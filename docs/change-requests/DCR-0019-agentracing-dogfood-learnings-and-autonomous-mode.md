@@ -76,8 +76,18 @@ Add follow-up design and implementation coverage for:
 
 7. Autonomous / YOLO mode.
    - Add an explicit mode for no-human-gate execution.
-   - The mode should convert human-gate pauses into logged open questions,
-     DCRs, or blocked statuses.
+   - The mode should not stop when no implementation task is ready. It should
+     support a research fallback that studies adjacent projects, records
+     evidence-backed feature ideas, and creates proposed requirements or task
+     packs when appropriate.
+   - The mode should convert minor human-gate pauses into logged assumptions,
+     open questions, DCRs, or blocked statuses, but it should still surface
+     genuinely high-impact questions to the user instead of pretending all
+     product decisions are equally safe to make autonomously.
+   - The mode should support multi-model review through AgentSpec's configured
+     reviewer profiles. In the current dogfood config, `continuation_reviewer`
+     and `quality_reviewer` provide a basis for independent review of
+     nontrivial `agentracing` implementation or research decisions.
    - It should require bounded write scope, verification evidence, no
      destructive git commands, no remote pushes unless explicitly configured,
      and a durable audit trail.
@@ -95,11 +105,15 @@ Likely affected areas:
 - `agentspec/init.py`: generated ignore guidance for local run state.
 - `agentspec/run.py` and `agentspec/runner.py`: autonomous execution profile,
   gate handling, and audit evidence.
+- `agentspec/model_review.py`: reviewer-profile routing for implementation,
+  research, and product-decision checkpoints.
 - `agentspec/cli.py`: new command flags or subcommands for autonomous mode and
   dogfood learning capture.
 - `docs/spec/security-and-governance.md`: policy boundaries for no-human-gate
   execution.
 - `docs/spec/runtime-architecture.md`: autonomous run lifecycle.
+- `docs/spec/observability-and-evaluation.md`: research fallback evidence,
+  model-review disagreement handling, and quality signals.
 - `agent/context-packs/`: follow-up implementation packs should cite this DCR
   and any new requirements derived from it.
 
@@ -115,6 +129,12 @@ Required follow-ups:
 - Draft an ADR for AgentSpec autonomous execution profiles.
 - Derive accepted requirements for repository-aware target inference and
   context-pack target validation.
+- Define the empty-queue behavior: research adjacent tools, produce durable
+  evidence, and optionally create proposed requirements/tasks.
+- Define the question policy: what can be assumed, what should be logged, and
+  what must be surfaced to a human.
+- Define when autonomous runs should invoke continuation or quality model
+  review, and how disagreements affect next actions.
 - Decide whether dogfood notes should live under `reports/dogfood/`, DCRs, or
   both.
 - Create implementation packs after the requirements are accepted.
@@ -128,5 +148,10 @@ Required follow-ups:
 - New AgentSpec initialization includes guidance to keep `agent/runs/*` local.
 - A documented autonomous mode exists with explicit guardrails for no-human-gate
   execution.
+- Empty task queues lead to research/proposal work rather than idle completion.
+- High-impact questions can be surfaced to the user while low-risk uncertainty
+  is captured as assumptions or open questions.
+- Autonomous runs can route selected decisions through configured model-review
+  profiles and record reviewer disagreement.
 - Dogfood findings can be recorded as durable project artifacts without relying
   on chat history.

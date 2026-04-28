@@ -3525,5 +3525,101 @@
     "owner_roles": [
       "coordinator"
     ]
+  },
+  {
+    "id": "R-142",
+    "title": "Autonomous run supports a research fallback when no executable pack is ready",
+    "description": "When aspec run loop --mode autonomous finds no ready context pack, instead of halting it MAY enter research mode: read repo artifacts (and configured adjacent sources), append findings to reports/dogfood/, open-questions.yml, or DCR stubs under docs/change-requests/. Research mode is strictly write-restricted (no product code edits, no git, no acceptance commands) and bounded by max_research_findings + max_iterations.",
+    "source_sections": [
+      "D-07",
+      "D-11.4",
+      "D-23.4"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0019",
+    "blocked_by": "ADR-0005",
+    "acceptance": [
+      "aspec run loop --mode autonomous with empty queue enters research mode and produces at least one finding artifact.",
+      "Research mode never writes outside reports/dogfood/, docs/discovery/open-questions.yml, or docs/change-requests/.",
+      "Research mode never calls dcr accept or requirement accept.",
+      "Tests cover write-restriction enforcement."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/policy.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_autonomous_mode.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-143",
+    "title": "Reviewer classifies pause_for_human severity (minor vs high) and autonomous mode acts on it",
+    "description": "continuation_reviewer adds a severity field (minor | high) to pause_for_human verdicts. In autonomous mode: minor severity records an open-question with the chosen default and continues; high severity drafts a DCR stub and halts. Severity classification rules are encoded in agentspec/model_review.py with deterministic rules first, model fallback second.",
+    "source_sections": [
+      "D-07",
+      "D-12.17"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0019",
+    "blocked_by": "ADR-0005",
+    "acceptance": [
+      "Reviewer verdict schema supports an optional severity field.",
+      "Autonomous-mode minor pauses produce an open-questions entry and continue.",
+      "Autonomous-mode high pauses produce a DCR stub and halt.",
+      "Severity classification has documented rules covering security, scope, architecture, naming, defaults, and routine elaboration."
+    ],
+    "code_targets": [
+      "agentspec/review.py",
+      "agentspec/model_review.py",
+      "agentspec/run.py"
+    ],
+    "test_targets": [
+      "tests/test_autonomous_mode.py",
+      "tests/test_model_review.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer"
+    ]
+  },
+  {
+    "id": "R-144",
+    "title": "Autonomous-mode complete requires both continuation_reviewer and quality_reviewer signoff",
+    "description": "Before autonomous mode emits a terminal complete verdict, both reviewer profiles must agree. Without dual signoff the run degrades to pause_for_human severity=high and halts. Research mode requires only quality_reviewer signoff.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0019",
+    "blocked_by": "ADR-0005",
+    "acceptance": [
+      "Autonomous-mode complete is rejected when only one reviewer signs off.",
+      "Autonomous-mode complete is accepted when both sign off.",
+      "Research-mode complete is accepted when only quality_reviewer signs off.",
+      "Tests cover all three combinations."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/review.py"
+    ],
+    "test_targets": [
+      "tests/test_autonomous_mode.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer"
+    ]
   }
 ]

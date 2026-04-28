@@ -248,8 +248,8 @@
   },
   {
     "id": "Q-020",
-    "question": "Should autonomous mode operate strictly one-pack-per-invocation, or may a single autonomous loop drain the entire ready queue (aspec task next until none)? MVP chooses one-pack-per-invocation; multi-pack drains require an explicit follow-up DCR.",
-    "status": "open",
+    "question": "Should autonomous mode operate strictly one-pack-per-invocation, or may a single autonomous loop drain the entire ready queue (aspec task next until none)? MVP chooses one-pack-per-invocation; multi-pack drains require an explicit follow-up DCR. RESOLVED by ADR-0005: strict one-pack-per-invocation for the implementation branch; research fallback is a separate mode with its own termination conditions.",
+    "status": "answered",
     "impact": [
       "autonomous-mode",
       "run-loop",
@@ -259,7 +259,8 @@
       "D-07",
       "D-23.4"
     ],
-    "raised_by": "ADR-0004"
+    "raised_by": "ADR-0004",
+    "answered_by": "ADR-0005"
   },
   {
     "id": "Q-021",
@@ -275,5 +276,49 @@
       "D-24"
     ],
     "raised_by": "DCR-0019"
+  },
+  {
+    "id": "Q-022",
+    "question": "How is autonomous_mode.research_sources configured? File paths, git refs, or a registry of trusted projects? MVP allows file paths only.",
+    "status": "open",
+    "impact": [
+      "autonomous-mode",
+      "research",
+      "config"
+    ],
+    "source_sections": [
+      "D-07",
+      "D-23.4"
+    ],
+    "raised_by": "ADR-0005"
+  },
+  {
+    "id": "Q-023",
+    "question": "How does continuation_reviewer classify pause severity (rule-based, model-based, or hybrid)? MVP starts with a small rule list covering security/scope/architecture vs naming/defaults, with model fallback for ambiguous cases.",
+    "status": "open",
+    "impact": [
+      "autonomous-mode",
+      "reviewer",
+      "policy"
+    ],
+    "source_sections": [
+      "D-12.17"
+    ],
+    "raised_by": "ADR-0005"
+  },
+  {
+    "id": "Q-024",
+    "question": "Should research-mode DCR drafts default to Status=open or Status=classified with Classification=pending? DCR-0002 schema requires Classification, so a pending value would need an enum addition. Until then research drafts log as open-questions.yml entries only.",
+    "status": "open",
+    "impact": [
+      "autonomous-mode",
+      "research",
+      "dcr-schema"
+    ],
+    "source_sections": [
+      "D-11.4",
+      "D-18"
+    ],
+    "raised_by": "ADR-0005"
   }
 ]

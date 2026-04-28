@@ -143,3 +143,6 @@
 | `R-139` Dogfood notes have a durable artifact location | D-11.4, D-24 | agentspec/init.py, agentspec/paths.py, agentspec/cli.py | tests/test_init_layout.py |
 | `R-140` aspec init emits .gitignore guidance for agent/runs/* while preserving .gitkeep | D-23.6 | agentspec/init.py | tests/test_init_layout.py |
 | `R-141` Context-pack title truncation respects word boundaries | D-12.12 | agentspec/task.py, agentspec/paths.py | tests/test_task_originating_dcr.py |
+| `R-142` Autonomous run supports a research fallback when no executable pack is ready | D-07, D-11.4, D-23.4 | agentspec/run.py, agentspec/policy.py, agentspec/cli.py | tests/test_autonomous_mode.py |
+| `R-143` Reviewer classifies pause_for_human severity (minor vs high) and autonomous mode acts on it | D-07, D-12.17 | agentspec/review.py, agentspec/model_review.py, agentspec/run.py | tests/test_autonomous_mode.py, tests/test_model_review.py |
+| `R-144` Autonomous-mode complete requires both continuation_reviewer and quality_reviewer signoff | D-07 | agentspec/run.py, agentspec/review.py | tests/test_autonomous_mode.py |
