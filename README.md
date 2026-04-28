@@ -20,6 +20,7 @@ aspec task create --requirement R-001
 aspec task list
 aspec task next
 aspec run loop
+aspec run prompt <run-id>
 aspec emit --target claude,codex
 aspec doctor
 aspec drift
@@ -33,11 +34,14 @@ Structured `.yml` files are currently written as YAML-compatible JSON so the MVP
 aspec task list --json
 aspec task next
 aspec run loop
+aspec run prompt <run-id> --json
 aspec task complete T-013 --test-status passed
 ```
 
 `agent/task-ledger.yml` is the committed queue-status projection. Local
 `agent/runs/*` keeps detailed execution state and remains ignored by git.
+`aspec run prompt` renders the next executor handoff from durable run state and
+reviewer events, including any continuation reviewer instruction.
 
 ## Verification
 

@@ -20,7 +20,7 @@ from .ingest import ingest_source
 from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
-from .run import abort_run, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run
+from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -122,6 +122,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
+
+    run_prompt = run_subparsers.add_parser("prompt", help="Print the next executor handoff prompt.")
+    run_prompt.add_argument("run_id")
+    run_prompt.add_argument("--json", action="store_true")
 
     run_abort = run_subparsers.add_parser("abort", help="Abort a supervised run.")
     run_abort.add_argument("run_id")
@@ -319,6 +323,13 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             if args.run_command == "inspect":
                 info = inspect_run(root, args.run_id)
                 print(json.dumps(info, indent=2))
+                return 0
+            if args.run_command == "prompt":
+                handoff = build_next_executor_prompt(root, args.run_id)
+                if args.json:
+                    print(json.dumps(handoff, indent=2))
+                else:
+                    print(handoff["prompt"])
                 return 0
             if args.run_command == "abort":
                 state = abort_run(root, args.run_id, reason=args.reason)
