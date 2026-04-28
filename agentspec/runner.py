@@ -8,6 +8,7 @@ from .run import step_run
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
 RUNNER_RESULT_SCHEMA = "agentspec.runner_result.v0"
+RUNNER_DEMO_SCHEMA = "agentspec.runner_demo.v0"
 ALLOWED_RUNNERS = {"generic", "codex", "claude"}
 ALLOWED_TEST_STATUSES = {"not_run", "passed", "failed"}
 ALLOWED_REVIEWER_MODES = {"deterministic", "model", "auto"}
@@ -64,6 +65,64 @@ def submit_runner_result(
         test_status=str(parsed["test_status"]),
         reviewer_mode=mode if isinstance(mode, str) else None,
     )
+
+
+def run_demo(
+    root: Path,
+    context_pack: Path | None = None,
+    *,
+    runner: str = "generic",
+    run_id: str | None = None,
+    executor_output: str = "Done. Acceptance criteria are met.",
+    touched_paths: list[str] | None = None,
+    test_status: str = "passed",
+    reviewer_mode: str | None = None,
+    task_type: str | None = None,
+    order: str = "newest",
+    max_iterations: int | None = None,
+) -> dict[str, Any]:
+    initial_package = package_run(
+        root,
+        context_pack,
+        runner=runner,
+        run_id=run_id,
+        task_type=task_type,
+        order=order,
+        max_iterations=max_iterations,
+    )
+    actual_run_id = str(initial_package["run_id"])
+    transcript: list[dict[str, Any]] = [{"kind": "package", "package": initial_package}]
+    final_package = initial_package
+
+    if initial_package.get("should_execute"):
+        result = {
+            "schema": RUNNER_RESULT_SCHEMA,
+            "executor_output": executor_output,
+            "touched_paths": touched_paths or _default_demo_touched_paths(initial_package),
+            "test_status": test_status,
+        }
+        if reviewer_mode is not None:
+            result["reviewer_mode"] = reviewer_mode
+        transcript.append({"kind": "runner_result", "result": result})
+        final_package = submit_runner_result(
+            root,
+            actual_run_id,
+            result,
+            runner=runner,
+            reviewer_mode=reviewer_mode,
+        )
+        transcript.append({"kind": "package", "package": final_package})
+
+    return {
+        "schema": RUNNER_DEMO_SCHEMA,
+        "runner": runner,
+        "run_id": actual_run_id,
+        "transcript": transcript,
+        "final_package": final_package,
+        "final_next_action": final_package.get("next_action"),
+        "final_should_execute": final_package.get("should_execute"),
+        "final_state": final_package.get("step", {}).get("state") if isinstance(final_package.get("step"), dict) else None,
+    }
 
 
 def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
@@ -177,3 +236,14 @@ def _runner_env(*, runner: str, run_id: str, next_action: str, context_pack: Any
     if isinstance(context_pack, str) and context_pack.strip():
         env["AGENTSPEC_CONTEXT_PACK"] = context_pack
     return env
+
+
+def _default_demo_touched_paths(package: dict[str, Any]) -> list[str]:
+    step = package.get("step")
+    if not isinstance(step, dict):
+        return []
+    state = step.get("state")
+    if not isinstance(state, dict):
+        return []
+    context_pack = state.get("context_pack")
+    return [context_pack] if isinstance(context_pack, str) and context_pack else []

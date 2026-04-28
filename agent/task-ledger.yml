@@ -180,6 +180,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T22:03:56Z"
+    },
+    "agent/context-packs/T-023-local-runner-demo-e2e.md": {
+      "status": "complete",
+      "run_id": "dogfood-t023-e2e",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:13:30Z"
     }
   }
 }

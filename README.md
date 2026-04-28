@@ -24,6 +24,7 @@ aspec run prompt <run-id>
 aspec run step --json
 aspec run package --runner generic --json
 aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
+aspec run demo --json
 aspec emit --target claude,codex
 aspec doctor
 aspec drift
@@ -41,6 +42,7 @@ aspec run prompt <run-id> --json
 aspec run step --run-id <run-id> --executor-output "..." --json
 aspec run package --runner codex --run-id <run-id> --json
 aspec run result <run-id> --result-json '{"executor_output":"Done.","test_status":"passed"}' --json
+aspec run demo --run-id demo-001 --json
 aspec task complete T-013 --test-status passed
 ```
 
@@ -54,6 +56,8 @@ the next handoff prompt into one harness-oriented JSON response.
 stdin prompt, environment hints, and a report-back command template.
 `aspec run result` accepts a structured runner result JSON and returns the next
 runner package, completing the package/result handshake.
+`aspec run demo` runs a deterministic local package/result transcript for e2e
+testing without invoking an external agent binary.
 
 ## Verification
 

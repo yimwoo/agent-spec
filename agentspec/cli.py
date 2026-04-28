@@ -21,7 +21,7 @@ from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
-from .runner import ALLOWED_RUNNERS, submit_runner_result, package_run
+from .runner import ALLOWED_RUNNERS, package_run, run_demo, submit_runner_result
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -152,6 +152,19 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_result.add_argument("--result-json", required=True, help="Runner result JSON, or '-' to read stdin.")
     run_result.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
     run_result.add_argument("--json", action="store_true")
+
+    run_demo_parser = run_subparsers.add_parser("demo", help="Run a deterministic local package/result demo.")
+    run_demo_parser.add_argument("context_pack", nargs="?")
+    run_demo_parser.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
+    run_demo_parser.add_argument("--run-id")
+    run_demo_parser.add_argument("--executor-output", default="Done. Acceptance criteria are met.")
+    run_demo_parser.add_argument("--touched-path", action="append", default=[])
+    run_demo_parser.add_argument("--test-status", default="passed", choices=["not_run", "passed", "failed"])
+    run_demo_parser.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_demo_parser.add_argument("--type", dest="task_type")
+    run_demo_parser.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    run_demo_parser.add_argument("--max-iterations", type=int)
+    run_demo_parser.add_argument("--json", action="store_true")
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
@@ -412,6 +425,25 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 stdin = package.get("execution", {}).get("stdin")
                 if stdin:
                     print(stdin)
+                return 0
+            if args.run_command == "demo":
+                demo = run_demo(
+                    root,
+                    Path(args.context_pack) if args.context_pack else None,
+                    runner=args.runner,
+                    run_id=args.run_id,
+                    executor_output=args.executor_output,
+                    touched_paths=args.touched_path or None,
+                    test_status=args.test_status,
+                    reviewer_mode=args.reviewer_mode,
+                    task_type=args.task_type,
+                    order=args.order,
+                    max_iterations=args.max_iterations,
+                )
+                if args.json:
+                    print(json.dumps(demo, indent=2))
+                    return 0
+                print(f"{demo['run_id']}: {demo['final_next_action']} runner={demo['runner']}")
                 return 0
             if args.run_command == "inspect":
                 info = inspect_run(root, args.run_id)
