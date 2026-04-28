@@ -10,6 +10,17 @@ AgentSpec is a local-first CLI that turns design documents into agent-ready repo
 - Claude/Codex-oriented agent instruction artifacts
 - brownfield doctor and drift-review skeleton reports
 
+## Install
+
+```bash
+pip install -e .
+```
+
+This exposes both `aspec` (short) and `agentspec` (long) on PATH. They are
+the same entry point; `aspec --help` and `agentspec --help` produce
+identical output modulo the program name. If you prefer not to install,
+you can invoke the CLI directly via `python -m agentspec.cli`.
+
 ## Quick Start
 
 ```bash

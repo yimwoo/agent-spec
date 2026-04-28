@@ -1,3 +1,4 @@
+import importlib
 import io
 import tomllib
 import unittest
@@ -14,6 +15,21 @@ class CliAliasTests(unittest.TestCase):
         scripts = data["project"]["scripts"]
         self.assertEqual(scripts["agentspec"], "agentspec.cli:main")
         self.assertEqual(scripts["aspec"], "agentspec.cli:main")
+
+    def test_entry_point_targets_resolve_to_callables(self) -> None:
+        """Each `[project.scripts]` entry must point at a real callable.
+
+        This catches typos in the spec string without requiring `pip install`.
+        """
+        data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+        for name, spec in data["project"]["scripts"].items():
+            module_name, _, func_name = spec.partition(":")
+            self.assertTrue(module_name and func_name, f"{name}: malformed spec {spec!r}")
+
+            module = importlib.import_module(module_name)
+            target = getattr(module, func_name, None)
+            self.assertTrue(callable(target), f"{name}: {spec} did not resolve to a callable")
 
     def test_parser_can_render_aspec_usage(self) -> None:
         parser = build_parser(prog="aspec")

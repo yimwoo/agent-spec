@@ -198,6 +198,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T22:18:40Z"
+    },
+    "agent/context-packs/T-025-aspec-console-script-verification.md": {
+      "status": "complete",
+      "reason": "pyproject entry points verified; pip install -e . exposes aspec/agentspec on PATH; tests pass.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T23:06:35Z"
     }
   }
 }
