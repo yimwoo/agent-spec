@@ -1,0 +1,155 @@
+import io
+import json
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+
+from agentspec.cli import main
+from agentspec.io import write_data
+from agentspec.task import list_task_context_packs, next_task_context_pack
+
+
+class TaskQueueTests(unittest.TestCase):
+    def test_list_task_context_packs_overlays_run_status(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            records = list_task_context_packs(root)
+            by_id = {record["id"]: record for record in records}
+
+            self.assertEqual(by_id["T-001"]["status"], "ready")
+            self.assertEqual(by_id["T-001"]["requirements"][0]["status"], "accepted")
+            self.assertEqual(by_id["T-002"]["status"], "complete")
+            self.assertEqual(by_id["T-003"]["status"], "ready")
+
+    def test_next_defaults_to_newest_ready_context_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            record = next_task_context_pack(root)
+
+            self.assertIsNotNone(record)
+            self.assertEqual(record["id"], "T-004")
+            self.assertEqual(record["path"], "agent/context-packs/T-004-spike-ready.md")
+
+    def test_next_can_select_oldest_ready_context_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            record = next_task_context_pack(root, order="oldest")
+
+            self.assertIsNotNone(record)
+            self.assertEqual(record["id"], "T-001")
+
+    def test_next_can_filter_by_type(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            record = next_task_context_pack(root, task_type="spike")
+
+            self.assertIsNotNone(record)
+            self.assertEqual(record["id"], "T-004")
+
+    def test_cli_task_list_json_and_next(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "list", "--json"])
+            self.assertEqual(code, 0)
+            records = json.loads(output.getvalue())
+            self.assertEqual(records[0]["id"], "T-001")
+            self.assertIn("status", records[0])
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next"])
+            self.assertEqual(code, 0)
+            self.assertEqual(output.getvalue().strip(), "agent/context-packs/T-004-spike-ready.md")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--order", "oldest"])
+            self.assertEqual(code, 0)
+            self.assertEqual(output.getvalue().strip(), "agent/context-packs/T-001-oldest-ready.md")
+
+
+def _seed(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "agent" / "runs" / "done-run").mkdir(parents=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [
+            {"id": "R-001", "status": "accepted", "priority": "P0"},
+            {"id": "R-002", "status": "accepted", "priority": "P1"},
+            {"id": "R-003", "status": "accepted", "priority": "P2"},
+            {"id": "R-004", "status": "accepted", "priority": "P2"},
+        ],
+    )
+    _write_pack(
+        root / "agent" / "context-packs" / "T-001-oldest-ready.md",
+        "T-001",
+        "Oldest Ready",
+        "implementation",
+        "R-001",
+    )
+    _write_pack(
+        root / "agent" / "context-packs" / "T-002-complete.md",
+        "T-002",
+        "Complete",
+        "implementation",
+        "R-002",
+    )
+    _write_pack(
+        root / "agent" / "context-packs" / "T-003-newest-ready.md",
+        "T-003",
+        "Newest Ready",
+        "implementation",
+        "R-003",
+    )
+    _write_pack(
+        root / "agent" / "context-packs" / "T-004-spike-ready.md",
+        "T-004",
+        "Spike Ready",
+        "spike",
+        "R-004",
+    )
+    write_data(
+        root / "agent" / "runs" / "done-run" / "state.yml",
+        {
+            "run_id": "done-run",
+            "status": "complete",
+            "context_pack": "agent/context-packs/T-002-complete.md",
+            "updated_at": "2026-04-28T20:00:00Z",
+        },
+    )
+
+
+def _write_pack(path: Path, task_id: str, title: str, task_type: str, requirement_id: str) -> None:
+    path.write_text(
+        f"""# {task_id}: {title}
+
+Type: `{task_type}`
+
+## Requirements
+
+- `{requirement_id}` Requirement
+
+## Allowed Paths
+
+- `agentspec/task.py`
+""",
+        encoding="utf-8",
+    )
+
+
+if __name__ == "__main__":
+    unittest.main()

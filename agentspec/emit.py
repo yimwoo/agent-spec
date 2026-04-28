@@ -45,12 +45,12 @@ This repository uses AgentSpec-generated context.
 ## Key Commands
 
 ```bash
-agentspec ingest docs/source/design.md
-agentspec compile
-agentspec task create --requirement R-001
-agentspec emit --target claude,codex
-agentspec doctor
-agentspec drift
+aspec ingest docs/source/design.md
+aspec compile
+aspec task create --requirement R-001
+aspec emit --target claude,codex
+aspec doctor
+aspec drift
 ```
 """
     path = root / "AGENTS.md"

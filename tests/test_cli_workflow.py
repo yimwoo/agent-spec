@@ -119,6 +119,7 @@ class CliWorkflowTests(unittest.TestCase):
 
                 self.assertEqual(main(["emit", "--target", "agents-md,claude,codex"]), 0)
                 self.assertTrue((project / "AGENTS.md").exists())
+                self.assertIn("aspec compile", (project / "AGENTS.md").read_text(encoding="utf-8"))
                 self.assertTrue((project / "CLAUDE.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
                 self.assertTrue((project / ".codex" / "agents" / "spec-reviewer.toml").exists())

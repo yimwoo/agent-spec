@@ -20,11 +20,22 @@ from .ingest import ingest_source
 from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
-from .task import create_task_context_pack
+from .run import abort_run, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run
+from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="agentspec", description="Compile design sources into agent-ready repository artifacts.")
+def _default_prog() -> str:
+    invoked = Path(sys.argv[0]).name
+    if invoked in {"agentspec", "aspec"}:
+        return invoked
+    return "agentspec"
+
+
+def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog=prog or _default_prog(),
+        description="Compile design sources into agent-ready repository artifacts.",
+    )
     parser.add_argument("--root", default=".", help="Project root. Defaults to the current directory.")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -55,6 +66,20 @@ def build_parser() -> argparse.ArgumentParser:
     task_create.add_argument("--requirement")
     task_create.add_argument("--type", default="implementation", choices=["discovery", "spec", "spike", "scaffold", "implementation", "review", "migration", "automation"])
     task_create.add_argument("--title")
+    task_list = task_subparsers.add_parser("list", help="List task context packs.")
+    task_list.add_argument("--type")
+    task_list.add_argument("--status")
+    task_list.add_argument("--json", action="store_true")
+    task_next = task_subparsers.add_parser("next", help="Print the next ready task context pack.")
+    task_next.add_argument("--type")
+    task_next.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    task_next.add_argument("--json", action="store_true")
+    task_complete = task_subparsers.add_parser("complete", help="Mark a context pack complete by writing run state.")
+    task_complete.add_argument("selector", help="Task id (e.g. T-013) or context pack path.")
+    task_complete.add_argument("--run-id")
+    task_complete.add_argument("--reason", default="Marked complete by user.")
+    task_complete.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    task_complete.add_argument("--json", action="store_true")
 
     context = subparsers.add_parser("context", help="Context pack utilities.")
     context_subparsers = context.add_subparsers(dest="context_command")
@@ -69,6 +94,39 @@ def build_parser() -> argparse.ArgumentParser:
     drift = subparsers.add_parser("drift", help="Generate a spec drift review report.")
     drift.add_argument("--diff")
 
+    run = subparsers.add_parser("run", help="Supervised run utilities.")
+    run_subparsers = run.add_subparsers(dest="run_command")
+    run_start = run_subparsers.add_parser("start", help="Create local supervised-run state for a context pack.")
+    run_start.add_argument("context_pack")
+    run_start.add_argument("--run-id")
+    run_start.add_argument("--max-iterations", type=int)
+
+    run_resume = run_subparsers.add_parser("resume", help="Record an executor iteration and reviewer verdict.")
+    run_resume.add_argument("run_id")
+    run_resume.add_argument("--executor-output", required=True)
+    run_resume.add_argument("--touched-path", action="append", default=[])
+    run_resume.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    run_resume.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+
+    run_loop = run_subparsers.add_parser("loop", help="Select, start, or resume the next supervised run step.")
+    run_loop.add_argument("context_pack", nargs="?")
+    run_loop.add_argument("--run-id")
+    run_loop.add_argument("--executor-output")
+    run_loop.add_argument("--touched-path", action="append", default=[])
+    run_loop.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    run_loop.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_loop.add_argument("--type", dest="task_type")
+    run_loop.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    run_loop.add_argument("--max-iterations", type=int)
+    run_loop.add_argument("--json", action="store_true")
+
+    run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
+    run_inspect.add_argument("run_id")
+
+    run_abort = run_subparsers.add_parser("abort", help="Abort a supervised run.")
+    run_abort.add_argument("run_id")
+    run_abort.add_argument("--reason", default="Aborted by user.")
+
     dcr = subparsers.add_parser("dcr", help="Design Change Request utilities.")
     dcr_subparsers = dcr.add_subparsers(dest="dcr_command")
 
@@ -81,7 +139,7 @@ def build_parser() -> argparse.ArgumentParser:
     dcr_classify.add_argument("dcr_id")
     dcr_classify.add_argument("--to", dest="classification", required=True, choices=sorted(ALLOWED_CLASSIFICATIONS))
 
-    dcr_accept = dcr_subparsers.add_parser("accept", help="Flip a DCR to accepted and cascade requirement status.")
+    dcr_accept = dcr_subparsers.add_parser("accept", help="Flip a DCR to accepted without changing requirements.")
     dcr_accept.add_argument("dcr_id")
 
     dcr_subparsers.add_parser("list", help="List all DCRs in the workspace.")
@@ -102,8 +160,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
+def main(argv: list[str] | None = None, prog: str | None = None) -> int:
+    parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
     root = Path(args.root).resolve()
 
@@ -148,6 +206,40 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Created task context pack: {path.relative_to(root)}")
             return 0
 
+        if args.command == "task" and args.task_command == "list":
+            records = list_task_context_packs(root, task_type=args.type, status=args.status)
+            if args.json:
+                print(json.dumps(records, indent=2))
+            else:
+                for record in records:
+                    print(f"{record['id']}\t{record['status']}\t{record['type']}\t{record['path']}\t{record['title']}")
+            return 0
+
+        if args.command == "task" and args.task_command == "next":
+            record = next_task_context_pack(root, task_type=args.type, order=args.order)
+            if record is None:
+                print("No ready task context pack found.")
+                return 1
+            if args.json:
+                print(json.dumps(record, indent=2))
+            else:
+                print(f"{record['path']}")
+            return 0
+
+        if args.command == "task" and args.task_command == "complete":
+            state = complete_context_pack_run(
+                root,
+                args.selector,
+                run_id=args.run_id,
+                reason=args.reason,
+                test_status=args.test_status,
+            )
+            if args.json:
+                print(json.dumps(state, indent=2))
+            else:
+                print(f"Marked {state['context_pack']} complete via run {state['run_id']}.")
+            return 0
+
         if args.command == "context" and args.context_command == "build":
             path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
             print(f"Created task context pack: {path.relative_to(root)}")
@@ -161,6 +253,78 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "drift":
             path = run_drift(root, diff_ref=args.diff)
             print(f"Wrote drift report: {path.relative_to(root)}")
+            return 0
+
+        if args.command == "run":
+            if args.run_command == "start":
+                state = start_run(
+                    root,
+                    Path(args.context_pack),
+                    run_id=args.run_id,
+                    max_iterations=args.max_iterations,
+                )
+                print(
+                    f"Started run {state['run_id']} for {state['context_pack']} "
+                    f"(max_iterations={state['max_iterations']})."
+                )
+                return 0
+            if args.run_command == "resume":
+                result = resume_run(
+                    root,
+                    args.run_id,
+                    executor_output=args.executor_output,
+                    touched_paths=args.touched_path,
+                    test_status=args.test_status,
+                    reviewer_mode=args.reviewer_mode,
+                )
+                review = result["review"]
+                print(f"{args.run_id}: {review['decision']} ({review['confidence']}) - {review['reason']}")
+                message = review.get("message_to_executor")
+                if message:
+                    print(message)
+                return 0
+            if args.run_command == "loop":
+                result = loop_run(
+                    root,
+                    Path(args.context_pack) if args.context_pack else None,
+                    run_id=args.run_id,
+                    executor_output=args.executor_output,
+                    touched_paths=args.touched_path,
+                    test_status=args.test_status,
+                    reviewer_mode=args.reviewer_mode,
+                    task_type=args.task_type,
+                    order=args.order,
+                    max_iterations=args.max_iterations,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                    return 0
+
+                state = result["state"]
+                selected = result.get("selected_task")
+                if selected:
+                    print(f"Selected {selected['path']}.")
+                action = "Started" if result.get("started") else "Using"
+                print(f"{action} run {state['run_id']} for {state['context_pack']}.")
+
+                review = result.get("review")
+                if review:
+                    print(f"{state['run_id']}: {review['decision']} ({review['confidence']}) - {review['reason']}")
+                    message = review.get("message_to_executor")
+                    if message:
+                        print(message)
+                else:
+                    print(f"Status: {state['status']}.")
+                return 0
+            if args.run_command == "inspect":
+                info = inspect_run(root, args.run_id)
+                print(json.dumps(info, indent=2))
+                return 0
+            if args.run_command == "abort":
+                state = abort_run(root, args.run_id, reason=args.reason)
+                print(f"Aborted run {state['run_id']}.")
+                return 0
+            parser.print_help()
             return 0
 
         if args.command == "dcr":
@@ -209,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
     except Exception as exc:
-        print(f"agentspec: error: {exc}", file=sys.stderr)
+        print(f"{parser.prog}: error: {exc}", file=sys.stderr)
         return 1
 
 

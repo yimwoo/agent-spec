@@ -127,7 +127,8 @@
   {
     "id": "Q-012",
     "question": "What reviewer model is used by default in supervised runs, and is the choice configurable per-repo or per-task?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "ADR-0003",
     "impact": [
       "supervised-runs",
       "plugin",
@@ -142,7 +143,8 @@
   {
     "id": "Q-013",
     "question": "What is the default max_iterations cap for supervised runs, and how should it be tuned per task type (small fix vs. large refactor)?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "ADR-0003",
     "impact": [
       "supervised-runs",
       "context-pack"
@@ -156,7 +158,8 @@
   {
     "id": "Q-014",
     "question": "Should agent/runs/ supervised-run state be committed to git, .gitignore'd, or split (audit metadata committed, raw outputs ignored)?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "ADR-0003",
     "impact": [
       "supervised-runs",
       "audit",

@@ -1,0 +1,149 @@
+{
+  "schema": "agentspec.task_ledger.v0",
+  "tasks": {
+    "agent/context-packs/T-001-convert-a-markdown-design-document-into-canonical-source-sections-with-stable-ids-and-content-ha.md": {
+      "status": "complete",
+      "run_id": "ledger-T-001",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:11Z"
+    },
+    "agent/context-packs/T-002-promote-drift-checker-to-semantic-diff-review.md": {
+      "status": "complete",
+      "run_id": "ledger-T-002",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:11Z"
+    },
+    "agent/context-packs/T-003-design-change-management-schema.md": {
+      "status": "complete",
+      "run_id": "ledger-T-003",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-004-spike-supervised-runs.md": {
+      "status": "complete",
+      "run_id": "ledger-T-004",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-005-dcr-cli.md": {
+      "status": "complete",
+      "run_id": "ledger-T-005",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-008-dcr-accept-cascade-fix.md": {
+      "status": "complete",
+      "run_id": "ledger-T-008",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-009-draft-adr-0003-supervised-run-protocol.md": {
+      "status": "complete",
+      "run_id": "ledger-T-009",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-010-add-aspec-cli-alias.md": {
+      "status": "complete",
+      "run_id": "ledger-T-010",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-011-add-agent-model-profile-config.md": {
+      "status": "complete",
+      "run_id": "ledger-T-011",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-012-supervised-run-local-protocol-mvp.md": {
+      "status": "complete",
+      "run_id": "ledger-T-012",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-013-add-task-queue-and-next-task-selection.md": {
+      "status": "complete",
+      "run_id": "ledger-T-013",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-014-supervised-run-loop-mvp.md": {
+      "status": "complete",
+      "run_id": "ledger-T-014",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:14Z"
+    },
+    "agent/context-packs/T-015-task-completion-backfill-command.md": {
+      "status": "complete",
+      "run_id": "ledger-T-015",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:14Z"
+    },
+    "agent/context-packs/T-016-committed-task-ledger.md": {
+      "status": "complete",
+      "run_id": "dogfood-t016-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:57Z"
+    },
+    "agent/context-packs/T-017-review-findings-and-status-hygiene.md": {
+      "status": "complete",
+      "run_id": "dogfood-t017-final-2",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:28:13Z"
+    },
+    "agent/context-packs/T-018-model-backed-continuation-reviewer-mvp.md": {
+      "status": "complete",
+      "run_id": "dogfood-t018-final-2",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:40:09Z"
+    }
+  }
+}

@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
+aspec = "agentspec.cli:main"
 agentspec = "agentspec.cli:main"
 
 [tool.setuptools]

@@ -123,6 +123,15 @@ class DCRCLIClassifyTests(unittest.TestCase):
 
 
 class DCRCLIAcceptTests(unittest.TestCase):
+    def test_accept_help_does_not_claim_requirement_cascade(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            with self.assertRaises(SystemExit) as ctx:
+                main(["dcr", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("without changing requirements", output.getvalue())
+        self.assertNotIn("cascade requirement status", output.getvalue())
+
     def test_accept_flips_only_dcr_status_no_cascade(self) -> None:
         """Per DCR-0004 / R-133: dcr accept must not cascade to requirements."""
         with tempfile.TemporaryDirectory() as td:

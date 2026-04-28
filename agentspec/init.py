@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .config import default_runtime_config
 from .io import write_data, write_text
 from .paths import ROLE_NAMES, ensure_dirs
 
@@ -12,19 +13,18 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
 
     config_path = root / ".agentspec" / "config.yml"
     if not config_path.exists():
-        write_data(
-            config_path,
-            {
-                "version": 1,
-                "mode": mode,
-                "archetype": archetype,
-                "targets": [target.strip() for target in targets.split(",") if target.strip()],
-                "readiness_gate": 60,
-                "source_classification_default": "internal",
-                "storage_mode_default": "committed",
-                "generated_by": "agentspec",
-            },
-        )
+        config = {
+            "version": 1,
+            "mode": mode,
+            "archetype": archetype,
+            "targets": [target.strip() for target in targets.split(",") if target.strip()],
+            "readiness_gate": 60,
+            "source_classification_default": "internal",
+            "storage_mode_default": "committed",
+            **default_runtime_config(),
+            "generated_by": "agentspec",
+        }
+        write_data(config_path, config)
         written.append(config_path)
 
     defaults = {

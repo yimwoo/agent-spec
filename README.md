@@ -13,20 +13,35 @@ AgentSpec is a local-first CLI that turns design documents into agent-ready repo
 ## Quick Start
 
 ```bash
-python -m agentspec.cli init
-python -m agentspec.cli ingest docs/source/design.md
-python -m agentspec.cli compile
-python -m agentspec.cli task create --requirement R-001
-python -m agentspec.cli emit --target claude,codex
-python -m agentspec.cli doctor
-python -m agentspec.cli drift
+aspec init
+aspec ingest docs/source/design.md
+aspec compile
+aspec task create --requirement R-001
+aspec task list
+aspec task next
+aspec run loop
+aspec emit --target claude,codex
+aspec doctor
+aspec drift
 ```
 
 Structured `.yml` files are currently written as YAML-compatible JSON so the MVP can run with only the Python standard library.
+
+## Agent Control Plane
+
+```bash
+aspec task list --json
+aspec task next
+aspec run loop
+aspec task complete T-013 --test-status passed
+```
+
+`agent/task-ledger.yml` is the committed queue-status projection. Local
+`agent/runs/*` keeps detailed execution state and remains ignored by git.
 
 ## Verification
 
 ```bash
 python -m unittest discover -s tests -v
-python -m agentspec.cli --help
+aspec --help
 ```
