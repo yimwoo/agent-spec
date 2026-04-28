@@ -162,6 +162,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T21:56:03Z"
+    },
+    "agent/context-packs/T-021-runner-package-adapter.md": {
+      "status": "complete",
+      "run_id": "dogfood-t021-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:59:58Z"
     }
   }
 }

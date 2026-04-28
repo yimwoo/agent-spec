@@ -21,6 +21,7 @@ from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
+from .runner import ALLOWED_RUNNERS, package_run
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -131,6 +132,19 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_step.add_argument("--order", default="newest", choices=["oldest", "newest"])
     run_step.add_argument("--max-iterations", type=int)
     run_step.add_argument("--json", action="store_true")
+
+    run_package = run_subparsers.add_parser("package", help="Prepare a runner execution package for one harness step.")
+    run_package.add_argument("context_pack", nargs="?")
+    run_package.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
+    run_package.add_argument("--run-id")
+    run_package.add_argument("--executor-output")
+    run_package.add_argument("--touched-path", action="append", default=[])
+    run_package.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    run_package.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_package.add_argument("--type", dest="task_type")
+    run_package.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    run_package.add_argument("--max-iterations", type=int)
+    run_package.add_argument("--json", action="store_true")
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
@@ -351,6 +365,28 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(f"{result['run_id']}: {result['next_action']} ({result['state']['status']})")
                 if result.get("prompt"):
                     print(result["prompt"])
+                return 0
+            if args.run_command == "package":
+                package = package_run(
+                    root,
+                    Path(args.context_pack) if args.context_pack else None,
+                    runner=args.runner,
+                    run_id=args.run_id,
+                    executor_output=args.executor_output,
+                    touched_paths=args.touched_path,
+                    test_status=args.test_status,
+                    reviewer_mode=args.reviewer_mode,
+                    task_type=args.task_type,
+                    order=args.order,
+                    max_iterations=args.max_iterations,
+                )
+                if args.json:
+                    print(json.dumps(package, indent=2))
+                    return 0
+                print(f"{package['run_id']}: {package['next_action']} runner={package['runner']}")
+                stdin = package.get("execution", {}).get("stdin")
+                if stdin:
+                    print(stdin)
                 return 0
             if args.run_command == "inspect":
                 info = inspect_run(root, args.run_id)
