@@ -13,7 +13,7 @@ This repository uses AgentSpec-generated context.
 ## Current Status
 
 - Readiness: 100/100 (normal-implementation)
-- Requirements: 144 (14 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis; R-127..R-130 from DCR-0001 remain proposed until approval/evidence-flow coverage and requirement acceptance review; R-135..R-137 and R-139..R-141 from DCR-0019 awaiting per-pack implementation; R-142..R-144 from ADR-0005 awaiting per-pack implementation; R-138 shipped via T-025)
+- Requirements: 144 (12 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis; R-127..R-130 from DCR-0001 remain proposed until approval/evidence-flow coverage and requirement acceptance review; R-135 awaiting basic autonomous-mode pack T-027; R-139..R-141 from DCR-0019 awaiting per-pack implementation; R-142..R-144 from ADR-0005 awaiting per-pack implementation; R-136/R-137/R-138 shipped via T-025/T-026)
 - DCRs: DCR-0001 (spike, ADR-0003 accepted; local run protocol MVP shipped), DCR-0002..DCR-0019 (accepted; DCR-0019 needs-adr satisfied by ADR-0004 + ADR-0005)
 - ADRs: 0001-0005 all accepted (0004 = autonomous execution profile; 0005 = research fallback, severity gating, multi-reviewer signoff)
 - `agent/task-ledger.yml` is the committed queue-status projection; local `agent/runs/*` remains ignored execution detail.

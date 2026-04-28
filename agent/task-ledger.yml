@@ -206,6 +206,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T23:06:35Z"
+    },
+    "agent/context-packs/T-026-archetype-aware-target-inference-and-validation.md": {
+      "status": "complete",
+      "reason": "Archetype-aware inference + path provenance shipped; tests cover Python/TypeScript/Go/undetermined; compile on Python self-host preserves agentspec/*.py targets.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T23:58:27Z"
     }
   }
 }

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 import re
 
+from .archetype import validate_path_provenance
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
 from .paths import slugify
@@ -348,6 +349,19 @@ def _pack_text(
     out.extend(["", "## Allowed Paths", ""])
     for path in allowed_paths:
         out.append(f"- `{path}`")
+
+    # R-137: per-path provenance so reviewers and autonomous mode can
+    # tell inferred guesses from confirmed scope.
+    provenance = {path: validate_path_provenance(path, root) for path in allowed_paths}
+    out.extend(["", "## Allowed Paths Provenance", "", "| Path | Provenance |", "|---|---|"])
+    for path in allowed_paths:
+        out.append(f"| `{path}` | {provenance[path]} |")
+    if allowed_paths and all(p == "inferred" for p in provenance.values()):
+        out.extend([
+            "",
+            "> Warning: every allowed path is inferred (no matching file in the repo). "
+            "Confirm the scope before executing — autonomous mode will refuse this pack.",
+        ])
 
     out.extend(["", "## Forbidden Paths", "", "- Anything outside the allowed paths unless the task is explicitly revised.", "", "## Tests To Add Or Update", ""])
     for path in test_targets or ["tests/"]:

@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .archetype import detect_archetype, infer_code_targets, infer_test_targets
 from .io import lines_between, load_data, sha256_text, write_data, write_text
 from .paths import slugify
 
@@ -172,6 +173,10 @@ def _matches_keywords(section: dict[str, Any], keywords: list[str]) -> bool:
 def _extract_requirements(root: Path, sections: list[dict[str, Any]], section_texts: dict[str, str]) -> list[dict[str, Any]]:
     requirements: list[dict[str, Any]] = []
     seen: set[str] = set()
+    # R-136: detect host archetype once per compile run; downstream
+    # inference uses language-aware paths instead of AgentSpec's
+    # Python-specific defaults.
+    archetype = detect_archetype(root)
     for section in sections:
         title = str(section["title"])
         if OPEN_QUESTION_TITLE_RE.search(title) or "candidate project names" in title.lower():
@@ -192,8 +197,8 @@ def _extract_requirements(root: Path, sections: list[dict[str, Any]], section_te
                     "status": "accepted",
                     "confidence": _confidence(normalized),
                     "acceptance": _acceptance(normalized),
-                    "code_targets": _code_targets(normalized),
-                    "test_targets": _test_targets(normalized),
+                    "code_targets": infer_code_targets(normalized, archetype),
+                    "test_targets": infer_test_targets(normalized, archetype),
                     "owner_roles": _owner_roles(normalized),
                 }
             )

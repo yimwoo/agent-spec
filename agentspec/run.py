@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .archetype import validate_path_provenance
 from .config import load_project_config, merged_runtime_config, resolve_agent_profile
 from .io import load_data, write_data, write_text
 from .paths import slugify
@@ -459,6 +460,25 @@ def _resolve_context_pack_selector(root: Path, selector: str) -> Path:
         return matches[0].resolve()
 
     return _resolve_context_pack(root, candidate)
+
+
+def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:
+    """Per R-137: a pack is autonomous-eligible if at least one of its
+    Allowed Paths is `confirmed` (exists in the repo) or `pattern` (a glob
+    that the runtime evaluates at write time). Packs whose paths are
+    entirely `inferred` (source-derived guesses that don't exist) are
+    refused so autonomous mode never executes against fabricated scope.
+    """
+    pack = _resolve_context_pack(Path(root).resolve(), context_pack)
+    parsed = _parse_context_pack(pack)
+    allowed_paths = parsed.get("allowed_paths", [])
+    if not allowed_paths:
+        return False
+    for path in allowed_paths:
+        provenance = validate_path_provenance(path, Path(root))
+        if provenance in {"confirmed", "pattern"}:
+            return True
+    return False
 
 
 def _parse_context_pack(path: Path) -> dict[str, Any]:
