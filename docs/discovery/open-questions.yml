@@ -245,5 +245,35 @@
       "D-18"
     ],
     "raised_by": "DCR-0004"
+  },
+  {
+    "id": "Q-020",
+    "question": "Should autonomous mode operate strictly one-pack-per-invocation, or may a single autonomous loop drain the entire ready queue (aspec task next until none)? MVP chooses one-pack-per-invocation; multi-pack drains require an explicit follow-up DCR.",
+    "status": "open",
+    "impact": [
+      "autonomous-mode",
+      "run-loop",
+      "safety"
+    ],
+    "source_sections": [
+      "D-07",
+      "D-23.4"
+    ],
+    "raised_by": "ADR-0004"
+  },
+  {
+    "id": "Q-021",
+    "question": "Should dogfood notes (R-139) be a CLI subcommand (aspec dogfood record), a documented reports/dogfood/ convention, or both? The MVP allows both but does not require either.",
+    "status": "open",
+    "impact": [
+      "dogfood",
+      "cli",
+      "observability"
+    ],
+    "source_sections": [
+      "D-11.4",
+      "D-24"
+    ],
+    "raised_by": "DCR-0019"
   }
 ]

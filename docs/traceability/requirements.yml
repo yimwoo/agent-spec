@@ -3321,5 +3321,209 @@
     "owner_roles": [
       "coordinator"
     ]
+  },
+  {
+    "id": "R-135",
+    "title": "Autonomous execution profile transforms pause_for_human into blocked findings",
+    "description": "Implement a no-human-gate execution mode for the supervised run protocol. In autonomous mode, pause_for_human verdicts are converted into structured blocked findings (open questions, DCR stubs, or pause records) and the run halts. Hard policy limits from ADR-0004 (allowed-paths, no destructive git, no remote push, no credential exfiltration, iteration cap, required tests, no artifact auto-acceptance) are always enforced.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-23.4"
+    ],
+    "priority": "P0",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0019",
+    "blocked_by": "ADR-0004",
+    "acceptance": [
+      "aspec run start --mode autonomous on a pack with a pause_for_human-triggering scenario produces a blocked finding artifact and halts.",
+      "Autonomous mode never calls dcr accept or requirement accept.",
+      "Tests cover all hard limits from ADR-0004."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/policy.py",
+      "agentspec/cli.py",
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_supervised_run.py",
+      "tests/test_autonomous_mode.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-136",
+    "title": "Repository-aware code and test target inference",
+    "description": "compile and task create infer code_targets and test_targets from repo scan archetype/language signals (TypeScript -> src/**, tests/**; Go -> cmd/, internal/; etc.) instead of defaulting to AgentSpec's Python paths. The previous Python-specific heuristics remain only when the host repo is itself a Python project.",
+    "source_sections": [
+      "D-12.5",
+      "D-12.10",
+      "D-12.12"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "For a TypeScript fixture repo, generated context packs reference src/** and tests/**, not agentspec/*.py.",
+      "For a Go fixture repo, generated context packs reference cmd/ and internal/ as appropriate.",
+      "When the language cannot be determined, the inferred targets fall back to docs/** and an explicit  flag in pack metadata."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/task.py",
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_target_inference.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "brownfield-mapper"
+    ]
+  },
+  {
+    "id": "R-137",
+    "title": "Context-pack allowed-path validation distinguishes inferred from confirmed scope",
+    "description": "Before a context pack is finalized, AgentSpec validates each Allowed Path against the actual repo tree. Paths that do not exist are flagged. The pack metadata records whether each path is inferred (source-derived guess) or confirmed (verified by repo scan). Autonomous mode (R-135) MUST NOT execute against packs that contain only inferred paths without explicit human acceptance.",
+    "source_sections": [
+      "D-12.12",
+      "D-23.4"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "task create warns when an allowed path does not exist in the repo tree.",
+      "Generated packs carry an  block indicating inferred vs confirmed.",
+      "aspec run start --mode autonomous refuses a pack whose allowed paths are all inferred."
+    ],
+    "code_targets": [
+      "agentspec/task.py",
+      "agentspec/run.py"
+    ],
+    "test_targets": [
+      "tests/test_task_originating_dcr.py",
+      "tests/test_supervised_run.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-138",
+    "title": "aspec is installed on PATH via [project.scripts] console entry point",
+    "description": "pyproject.toml declares aspec (and agentspec) as console_scripts so a pip install -e . exposes the CLI on PATH. The argv-prog-name detection in cli.py remains as a fallback for direct python -m invocation.",
+    "source_sections": [
+      "D-12.1",
+      "D-19"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "After pip install -e ., aspec not found returns a path and  works.",
+      " and  produce identical help output.",
+      "A test verifies the entry-point declaration is well-formed."
+    ],
+    "code_targets": [
+      "pyproject.toml"
+    ],
+    "test_targets": [
+      "tests/test_cli_alias.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-139",
+    "title": "Dogfood notes have a durable artifact location",
+    "description": "AgentSpec exposes a stable place for experiment / dogfood findings that pre-date a DCR. MVP shape: reports/dogfood/<date>-<slug>.md plus an optional  subcommand. Q-021 is reserved for the CLI-vs-convention decision.",
+    "source_sections": [
+      "D-11.4",
+      "D-24"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "reports/dogfood/ exists in the artifact layout after aspec init.",
+      "A dogfood note authored as a markdown file is preserved through compile (does not get overwritten).",
+      "Optional CLI: aspec dogfood record --title --slug produces a stub."
+    ],
+    "code_targets": [
+      "agentspec/init.py",
+      "agentspec/paths.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_init_layout.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-140",
+    "title": "aspec init emits .gitignore guidance for agent/runs/* while preserving .gitkeep",
+    "description": "A freshly initialized target repo receives either a generated .gitignore fragment or documented guidance covering agent/runs/* (ignored) and .gitkeep (kept). This mirrors the policy AgentSpec uses on itself per ADR-0003 run-state retention.",
+    "source_sections": [
+      "D-23.6"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "aspec init writes or updates .gitignore with agent/runs/* and !.gitkeep entries.",
+      "If a target repo has its own .gitignore, the entries are appended without overwriting.",
+      "A test verifies the resulting .gitignore content."
+    ],
+    "code_targets": [
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_init_layout.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-141",
+    "title": "Context-pack title truncation respects word boundaries",
+    "description": "Generated context-pack titles truncate on word boundaries rather than mid-word (the agentracing run produced a title ending in ). Full source-backed goal text is preserved in pack metadata even when the displayed title is shortened.",
+    "source_sections": [
+      "D-12.12"
+    ],
+    "priority": "P3",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0019",
+    "acceptance": [
+      "A title that would otherwise be cut mid-word is truncated to the previous word boundary plus an ellipsis.",
+      "The full goal text remains accessible in pack metadata (Goal section).",
+      "A test fixture exercises the truncation logic."
+    ],
+    "code_targets": [
+      "agentspec/task.py",
+      "agentspec/paths.py"
+    ],
+    "test_targets": [
+      "tests/test_task_originating_dcr.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
   }
 ]

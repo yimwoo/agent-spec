@@ -136,3 +136,10 @@
 | `R-132` agentspec compile fails loudly when reconciliation is impossible | D-12.5, D-07 | agentspec/compile.py | tests/test_compile_preserves_dcr_material.py |
 | `R-133` agentspec dcr accept flips only the DCR status, not requirement statuses | D-11.4, D-12.1 | agentspec/dcr.py, agentspec/cli.py | tests/test_dcr_cli.py |
 | `R-134` agentspec requirement accept R-XXX flips a single proposed-pending-acceptance requirement | D-12.1, D-18 | agentspec/requirement.py, agentspec/cli.py | tests/test_requirement_cli.py |
+| `R-135` Autonomous execution profile transforms pause_for_human into blocked findings | D-07, D-12.17, D-23.4 | agentspec/run.py, agentspec/policy.py, agentspec/cli.py, agentspec/init.py | tests/test_supervised_run.py, tests/test_autonomous_mode.py |
+| `R-136` Repository-aware code and test target inference | D-12.5, D-12.10, D-12.12 | agentspec/compile.py, agentspec/task.py, agentspec/doctor.py | tests/test_target_inference.py |
+| `R-137` Context-pack allowed-path validation distinguishes inferred from confirmed scope | D-12.12, D-23.4 | agentspec/task.py, agentspec/run.py | tests/test_task_originating_dcr.py, tests/test_supervised_run.py |
+| `R-138` aspec is installed on PATH via [project.scripts] console entry point | D-12.1, D-19 | pyproject.toml | tests/test_cli_alias.py |
+| `R-139` Dogfood notes have a durable artifact location | D-11.4, D-24 | agentspec/init.py, agentspec/paths.py, agentspec/cli.py | tests/test_init_layout.py |
+| `R-140` aspec init emits .gitignore guidance for agent/runs/* while preserving .gitkeep | D-23.6 | agentspec/init.py | tests/test_init_layout.py |
+| `R-141` Context-pack title truncation respects word boundaries | D-12.12 | agentspec/task.py, agentspec/paths.py | tests/test_task_originating_dcr.py |
