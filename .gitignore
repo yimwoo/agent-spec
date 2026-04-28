@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local env
+.venv/
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# AgentSpec local cache + locks (per .agentspec/config.yml; storage_mode=committed
+# applies to source documents, not the runtime cache).
+.agentspec/cache/
+.agentspec/locks/
+
+# Generated runtime reports — regenerable via `agentspec doctor` /
+# `agentspec compile` / `agentspec drift`. The .gitkeep markers stay so a fresh
+# clone preserves the report directory layout.
+reports/*/*
+!reports/*/.gitkeep
+
+# Supervised-run state — Q-014 (commit vs ignore vs split) is unresolved.
+# Default to ignore until DCR-0001's spike picks a policy. .gitkeep stays.
+agent/runs/*
+!agent/runs/.gitkeep

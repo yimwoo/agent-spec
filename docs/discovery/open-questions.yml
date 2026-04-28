@@ -1,0 +1,246 @@
+[
+  {
+    "id": "Q-001",
+    "question": "What should the final product name be?",
+    "status": "open",
+    "impact": [
+      "product"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-002",
+    "question": "Should the first implementation language be Python, TypeScript, or a split architecture?",
+    "status": "open",
+    "impact": [
+      "language"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-003",
+    "question": "Should LLM-based spec compilation be built into the CLI, or delegated to code agents through generated prompts first?",
+    "status": "open",
+    "impact": [
+      "product"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-004",
+    "question": "What is the minimum useful MCP tool set for V1?",
+    "status": "open",
+    "impact": [
+      "mcp"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-005",
+    "question": "Should enterprise source snapshots ever be committed to git by default?",
+    "status": "open",
+    "impact": [
+      "enterprise"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-006",
+    "question": "What plugin should be built first: Claude Code or Codex?",
+    "status": "open",
+    "impact": [
+      "plugin"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-007",
+    "question": "Should AgentSpec support GitHub Agentic Workflows before or after generic GitHub Actions?",
+    "status": "open",
+    "impact": [
+      "github"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-008",
+    "question": "What is the best default schema format: YAML, JSON, TOML, or Markdown frontmatter?",
+    "status": "open",
+    "impact": [
+      "schema"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-009",
+    "question": "How strict should readiness gates be by default?",
+    "status": "open",
+    "impact": [
+      "product"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-010",
+    "question": "What is the first public dogfood demo?",
+    "status": "open",
+    "impact": [
+      "product"
+    ],
+    "source_sections": [
+      "D-30"
+    ]
+  },
+  {
+    "id": "Q-011",
+    "question": "Should task context packs automatically include test targets and verification-generated artifacts in the allowed write scope, or model them as a separate verification scope?",
+    "status": "open",
+    "impact": [
+      "context-pack",
+      "dogfood",
+      "verification"
+    ],
+    "source_sections": [
+      "D-03",
+      "D-12.12"
+    ],
+    "preserve": "hand-curated"
+  },
+  {
+    "id": "Q-012",
+    "question": "What reviewer model is used by default in supervised runs, and is the choice configurable per-repo or per-task?",
+    "status": "open",
+    "impact": [
+      "supervised-runs",
+      "plugin",
+      "policy"
+    ],
+    "source_sections": [
+      "D-12.17",
+      "D-23.4"
+    ],
+    "raised_by": "DCR-0001"
+  },
+  {
+    "id": "Q-013",
+    "question": "What is the default max_iterations cap for supervised runs, and how should it be tuned per task type (small fix vs. large refactor)?",
+    "status": "open",
+    "impact": [
+      "supervised-runs",
+      "context-pack"
+    ],
+    "source_sections": [
+      "D-12.12",
+      "D-23.4"
+    ],
+    "raised_by": "DCR-0001"
+  },
+  {
+    "id": "Q-014",
+    "question": "Should agent/runs/ supervised-run state be committed to git, .gitignore'd, or split (audit metadata committed, raw outputs ignored)?",
+    "status": "open",
+    "impact": [
+      "supervised-runs",
+      "audit",
+      "storage"
+    ],
+    "source_sections": [
+      "D-23.6",
+      "D-24"
+    ],
+    "raised_by": "DCR-0001"
+  },
+  {
+    "id": "Q-015",
+    "question": "Should DCR IDs be globally sequential across the repository, or namespaced per source document or per area? Defaulting to global until first conflict.",
+    "status": "open",
+    "impact": [
+      "dcr",
+      "schema"
+    ],
+    "source_sections": [
+      "D-11.4",
+      "D-18"
+    ],
+    "raised_by": "DCR-0002"
+  },
+  {
+    "id": "Q-016",
+    "question": "When a DCR is classified `defer`, is downstream context-pack creation blocked, or merely warned with an override flag?",
+    "status": "open",
+    "impact": [
+      "dcr",
+      "context-pack",
+      "policy"
+    ],
+    "source_sections": [
+      "D-09",
+      "D-12.12"
+    ],
+    "raised_by": "DCR-0002"
+  },
+  {
+    "id": "Q-017",
+    "question": "What is the long-term merge strategy for agentspec compile? Candidates: preserve-by-marker section in the same file; separate proposed-requirements.yml written by the DCR pipeline; preserve-by-field on every record. The interim T-003 safety guard chooses preserve-by-field; a deliberate decision (likely a future DCR) is owed.",
+    "status": "open",
+    "impact": [
+      "compile",
+      "dcr",
+      "schema"
+    ],
+    "source_sections": [
+      "D-12.5",
+      "D-18"
+    ],
+    "raised_by": "DCR-0003"
+  },
+  {
+    "id": "Q-018",
+    "question": "Should `dcr accept` cascade to ALL proposed-pending-acceptance requirements with matching originating_dcr (per R-124 literal wording), or only flip the DCR itself and require a separate per-requirement acceptance step? Surfaced when accepting DCR-0002 prematurely flipped R-126 (T-006 not yet shipped). RESOLVED by DCR-0004: per-requirement acceptance via agentspec requirement accept.",
+    "status": "answered",
+    "answered_by": "DCR-0004",
+    "impact": [
+      "dcr",
+      "cli",
+      "schema"
+    ],
+    "source_sections": [
+      "D-11.4",
+      "D-18"
+    ],
+    "raised_by": "T-005",
+    "preserve": "dogfood-finding"
+  },
+  {
+    "id": "Q-019",
+    "question": "Should requirement records grow an implementation_complete boolean that `requirement accept` checks (refusing to flip when False)? Pro: prevents accidental claims of completion. Con: extra schema surface and unclear ownership of the flag. T-008 may defer until manual-only flow shows pain.",
+    "status": "open",
+    "impact": [
+      "schema",
+      "dcr",
+      "cli"
+    ],
+    "source_sections": [
+      "D-18"
+    ],
+    "raised_by": "DCR-0004"
+  }
+]

@@ -1,0 +1,138 @@
+# Design To Code Map
+
+| Requirement | Source Sections | Code Targets | Tests |
+|---|---|---|---|
+| `R-001` An architect agent, PM agent, developer agent, or reviewer agent must not become the sole source | D-02 | agentspec/compile.py, agentspec/emit.py, agentspec/markdown.py, agentspec/task.py | tests/test_markdown_sectionizer.py |
+| `R-002` Convert a Markdown design document into canonical source sections with stable IDs and content ha | D-03 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-003` Generate a draft project canvas, spec shards, requirements, assumptions, open questions, and tas | D-03 | agentspec/compile.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-004` Support sparse input and empty repositories through Discovery Mode instead of fabricating certai | D-03 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-005` Support existing repositories through Brownfield Doctor mode | D-03 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-006` Generate AGENTS.md, CLAUDE.md, Claude Code subagents, Codex agents, and reusable role definition | D-03 | agentspec/emit.py, agentspec/init.py | tests/test_cli_workflow.py |
+| `R-007` Provide a CLI that can run locally and in CI | D-03 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-008` Provide a validation model for requirements, task context packs, and traceability files | D-03 | agentspec/compile.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-009` Generate implementation tasks only when the relevant requirements are sufficiently specified | D-03 | agentspec/compile.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-010` Detect design drift in a code diff by comparing changed files against requirements, ADRs, and ta | D-03 | agentspec/compile.py, agentspec/drift.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-011` Provide an AgentSpec MCP server for code agents | D-03 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-012` Provide Claude Code and Codex plugins as thin adapters over the core CLI and MCP server | D-03 | agentspec/cli.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-013` Generate GitHub Agentic Workflows or GitHub Actions for scheduled read-only audits and agent-saf | D-03 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-014` Support repository-wide traceability reports and test gap reports | D-03 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-015` Support large brownfield migrations with safe task partitioning | D-03 | agentspec/doctor.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-016` Support organization-wide policy packs | D-03 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-017` not implement a general-purpose autonomous coding agent | D-03 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-018` not require a hosted service | D-03 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-019` not require enterprise connectors for the first release | D-03 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-020` A user should be able to run the following on a fresh repository: | D-04 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-021` agentspec task create --requirement R-001 | D-04 | agentspec/compile.py, agentspec/emit.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-022` agentspec emit --target claude,codex | D-04 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-023` After that, the repository should contain enough durable context for a code agent to start work  | D-04 | agentspec/doctor.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-024` A tech lead owns a design document and wants multiple developers or code agents to implement it  | D-05 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-025` The snapshot makes code-agent behavior reproducible. A task created today should remain auditabl | D-06 | agentspec/emit.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-026` A spec shard must cite source sections and declare whether its content is source-backed, inferre | D-06 | agentspec/compile.py, agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-027` Assumptions must be explicit. They can be accepted, rejected, superseded, or left unconfirmed. P | D-06 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-028` Not every drift is wrong. Some drift is a valid design evolution. But it must be explicit and us | D-06 | agentspec/drift.py | tests/test_cli_workflow.py |
+| `R-029` 6.8 Task Context Pack | D-06.8 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-030` 6.10 Design Drift | D-06.10 | agentspec/drift.py | tests/test_cli_workflow.py |
+| `R-031` One writer by default. Multiple reviewers are encouraged; multiple concurrent writers require ex | D-07 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-032` Generator-verifier for quality-critical artifacts. Spec compilation, requirements, drift reviews | D-07 | agentspec/compile.py, agentspec/drift.py | tests/test_cli_workflow.py |
+| `R-033` Message bus later, not first. Event-driven agent ecosystems are useful for automation, but V1 sh | D-07 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-034` Brownfield first-class. Existing projects are not broken greenfield projects. Assessment must be | D-07 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-035` Dogfood early. AgentSpec must be able to scaffold, plan, review, and improve its own repository | D-07 | agentspec/compile.py, agentspec/doctor.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-036` Policy is data. Organization-specific rules should be represented as versioned policy packs, not | D-07 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-037` use agentic design, but it should not become an unconstrained multi-agent swarm | D-08 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-038` The verifier must use explicit criteria. A generic instruction such as "check if this is good" i | D-08 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-039` concurrent writes require locking or branch isolation | D-08 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-040` high-impact changes require ADRs | D-08 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-041` V1 should not start with a full message bus. It should emit GitHub workflows or CI jobs. A real  | D-08 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-042` Agent teams are dangerous when workers edit shared files or depend on one another's findings. Ag | D-08 | agentspec/compile.py, agentspec/emit.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-043` agentspec emit --target claude | D-10 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-044` agentspec emit --target codex | D-10 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-045` It should expose tools such as: | D-10 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-046` It should be a thin adapter over the CLI and MCP server | D-10 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-047` It should also be a thin adapter over the CLI and MCP server | D-10 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-048` generate workflow templates for: | D-10 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-049` V1 can emit standard GitHub Actions. V2 can emit GitHub Agentic Workflows where appropriate | D-10 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-050` 10.2 CLI | D-10.2 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-051` 10.3 MCP Server | D-10.3 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-052` generate implementation tasks | D-11 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-053` generate agent configs | D-11 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-054` create project canvas | D-11 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-055` create assumptions ledger | D-11 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-056` create open questions | D-11 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-057` generate draft spec | D-11 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-058` compute readiness score | D-11 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-059` generate discovery, spike, and scaffold tasks only | D-11 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-060` detect language, frameworks, tests, CI, package managers | D-11 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-061` 11.3 Brownfield Doctor Mode | D-11.3 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-062` Responsible for command parsing, configuration loading, output formatting, and local execution o | D-12 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-063` Responsible for importing design sources: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-064` Responsible for provenance: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-065` Responsible for turning source documents into stable sections | D-12 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-066` parse heading hierarchy | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-067` compute section content hashes | D-12 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-068` detect duplicate headings | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-069` Responsible for generating spec shards from source sections | D-12 | agentspec/compile.py, agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-070` The compiler may use LLM assistance, but the output must mark each paragraph or requirement as: | D-12 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-071` Responsible for extracting requirements with status, priority, source references, acceptance cri | D-12 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-072` Responsible for managing assumptions: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-073` Responsible for managing missing decisions and facts | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-074` Responsible for evaluating whether the project is ready for implementation | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-075` Responsible for reading existing codebases: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-076` Responsible for mapping: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-077` Responsible for building task-bounded context: | D-12 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-078` include adjacent sections where needed | D-12 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-079` include accepted requirements and assumptions | D-12 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-080` include open questions and non-goals | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-081` include allowed/forbidden paths | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-082` include relevant code and tests | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-083` Responsible for comparing diffs against requirements, ADRs, allowed paths, tests, and security p | D-12 | agentspec/compile.py, agentspec/drift.py | tests/test_cli_workflow.py |
+| `R-084` Responsible for generating: | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-085` Responsible for exposing AgentSpec project context and actions to code agents | D-12 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-086` Responsible for generating scheduled and event-triggered workflows | D-12 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-087` Responsible for applying organization-specific rules: | D-12 | agentspec/compile.py | tests/test_cli_workflow.py |
+| `R-088` 12.1 CLI Application | D-12.1 | agentspec/cli.py | tests/test_cli_workflow.py |
+| `R-089` 12.4 Sectionizer | D-12.4 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-090` 12.12 Context Pack Builder | D-12.12 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-091` 12.13 Drift Checker | D-12.13 | agentspec/drift.py | tests/test_cli_workflow.py |
+| `R-092` 12.14 Agent Config Emitters | D-12.14 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-093` 12.15 MCP Server | D-12.15 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-094` 12.16 Automation Emitter | D-12.16 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-095` title: Every implementation task must have a task context pack | D-13 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-096` question: Should AgentSpec store enterprise source snapshots in git, local encrypted cache, or o | D-13 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-097` title: Implement context pack builder | D-13 | agentspec/task.py | tests/test_cli_workflow.py |
+| `R-098` Do not implement Claude or Codex emitters | D-13 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-099` context: AgentSpec must support multiple code agents | D-13 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-100` decision: Build vendor-neutral core first; implement plugins as adapters | D-13 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-101` implement-feature.md | D-14 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-102` Many users will not provide a complete design document. They may provide: | D-15 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-103` not generate false certainty from thin input | D-15 | agentspec/compile.py, agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-104` It must not generate production implementation tasks until readiness gates pass or the user expl | D-15 | agentspec/compile.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-105` Brownfield Doctor Design | D-16 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-106` The first brownfield pass must not modify production code | D-16 | agentspec/doctor.py | tests/test_cli_workflow.py |
+| `R-107` For weakly documented projects, AgentSpec should create tasks such as: | D-16 | agentspec/compile.py, agentspec/emit.py, agentspec/task.py | tests/test_cli_workflow.py |
+| `R-108` create AGENTS.md and CLAUDE.md | D-16 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-109` create traceability placeholders | D-16 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-110` Major refactors require accepted ADRs | D-16 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-111` -> create repo artifact layout | D-18 | agentspec/doctor.py, agentspec/init.py | tests/test_cli_workflow.py |
+| `R-112` -> create default config | D-18 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-113` -> create AGENTS.md and CLAUDE.md skeletons | D-18 | agentspec/emit.py | tests/test_cli_workflow.py |
+| `R-114` -> create discovery files | D-18 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-115` -> create role definitions | D-18 | agentspec/init.py | tests/test_cli_workflow.py |
+| `R-116` -> parse headings | D-18 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-117` -> generate source sections | D-18 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-118` -> compute section hashes | D-18 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-119` -> include source sections | D-18 | agentspec/markdown.py | tests/test_markdown_sectionizer.py |
+| `R-120` -> include accepted assumptions | D-18 | docs/traceability/requirements.yml | tests/test_cli_workflow.py |
+| `R-121` Capture every post-implementation design change as a DCR before downstream artifacts change | D-03, D-11.4 | agentspec/init.py, agentspec/dcr.py, agentspec/task.py | tests/test_dcr_schema.py, tests/test_task_originating_dcr.py |
+| `R-122` DCR carries one of five classifications | D-11.4, D-18 | agentspec/dcr.py | tests/test_dcr_schema.py |
+| `R-123` DCR-derived context packs cite the DCR and require an implementation-eligible state | D-12.12, D-11.4 | agentspec/task.py, agentspec/dcr.py | tests/test_task_originating_dcr.py |
+| `R-124` DCR-introduced requirements use status proposed-pending-acceptance | D-12.5, D-18 | agentspec/compile.py, agentspec/dcr.py | tests/test_dcr_schema.py, tests/test_cli_workflow.py |
+| `R-125` CLI provides agentspec dcr create / classify / accept / list | D-12.1, D-19 | agentspec/cli.py, agentspec/dcr.py | tests/test_cli_workflow.py |
+| `R-126` Drift checker recognizes DCR-derived files and surfaces the DCR ID | D-12.13, D-11.4 | agentspec/drift.py | tests/test_drift.py |
+| `R-127` Bounded supervised run executes one context pack with iteration cap and allowed-paths enforcement | D-07, D-12.12, D-12.17, D-23.4 | agentspec/run.py, agentspec/cli.py | tests/test_supervised_run.py |
+| `R-128` Supervised run records per-iteration evidence in agent/runs/ JSONL | D-23.6, D-24 | agentspec/run.py, agentspec/io.py | tests/test_supervised_run.py |
+| `R-129` Reviewer model produces structured feedback consumable by next iteration | D-07 | agentspec/review.py, agentspec/run.py | tests/test_supervised_run.py |
+| `R-130` Supervised run halts and requires human approval for risky changes | D-12.17, D-23.4 | agentspec/run.py, agentspec/policy.py | tests/test_supervised_run.py |
+| `R-131` agentspec compile preserves DCR-originated artifacts when regenerating | D-12.5, D-11.4, D-18 | agentspec/compile.py | tests/test_compile_preserves_dcr_material.py |
+| `R-132` agentspec compile fails loudly when reconciliation is impossible | D-12.5, D-07 | agentspec/compile.py | tests/test_compile_preserves_dcr_material.py |
+| `R-133` agentspec dcr accept flips only the DCR status, not requirement statuses | D-11.4, D-12.1 | agentspec/dcr.py, agentspec/cli.py | tests/test_dcr_cli.py |
+| `R-134` agentspec requirement accept R-XXX flips a single proposed-pending-acceptance requirement | D-12.1, D-18 | agentspec/requirement.py, agentspec/cli.py | tests/test_requirement_cli.py |

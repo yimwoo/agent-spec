@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "mode": "dogfood",
+  "archetype": "code-agent-tooling",
+  "targets": [
+    "claude",
+    "codex"
+  ],
+  "readiness_gate": 60,
+  "source_classification_default": "internal",
+  "storage_mode_default": "committed",
+  "generated_by": "agentspec"
+}

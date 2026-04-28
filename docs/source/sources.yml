@@ -1,0 +1,14 @@
+[
+  {
+    "id": "SRC-0001",
+    "kind": "markdown",
+    "uri": "docs/source/src-0001-agentspec-design-doc.md",
+    "original_uri": "/Users/yimwu/Downloads/AgentSpec_Design_Doc.md",
+    "title": "AgentSpec Product Design",
+    "version": null,
+    "content_hash": "sha256:506202aee7dde4e19405f82af8777a11cf63ad4fa5ee1e1da7186adbcc726283",
+    "fetched_at": "2026-04-28T18:46:37Z",
+    "classification": "internal",
+    "storage_mode": "committed"
+  }
+]

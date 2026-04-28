@@ -1,0 +1,26 @@
+[
+  {
+    "id": "A-001",
+    "statement": "The first AgentSpec release is local-first and CLI-first.",
+    "source": "design_doc",
+    "confidence": "high",
+    "status": "accepted",
+    "impact": [
+      "packaging",
+      "architecture",
+      "plugin strategy"
+    ]
+  },
+  {
+    "id": "A-002",
+    "statement": "The MVP stores structured .yml artifacts as YAML-compatible JSON to avoid runtime dependencies.",
+    "source": "implementation_choice",
+    "confidence": "medium",
+    "status": "accepted",
+    "impact": [
+      "schema format",
+      "packaging",
+      "local execution"
+    ]
+  }
+]

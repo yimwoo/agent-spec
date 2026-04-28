@@ -1,0 +1,3325 @@
+[
+  {
+    "id": "R-001",
+    "title": "An architect agent, PM agent, developer agent, or reviewer agent must not become the sole source",
+    "description": "An architect agent, PM agent, developer agent, or reviewer agent must not become the sole source of truth for downstream work. Each task must carry direct references to the canonical source sections, requirement IDs, accepted assumptions, ADRs, relevant code, and acceptance tests.",
+    "source_sections": [
+      "D-02"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: An architect agent, PM agent, developer agent, or reviewer agent must not become the sole source of truth for downstream work. Each task must carry direct references to the canonical source sections, requirement IDs, accepted assumptions, ADRs, relevant code, and acceptance tests.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py",
+      "agentspec/markdown.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-002",
+    "title": "Convert a Markdown design document into canonical source sections with stable IDs and content ha",
+    "description": "Convert a Markdown design document into canonical source sections with stable IDs and content hashes.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Convert a Markdown design document into canonical source sections with stable IDs and content hashes.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-003",
+    "title": "Generate a draft project canvas, spec shards, requirements, assumptions, open questions, and tas",
+    "description": "Generate a draft project canvas, spec shards, requirements, assumptions, open questions, and task context pack templates.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Generate a draft project canvas, spec shards, requirements, assumptions, open questions, and task context pack templates.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-004",
+    "title": "Support sparse input and empty repositories through Discovery Mode instead of fabricating certai",
+    "description": "Support sparse input and empty repositories through Discovery Mode instead of fabricating certainty.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Support sparse input and empty repositories through Discovery Mode instead of fabricating certainty.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-005",
+    "title": "Support existing repositories through Brownfield Doctor mode",
+    "description": "Support existing repositories through Brownfield Doctor mode.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Support existing repositories through Brownfield Doctor mode.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-006",
+    "title": "Generate AGENTS.md, CLAUDE.md, Claude Code subagents, Codex agents, and reusable role definition",
+    "description": "Generate AGENTS.md, CLAUDE.md, Claude Code subagents, Codex agents, and reusable role definitions.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Generate AGENTS.md, CLAUDE.md, Claude Code subagents, Codex agents, and reusable role definitions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py",
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-007",
+    "title": "Provide a CLI that can run locally and in CI",
+    "description": "Provide a CLI that can run locally and in CI.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Provide a CLI that can run locally and in CI.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-008",
+    "title": "Provide a validation model for requirements, task context packs, and traceability files",
+    "description": "Provide a validation model for requirements, task context packs, and traceability files.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Provide a validation model for requirements, task context packs, and traceability files.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-009",
+    "title": "Generate implementation tasks only when the relevant requirements are sufficiently specified",
+    "description": "Generate implementation tasks only when the relevant requirements are sufficiently specified.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Generate implementation tasks only when the relevant requirements are sufficiently specified.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-010",
+    "title": "Detect design drift in a code diff by comparing changed files against requirements, ADRs, and ta",
+    "description": "Detect design drift in a code diff by comparing changed files against requirements, ADRs, and task context packs.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Detect design drift in a code diff by comparing changed files against requirements, ADRs, and task context packs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/drift.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-011",
+    "title": "Provide an AgentSpec MCP server for code agents",
+    "description": "Provide an AgentSpec MCP server for code agents.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Provide an AgentSpec MCP server for code agents.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-012",
+    "title": "Provide Claude Code and Codex plugins as thin adapters over the core CLI and MCP server",
+    "description": "Provide Claude Code and Codex plugins as thin adapters over the core CLI and MCP server.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Provide Claude Code and Codex plugins as thin adapters over the core CLI and MCP server.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-013",
+    "title": "Generate GitHub Agentic Workflows or GitHub Actions for scheduled read-only audits and agent-saf",
+    "description": "Generate GitHub Agentic Workflows or GitHub Actions for scheduled read-only audits and agent-safe implementation jobs.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Generate GitHub Agentic Workflows or GitHub Actions for scheduled read-only audits and agent-safe implementation jobs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-014",
+    "title": "Support repository-wide traceability reports and test gap reports",
+    "description": "Support repository-wide traceability reports and test gap reports.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Support repository-wide traceability reports and test gap reports.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-015",
+    "title": "Support large brownfield migrations with safe task partitioning",
+    "description": "Support large brownfield migrations with safe task partitioning.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Support large brownfield migrations with safe task partitioning.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-016",
+    "title": "Support organization-wide policy packs",
+    "description": "Support organization-wide policy packs.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Support organization-wide policy packs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-017",
+    "title": "not implement a general-purpose autonomous coding agent",
+    "description": "AgentSpec will not implement a general-purpose autonomous coding agent.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec will not implement a general-purpose autonomous coding agent.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-018",
+    "title": "not require a hosted service",
+    "description": "AgentSpec will not require a hosted service.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec will not require a hosted service.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-019",
+    "title": "not require enterprise connectors for the first release",
+    "description": "AgentSpec will not require enterprise connectors for the first release.",
+    "source_sections": [
+      "D-03"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec will not require enterprise connectors for the first release.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-020",
+    "title": "A user should be able to run the following on a fresh repository:",
+    "description": "A user should be able to run the following on a fresh repository:.",
+    "source_sections": [
+      "D-04"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: A user should be able to run the following on a fresh repository:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-021",
+    "title": "agentspec task create --requirement R-001",
+    "description": "agentspec task create --requirement R-001.",
+    "source_sections": [
+      "D-04"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: agentspec task create --requirement R-001.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-022",
+    "title": "agentspec emit --target claude,codex",
+    "description": "agentspec emit --target claude,codex.",
+    "source_sections": [
+      "D-04"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: agentspec emit --target claude,codex.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-023",
+    "title": "After that, the repository should contain enough durable context for a code agent to start work ",
+    "description": "After that, the repository should contain enough durable context for a code agent to start work without relying on hidden chat history.",
+    "source_sections": [
+      "D-04"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: After that, the repository should contain enough durable context for a code agent to start work without relying on hidden chat history.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-024",
+    "title": "A tech lead owns a design document and wants multiple developers or code agents to implement it ",
+    "description": "A tech lead owns a design document and wants multiple developers or code agents to implement it consistently.",
+    "source_sections": [
+      "D-05"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: A tech lead owns a design document and wants multiple developers or code agents to implement it consistently.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-025",
+    "title": "The snapshot makes code-agent behavior reproducible. A task created today should remain auditabl",
+    "description": "The snapshot makes code-agent behavior reproducible. A task created today should remain auditable two weeks later even if the Confluence page has changed.",
+    "source_sections": [
+      "D-06"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: The snapshot makes code-agent behavior reproducible. A task created today should remain auditable two weeks later even if the Confluence page has changed.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-026",
+    "title": "A spec shard must cite source sections and declare whether its content is source-backed, inferre",
+    "description": "A spec shard must cite source sections and declare whether its content is source-backed, inferred, or user-confirmed.",
+    "source_sections": [
+      "D-06"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: A spec shard must cite source sections and declare whether its content is source-backed, inferred, or user-confirmed.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-027",
+    "title": "Assumptions must be explicit. They can be accepted, rejected, superseded, or left unconfirmed. P",
+    "description": "Assumptions must be explicit. They can be accepted, rejected, superseded, or left unconfirmed. Production implementation tasks cannot depend on unconfirmed high-impact assumptions unless the user explicitly overrides the gate.",
+    "source_sections": [
+      "D-06"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Assumptions must be explicit. They can be accepted, rejected, superseded, or left unconfirmed. Production implementation tasks cannot depend on unconfirmed high-impact assumptions unless the user explicitly overrides the gate.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-028",
+    "title": "Not every drift is wrong. Some drift is a valid design evolution. But it must be explicit and us",
+    "description": "Not every drift is wrong. Some drift is a valid design evolution. But it must be explicit and usually requires an ADR.",
+    "source_sections": [
+      "D-06"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Not every drift is wrong. Some drift is a valid design evolution. But it must be explicit and usually requires an ADR.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-029",
+    "title": "6.8 Task Context Pack",
+    "description": "6.8 Task Context Pack.",
+    "source_sections": [
+      "D-06.8"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 6.8 Task Context Pack.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-030",
+    "title": "6.10 Design Drift",
+    "description": "6.10 Design Drift.",
+    "source_sections": [
+      "D-06.10"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 6.10 Design Drift.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-031",
+    "title": "One writer by default. Multiple reviewers are encouraged; multiple concurrent writers require ex",
+    "description": "One writer by default. Multiple reviewers are encouraged; multiple concurrent writers require explicit partitioning.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: One writer by default. Multiple reviewers are encouraged; multiple concurrent writers require explicit partitioning.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-032",
+    "title": "Generator-verifier for quality-critical artifacts. Spec compilation, requirements, drift reviews",
+    "description": "Generator-verifier for quality-critical artifacts. Spec compilation, requirements, drift reviews, and plugins require independent verification.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Generator-verifier for quality-critical artifacts. Spec compilation, requirements, drift reviews, and plugins require independent verification.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-033",
+    "title": "Message bus later, not first. Event-driven agent ecosystems are useful for automation, but V1 sh",
+    "description": "Message bus later, not first. Event-driven agent ecosystems are useful for automation, but V1 should use simpler workflows.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Message bus later, not first. Event-driven agent ecosystems are useful for automation, but V1 should use simpler workflows.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-034",
+    "title": "Brownfield first-class. Existing projects are not broken greenfield projects. Assessment must be",
+    "description": "Brownfield first-class. Existing projects are not broken greenfield projects. Assessment must be read-only by default.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Brownfield first-class. Existing projects are not broken greenfield projects. Assessment must be read-only by default.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-035",
+    "title": "Dogfood early. AgentSpec must be able to scaffold, plan, review, and improve its own repository",
+    "description": "Dogfood early. AgentSpec must be able to scaffold, plan, review, and improve its own repository.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Dogfood early. AgentSpec must be able to scaffold, plan, review, and improve its own repository.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/doctor.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-036",
+    "title": "Policy is data. Organization-specific rules should be represented as versioned policy packs, not",
+    "description": "Policy is data. Organization-specific rules should be represented as versioned policy packs, not hardcoded prompts.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Policy is data. Organization-specific rules should be represented as versioned policy packs, not hardcoded prompts.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-037",
+    "title": "use agentic design, but it should not become an unconstrained multi-agent swarm",
+    "description": "AgentSpec should use agentic design, but it should not become an unconstrained multi-agent swarm.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec should use agentic design, but it should not become an unconstrained multi-agent swarm.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-038",
+    "title": "The verifier must use explicit criteria. A generic instruction such as \"check if this is good\" i",
+    "description": "The verifier must use explicit criteria. A generic instruction such as \"check if this is good\" is not acceptable.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: The verifier must use explicit criteria. A generic instruction such as \"check if this is good\" is not acceptable.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-039",
+    "title": "concurrent writes require locking or branch isolation",
+    "description": "concurrent writes require locking or branch isolation.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: concurrent writes require locking or branch isolation.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-040",
+    "title": "high-impact changes require ADRs",
+    "description": "high-impact changes require ADRs.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: high-impact changes require ADRs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-041",
+    "title": "V1 should not start with a full message bus. It should emit GitHub workflows or CI jobs. A real ",
+    "description": "V1 should not start with a full message bus. It should emit GitHub workflows or CI jobs. A real event bus can come later when automations become numerous and independently deployable.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: V1 should not start with a full message bus. It should emit GitHub workflows or CI jobs. A real event bus can come later when automations become numerous and independently deployable.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-042",
+    "title": "Agent teams are dangerous when workers edit shared files or depend on one another's findings. Ag",
+    "description": "Agent teams are dangerous when workers edit shared files or depend on one another's findings. AgentSpec should require task partitioning, allowed paths, locks, and final integration review before enabling this pattern.",
+    "source_sections": [
+      "D-08"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Agent teams are dangerous when workers edit shared files or depend on one another's findings. AgentSpec should require task partitioning, allowed paths, locks, and final integration review before enabling this pattern.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-043",
+    "title": "agentspec emit --target claude",
+    "description": "agentspec emit --target claude.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: agentspec emit --target claude.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-044",
+    "title": "agentspec emit --target codex",
+    "description": "agentspec emit --target codex.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: agentspec emit --target codex.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-045",
+    "title": "It should expose tools such as:",
+    "description": "It should expose tools such as:.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: It should expose tools such as:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-046",
+    "title": "It should be a thin adapter over the CLI and MCP server",
+    "description": "It should be a thin adapter over the CLI and MCP server.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: It should be a thin adapter over the CLI and MCP server.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-047",
+    "title": "It should also be a thin adapter over the CLI and MCP server",
+    "description": "It should also be a thin adapter over the CLI and MCP server.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: It should also be a thin adapter over the CLI and MCP server.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-048",
+    "title": "generate workflow templates for:",
+    "description": "AgentSpec should generate workflow templates for:.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec should generate workflow templates for:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-049",
+    "title": "V1 can emit standard GitHub Actions. V2 can emit GitHub Agentic Workflows where appropriate",
+    "description": "V1 can emit standard GitHub Actions. V2 can emit GitHub Agentic Workflows where appropriate.",
+    "source_sections": [
+      "D-10"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: V1 can emit standard GitHub Actions. V2 can emit GitHub Agentic Workflows where appropriate.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-050",
+    "title": "10.2 CLI",
+    "description": "10.2 CLI.",
+    "source_sections": [
+      "D-10.2"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 10.2 CLI.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-051",
+    "title": "10.3 MCP Server",
+    "description": "10.3 MCP Server.",
+    "source_sections": [
+      "D-10.3"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 10.3 MCP Server.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-052",
+    "title": "generate implementation tasks",
+    "description": "generate implementation tasks.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: generate implementation tasks.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-053",
+    "title": "generate agent configs",
+    "description": "generate agent configs.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: generate agent configs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-054",
+    "title": "create project canvas",
+    "description": "create project canvas.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: create project canvas.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-055",
+    "title": "create assumptions ledger",
+    "description": "create assumptions ledger.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: create assumptions ledger.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-056",
+    "title": "create open questions",
+    "description": "create open questions.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: create open questions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-057",
+    "title": "generate draft spec",
+    "description": "generate draft spec.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: generate draft spec.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-058",
+    "title": "compute readiness score",
+    "description": "compute readiness score.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: compute readiness score.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-059",
+    "title": "generate discovery, spike, and scaffold tasks only",
+    "description": "generate discovery, spike, and scaffold tasks only.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: generate discovery, spike, and scaffold tasks only.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-060",
+    "title": "detect language, frameworks, tests, CI, package managers",
+    "description": "detect language, frameworks, tests, CI, package managers.",
+    "source_sections": [
+      "D-11"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: detect language, frameworks, tests, CI, package managers.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-061",
+    "title": "11.3 Brownfield Doctor Mode",
+    "description": "11.3 Brownfield Doctor Mode.",
+    "source_sections": [
+      "D-11.3"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 11.3 Brownfield Doctor Mode.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-062",
+    "title": "Responsible for command parsing, configuration loading, output formatting, and local execution o",
+    "description": "Responsible for command parsing, configuration loading, output formatting, and local execution of core workflows.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for command parsing, configuration loading, output formatting, and local execution of core workflows.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-063",
+    "title": "Responsible for importing design sources:",
+    "description": "Responsible for importing design sources:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for importing design sources:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-064",
+    "title": "Responsible for provenance:",
+    "description": "Responsible for provenance:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for provenance:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-065",
+    "title": "Responsible for turning source documents into stable sections",
+    "description": "Responsible for turning source documents into stable sections.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for turning source documents into stable sections.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-066",
+    "title": "parse heading hierarchy",
+    "description": "parse heading hierarchy.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: parse heading hierarchy.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-067",
+    "title": "compute section content hashes",
+    "description": "compute section content hashes.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: compute section content hashes.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-068",
+    "title": "detect duplicate headings",
+    "description": "detect duplicate headings.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: detect duplicate headings.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-069",
+    "title": "Responsible for generating spec shards from source sections",
+    "description": "Responsible for generating spec shards from source sections.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for generating spec shards from source sections.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-070",
+    "title": "The compiler may use LLM assistance, but the output must mark each paragraph or requirement as:",
+    "description": "The compiler may use LLM assistance, but the output must mark each paragraph or requirement as:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: The compiler may use LLM assistance, but the output must mark each paragraph or requirement as:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-071",
+    "title": "Responsible for extracting requirements with status, priority, source references, acceptance cri",
+    "description": "Responsible for extracting requirements with status, priority, source references, acceptance criteria, and test targets.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for extracting requirements with status, priority, source references, acceptance criteria, and test targets.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-072",
+    "title": "Responsible for managing assumptions:",
+    "description": "Responsible for managing assumptions:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for managing assumptions:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-073",
+    "title": "Responsible for managing missing decisions and facts",
+    "description": "Responsible for managing missing decisions and facts.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for managing missing decisions and facts.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-074",
+    "title": "Responsible for evaluating whether the project is ready for implementation",
+    "description": "Responsible for evaluating whether the project is ready for implementation.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for evaluating whether the project is ready for implementation.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-075",
+    "title": "Responsible for reading existing codebases:",
+    "description": "Responsible for reading existing codebases:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for reading existing codebases:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-076",
+    "title": "Responsible for mapping:",
+    "description": "Responsible for mapping:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for mapping:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-077",
+    "title": "Responsible for building task-bounded context:",
+    "description": "Responsible for building task-bounded context:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for building task-bounded context:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-078",
+    "title": "include adjacent sections where needed",
+    "description": "include adjacent sections where needed.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: include adjacent sections where needed.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-079",
+    "title": "include accepted requirements and assumptions",
+    "description": "include accepted requirements and assumptions.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: include accepted requirements and assumptions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-080",
+    "title": "include open questions and non-goals",
+    "description": "include open questions and non-goals.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: include open questions and non-goals.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-081",
+    "title": "include allowed/forbidden paths",
+    "description": "include allowed/forbidden paths.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: include allowed/forbidden paths.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-082",
+    "title": "include relevant code and tests",
+    "description": "include relevant code and tests.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: include relevant code and tests.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-083",
+    "title": "Responsible for comparing diffs against requirements, ADRs, allowed paths, tests, and security p",
+    "description": "Responsible for comparing diffs against requirements, ADRs, allowed paths, tests, and security policy.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for comparing diffs against requirements, ADRs, allowed paths, tests, and security policy.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-084",
+    "title": "Responsible for generating:",
+    "description": "Responsible for generating:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for generating:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-085",
+    "title": "Responsible for exposing AgentSpec project context and actions to code agents",
+    "description": "Responsible for exposing AgentSpec project context and actions to code agents.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for exposing AgentSpec project context and actions to code agents.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-086",
+    "title": "Responsible for generating scheduled and event-triggered workflows",
+    "description": "Responsible for generating scheduled and event-triggered workflows.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for generating scheduled and event-triggered workflows.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-087",
+    "title": "Responsible for applying organization-specific rules:",
+    "description": "Responsible for applying organization-specific rules:.",
+    "source_sections": [
+      "D-12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Responsible for applying organization-specific rules:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-088",
+    "title": "12.1 CLI Application",
+    "description": "12.1 CLI Application.",
+    "source_sections": [
+      "D-12.1"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.1 CLI Application.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-089",
+    "title": "12.4 Sectionizer",
+    "description": "12.4 Sectionizer.",
+    "source_sections": [
+      "D-12.4"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.4 Sectionizer.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-090",
+    "title": "12.12 Context Pack Builder",
+    "description": "12.12 Context Pack Builder.",
+    "source_sections": [
+      "D-12.12"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.12 Context Pack Builder.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-091",
+    "title": "12.13 Drift Checker",
+    "description": "12.13 Drift Checker.",
+    "source_sections": [
+      "D-12.13"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.13 Drift Checker.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-092",
+    "title": "12.14 Agent Config Emitters",
+    "description": "12.14 Agent Config Emitters.",
+    "source_sections": [
+      "D-12.14"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.14 Agent Config Emitters.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-093",
+    "title": "12.15 MCP Server",
+    "description": "12.15 MCP Server.",
+    "source_sections": [
+      "D-12.15"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.15 MCP Server.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-094",
+    "title": "12.16 Automation Emitter",
+    "description": "12.16 Automation Emitter.",
+    "source_sections": [
+      "D-12.16"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: 12.16 Automation Emitter.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-095",
+    "title": "title: Every implementation task must have a task context pack",
+    "description": "title: Every implementation task must have a task context pack.",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: title: Every implementation task must have a task context pack.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-096",
+    "title": "question: Should AgentSpec store enterprise source snapshots in git, local encrypted cache, or o",
+    "description": "question: Should AgentSpec store enterprise source snapshots in git, local encrypted cache, or object storage?",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: question: Should AgentSpec store enterprise source snapshots in git, local encrypted cache, or object storage?",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-097",
+    "title": "title: Implement context pack builder",
+    "description": "title: Implement context pack builder.",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: title: Implement context pack builder.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-098",
+    "title": "Do not implement Claude or Codex emitters",
+    "description": "Do not implement Claude or Codex emitters.",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Do not implement Claude or Codex emitters.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-099",
+    "title": "context: AgentSpec must support multiple code agents",
+    "description": "context: AgentSpec must support multiple code agents.",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: context: AgentSpec must support multiple code agents.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-100",
+    "title": "decision: Build vendor-neutral core first; implement plugins as adapters",
+    "description": "decision: Build vendor-neutral core first; implement plugins as adapters.",
+    "source_sections": [
+      "D-13"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: decision: Build vendor-neutral core first; implement plugins as adapters.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-101",
+    "title": "implement-feature.md",
+    "description": "implement-feature.md.",
+    "source_sections": [
+      "D-14"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: implement-feature.md.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-102",
+    "title": "Many users will not provide a complete design document. They may provide:",
+    "description": "Many users will not provide a complete design document. They may provide:.",
+    "source_sections": [
+      "D-15"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Many users will not provide a complete design document. They may provide:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-103",
+    "title": "not generate false certainty from thin input",
+    "description": "AgentSpec must not generate false certainty from thin input.",
+    "source_sections": [
+      "D-15"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: AgentSpec must not generate false certainty from thin input.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-104",
+    "title": "It must not generate production implementation tasks until readiness gates pass or the user expl",
+    "description": "It must not generate production implementation tasks until readiness gates pass or the user explicitly accepts key assumptions.",
+    "source_sections": [
+      "D-15"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: It must not generate production implementation tasks until readiness gates pass or the user explicitly accepts key assumptions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-105",
+    "title": "Brownfield Doctor Design",
+    "description": "Brownfield Doctor Design.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Brownfield Doctor Design.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-106",
+    "title": "The first brownfield pass must not modify production code",
+    "description": "The first brownfield pass must not modify production code.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: The first brownfield pass must not modify production code.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-107",
+    "title": "For weakly documented projects, AgentSpec should create tasks such as:",
+    "description": "For weakly documented projects, AgentSpec should create tasks such as:.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: For weakly documented projects, AgentSpec should create tasks such as:.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/emit.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-108",
+    "title": "create AGENTS.md and CLAUDE.md",
+    "description": "create AGENTS.md and CLAUDE.md.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: create AGENTS.md and CLAUDE.md.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-109",
+    "title": "create traceability placeholders",
+    "description": "create traceability placeholders.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: create traceability placeholders.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-110",
+    "title": "Major refactors require accepted ADRs",
+    "description": "Major refactors require accepted ADRs.",
+    "source_sections": [
+      "D-16"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: Major refactors require accepted ADRs.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-111",
+    "title": "-> create repo artifact layout",
+    "description": "-> create repo artifact layout.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> create repo artifact layout.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py",
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-112",
+    "title": "-> create default config",
+    "description": "-> create default config.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> create default config.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-113",
+    "title": "-> create AGENTS.md and CLAUDE.md skeletons",
+    "description": "-> create AGENTS.md and CLAUDE.md skeletons.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> create AGENTS.md and CLAUDE.md skeletons.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-114",
+    "title": "-> create discovery files",
+    "description": "-> create discovery files.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> create discovery files.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-115",
+    "title": "-> create role definitions",
+    "description": "-> create role definitions.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> create role definitions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-116",
+    "title": "-> parse headings",
+    "description": "-> parse headings.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> parse headings.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-117",
+    "title": "-> generate source sections",
+    "description": "-> generate source sections.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> generate source sections.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-118",
+    "title": "-> compute section hashes",
+    "description": "-> compute section hashes.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> compute section hashes.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-119",
+    "title": "-> include source sections",
+    "description": "-> include source sections.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> include source sections.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "agentspec/markdown.py"
+    ],
+    "test_targets": [
+      "tests/test_markdown_sectionizer.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-120",
+    "title": "-> include accepted assumptions",
+    "description": "-> include accepted assumptions.",
+    "source_sections": [
+      "D-18"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "acceptance": [
+      "Generated artifacts or implementation demonstrate: -> include accepted assumptions.",
+      "Evidence cites the source section listed on this requirement."
+    ],
+    "code_targets": [
+      "docs/traceability/requirements.yml"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-121",
+    "title": "Capture every post-implementation design change as a DCR before downstream artifacts change",
+    "description": "AgentSpec captures every post-implementation design change as a DCR document in docs/change-requests/ before any artifact downstream of it (requirements, context packs, ADRs, code) is changed.",
+    "source_sections": [
+      "D-03",
+      "D-11.4"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "Implementation demonstrates that running an intake creates a DCR file under docs/change-requests/ with the canonical shape.",
+      "Validation refuses to create a DCR-derived context pack until the DCR is in an implementation-eligible state."
+    ],
+    "code_targets": [
+      "agentspec/init.py",
+      "agentspec/dcr.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_dcr_schema.py",
+      "tests/test_task_originating_dcr.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-122",
+    "title": "DCR carries one of five classifications",
+    "description": "Each DCR is classified as exactly one of: implement-now, defer, spike, reject, needs-adr. Combinations are expressed via required follow-ups, not by multi-classification.",
+    "source_sections": [
+      "D-11.4",
+      "D-18"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "Schema validation rejects a DCR with a classification outside the allowed enum.",
+      "Schema validation rejects a DCR with multiple classifications set."
+    ],
+    "code_targets": [
+      "agentspec/dcr.py"
+    ],
+    "test_targets": [
+      "tests/test_dcr_schema.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-123",
+    "title": "DCR-derived context packs cite the DCR and require an implementation-eligible state",
+    "description": "A task context pack derived from a DCR must cite the DCR ID and may not be created until the DCR is classified implement-now, or needs-adr with the related ADR accepted.",
+    "source_sections": [
+      "D-12.12",
+      "D-11.4"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "Task creator refuses to create a pack whose originating_dcr is missing or in a non-eligible state, with a clear error.",
+      "Task creator persists originating_dcr on the pack when set."
+    ],
+    "code_targets": [
+      "agentspec/task.py",
+      "agentspec/dcr.py"
+    ],
+    "test_targets": [
+      "tests/test_task_originating_dcr.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-124",
+    "title": "DCR-introduced requirements use status proposed-pending-acceptance",
+    "description": "Requirements introduced by a DCR are recorded in requirements.yml with status proposed-pending-acceptance. They flip to accepted only when the originating DCR is accepted.",
+    "source_sections": [
+      "D-12.5",
+      "D-18"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "Compile recognizes proposed-pending-acceptance as a valid status and does not promote it.",
+      "Acceptance of a DCR triggers (manual or automated) flip of its proposed requirements to accepted."
+    ],
+    "code_targets": [
+      "agentspec/compile.py",
+      "agentspec/dcr.py"
+    ],
+    "test_targets": [
+      "tests/test_dcr_schema.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-125",
+    "title": "CLI provides agentspec dcr create / classify / accept / list",
+    "description": "The CLI exposes `agentspec dcr create`, `agentspec dcr classify`, `agentspec dcr accept`, and `agentspec dcr list` subcommands for managing DCR lifecycle.",
+    "source_sections": [
+      "D-12.1",
+      "D-19"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "Each subcommand has a happy-path test.",
+      "Invalid transitions (e.g. accept on an unclassified DCR) are rejected."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/dcr.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-126",
+    "title": "Drift checker recognizes DCR-derived files and surfaces the DCR ID",
+    "description": "The drift checker recognizes files derived from a DCR-driven context pack and includes the originating DCR ID in compliance reports for those files.",
+    "source_sections": [
+      "D-12.13",
+      "D-11.4"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0002",
+    "acceptance": [
+      "A diff that touches a file inside a DCR-derived pack produces a report row with the DCR ID column populated.",
+      "A diff that touches files unrelated to any DCR has an empty DCR ID column."
+    ],
+    "code_targets": [
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_drift.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-127",
+    "title": "Bounded supervised run executes one context pack with iteration cap and allowed-paths enforcement",
+    "description": "AgentSpec supports a bounded supervised run that executes a single context pack with a configurable max_iterations cap, allowed-paths enforcement, and policy-gate evaluation between iterations.",
+    "source_sections": [
+      "D-07",
+      "D-12.12",
+      "D-12.17",
+      "D-23.4"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "low",
+    "originating_dcr": "DCR-0001",
+    "blocked_by": "ADR-0003",
+    "acceptance": [
+      "Run terminates on success, on max_iterations exhaustion, on policy halt, or on explicit human halt.",
+      "Diffs produced by any iteration touch only paths declared in the pack's Allowed Paths."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_supervised_run.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer"
+    ]
+  },
+  {
+    "id": "R-128",
+    "title": "Supervised run records per-iteration evidence in agent/runs/ JSONL",
+    "description": "A supervised run collects per-iteration evidence (executor invocation, diff, test results, logs, reviewer findings, policy verdict) into agent/runs/<run-id>/ as JSONL audit records, in the location designated by D-23.6.",
+    "source_sections": [
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "low",
+    "originating_dcr": "DCR-0001",
+    "blocked_by": "ADR-0003",
+    "acceptance": [
+      "Each iteration appends one JSONL record with the documented schema.",
+      "Run state is sufficient to resume a paused run from disk."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/io.py"
+    ],
+    "test_targets": [
+      "tests/test_supervised_run.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-129",
+    "title": "Reviewer model produces structured feedback consumable by next iteration",
+    "description": "A reviewer model (or static analyzer) produces structured feedback \u2014 issue list with severity, file references, and suggested next action \u2014 that the next supervised-run iteration consumes.",
+    "source_sections": [
+      "D-07"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "low",
+    "originating_dcr": "DCR-0001",
+    "blocked_by": "ADR-0003",
+    "acceptance": [
+      "Reviewer output validates against a documented schema.",
+      "An iteration receives the prior reviewer findings as input and references them in its next action."
+    ],
+    "code_targets": [
+      "agentspec/review.py",
+      "agentspec/run.py"
+    ],
+    "test_targets": [
+      "tests/test_supervised_run.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer"
+    ]
+  },
+  {
+    "id": "R-130",
+    "title": "Supervised run halts and requires human approval for risky changes",
+    "description": "A supervised run halts and requires explicit human approval to continue when the policy engine classifies the proposed change as risky (touches forbidden paths, fails required tests, or exceeds risk thresholds defined by the policy).",
+    "source_sections": [
+      "D-12.17",
+      "D-23.4"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "low",
+    "originating_dcr": "DCR-0001",
+    "blocked_by": "ADR-0003",
+    "acceptance": [
+      "Policy verdict halt triggers a pause record in agent/runs/<run-id>/.",
+      "A run cannot continue past a halt without a recorded approval event."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/policy.py"
+    ],
+    "test_targets": [
+      "tests/test_supervised_run.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-131",
+    "title": "agentspec compile preserves DCR-originated artifacts when regenerating",
+    "description": "agentspec compile preserves any DCR-originated artifact when regenerating from source. Specifically: requirements with originating_dcr set OR status proposed-pending-acceptance, and open questions with raised_by set to a DCR ID, must survive a compile run unchanged. Interim merge strategy is preserve-by-field; long-term strategy is deferred to Q-017.",
+    "source_sections": [
+      "D-12.5",
+      "D-11.4",
+      "D-18"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0003",
+    "acceptance": [
+      "Compile against a fixture containing a DCR-originated requirement returns the entry unchanged.",
+      "Compile against a fixture containing a DCR-originated open question returns the entry unchanged.",
+      "Compile against the live workspace preserves R-121..R-132 and Q-012..Q-017."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_compile_preserves_dcr_material.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-132",
+    "title": "agentspec compile fails loudly when reconciliation is impossible",
+    "description": "When agentspec compile cannot reconcile source-derived output with DCR-originated artifacts (for example an ID collision between a new source-derived requirement and a preserved DCR-originated one), it exits non-zero with a structured error listing the affected DCRs and artifact IDs. No silent drops, no implicit override of human-curated DCR material.",
+    "source_sections": [
+      "D-12.5",
+      "D-07"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0003",
+    "acceptance": [
+      "ID collision fixture causes compile to exit non-zero.",
+      "Error output names the DCR and the colliding artifact ID."
+    ],
+    "code_targets": [
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_compile_preserves_dcr_material.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-133",
+    "title": "agentspec dcr accept flips only the DCR status, not requirement statuses",
+    "description": "agentspec dcr accept <id> flips only the DCR's Status row to accepted. It does not modify requirements.yml. Requirement-level acceptance is a separate command (R-134).",
+    "source_sections": [
+      "D-11.4",
+      "D-12.1"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0004",
+    "acceptance": [
+      "Running dcr accept on a DCR with proposed-pending-acceptance requirements leaves those requirements untouched.",
+      "DCR Status row flips from classified to accepted as before."
+    ],
+    "code_targets": [
+      "agentspec/dcr.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_dcr_cli.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  },
+  {
+    "id": "R-134",
+    "title": "agentspec requirement accept R-XXX flips a single proposed-pending-acceptance requirement",
+    "description": "agentspec requirement accept <R-id> flips a single requirement from proposed-pending-acceptance to accepted. It validates that the requirement exists, is in proposed-pending-acceptance, and (if originating_dcr is set) the originating DCR is itself accepted. Refusal cases exit non-zero with a clear error.",
+    "source_sections": [
+      "D-12.1",
+      "D-18"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0004",
+    "acceptance": [
+      "Happy path: a proposed-pending-acceptance requirement whose originating_dcr is accepted flips on requirement accept.",
+      "Refusal: requirement not found exits non-zero.",
+      "Refusal: requirement already accepted exits non-zero.",
+      "Refusal: requirement's originating_dcr is not accepted exits non-zero."
+    ],
+    "code_targets": [
+      "agentspec/requirement.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_requirement_cli.py"
+    ],
+    "owner_roles": [
+      "coordinator"
+    ]
+  }
+]

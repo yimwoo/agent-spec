@@ -1,0 +1,86 @@
+{
+  "score": 100,
+  "mode": "normal-implementation",
+  "dimensions": {
+    "problem_definition": {
+      "score": 10,
+      "signals": [
+        "executive summary",
+        "problem"
+      ]
+    },
+    "target_users": {
+      "score": 10,
+      "signals": [
+        "target users",
+        "personas"
+      ]
+    },
+    "goals": {
+      "score": 10,
+      "signals": [
+        "goals"
+      ]
+    },
+    "non_goals": {
+      "score": 10,
+      "signals": [
+        "non-goals"
+      ]
+    },
+    "success_criteria": {
+      "score": 10,
+      "signals": [
+        "success criteria"
+      ]
+    },
+    "architecture_boundaries": {
+      "score": 10,
+      "signals": [
+        "core runtime",
+        "system overview"
+      ]
+    },
+    "data_model": {
+      "score": 10,
+      "signals": [
+        "domain model"
+      ]
+    },
+    "integrations": {
+      "score": 10,
+      "signals": [
+        "plugin",
+        "mcp",
+        "claude",
+        "codex",
+        "cli"
+      ]
+    },
+    "security_model": {
+      "score": 10,
+      "signals": [
+        "security",
+        "governance",
+        "permissions"
+      ]
+    },
+    "test_strategy": {
+      "score": 10,
+      "signals": [
+        "evaluation",
+        "quality",
+        "golden fixtures",
+        "success criteria"
+      ]
+    },
+    "rollout_plan": {
+      "score": 10,
+      "signals": [
+        "rollout",
+        "phase"
+      ]
+    }
+  },
+  "summary": "Readiness is 100/100 (normal-implementation)."
+}
