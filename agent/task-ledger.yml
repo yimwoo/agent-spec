@@ -189,6 +189,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T22:13:30Z"
+    },
+    "agent/context-packs/T-024-local-subprocess-runner.md": {
+      "status": "complete",
+      "run_id": "dogfood-t024-exec",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:18:40Z"
     }
   }
 }

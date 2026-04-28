@@ -25,6 +25,7 @@ aspec run step --json
 aspec run package --runner generic --json
 aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
 aspec run demo --json
+aspec run exec --command-json '["python","-c","print(\"Done.\")"]' --test-status passed --json
 aspec emit --target claude,codex
 aspec doctor
 aspec drift
@@ -43,6 +44,7 @@ aspec run step --run-id <run-id> --executor-output "..." --json
 aspec run package --runner codex --run-id <run-id> --json
 aspec run result <run-id> --result-json '{"executor_output":"Done.","test_status":"passed"}' --json
 aspec run demo --run-id demo-001 --json
+aspec run exec --runner codex --run-id run-001 --test-status passed --json
 aspec task complete T-013 --test-status passed
 ```
 
@@ -58,6 +60,9 @@ stdin prompt, environment hints, and a report-back command template.
 runner package, completing the package/result handshake.
 `aspec run demo` runs a deterministic local package/result transcript for e2e
 testing without invoking an external agent binary.
+`aspec run exec` executes one runner package with a local subprocess, feeds the
+prompt on stdin, discovers touched paths from git status, and submits the result
+through the same package/result handshake.
 
 ## Verification
 

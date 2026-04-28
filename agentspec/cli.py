@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import sys
 from pathlib import Path
 
@@ -21,7 +22,7 @@ from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
-from .runner import ALLOWED_RUNNERS, package_run, run_demo, submit_runner_result
+from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -165,6 +166,21 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_demo_parser.add_argument("--order", default="newest", choices=["oldest", "newest"])
     run_demo_parser.add_argument("--max-iterations", type=int)
     run_demo_parser.add_argument("--json", action="store_true")
+
+    run_exec = run_subparsers.add_parser("exec", help="Execute one runner package with a local subprocess.")
+    run_exec.add_argument("context_pack", nargs="?")
+    run_exec.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
+    run_exec.add_argument("--run-id")
+    run_exec.add_argument("--command", dest="runner_command", help="Shell-like command string to split and execute without a shell.")
+    run_exec.add_argument("--command-json", help="JSON array command argv to execute.")
+    run_exec.add_argument("--touched-path", action="append", default=[])
+    run_exec.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    run_exec.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_exec.add_argument("--type", dest="task_type")
+    run_exec.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    run_exec.add_argument("--max-iterations", type=int)
+    run_exec.add_argument("--timeout", type=float)
+    run_exec.add_argument("--json", action="store_true")
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
@@ -445,6 +461,26 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     return 0
                 print(f"{demo['run_id']}: {demo['final_next_action']} runner={demo['runner']}")
                 return 0
+            if args.run_command == "exec":
+                result = execute_runner(
+                    root,
+                    Path(args.context_pack) if args.context_pack else None,
+                    runner=args.runner,
+                    command=_runner_command_from_args(args.runner_command, args.command_json),
+                    run_id=args.run_id,
+                    touched_paths=args.touched_path or None,
+                    test_status=args.test_status,
+                    reviewer_mode=args.reviewer_mode,
+                    task_type=args.task_type,
+                    order=args.order,
+                    max_iterations=args.max_iterations,
+                    timeout_seconds=args.timeout,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                    return 0
+                print(f"{result['run_id']}: {result['final_next_action']} runner={result['runner']}")
+                return 0
             if args.run_command == "inspect":
                 info = inspect_run(root, args.run_id)
                 print(json.dumps(info, indent=2))
@@ -511,6 +547,19 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
     except Exception as exc:
         print(f"{parser.prog}: error: {exc}", file=sys.stderr)
         return 1
+
+
+def _runner_command_from_args(command: str | None, command_json: str | None) -> list[str] | None:
+    if command and command_json:
+        raise ValueError("Use either --command or --command-json, not both.")
+    if command_json:
+        parsed = json.loads(command_json)
+        if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+            raise ValueError("--command-json must be a JSON array of strings.")
+        return parsed
+    if command:
+        return shlex.split(command)
+    return None
 
 
 if __name__ == "__main__":

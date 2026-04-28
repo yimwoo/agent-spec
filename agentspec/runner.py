@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +11,7 @@ from .run import step_run
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
 RUNNER_RESULT_SCHEMA = "agentspec.runner_result.v0"
 RUNNER_DEMO_SCHEMA = "agentspec.runner_demo.v0"
+RUNNER_EXEC_SCHEMA = "agentspec.runner_exec.v0"
 ALLOWED_RUNNERS = {"generic", "codex", "claude"}
 ALLOWED_TEST_STATUSES = {"not_run", "passed", "failed"}
 ALLOWED_REVIEWER_MODES = {"deterministic", "model", "auto"}
@@ -115,6 +118,77 @@ def run_demo(
 
     return {
         "schema": RUNNER_DEMO_SCHEMA,
+        "runner": runner,
+        "run_id": actual_run_id,
+        "transcript": transcript,
+        "final_package": final_package,
+        "final_next_action": final_package.get("next_action"),
+        "final_should_execute": final_package.get("should_execute"),
+        "final_state": final_package.get("step", {}).get("state") if isinstance(final_package.get("step"), dict) else None,
+    }
+
+
+def execute_runner(
+    root: Path,
+    context_pack: Path | None = None,
+    *,
+    runner: str = "generic",
+    command: list[str] | None = None,
+    run_id: str | None = None,
+    touched_paths: list[str] | None = None,
+    test_status: str = "not_run",
+    reviewer_mode: str | None = None,
+    task_type: str | None = None,
+    order: str = "newest",
+    max_iterations: int | None = None,
+    timeout_seconds: float | None = None,
+) -> dict[str, Any]:
+    root = root.resolve()
+    if command is not None and not command:
+        raise ValueError("Runner command must not be empty.")
+    if command is None and runner == "generic":
+        raise ValueError("Runner generic has no default command. Pass --command or --command-json.")
+    initial_package = package_run(
+        root,
+        context_pack,
+        runner=runner,
+        run_id=run_id,
+        task_type=task_type,
+        order=order,
+        max_iterations=max_iterations,
+    )
+    actual_run_id = str(initial_package["run_id"])
+    transcript: list[dict[str, Any]] = [{"kind": "package", "package": initial_package}]
+    final_package = initial_package
+
+    if initial_package.get("should_execute"):
+        execution = _run_package_subprocess(
+            root,
+            initial_package,
+            command=command,
+            timeout_seconds=timeout_seconds,
+        )
+        transcript.append({"kind": "subprocess", "execution": execution})
+        result = {
+            "schema": RUNNER_RESULT_SCHEMA,
+            "executor_output": _executor_output_from_subprocess(execution),
+            "touched_paths": touched_paths if touched_paths is not None else execution.get("touched_paths", []),
+            "test_status": "failed" if execution.get("returncode") not in {0, None} or execution.get("error") else test_status,
+        }
+        if reviewer_mode is not None:
+            result["reviewer_mode"] = reviewer_mode
+        transcript.append({"kind": "runner_result", "result": result})
+        final_package = submit_runner_result(
+            root,
+            actual_run_id,
+            result,
+            runner=runner,
+            reviewer_mode=reviewer_mode,
+        )
+        transcript.append({"kind": "package", "package": final_package})
+
+    return {
+        "schema": RUNNER_EXEC_SCHEMA,
         "runner": runner,
         "run_id": actual_run_id,
         "transcript": transcript,
@@ -247,3 +321,106 @@ def _default_demo_touched_paths(package: dict[str, Any]) -> list[str]:
         return []
     context_pack = state.get("context_pack")
     return [context_pack] if isinstance(context_pack, str) and context_pack else []
+
+
+def _run_package_subprocess(
+    root: Path,
+    package: dict[str, Any],
+    *,
+    command: list[str] | None,
+    timeout_seconds: float | None,
+) -> dict[str, Any]:
+    argv = command if command is not None else list(package.get("execution", {}).get("argv") or [])
+    if not argv:
+        raise ValueError("Runner package has no command. Pass --command or --command-json, or use runner=codex|claude.")
+
+    execution = package.get("execution", {})
+    stdin = execution.get("stdin")
+    env = os.environ.copy()
+    package_env = execution.get("env")
+    if isinstance(package_env, dict):
+        env.update({str(key): str(value) for key, value in package_env.items()})
+
+    try:
+        completed = subprocess.run(
+            argv,
+            cwd=root,
+            input=stdin if isinstance(stdin, str) else None,
+            text=True,
+            capture_output=True,
+            env=env,
+            timeout=timeout_seconds,
+            check=False,
+        )
+        result = {
+            "argv": argv,
+            "returncode": completed.returncode,
+            "stdout": completed.stdout,
+            "stderr": completed.stderr,
+            "timed_out": False,
+            "error": None,
+        }
+    except subprocess.TimeoutExpired as exc:
+        result = {
+            "argv": argv,
+            "returncode": None,
+            "stdout": exc.stdout if isinstance(exc.stdout, str) else "",
+            "stderr": exc.stderr if isinstance(exc.stderr, str) else "",
+            "timed_out": True,
+            "error": f"Runner command timed out after {timeout_seconds} seconds.",
+        }
+    except OSError as exc:
+        result = {
+            "argv": argv,
+            "returncode": None,
+            "stdout": "",
+            "stderr": "",
+            "timed_out": False,
+            "error": f"Runner command failed to start: {exc}",
+        }
+
+    result["touched_paths"] = _git_changed_paths(root)
+    return result
+
+
+def _executor_output_from_subprocess(execution: dict[str, Any]) -> str:
+    parts = [f"Runner command exited with returncode={execution.get('returncode')}."]
+    if execution.get("timed_out"):
+        parts.append("Runner command timed out.")
+    error = execution.get("error")
+    if isinstance(error, str) and error:
+        parts.append(error)
+    stdout = execution.get("stdout")
+    if isinstance(stdout, str) and stdout.strip():
+        parts.extend(["stdout:", stdout.strip()])
+    stderr = execution.get("stderr")
+    if isinstance(stderr, str) and stderr.strip():
+        parts.extend(["stderr:", stderr.strip()])
+    return "\n".join(parts)
+
+
+def _git_changed_paths(root: Path) -> list[str]:
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return []
+    if completed.returncode != 0:
+        return []
+
+    paths: list[str] = []
+    for line in completed.stdout.splitlines():
+        if not line:
+            continue
+        path = line[3:] if len(line) > 3 else ""
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[-1]
+        path = path.strip().strip('"')
+        if path:
+            paths.append(path)
+    return sorted(set(paths))
