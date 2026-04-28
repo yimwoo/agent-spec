@@ -15,6 +15,7 @@ from .review import review_executor_output
 
 STATE_SCHEMA = "agentspec.supervised_run.state.v0"
 EVENT_SCHEMA = "agentspec.supervised_run.event.v0"
+HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
 
 
@@ -207,6 +208,51 @@ def loop_run(
     return result
 
 
+def step_run(
+    root: Path,
+    context_pack: Path | None = None,
+    *,
+    run_id: str | None = None,
+    executor_output: str | None = None,
+    touched_paths: list[str] | None = None,
+    test_status: str = "not_run",
+    reviewer_mode: str | None = None,
+    task_type: str | None = None,
+    order: str = "newest",
+    max_iterations: int | None = None,
+) -> dict[str, Any]:
+    root = root.resolve()
+    loop = loop_run(
+        root,
+        context_pack,
+        run_id=run_id,
+        executor_output=executor_output,
+        touched_paths=touched_paths or [],
+        test_status=test_status,
+        reviewer_mode=reviewer_mode,
+        task_type=task_type,
+        order=order,
+        max_iterations=max_iterations,
+    )
+    state = loop["state"]
+    next_action = _next_action_for_status(str(state.get("status")))
+    handoff = None
+    if next_action == "continue_executor":
+        handoff = build_next_executor_prompt(root, str(loop["run_id"]))
+
+    return {
+        "schema": HARNESS_STEP_SCHEMA,
+        "run_id": loop["run_id"],
+        "next_action": next_action,
+        "selected_task": loop.get("selected_task"),
+        "started": loop.get("started", False),
+        "state": state,
+        "review": loop.get("review"),
+        "handoff": handoff,
+        "prompt": handoff.get("prompt") if isinstance(handoff, dict) else None,
+    }
+
+
 def complete_context_pack_run(
     root: Path,
     selector: str,
@@ -377,6 +423,17 @@ def _status_for_decision(decision: str) -> str:
         "halt": "halted",
         "complete": "complete",
     }.get(decision, "paused")
+
+
+def _next_action_for_status(status: str) -> str:
+    return {
+        "started": "continue_executor",
+        "running": "continue_executor",
+        "paused": "await_human",
+        "complete": "complete",
+        "halted": "stop",
+        "aborted": "stop",
+    }.get(status, "await_human")
 
 
 def _resolve_context_pack(root: Path, context_pack: Path) -> Path:

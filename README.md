@@ -21,6 +21,7 @@ aspec task list
 aspec task next
 aspec run loop
 aspec run prompt <run-id>
+aspec run step --json
 aspec emit --target claude,codex
 aspec doctor
 aspec drift
@@ -35,6 +36,7 @@ aspec task list --json
 aspec task next
 aspec run loop
 aspec run prompt <run-id> --json
+aspec run step --run-id <run-id> --executor-output "..." --json
 aspec task complete T-013 --test-status passed
 ```
 
@@ -42,6 +44,8 @@ aspec task complete T-013 --test-status passed
 `agent/runs/*` keeps detailed execution state and remains ignored by git.
 `aspec run prompt` renders the next executor handoff from durable run state and
 reviewer events, including any continuation reviewer instruction.
+`aspec run step` combines task selection/start/resume, reviewer verdicts, and
+the next handoff prompt into one harness-oriented JSON response.
 
 ## Verification
 

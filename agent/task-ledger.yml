@@ -153,6 +153,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T21:45:23Z"
+    },
+    "agent/context-packs/T-020-harness-step-command.md": {
+      "status": "complete",
+      "run_id": "dogfood-t020-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:56:03Z"
     }
   }
 }
