@@ -21,7 +21,7 @@ from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
-from .runner import ALLOWED_RUNNERS, package_run
+from .runner import ALLOWED_RUNNERS, submit_runner_result, package_run
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -145,6 +145,13 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_package.add_argument("--order", default="newest", choices=["oldest", "newest"])
     run_package.add_argument("--max-iterations", type=int)
     run_package.add_argument("--json", action="store_true")
+
+    run_result = run_subparsers.add_parser("result", help="Submit a structured runner result and return the next package.")
+    run_result.add_argument("run_id")
+    run_result.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
+    run_result.add_argument("--result-json", required=True, help="Runner result JSON, or '-' to read stdin.")
+    run_result.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_result.add_argument("--json", action="store_true")
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
@@ -379,6 +386,24 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     task_type=args.task_type,
                     order=args.order,
                     max_iterations=args.max_iterations,
+                )
+                if args.json:
+                    print(json.dumps(package, indent=2))
+                    return 0
+                print(f"{package['run_id']}: {package['next_action']} runner={package['runner']}")
+                stdin = package.get("execution", {}).get("stdin")
+                if stdin:
+                    print(stdin)
+                return 0
+            if args.run_command == "result":
+                raw_result = sys.stdin.read() if args.result_json == "-" else args.result_json
+                result_payload = json.loads(raw_result)
+                package = submit_runner_result(
+                    root,
+                    args.run_id,
+                    result_payload,
+                    runner=args.runner,
+                    reviewer_mode=args.reviewer_mode,
                 )
                 if args.json:
                     print(json.dumps(package, indent=2))

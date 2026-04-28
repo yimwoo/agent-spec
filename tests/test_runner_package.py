@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import write_data
-from agentspec.runner import package_run
+from agentspec.runner import RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
 
 
 class RunnerPackageTests(unittest.TestCase):
@@ -26,8 +26,10 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertIn("Start the active context pack.", package["execution"]["stdin"])
             self.assertEqual(package["execution"]["env"]["AGENTSPEC_RUN_ID"], "pkg-001")
             self.assertEqual(package["execution"]["env"]["AGENTSPEC_NEXT_ACTION"], "continue_executor")
-            self.assertEqual(package["execution"]["env"]["AGENTSPEC_CONTEXT_PACK"], "agent/context-packs/T-021-runner-package-adapter.md")
-            self.assertEqual(package["report_back"]["argv"][:5], ["aspec", "run", "step", "--run-id", "pkg-001"])
+            self.assertEqual(package["execution"]["env"]["AGENTSPEC_CONTEXT_PACK"], "agent/context-packs/T-022-runner-result-ingestion.md")
+            self.assertEqual(package["report_back"]["argv"][:4], ["aspec", "run", "result", "pkg-001"])
+            self.assertEqual(package["report_back"]["result_schema"], RUNNER_RESULT_SCHEMA)
+            self.assertEqual(package["report_back"]["result_template"]["schema"], RUNNER_RESULT_SCHEMA)
             self.assertEqual(package["report_back"]["touched_path_flag"], "--touched-path")
 
     def test_codex_package_uses_codex_command_hint(self) -> None:
@@ -71,6 +73,44 @@ class RunnerPackageTests(unittest.TestCase):
 
             self.assertFalse((root / "agent" / "runs" / "pkg-001" / "state.yml").exists())
 
+    def test_submit_runner_result_completes_run_and_returns_next_package(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            package_run(root, run_id="pkg-001", runner="generic")
+
+            package = submit_runner_result(
+                root,
+                "pkg-001",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are met.",
+                    "touched_paths": ["agentspec/runner.py"],
+                    "test_status": "passed",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "complete")
+            self.assertFalse(package["should_execute"])
+            self.assertEqual(package["step"]["state"]["status"], "complete")
+            self.assertEqual(package["step"]["review"]["decision"], "complete")
+
+    def test_invalid_runner_result_is_rejected_before_state_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            with self.assertRaisesRegex(ValueError, "executor_output"):
+                submit_runner_result(
+                    root,
+                    "pkg-001",
+                    {"schema": RUNNER_RESULT_SCHEMA, "touched_paths": ["agentspec/runner.py"]},
+                    runner="generic",
+                )
+
+            self.assertFalse((root / "agent" / "runs" / "pkg-001" / "state.yml").exists())
+
     def test_cli_package_json_outputs_runner_package(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -86,6 +126,41 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(package["runner"], "claude")
             self.assertEqual(package["execution"]["argv"], ["claude"])
             self.assertTrue(package["should_execute"])
+
+    def test_cli_result_json_outputs_next_runner_package(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            package_run(root, run_id="pkg-cli", runner="generic")
+            result = json.dumps(
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are met.",
+                    "touched_paths": ["agentspec/runner.py"],
+                    "test_status": "passed",
+                }
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "run",
+                        "result",
+                        "pkg-cli",
+                        "--result-json",
+                        result,
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            package = json.loads(output.getvalue())
+            self.assertEqual(package["schema"], "agentspec.runner_package.v0")
+            self.assertEqual(package["next_action"], "complete")
+            self.assertFalse(package["should_execute"])
 
 
 def _seed(root: Path) -> None:
@@ -120,8 +195,8 @@ def _seed(root: Path) -> None:
         ),
         encoding="utf-8",
     )
-    (root / "agent" / "context-packs" / "T-021-runner-package-adapter.md").write_text(
-        """# T-021: Runner Package Adapter
+    (root / "agent" / "context-packs" / "T-022-runner-result-ingestion.md").write_text(
+        """# T-022: Runner Result Ingestion
 
 Type: `implementation`
 

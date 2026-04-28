@@ -7,7 +7,10 @@ from .run import step_run
 
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
+RUNNER_RESULT_SCHEMA = "agentspec.runner_result.v0"
 ALLOWED_RUNNERS = {"generic", "codex", "claude"}
+ALLOWED_TEST_STATUSES = {"not_run", "passed", "failed"}
+ALLOWED_REVIEWER_MODES = {"deterministic", "model", "auto"}
 
 
 def package_run(
@@ -42,6 +45,59 @@ def package_run(
     return build_runner_package(step, runner=runner)
 
 
+def submit_runner_result(
+    root: Path,
+    run_id: str,
+    result: dict[str, Any],
+    *,
+    runner: str = "generic",
+    reviewer_mode: str | None = None,
+) -> dict[str, Any]:
+    parsed = parse_runner_result(result)
+    mode = reviewer_mode or parsed.get("reviewer_mode")
+    return package_run(
+        root,
+        runner=runner,
+        run_id=run_id,
+        executor_output=str(parsed["executor_output"]),
+        touched_paths=list(parsed["touched_paths"]),
+        test_status=str(parsed["test_status"]),
+        reviewer_mode=mode if isinstance(mode, str) else None,
+    )
+
+
+def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        raise ValueError("Runner result must be a JSON object.")
+    schema = result.get("schema")
+    if schema is not None and schema != RUNNER_RESULT_SCHEMA:
+        raise ValueError(f"Runner result schema must be {RUNNER_RESULT_SCHEMA}.")
+
+    executor_output = result.get("executor_output")
+    if not isinstance(executor_output, str):
+        raise ValueError("Runner result field executor_output must be a string.")
+
+    touched_paths = result.get("touched_paths", [])
+    if not isinstance(touched_paths, list) or not all(isinstance(path, str) for path in touched_paths):
+        raise ValueError("Runner result field touched_paths must be a list of strings.")
+
+    test_status = result.get("test_status", "not_run")
+    if test_status not in ALLOWED_TEST_STATUSES:
+        raise ValueError(f"Runner result field test_status must be one of {sorted(ALLOWED_TEST_STATUSES)}.")
+
+    reviewer_mode = result.get("reviewer_mode")
+    if reviewer_mode is not None and reviewer_mode not in ALLOWED_REVIEWER_MODES:
+        raise ValueError(f"Runner result field reviewer_mode must be one of {sorted(ALLOWED_REVIEWER_MODES)}.")
+
+    return {
+        "schema": schema or RUNNER_RESULT_SCHEMA,
+        "executor_output": executor_output,
+        "touched_paths": touched_paths,
+        "test_status": test_status,
+        "reviewer_mode": reviewer_mode,
+    }
+
+
 def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> dict[str, Any]:
     if runner not in ALLOWED_RUNNERS:
         raise ValueError(f"Unknown runner: {runner}. Expected one of {sorted(ALLOWED_RUNNERS)}.")
@@ -69,6 +125,24 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> di
         },
         "report_back": {
             "argv": [
+                "aspec",
+                "run",
+                "result",
+                run_id,
+                "--runner",
+                runner,
+                "--result-json",
+                "<runner-result-json>",
+                "--json",
+            ],
+            "result_schema": RUNNER_RESULT_SCHEMA,
+            "result_template": {
+                "schema": RUNNER_RESULT_SCHEMA,
+                "executor_output": "<executor-output>",
+                "touched_paths": [],
+                "test_status": "<not_run|passed|failed>",
+            },
+            "legacy_step_argv": [
                 "aspec",
                 "run",
                 "step",

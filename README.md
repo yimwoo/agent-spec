@@ -23,6 +23,7 @@ aspec run loop
 aspec run prompt <run-id>
 aspec run step --json
 aspec run package --runner generic --json
+aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
 aspec emit --target claude,codex
 aspec doctor
 aspec drift
@@ -39,6 +40,7 @@ aspec run loop
 aspec run prompt <run-id> --json
 aspec run step --run-id <run-id> --executor-output "..." --json
 aspec run package --runner codex --run-id <run-id> --json
+aspec run result <run-id> --result-json '{"executor_output":"Done.","test_status":"passed"}' --json
 aspec task complete T-013 --test-status passed
 ```
 
@@ -50,6 +52,8 @@ reviewer events, including any continuation reviewer instruction.
 the next handoff prompt into one harness-oriented JSON response.
 `aspec run package` wraps a harness step in a runner execution envelope with
 stdin prompt, environment hints, and a report-back command template.
+`aspec run result` accepts a structured runner result JSON and returns the next
+runner package, completing the package/result handshake.
 
 ## Verification
 

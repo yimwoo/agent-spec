@@ -171,6 +171,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T21:59:58Z"
+    },
+    "agent/context-packs/T-022-runner-result-ingestion.md": {
+      "status": "complete",
+      "run_id": "dogfood-t022-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:03:56Z"
     }
   }
 }
