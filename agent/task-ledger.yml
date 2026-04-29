@@ -340,11 +340,20 @@
     },
     "agent/context-packs/T-042-cli-json-error-envelope.md": {
       "status": "complete",
-      "reason": "Closes the only P1 finding from the T-040 code review: structured JSON error envelope on the top-level CLI exception handler. New agentspec.cli_error.v0 schema with type/message/retryable/command fields emits to stdout when args.json is truthy; plain stderr text remains for non-JSON callers. Retryability heuristic covers TimeoutError + ConnectionError; everything else defaults to non-retryable. 8 new tests in test_cli_json_errors.py (5 unit, 1 envelope-shape, 2 end-to-end). Live smoke confirms both paths. Full suite 178 → 186. Covers R-007, R-128.",
+      "reason": "Closes the only P1 finding from the T-040 code review: structured JSON error envelope on the top-level CLI exception handler. New agentspec.cli_error.v0 schema with type/message/retryable/command fields emits to stdout when args.json is truthy; plain stderr text remains for non-JSON callers. Retryability heuristic covers TimeoutError + ConnectionError; everything else defaults to non-retryable. 8 new tests in test_cli_json_errors.py (5 unit, 1 envelope-shape, 2 end-to-end). Live smoke confirms both paths. Full suite 178 \u2192 186. Covers R-007, R-128.",
       "verification": {
         "status": "passed"
       },
       "updated_at": "2026-04-29T06:30:00Z"
+    },
+    "agent/context-packs/T-043-fix-globstar-path-matching-semantics.md": {
+      "status": "complete",
+      "run_id": "complete-t-043-fix-globstar-path-matching-semantics-20260429203843",
+      "reason": "Globstar matcher semantics shipped for policy and drift: shared path_matches_pattern helper treats ** as zero-or-more segments and * as single-segment only; policy and drift delegate to the shared helper; tests cover generated src/**/*.py behavior.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T20:38:43Z"
     }
   }
 }

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import ensure_writable_dir, load_data, utc_now_iso, write_text
+from .paths import path_matches_pattern
 
 
 SENSITIVE_PATH_HINTS = ["auth", "security", "secret", "permission", "policy", "billing"]
@@ -456,18 +457,7 @@ def _matching_context_packs(path: str, impacted_requirements: list[dict[str, Any
 
 
 def _path_matches(path: str, pattern: str) -> bool:
-    path = path.strip("/")
-    pattern = pattern.strip("/")
-    if not pattern:
-        return False
-    if pattern.endswith("/**"):
-        return path.startswith(pattern[:-3].rstrip("/") + "/")
-    if pattern.endswith("/*"):
-        prefix = pattern[:-2].rstrip("/")
-        return path.startswith(prefix + "/") and "/" not in path[len(prefix) + 1 :]
-    if pattern.endswith("/"):
-        return path.startswith(pattern)
-    return path == pattern or path.startswith(pattern.rstrip("/") + "/")
+    return path_matches_pattern(path, pattern)
 
 
 def _expected_tests(impacted: list[dict[str, Any]]) -> set[str]:
