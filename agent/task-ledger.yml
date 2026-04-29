@@ -304,6 +304,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T04:30:00Z"
+    },
+    "agent/context-packs/T-038-dcr-0020-acceptance-and-quality-reviewer-question.md": {
+      "status": "complete",
+      "reason": "DCR-0020 flipped to accepted now that T-037 spike shipped with green tests + live smoke. Q-026 filed in open-questions.yml so the model-backed quality_reviewer gap (deterministic-only quality_reviewer_signoff vs. ADR-0003's 'should use a stronger model' guidance) leaves code-comment land and joins the discovery surface. No code changes; full test suite green; aspec compile idempotent.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T05:00:00Z"
     }
   }
 }

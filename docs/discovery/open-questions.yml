@@ -336,5 +336,19 @@
       "D-23.4"
     ],
     "raised_by": "T-029"
+  },
+  {
+    "id": "Q-026",
+    "question": "When should `quality_reviewer` gain a model-backed branch beyond the deterministic test-status + acceptance-evidence rule? ADR-0003 says reviewer profiles `should` use a stronger model for quality signoff and gives an example config (`oca/gpt-5.5`); the MVP shipped a deterministic-only `quality_reviewer_signoff` with `request_model_review` reserved for future enhancement (see `agentspec/review.py:243+`). The gap is intentional until concrete miss cases \u2014 false approvals or missed regressions \u2014 motivate the model-backed branch. Until then, dual-reviewer signoff per ADR-0005 keeps autonomous-mode `complete` honest with deterministic rules.",
+    "status": "open",
+    "impact": [
+      "supervised-runs",
+      "reviewer",
+      "autonomous-mode"
+    ],
+    "source_sections": [
+      "D-12.17"
+    ],
+    "raised_by": "ADR-0003"
   }
 ]

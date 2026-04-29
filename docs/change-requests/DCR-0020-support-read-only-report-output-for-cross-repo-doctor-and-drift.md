@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | spike |
 | Submitted | 2026-04-28 |
 | Submitted by | user |
