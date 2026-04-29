@@ -47,10 +47,25 @@ def default_supervised_run_config() -> dict[str, Any]:
     }
 
 
+def default_autonomous_mode_config() -> dict[str, Any]:
+    """Soft-limit defaults for autonomous mode per ADR-0004.
+
+    Hard limits are encoded in `agentspec.policy` and cannot be relaxed
+    by config. The values here govern how findings are routed and how
+    eagerly the loop bails out.
+    """
+    return {
+        "findings_dir": "docs/discovery/open-questions.yml",
+        "allow_remote_push": False,
+        "max_consecutive_blocks": 3,
+    }
+
+
 def default_runtime_config() -> dict[str, Any]:
     return {
         "agent_profiles": default_agent_profiles(),
         "supervised_runs": default_supervised_run_config(),
+        "autonomous_mode": default_autonomous_mode_config(),
     }
 
 
@@ -70,6 +85,9 @@ def merged_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
     supervised = merged.setdefault("supervised_runs", {})
     for key, value in defaults["supervised_runs"].items():
         supervised.setdefault(key, value)
+    autonomous = merged.setdefault("autonomous_mode", {})
+    for key, value in defaults["autonomous_mode"].items():
+        autonomous.setdefault(key, value)
     return merged
 
 

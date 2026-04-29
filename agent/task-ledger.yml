@@ -222,6 +222,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T00:08:05Z"
+    },
+    "agent/context-packs/T-028-basic-autonomous-mode.md": {
+      "status": "complete",
+      "reason": "Basic autonomous mode shipped: --mode flag, eligibility refusal, pause-to-finding transform, hard-limit gates (destructive git, remote push, credential pattern, auto-acceptance). Tests cover all ADR-0004 hard limits.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T00:20:06Z"
     }
   }
 }

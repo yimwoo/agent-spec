@@ -102,6 +102,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_start.add_argument("context_pack")
     run_start.add_argument("--run-id")
     run_start.add_argument("--max-iterations", type=int)
+    run_start.add_argument("--mode", default="supervised", choices=["supervised", "autonomous"])
 
     run_resume = run_subparsers.add_parser("resume", help="Record an executor iteration and reviewer verdict.")
     run_resume.add_argument("run_id")
@@ -120,6 +121,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_loop.add_argument("--type", dest="task_type")
     run_loop.add_argument("--order", default="newest", choices=["oldest", "newest"])
     run_loop.add_argument("--max-iterations", type=int)
+    run_loop.add_argument("--mode", default="supervised", choices=["supervised", "autonomous"])
     run_loop.add_argument("--json", action="store_true")
 
     run_step = run_subparsers.add_parser("step", help="Run one harness control-plane step.")
@@ -336,10 +338,11 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     Path(args.context_pack),
                     run_id=args.run_id,
                     max_iterations=args.max_iterations,
+                    mode=args.mode,
                 )
                 print(
                     f"Started run {state['run_id']} for {state['context_pack']} "
-                    f"(max_iterations={state['max_iterations']})."
+                    f"(mode={state.get('mode', 'supervised')}, max_iterations={state['max_iterations']})."
                 )
                 return 0
             if args.run_command == "resume":
@@ -369,6 +372,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     task_type=args.task_type,
                     order=args.order,
                     max_iterations=args.max_iterations,
+                    mode=args.mode,
                 )
                 if args.json:
                     print(json.dumps(result, indent=2))

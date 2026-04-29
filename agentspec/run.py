@@ -26,6 +26,7 @@ def start_run(
     *,
     run_id: str | None = None,
     max_iterations: int | None = None,
+    mode: str = "supervised",
 ) -> dict[str, Any]:
     root = root.resolve()
     context_path = _resolve_context_pack(root, context_pack)
@@ -36,12 +37,23 @@ def start_run(
     if run_dir.exists() and (run_dir / "state.yml").exists():
         raise FileExistsError(f"Run already exists: {run_id}")
 
+    if mode not in {"supervised", "autonomous"}:
+        raise ValueError(f"mode must be 'supervised' or 'autonomous'; got {mode!r}.")
+    # ADR-0004 / R-137: autonomous mode requires confirmed scope.
+    if mode == "autonomous" and not is_pack_autonomous_eligible(context_path, root):
+        raise ValueError(
+            f"Cannot start autonomous run for {context_path.relative_to(root)}: "
+            f"all allowed paths are inferred (none exist in the repo and none are "
+            f"glob patterns). Confirm the scope or run in supervised mode."
+        )
+
     task_type = context.get("task_type", "implementation")
     configured_max = config.get("supervised_runs", {}).get("max_iterations", {}).get(task_type)
     state = {
         "schema": STATE_SCHEMA,
         "run_id": run_id,
         "status": "started",
+        "mode": mode,
         "context_pack": str(context_path.relative_to(root)),
         "context_pack_title": context.get("title"),
         "task_type": task_type,
@@ -77,11 +89,14 @@ def resume_run(
     configured_reviewer_mode = config.get("supervised_runs", {}).get("reviewer_mode", "deterministic")
     reviewer_mode = reviewer_mode or configured_reviewer_mode
     iteration = int(state.get("iteration", 0)) + 1
+    mode = state.get("mode", "supervised")
     policy_verdict = evaluate_policy(
         allowed_paths=list(state.get("allowed_paths", [])),
         touched_paths=touched_paths,
         iteration=iteration,
         max_iterations=int(state.get("max_iterations", 1)),
+        executor_output=executor_output,
+        mode=mode,
     )
     review = review_executor_output(
         executor_output=executor_output,
@@ -126,6 +141,27 @@ def resume_run(
     state["status"] = _status_for_decision(review.decision)
     state["last_decision"] = review.decision
     state["updated_at"] = _now()
+
+    # ADR-0004 / R-135: in autonomous mode, pause_for_human is converted
+    # into a durable blocked finding and the run halts rather than waiting
+    # for a human reply.
+    if review.decision == "pause_for_human" and mode == "autonomous":
+        finding_id = _record_blocked_finding(root, run_id, state, review)
+        state["status"] = "halted"
+        state["autonomous_finding"] = finding_id
+        _append_event(
+            root,
+            run_id,
+            {
+                "kind": "autonomous_pause_to_finding",
+                "iteration": iteration,
+                "finding": finding_id,
+                "original_decision": "pause_for_human",
+                "applied_decision": "halt",
+                "reason": review.reason,
+            },
+        )
+
     _write_state(root, run_id, state)
     if review.decision == "complete":
         from .task import record_task_ledger_status
@@ -154,6 +190,7 @@ def loop_run(
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
+    mode: str = "supervised",
 ) -> dict[str, Any]:
     root = root.resolve()
     selected_task: dict[str, Any] | None = None
@@ -182,6 +219,7 @@ def loop_run(
             context_pack,
             run_id=run_id,
             max_iterations=max_iterations,
+            mode=mode,
         )
         run_id = str(state["run_id"])
         started = True
@@ -460,6 +498,43 @@ def _resolve_context_pack_selector(root: Path, selector: str) -> Path:
         return matches[0].resolve()
 
     return _resolve_context_pack(root, candidate)
+
+
+def _record_blocked_finding(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    review: Any,
+) -> str:
+    """Append an open-question entry capturing an autonomous-mode pause.
+
+    Returns the new question id (Q-NNN) so callers can store it on state.
+    """
+    questions_path = Path(root) / "docs" / "discovery" / "open-questions.yml"
+    questions = load_data(questions_path, []) or []
+    next_n = 1
+    for q in questions:
+        match = re.match(r"^Q-(\d+)$", str(q.get("id", "")))
+        if match:
+            next_n = max(next_n, int(match.group(1)) + 1)
+    finding_id = f"Q-{next_n:03d}"
+    finding = {
+        "id": finding_id,
+        "question": (
+            f"Blocked finding from autonomous run {run_id}: "
+            + (getattr(review, "reason", None) or "executor paused for human input.")
+        ),
+        "status": "open",
+        "impact": ["autonomous-mode", "blocked-finding"],
+        "source_sections": [],
+        "raised_by": run_id,
+        "preserve": "autonomous-finding",
+        "context_pack": state.get("context_pack"),
+        "iteration": state.get("iteration"),
+    }
+    questions.append(finding)
+    write_data(questions_path, questions)
+    return finding_id
 
 
 def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:
