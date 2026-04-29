@@ -13,9 +13,10 @@ This repository uses AgentSpec-generated context.
 ## Current Status
 
 - Readiness: 100/100 (normal-implementation)
-- Requirements: 144 (2 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis; R-142 (research fallback) from ADR-0005 awaiting per-pack implementation. R-143 / R-144 shipped via T-030 / T-031.)
-- DCRs: DCR-0001..DCR-0019 all accepted (DCR-0001 closed via T-029 + ADR-0003; DCR-0019 needs-adr satisfied by ADR-0004 + ADR-0005).
-- Autonomous mode: pause_for_human is severity-routed — high → DCR stub (`needs-adr`) + halt; minor → open-question + auto_continue; unclassified → conservative open-question + halt (T-028 fallback). Autonomous-mode `complete` requires dual-reviewer signoff (continuation + quality); reject degrades to pause_for_human severity=high. Hard limits in policy.py (destructive git, remote push, credential pattern, auto-acceptance) always halt regardless of severity.
+- Requirements: 144 (1 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis). DCR-0019 chain fully closed (R-135..R-144 accepted via T-025..T-032).
+- DCRs: DCR-0001..DCR-0019 all accepted.
+- Autonomous mode: pause_for_human is severity-routed — high → DCR stub (`needs-adr`) + halt; minor → open-question + auto_continue. In autonomous, unclassified pauses fall back to conservative halt + open-question (T-028); in research, unclassified pauses are logged + continued (since research is exploratory by definition). Autonomous- and research-mode `complete` requires dual-reviewer signoff (continuation + quality); reject degrades to pause_for_human severity=high. Hard limits in policy.py (destructive git, remote push, credential pattern, auto-acceptance) always halt regardless of mode.
+- Research mode: enters automatically on `aspec run loop --mode autonomous` with empty task queue; allowed paths are `reports/dogfood/**`, `docs/discovery/open-questions.yml`, `docs/change-requests/**`; bounded by `max_research_findings` (default 5) plus the existing `max_iterations`.
 - ADRs: 0001-0005 all accepted (0004 = autonomous execution profile; 0005 = research fallback, severity gating, multi-reviewer signoff)
 - `agent/task-ledger.yml` is the committed queue-status projection; local `agent/runs/*` remains ignored execution detail.
 - Historical context packs T-001..T-024 are marked complete in the committed task ledger; `aspec task next` should surface only new ready work.

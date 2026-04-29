@@ -68,7 +68,10 @@ def evaluate_policy(
             flags=["forbidden_path"],
         )
 
-    if mode == "autonomous" and executor_output:
+    # ADR-0004 hard limits + ADR-0005 research-mode safety: the content
+    # gates fire on any non-supervised mode. Supervised mode keeps the
+    # human in the loop, so the gates are noise there.
+    if mode in {"autonomous", "research"} and executor_output:
         autonomous_verdict = _evaluate_autonomous_content(executor_output)
         if autonomous_verdict is not None:
             return autonomous_verdict

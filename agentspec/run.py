@@ -20,6 +20,23 @@ EVENT_SCHEMA = "agentspec.supervised_run.event.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
 
+# R-142 / ADR-0005: research-mode fallback constants. Allowed paths are
+# the three durable findings sinks; nothing else is writable. The
+# sentinel context-pack value avoids inventing a synthetic pack file
+# while still satisfying the run-state schema.
+RESEARCH_ALLOWED_PATHS: list[str] = [
+    "reports/dogfood/**",
+    "docs/discovery/open-questions.yml",
+    "docs/change-requests/**",
+]
+RESEARCH_CONTEXT_PACK_SENTINEL = "<research-mode>"
+MAX_RESEARCH_FINDINGS_DEFAULT = 5
+_RESEARCH_PATH_PREFIXES: tuple[str, ...] = (
+    "reports/dogfood/",
+    "docs/discovery/open-questions.yml",
+    "docs/change-requests/",
+)
+
 
 def start_run(
     root: Path,
@@ -71,6 +88,55 @@ def start_run(
     return state
 
 
+def start_research_run(
+    root: Path,
+    *,
+    run_id: str | None = None,
+    max_iterations: int | None = None,
+    max_research_findings: int | None = None,
+) -> dict[str, Any]:
+    """Create a research-mode run state per ADR-0005 / R-142.
+
+    Research mode does not consume a context pack; it produces findings
+    under the three research-allowed dirs. The state's `allowed_paths`
+    is set to the research findings dirs so the existing path-allowlist
+    gate enforces the write-restriction without any new policy code.
+    """
+    root = root.resolve()
+    config = merged_runtime_config(load_project_config(root))
+    run_id = run_id or f"research-{_now_slug()}"
+    run_dir = _run_dir(root, run_id)
+    if run_dir.exists() and (run_dir / "state.yml").exists():
+        raise FileExistsError(f"Run already exists: {run_id}")
+
+    state = {
+        "schema": STATE_SCHEMA,
+        "run_id": run_id,
+        "status": "started",
+        "mode": "research",
+        "context_pack": RESEARCH_CONTEXT_PACK_SENTINEL,
+        "context_pack_title": "Research mode (no pack)",
+        "task_type": "research",
+        "allowed_paths": list(RESEARCH_ALLOWED_PATHS),
+        "iteration": 0,
+        "max_iterations": max_iterations or 3,
+        "max_research_findings": max_research_findings or MAX_RESEARCH_FINDINGS_DEFAULT,
+        "research_findings_produced": 0,
+        "profiles": _profile_bindings(config),
+        "created_at": _now(),
+        "updated_at": _now(),
+        "last_decision": None,
+    }
+    _write_state(root, run_id, state)
+    _append_event(root, run_id, {"kind": "research_run_started", "state": state})
+    return state
+
+
+def _now_slug() -> str:
+    """Compact timestamp for default research run ids."""
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
 def resume_run(
     root: Path,
     run_id: str,
@@ -91,6 +157,19 @@ def resume_run(
     reviewer_mode = reviewer_mode or configured_reviewer_mode
     iteration = int(state.get("iteration", 0)) + 1
     mode = state.get("mode", "supervised")
+
+    # R-142: research-mode findings counter — credit research-allowed
+    # touched paths toward the run's max_research_findings cap. The cap
+    # check happens AFTER the policy + reviewer pass so that this
+    # iteration's finding still gets recorded; subsequent iterations
+    # halt when the cap is reached.
+    if mode == "research" and touched_paths:
+        added = sum(1 for path in touched_paths if _is_research_findings_path(path))
+        if added:
+            state["research_findings_produced"] = (
+                int(state.get("research_findings_produced", 0)) + added
+            )
+
     policy_verdict = evaluate_policy(
         allowed_paths=list(state.get("allowed_paths", [])),
         touched_paths=touched_paths,
@@ -143,12 +222,34 @@ def resume_run(
     state["last_decision"] = review.decision
     state["updated_at"] = _now()
 
-    # ADR-0005 / R-144: autonomous-mode `complete` requires both
-    # continuation_reviewer (which produced this verdict) AND
-    # quality_reviewer to sign off. Without dual signoff the verdict
-    # degrades to pause_for_human severity=high; the existing R-143
-    # high path then drops a DCR stub and halts.
-    if review.decision == "complete" and mode == "autonomous":
+    # R-142: enforce max_research_findings cap. If we already met or
+    # exceeded the cap, override this iteration's verdict to halt.
+    # The counter was incremented above, so the iteration that PRODUCES
+    # the cap-hitting finding still completes normally; the NEXT
+    # iteration is what halts.
+    if mode == "research":
+        cap = int(state.get("max_research_findings", MAX_RESEARCH_FINDINGS_DEFAULT))
+        produced = int(state.get("research_findings_produced", 0))
+        if produced >= cap and review.decision != "halt":
+            review = dataclasses.replace(
+                review,
+                decision="halt",
+                reason=f"Research mode reached max_research_findings={cap}.",
+                policy_flags=[*review.policy_flags, "research_findings_cap"],
+                requires_human=False,
+                message_to_executor=None,
+            )
+            state["status"] = _status_for_decision(review.decision)
+            state["last_decision"] = review.decision
+
+    # ADR-0005 / R-144: autonomous- and research-mode `complete` requires
+    # quality_reviewer signoff (autonomous needs both reviewers; research
+    # is documented as quality-only but the existing flow already routes
+    # through continuation, so quality is the deciding signoff in both).
+    # Without quality signoff the verdict degrades to pause_for_human
+    # severity=high; the existing R-143 high path then drops a DCR stub
+    # and halts.
+    if review.decision == "complete" and mode in {"autonomous", "research"}:
         quality_decision, quality_reason = quality_reviewer_signoff(
             executor_output,
             test_status,
@@ -182,7 +283,7 @@ def resume_run(
     # demote to auto_continue; None → existing T-028 path
     # (open-question + halt) — the conservative fallback when the
     # deterministic classifier doesn't match either bucket.
-    if review.decision == "pause_for_human" and mode == "autonomous":
+    if review.decision == "pause_for_human" and mode in {"autonomous", "research"}:
         severity = review.severity
         if severity == "high":
             dcr_id = _record_high_pause_dcr_stub(root, run_id, state, review)
@@ -221,23 +322,49 @@ def resume_run(
                 },
             )
         else:
-            # Unclassified pause: T-028's conservative path.
-            finding_id = _record_blocked_finding(root, run_id, state, review)
-            state["status"] = "halted"
-            state["autonomous_finding"] = finding_id
-            _append_event(
-                root,
-                run_id,
-                {
-                    "kind": "autonomous_pause_to_finding",
-                    "iteration": iteration,
-                    "finding": finding_id,
-                    "severity": None,
-                    "original_decision": "pause_for_human",
-                    "applied_decision": "halt",
-                    "reason": review.reason,
-                },
-            )
+            # Unclassified pause:
+            # - autonomous: T-028's conservative path (log + halt) — the
+            #   executor's question is ambiguous and we'd rather stop than
+            #   silently invent an answer.
+            # - research: log + auto_continue. Research is exploratory by
+            #   definition; unclassified pauses are the common case and
+            #   should not halt the loop. The cap and the hard-limit gates
+            #   still bound the run.
+            if mode == "research":
+                finding_id = _record_minor_pause_finding(root, run_id, state, review)
+                state["status"] = _status_for_decision("auto_continue")
+                state["last_decision"] = "auto_continue"
+                state["autonomous_minor_finding"] = finding_id
+                _append_event(
+                    root,
+                    run_id,
+                    {
+                        "kind": "research_pause_to_finding",
+                        "iteration": iteration,
+                        "finding": finding_id,
+                        "severity": None,
+                        "original_decision": "pause_for_human",
+                        "applied_decision": "auto_continue",
+                        "reason": review.reason,
+                    },
+                )
+            else:
+                finding_id = _record_blocked_finding(root, run_id, state, review)
+                state["status"] = "halted"
+                state["autonomous_finding"] = finding_id
+                _append_event(
+                    root,
+                    run_id,
+                    {
+                        "kind": "autonomous_pause_to_finding",
+                        "iteration": iteration,
+                        "finding": finding_id,
+                        "severity": None,
+                        "original_decision": "pause_for_human",
+                        "applied_decision": "halt",
+                        "reason": review.reason,
+                    },
+                )
 
     _write_state(root, run_id, state)
     if review.decision == "complete":
@@ -288,18 +415,40 @@ def loop_run(
 
             selected_task = next_task_context_pack(root, task_type=task_type, order=order)
             if selected_task is None:
-                raise ValueError("No ready task context pack found.")
-            context_pack = Path(selected_task["path"])
-
-        state = start_run(
-            root,
-            context_pack,
-            run_id=run_id,
-            max_iterations=max_iterations,
-            mode=mode,
-        )
-        run_id = str(state["run_id"])
-        started = True
+                if mode == "autonomous":
+                    # R-142 / ADR-0005: empty queue + autonomous mode →
+                    # fall through to research mode instead of halting.
+                    state = start_research_run(
+                        root,
+                        run_id=run_id,
+                        max_iterations=max_iterations,
+                    )
+                    run_id = str(state["run_id"])
+                    started = True
+                    selected_task = None
+                else:
+                    raise ValueError("No ready task context pack found.")
+            else:
+                context_pack = Path(selected_task["path"])
+                state = start_run(
+                    root,
+                    context_pack,
+                    run_id=run_id,
+                    max_iterations=max_iterations,
+                    mode=mode,
+                )
+                run_id = str(state["run_id"])
+                started = True
+        else:
+            state = start_run(
+                root,
+                context_pack,
+                run_id=run_id,
+                max_iterations=max_iterations,
+                mode=mode,
+            )
+            run_id = str(state["run_id"])
+            started = True
 
     result: dict[str, Any] = {
         "run_id": run_id,
@@ -712,6 +861,13 @@ def _record_high_pause_dcr_stub(
     )
     write_text(path, body)
     return dcr_id
+
+
+def _is_research_findings_path(path: str) -> bool:
+    """Return True if `path` lives inside one of the research findings dirs."""
+    normalized = path.strip().lstrip("./")
+    return any(normalized.startswith(prefix) or normalized == prefix.rstrip("/")
+               for prefix in _RESEARCH_PATH_PREFIXES)
 
 
 def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:
