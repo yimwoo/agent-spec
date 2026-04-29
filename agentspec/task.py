@@ -7,7 +7,7 @@ import re
 from .archetype import validate_path_provenance
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
-from .paths import slugify
+from .paths import slugify, truncate_on_word_boundary
 
 
 TASK_LEDGER_SCHEMA = "agentspec.task_ledger.v0"
@@ -34,7 +34,16 @@ def create_task_context_pack(
         raise ValueError("Readiness is below 60; create discovery, spike, or scaffold tasks until the gate passes.")
 
     task_id = _next_task_id(root)
-    task_title = title or (selected_requirements[0]["title"] if selected_requirements else "Discovery Task")
+    if title:
+        task_title = title
+    elif selected_requirements:
+        # R-141: derive the displayed title from the full description
+        # so word-boundary truncation has the source text to work with.
+        # The pack's Goal section still receives the full description verbatim.
+        full = selected_requirements[0].get("description") or selected_requirements[0].get("title") or "Discovery Task"
+        task_title = truncate_on_word_boundary(full, limit=96)
+    else:
+        task_title = "Discovery Task"
     path = root / "agent" / "context-packs" / f"{task_id}-{slugify(task_title)}.md"
     text = _pack_text(root, task_id, task_title, task_type, selected_requirements, sections, sources, assumptions, originating_dcr)
     write_text(path, text)

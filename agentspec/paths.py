@@ -30,6 +30,7 @@ ARTIFACT_DIRS = [
     "reports/doctor",
     "reports/traceability",
     "reports/eval",
+    "reports/dogfood",
     ".claude/agents",
     ".claude/skills",
     ".codex/agents",
@@ -61,3 +62,22 @@ def next_numbered_id(prefix: str, existing_ids: list[str]) -> str:
         if match:
             highest = max(highest, int(match.group(1)))
     return f"{prefix}-{highest + 1:03d}"
+
+
+def truncate_on_word_boundary(text: str, limit: int = 96) -> str:
+    """Truncate `text` on a word boundary at or before `limit` chars.
+
+    Implements R-141: pack titles must not end mid-word. If `text` is
+    already short enough, it is returned unchanged. Otherwise the slice
+    falls back to the previous space; if that would shorten too
+    aggressively (more than half the limit lost), the original slice is
+    used and an ellipsis is appended without word-boundary correction.
+    """
+    text = text.rstrip(" .,;:")
+    if len(text) <= limit:
+        return text
+    truncated = text[:limit]
+    last_space = truncated.rfind(" ")
+    if last_space >= max(1, limit // 2):
+        truncated = truncated[:last_space]
+    return truncated.rstrip(" .,;:") + "…"

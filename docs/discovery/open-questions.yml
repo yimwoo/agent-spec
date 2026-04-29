@@ -264,8 +264,8 @@
   },
   {
     "id": "Q-021",
-    "question": "Should dogfood notes (R-139) be a CLI subcommand (aspec dogfood record), a documented reports/dogfood/ convention, or both? The MVP allows both but does not require either.",
-    "status": "open",
+    "question": "Should dogfood notes (R-139) be a CLI subcommand (aspec dogfood record), a documented reports/dogfood/ convention, or both? The MVP allows both but does not require either. RESOLVED by T-027: ships both \u2014 reports/dogfood/<date>-<slug>.md is the convention; aspec dogfood record produces a stub from CLI.",
+    "status": "answered",
     "impact": [
       "dogfood",
       "cli",
@@ -275,7 +275,8 @@
       "D-11.4",
       "D-24"
     ],
-    "raised_by": "DCR-0019"
+    "raised_by": "DCR-0019",
+    "answered_by": "T-027"
   },
   {
     "id": "Q-022",

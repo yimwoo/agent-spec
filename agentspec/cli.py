@@ -217,6 +217,14 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     )
     requirement_accept.add_argument("requirement_id")
 
+    dogfood = subparsers.add_parser("dogfood", help="Dogfood / experiment notes.")
+    dogfood_subparsers = dogfood.add_subparsers(dest="dogfood_command")
+    dogfood_record = dogfood_subparsers.add_parser(
+        "record", help="Write a dogfood-finding stub under reports/dogfood/."
+    )
+    dogfood_record.add_argument("--title", required=True)
+    dogfood_record.add_argument("--slug", required=True)
+
     mcp = subparsers.add_parser("mcp", help="MCP utilities.")
     mcp_subparsers = mcp.add_subparsers(dest="mcp_command")
     serve = mcp_subparsers.add_parser("serve", help="MVP placeholder for future MCP server.")
@@ -534,6 +542,34 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 origin = info.get("originating_dcr")
                 suffix = f" (originating_dcr={origin})" if origin else ""
                 print(f"Accepted {args.requirement_id}{suffix}.")
+                return 0
+            parser.print_help()
+            return 0
+
+        if args.command == "dogfood":
+            if args.dogfood_command == "record":
+                from datetime import date
+                from .paths import slugify
+                slug = slugify(args.slug)
+                today = date.today().isoformat()
+                target = root / "reports" / "dogfood" / f"{today}-{slug}.md"
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    raise FileExistsError(f"Dogfood note already exists: {target}")
+                body = (
+                    f"# {args.title}\n\n"
+                    f"Recorded: {today}\n\n"
+                    f"## Context\n\n"
+                    f"<!-- where this finding came from -->\n\n"
+                    f"## Observation\n\n"
+                    f"<!-- what happened, what surprised you -->\n\n"
+                    f"## Implication\n\n"
+                    f"<!-- what AgentSpec should learn or do differently -->\n\n"
+                    f"## Suggested Next Step\n\n"
+                    f"<!-- DCR? open question? backlog item? nothing yet? -->\n"
+                )
+                target.write_text(body, encoding="utf-8")
+                print(f"Recorded: {target.relative_to(root)}")
                 return 0
             parser.print_help()
             return 0

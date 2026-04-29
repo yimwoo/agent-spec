@@ -84,13 +84,52 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
             write_text(path, _role_doc(role))
             written.append(path)
 
-    for keep in ["agent/runs/.gitkeep", "reports/drift/.gitkeep", "reports/doctor/.gitkeep", "reports/traceability/.gitkeep", "reports/eval/.gitkeep"]:
+    for keep in ["agent/runs/.gitkeep", "reports/drift/.gitkeep", "reports/doctor/.gitkeep", "reports/traceability/.gitkeep", "reports/eval/.gitkeep", "reports/dogfood/.gitkeep"]:
         path = root / keep
         if not path.exists():
             write_text(path, "")
             written.append(path)
 
+    if _write_or_append_gitignore(root):
+        written.append(root / ".gitignore")
+
     return written
+
+
+_GITIGNORE_BLOCK_BEGIN = "# === AgentSpec ==="
+_GITIGNORE_BLOCK_END = "# === /AgentSpec ==="
+_GITIGNORE_BLOCK = f"""{_GITIGNORE_BLOCK_BEGIN}
+# Runtime cache + locks (.agentspec/config.yml is committed; cache is not).
+.agentspec/cache/
+.agentspec/locks/
+# Supervised-run state (per ADR-0003 / Q-014). Keep .gitkeep markers.
+agent/runs/*
+!agent/runs/.gitkeep
+# Generated reports — regenerable via doctor / compile / drift.
+reports/*/*
+!reports/*/.gitkeep
+# Dogfood notes (R-139) are durable artifacts; keep them tracked.
+!reports/dogfood/*.md
+{_GITIGNORE_BLOCK_END}
+"""
+
+
+def _write_or_append_gitignore(root: Path) -> bool:
+    """Implement R-140: write or append the AgentSpec ignore block.
+
+    Returns True if the file was created or modified, False if the block
+    was already present (idempotent re-init).
+    """
+    path = root / ".gitignore"
+    if not path.exists():
+        write_text(path, _GITIGNORE_BLOCK)
+        return True
+    existing = path.read_text(encoding="utf-8")
+    if _GITIGNORE_BLOCK_BEGIN in existing:
+        return False
+    separator = "" if existing.endswith("\n") else "\n"
+    write_text(path, existing + separator + "\n" + _GITIGNORE_BLOCK)
+    return True
 
 
 def _project_canvas(mode: str, archetype: str) -> str:

@@ -214,6 +214,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-28T23:58:27Z"
+    },
+    "agent/context-packs/T-027-dcr-0019-polish-bundle.md": {
+      "status": "complete",
+      "reason": "R-139/R-140/R-141 shipped: dogfood/ in artifact layout + record CLI; .gitignore writer (idempotent); word-boundary title truncation in pack creation.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T00:08:05Z"
     }
   }
 }

@@ -3453,7 +3453,7 @@
       "D-24"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "medium",
     "originating_dcr": "DCR-0019",
     "acceptance": [
@@ -3481,7 +3481,7 @@
       "D-23.6"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "high",
     "originating_dcr": "DCR-0019",
     "acceptance": [
@@ -3507,7 +3507,7 @@
       "D-12.12"
     ],
     "priority": "P3",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "high",
     "originating_dcr": "DCR-0019",
     "acceptance": [
