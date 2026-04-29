@@ -96,6 +96,7 @@ class ContextPack:
     path: str
     requirements: set[str]
     allowed_paths: list[str]
+    originating_dcrs: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -104,6 +105,7 @@ class FileAssessment:
     verdict: str
     requirement_ids: list[str]
     context_pack_ids: list[str]
+    originating_dcrs: list[str]
     findings: list[str]
 
 
@@ -220,15 +222,35 @@ def _context_packs(root: Path) -> list[ContextPack]:
         text = path.read_text(encoding="utf-8")
         requirements = set(re.findall(r"`(R-\d{3})`", _section(text, "Requirements")))
         allowed_paths = re.findall(r"`([^`]+)`", _section(text, "Allowed Paths"))
+        originating_dcrs = _extract_originating_dcrs(text)
         packs.append(
             ContextPack(
                 id=path.stem.split("-", 2)[0] + "-" + path.stem.split("-", 2)[1],
                 path=str(path.relative_to(root)),
                 requirements=requirements,
                 allowed_paths=allowed_paths,
+                originating_dcrs=originating_dcrs,
             )
         )
     return packs
+
+
+def _extract_originating_dcrs(text: str) -> list[str]:
+    """Pull DCR ids from header lines like:
+
+        Originating DCR: `DCR-0019-...`
+        Originating DCRs: `DCR-0002-...`, `DCR-0003-...`
+
+    Returns a deduplicated list preserving first-seen order. Empty list
+    when the pack predates the DCR protocol (early packs like T-001/T-002).
+    """
+    head = "\n".join(text.splitlines()[:30])
+    dcrs: list[str] = []
+    for match in re.finditer(r"^Originating\s+DCRs?:[^\n]*", head, re.MULTILINE):
+        for dcr in re.findall(r"DCR-\d{4}", match.group(0)):
+            if dcr not in dcrs:
+                dcrs.append(dcr)
+    return dcrs
 
 
 def _section(text: str, heading: str) -> str:
@@ -292,7 +314,7 @@ def _report(
     if not findings:
         out.append("- No drift concerns detected by path, requirement, context-pack, ADR, or security checks.")
 
-    out.extend(["", "## File Impact", "", "| File | Verdict | Requirements | Context Packs | Evidence |", "|---|---|---|---|---|"])
+    out.extend(["", "## File Impact", "", "| File | Verdict | Requirements | Context Packs | DCRs | Evidence |", "|---|---|---|---|---|---|"])
     if assessments:
         for assessment in assessments:
             out.append(
@@ -300,10 +322,11 @@ def _report(
                 f"`{assessment.file.path}` | {assessment.verdict} | "
                 f"{_id_list(assessment.requirement_ids)} | "
                 f"{_id_list(assessment.context_pack_ids)} | "
+                f"{_id_list(assessment.originating_dcrs)} | "
                 f"{_escape_cell('; '.join(assessment.findings))} |"
             )
     else:
-        out.append("| None | review | - | - | No git diff was available or no files changed. |")
+        out.append("| None | review | - | - | - | No git diff was available or no files changed. |")
 
     impacted = {requirement_id for assessment in assessments for requirement_id in assessment.requirement_ids}
     out.extend(["", "## Requirement Coverage", "", "| Requirement | Status | Evidence |", "|---|---|---|"])
@@ -360,11 +383,20 @@ def _assess_file(
     if any("Security-sensitive" in finding for finding in findings):
         verdict = "review"
 
+    # R-126: union of originating DCRs across the matching packs.
+    # Preserves first-seen order so the report is deterministic.
+    originating_dcrs: list[str] = []
+    for pack in matching_packs:
+        for dcr in pack.originating_dcrs:
+            if dcr not in originating_dcrs:
+                originating_dcrs.append(dcr)
+
     return FileAssessment(
         file=change,
         verdict=verdict,
         requirement_ids=[requirement["id"] for requirement in impacted],
         context_pack_ids=[pack.id for pack in matching_packs],
+        originating_dcrs=originating_dcrs,
         findings=findings,
     )
 

@@ -262,6 +262,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T02:00:12Z"
+    },
+    "agent/context-packs/T-033-drift-dcr-axis.md": {
+      "status": "complete",
+      "reason": "Drift reports now carry a DCRs column derived from each context pack's Originating DCR(s) header line. Last DCR-0002 deliverable shipped; R-126 flipped.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:11:51Z"
     }
   }
 }

@@ -223,8 +223,10 @@ diff --git a/tests/test_cli_workflow.py b/tests/test_cli_workflow.py
 
             report = (project / "reports" / "drift" / "latest.md").read_text(encoding="utf-8")
             self.assertIn("approve", report)
-            self.assertIn("| `agentspec/drift.py` | aligned | `R-010`, `R-083` | `T-001` |", report)
-            self.assertIn("| `tests/test_cli_workflow.py` | aligned | `R-010`, `R-083` | `T-001` |", report)
+            # R-126: drift table now carries a DCRs column. The fixture
+            # pack has no Originating DCR header, so the cell is `-`.
+            self.assertIn("| `agentspec/drift.py` | aligned | `R-010`, `R-083` | `T-001` | - |", report)
+            self.assertIn("| `tests/test_cli_workflow.py` | aligned | `R-010`, `R-083` | `T-001` | - |", report)
             self.assertIn("| `R-999` | not-impacted |", report)
             self.assertNotIn("Drift skeleton does not yet perform semantic impact analysis", report)
 
