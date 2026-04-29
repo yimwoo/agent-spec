@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ from .config import load_project_config, merged_runtime_config, resolve_agent_pr
 from .io import load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy
-from .review import review_executor_output
+from .review import quality_reviewer_signoff, review_executor_output
 
 
 STATE_SCHEMA = "agentspec.supervised_run.state.v0"
@@ -141,6 +142,39 @@ def resume_run(
     state["status"] = _status_for_decision(review.decision)
     state["last_decision"] = review.decision
     state["updated_at"] = _now()
+
+    # ADR-0005 / R-144: autonomous-mode `complete` requires both
+    # continuation_reviewer (which produced this verdict) AND
+    # quality_reviewer to sign off. Without dual signoff the verdict
+    # degrades to pause_for_human severity=high; the existing R-143
+    # high path then drops a DCR stub and halts.
+    if review.decision == "complete" and mode == "autonomous":
+        quality_decision, quality_reason = quality_reviewer_signoff(
+            executor_output,
+            test_status,
+        )
+        _append_event(
+            root,
+            run_id,
+            {
+                "kind": "dual_signoff_check",
+                "iteration": iteration,
+                "continuation_decision": "complete",
+                "quality_decision": quality_decision,
+                "quality_reason": quality_reason,
+            },
+        )
+        if quality_decision != "approve":
+            review = dataclasses.replace(
+                review,
+                decision="pause_for_human",
+                severity="high",
+                reason=f"Quality reviewer rejected autonomous-mode complete: {quality_reason}",
+                requires_human=True,
+                message_to_executor=None,
+            )
+            state["status"] = _status_for_decision(review.decision)
+            state["last_decision"] = review.decision
 
     # ADR-0004 / R-135 (basic autonomous mode) + ADR-0005 / R-143
     # (severity gating): pause_for_human in autonomous mode is routed

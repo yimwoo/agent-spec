@@ -246,6 +246,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T01:45:20Z"
+    },
+    "agent/context-packs/T-031-autonomous-mode-dual-reviewer-signoff.md": {
+      "status": "complete",
+      "reason": "Dual-reviewer signoff shipped per ADR-0005: quality_reviewer_signoff in review.py with stricter deterministic rule (test_status=passed AND acceptance evidence); run.py invokes it on autonomous-mode complete and degrades to pause_for_human severity=high on reject; the existing R-143 high path drops DCR + halts.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:49:43Z"
     }
   }
 }

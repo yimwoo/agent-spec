@@ -232,3 +232,48 @@ def _asks_for_approval(text: str) -> bool:
 def _looks_complete(text: str) -> bool:
     lowered = text.lower()
     return "complete" in lowered or "done" in lowered or "acceptance criteria" in lowered
+
+
+# R-144 / ADR-0005: quality_reviewer is the second-opinion signoff
+# autonomous mode requires before emitting `complete`. Stricter than
+# `_looks_complete` on purpose — disagreement is the whole point.
+_QUALITY_EVIDENCE_VERBS = ("met", "covered", "passed", "verified", "satisfied")
+
+
+def quality_reviewer_signoff(
+    executor_output: str,
+    test_status: str,
+    *,
+    profile: dict[str, Any] | None = None,
+    reviewer_mode: str = "deterministic",
+) -> tuple[str, str]:
+    """Return ('approve', reason) or ('reject', reason).
+
+    Deterministic rule: quality requires `test_status == "passed"` AND
+    explicit acceptance-criteria evidence in the executor output (the
+    word "acceptance" plus either "criteria" or one of the evidence
+    verbs above). Naked "Done." passes continuation_reviewer but does
+    not satisfy quality.
+
+    The model-backed branch is reserved for a future enhancement; for
+    R-144's MVP it falls through to the deterministic check.
+    """
+    if test_status != "passed":
+        return (
+            "reject",
+            f"Quality reviewer requires test_status=passed; got {test_status!r}.",
+        )
+
+    lowered = executor_output.lower()
+    has_acceptance = "acceptance" in lowered
+    has_criteria = "criteria" in lowered or "criterion" in lowered
+    has_evidence_verb = any(verb in lowered for verb in _QUALITY_EVIDENCE_VERBS)
+    if has_acceptance and (has_criteria or has_evidence_verb):
+        return (
+            "approve",
+            "Tests pass and the executor output references acceptance evidence.",
+        )
+    return (
+        "reject",
+        "Quality reviewer requires explicit acceptance-criteria evidence in the executor output.",
+    )
