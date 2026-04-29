@@ -91,6 +91,34 @@ Proposed fix:
 
 The first option is preferred. No new schema needed.
 
+**Update 2026-04-29 — research-mode write extends scope.**
+
+Empty-queue autonomous research run `research-20260429T164324Z` (see
+`reports/dogfood/2026-04-29-empty-queue-autonomous-research.md`) surfaced
+a second defect in the same code block. The ledger write at
+`agentspec/run.py:375-386` fires whenever `review.decision == "complete"`
+with no mode guard, so research-mode runs — where
+`state["context_pack"] == RESEARCH_CONTEXT_PACK_SENTINEL` — write a
+`<research-mode>` entry into `agent/task-ledger.yml`. The bogus entry
+was removed from the live workspace by hand after discovery; no
+production code changed.
+
+This is a different failure mode from the atomicity gap above
+(wrong-mode write vs. partial-write recovery) but shares the same call
+site, so a single fix can address both when item 2 is promoted:
+
+- Skip the `record_task_ledger_status` call when the run is research
+  mode (e.g., `state.get("mode") == "research"` or the sentinel
+  context pack), so research completion never touches the
+  implementation ledger.
+- Apply the write-ledger-first reordering (or compensating delete) for
+  non-research runs as originally proposed.
+
+Per ADR-0005 / R-142, research mode's allowed write surface is
+`reports/dogfood/**`, `docs/discovery/open-questions.yml`, and
+`docs/change-requests/**` — `agent/task-ledger.yml` is out of scope by
+design, which makes this a contract violation, not just polish.
+
 ### Item 3 — Metrics surface for feedback loops (spike candidate)
 
 Origin: T-040 review finding #5 (`agentspec/status.py:31-66`).
