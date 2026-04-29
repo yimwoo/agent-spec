@@ -5,6 +5,7 @@ import json
 import shlex
 import sys
 from pathlib import Path
+from typing import Any
 
 from .compile import compile_project
 from .dcr import (
@@ -617,8 +618,43 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
         parser.print_help()
         return 0
     except Exception as exc:
-        print(f"{parser.prog}: error: {exc}", file=sys.stderr)
+        if getattr(args, "json", False):
+            print(json.dumps(_build_error_envelope(exc, parser.prog, args), indent=2))
+        else:
+            print(f"{parser.prog}: error: {exc}", file=sys.stderr)
         return 1
+
+
+CLI_ERROR_SCHEMA = "agentspec.cli_error.v0"
+
+# Exception classes treated as transient by harness consumers. Default for
+# everything else is False — most CLI failures are user input or schema
+# errors that retrying would just hit again.
+_RETRYABLE_EXCEPTIONS: tuple[type[BaseException], ...] = (TimeoutError, ConnectionError)
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    return isinstance(exc, _RETRYABLE_EXCEPTIONS)
+
+
+def _build_error_envelope(exc: BaseException, prog: str, args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "schema": CLI_ERROR_SCHEMA,
+        "error": {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "retryable": _is_retryable(exc),
+            "command": _command_label(args, prog),
+        },
+    }
+
+
+def _command_label(args: argparse.Namespace, prog: str) -> str:
+    parts = [prog]
+    cmd = getattr(args, "command", None)
+    if cmd:
+        parts.append(str(cmd))
+    return " ".join(parts)
 
 
 def _runner_command_from_args(command: str | None, command_json: str | None) -> list[str] | None:
