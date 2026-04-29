@@ -321,5 +321,20 @@
       "D-18"
     ],
     "raised_by": "ADR-0005"
+  },
+  {
+    "id": "Q-025",
+    "question": "Should AgentSpec ever support an approve-and-continue mechanism past a halt? Today halts are strictly terminal (resume_run refuses any terminal state); an approval-event-then-continue mechanism would make R-130 literal text expressible. New DCR if/when we want this. Until then, halt is permanent and operators abort + start a new run.",
+    "status": "open",
+    "impact": [
+      "supervised-runs",
+      "governance",
+      "cli"
+    ],
+    "source_sections": [
+      "D-12.17",
+      "D-23.4"
+    ],
+    "raised_by": "T-029"
   }
 ]

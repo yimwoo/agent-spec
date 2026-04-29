@@ -3104,7 +3104,7 @@
       "D-23.4"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "low",
     "originating_dcr": "DCR-0001",
     "blocked_by": "ADR-0003",
@@ -3133,7 +3133,7 @@
       "D-24"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "low",
     "originating_dcr": "DCR-0001",
     "blocked_by": "ADR-0003",
@@ -3161,7 +3161,7 @@
       "D-07"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "low",
     "originating_dcr": "DCR-0001",
     "blocked_by": "ADR-0003",
@@ -3190,7 +3190,7 @@
       "D-23.4"
     ],
     "priority": "P2",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "low",
     "originating_dcr": "DCR-0001",
     "blocked_by": "ADR-0003",

@@ -230,6 +230,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T00:20:06Z"
+    },
+    "agent/context-packs/T-029-r127-r130-acceptance-review.md": {
+      "status": "complete",
+      "reason": "Audit report at reports/dogfood/2026-04-28-supervised-run-acceptance-review.md maps each acceptance criterion to specific modules + tests; all four requirements meet (R-130 stricter than literal text; Q-025 captures the optional approve-and-continue extension).",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:34:42Z"
     }
   }
 }

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | **spike** (with required ADR before implementation) |
 | Submitted | 2026-04-28 |
 | Submitted by | yimwu (project owner), drafted by Claude pilot agent |
