@@ -3653,5 +3653,35 @@
       "coordinator",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-146",
+    "title": "Run completion is atomic and respects the research-mode write surface",
+    "description": "On review.decision == complete, AgentSpec writes the task ledger before finalizing the run state file (or uses an equivalent compensating-delete strategy) so a failed ledger write cannot leave a complete state file behind. Research-mode runs never modify agent/task-ledger.yml \u2014 their allowed write surface stays bounded to reports/dogfood/**, docs/discovery/open-questions.yml, and docs/change-requests/** per ADR-0005 / R-142.",
+    "source_sections": [
+      "D-07",
+      "D-23.4",
+      "D-23.6"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0024",
+    "acceptance": [
+      "Research-mode complete leaves agent/task-ledger.yml byte-identical to its pre-run state.",
+      "Implementation-mode complete still records the pack as complete in agent/task-ledger.yml.",
+      "Completion writes the ledger before finalizing the state file (or uses a compensating-delete on ledger-write failure).",
+      "Existing supervised-run and research-mode tests continue to pass."
+    ],
+    "code_targets": [
+      "agentspec/run.py"
+    ],
+    "test_targets": [
+      "tests/test_run_completion_atomicity.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
   }
 ]

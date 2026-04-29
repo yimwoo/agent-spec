@@ -119,6 +119,12 @@ Per ADR-0005 / R-142, research mode's allowed write surface is
 `docs/change-requests/**` — `agent/task-ledger.yml` is out of scope by
 design, which makes this a contract violation, not just polish.
 
+**Resolution 2026-04-29 — promoted to DCR-0024.** Item 2 was lifted
+out of this defer bundle on 2026-04-29 and now lives in
+`DCR-0024-atomic-completion-research-mode-ledger-guard.md` with
+classification `implement-now`. Items 1, 3, and 4 remain in this DCR
+as `defer`.
+
 ### Item 3 — Metrics surface for feedback loops (spike candidate)
 
 Origin: T-040 review finding #5 (`agentspec/status.py:31-66`).
