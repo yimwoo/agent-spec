@@ -270,6 +270,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T02:11:51Z"
+    },
+    "agent/context-packs/T-035-commit-autonomous-run-summary-projection.md": {
+      "status": "complete",
+      "run_id": "complete-t-035-commit-autonomous-run-summary-projection-20260429024522",
+      "reason": "ADR-0004 summary projection shipped: autonomous/research runs now write agent/runs/<run-id>/summary.yml; init and .gitignore keep summaries tracked while raw state remains local.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:45:22Z"
     }
   }
 }

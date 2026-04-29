@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from agentspec.init import init_project
+from agentspec.io import load_data
 from agentspec.run import (
     MAX_RESEARCH_FINDINGS_DEFAULT,
     RESEARCH_ALLOWED_PATHS,
@@ -36,6 +37,12 @@ class StartResearchRunTests(unittest.TestCase):
                 state["max_research_findings"],
                 MAX_RESEARCH_FINDINGS_DEFAULT,
             )
+
+            summary = load_data(root / "agent" / "runs" / "r-research-1" / "summary.yml")
+            self.assertEqual(summary["schema"], "agentspec.supervised_run.summary.v0")
+            self.assertEqual(summary["mode"], "research")
+            self.assertEqual(summary["status"], "started")
+            self.assertEqual(summary["event_counts"]["research_run_started"], 1)
 
     def test_max_research_findings_override(self) -> None:
         with tempfile.TemporaryDirectory() as td:

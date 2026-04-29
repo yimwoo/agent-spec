@@ -57,6 +57,7 @@ class InitLayoutTests(unittest.TestCase):
             gitignore = (root / ".gitignore").read_text(encoding="utf-8")
             self.assertIn("agent/runs/*", gitignore)
             self.assertIn("!agent/runs/.gitkeep", gitignore)
+            self.assertIn("!agent/runs/*/summary.yml", gitignore)
             self.assertIn("reports/", gitignore)
             self.assertIn(".agentspec/cache", gitignore)
             self.assertIn("!reports/dogfood/*.md", gitignore)

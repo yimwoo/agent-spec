@@ -32,7 +32,10 @@ reports/*/*
 # Dogfood notes (R-139) are durable artifacts; keep them tracked.
 !reports/dogfood/*.md
 
-# Supervised-run state — Q-014 (commit vs ignore vs split) is unresolved.
-# Default to ignore until DCR-0001's spike picks a policy. .gitkeep stays.
+# Supervised-run state. Raw events/state stay local, but ADR-0004 requires
+# committed summary projections for autonomous-style runs.
 agent/runs/*
 !agent/runs/.gitkeep
+!agent/runs/*/
+agent/runs/*/*
+!agent/runs/*/summary.yml

@@ -70,6 +70,13 @@ class StartRunModeTests(unittest.TestCase):
             state = start_run(root, pack, run_id="r-auto", mode="autonomous")
             self.assertEqual(state.get("mode"), "autonomous")
 
+            summary = load_data(root / "agent" / "runs" / "r-auto" / "summary.yml")
+            self.assertEqual(summary["schema"], "agentspec.supervised_run.summary.v0")
+            self.assertEqual(summary["mode"], "autonomous")
+            self.assertEqual(summary["status"], "started")
+            self.assertFalse(summary["terminal"])
+            self.assertEqual(summary["event_counts"]["run_started"], 1)
+
     def test_run_start_autonomous_refuses_all_inferred_pack(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -114,6 +121,14 @@ class AutonomousPauseTransformTests(unittest.TestCase):
                 any(q.get("raised_by") == "r-pause-auto" for q in qs),
                 f"no finding tagged with raised_by=r-pause-auto: {qs}",
             )
+
+            summary = load_data(root / "agent" / "runs" / "r-pause-auto" / "summary.yml")
+            self.assertEqual(summary["status"], "halted")
+            self.assertTrue(summary["terminal"])
+            self.assertEqual(summary["last_decision"], "pause_for_human")
+            self.assertEqual(summary["verdict_counts"]["pause_for_human"], 1)
+            self.assertEqual(summary["blocked_findings"][0]["id"], state["autonomous_finding"])
+            self.assertEqual(summary["blocked_findings"][0]["kind"], "open-question")
 
     def test_supervised_pause_for_human_unchanged(self) -> None:
         """Regression guard: supervised mode produces the existing pause status,

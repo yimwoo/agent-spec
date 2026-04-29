@@ -53,8 +53,10 @@ class SupervisedRunTests(unittest.TestCase):
 
             state_path = root / "agent" / "runs" / "run-001" / "state.yml"
             events_path = root / "agent" / "runs" / "run-001" / "events.jsonl"
+            summary_path = root / "agent" / "runs" / "run-001" / "summary.yml"
             self.assertTrue(state_path.exists())
             self.assertTrue(events_path.exists())
+            self.assertFalse(summary_path.exists())
             self.assertEqual(_events(events_path)[0]["kind"], "run_started")
 
     def test_resume_auto_continues_for_active_context_pack_choice(self) -> None:

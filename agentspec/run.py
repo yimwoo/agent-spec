@@ -17,8 +17,10 @@ from .review import quality_reviewer_signoff, review_executor_output
 
 STATE_SCHEMA = "agentspec.supervised_run.state.v0"
 EVENT_SCHEMA = "agentspec.supervised_run.event.v0"
+SUMMARY_SCHEMA = "agentspec.supervised_run.summary.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
+SUMMARY_MODES = {"autonomous", "research"}
 
 # R-142 / ADR-0005: research-mode fallback constants. Allowed paths are
 # the three durable findings sinks; nothing else is writable. The
@@ -85,6 +87,7 @@ def start_run(
     }
     _write_state(root, run_id, state)
     _append_event(root, run_id, {"kind": "run_started", "state": state})
+    _maybe_write_run_summary(root, run_id, state)
     return state
 
 
@@ -129,6 +132,7 @@ def start_research_run(
     }
     _write_state(root, run_id, state)
     _append_event(root, run_id, {"kind": "research_run_started", "state": state})
+    _maybe_write_run_summary(root, run_id, state)
     return state
 
 
@@ -367,6 +371,7 @@ def resume_run(
                 )
 
     _write_state(root, run_id, state)
+    _maybe_write_run_summary(root, run_id, state)
     if review.decision == "complete":
         from .task import record_task_ledger_status
 
@@ -642,6 +647,7 @@ def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.") -> d
     state["updated_at"] = _now()
     state["last_decision"] = "halt"
     _write_state(root, run_id, state)
+    _maybe_write_run_summary(root, run_id, state)
     return state
 
 
@@ -938,6 +944,68 @@ def _state_exists(root: Path, run_id: str) -> bool:
 
 def _write_state(root: Path, run_id: str, state: dict[str, Any]) -> None:
     write_data(_run_dir(root, run_id) / "state.yml", state)
+
+
+def _maybe_write_run_summary(root: Path, run_id: str, state: dict[str, Any]) -> None:
+    """Write ADR-0004's committed projection for autonomous-style runs.
+
+    The summary intentionally omits executor output excerpts and raw logs.
+    Those remain local run state; the committed projection carries only the
+    audit fields a reviewer needs to triage terminal state and blocked
+    findings.
+    """
+    if state.get("mode") not in SUMMARY_MODES:
+        return
+    write_data(_run_dir(root, run_id) / "summary.yml", _run_summary(root, run_id, state))
+
+
+def _run_summary(root: Path, run_id: str, state: dict[str, Any]) -> dict[str, Any]:
+    events = _load_events(root, run_id)
+    verdict_counts: dict[str, int] = {}
+    event_counts: dict[str, int] = {}
+    blocked_findings: list[dict[str, Any]] = []
+
+    for event in events:
+        kind = str(event.get("kind", "unknown"))
+        event_counts[kind] = event_counts.get(kind, 0) + 1
+        if kind == "reviewer_verdict":
+            decision = str(event.get("decision", "unknown"))
+            verdict_counts[decision] = verdict_counts.get(decision, 0) + 1
+        if kind in {
+            "autonomous_pause_to_finding",
+            "research_pause_to_finding",
+            "autonomous_pause_to_dcr",
+        }:
+            finding_id = event.get("finding") or event.get("dcr")
+            if finding_id:
+                blocked_findings.append(
+                    {
+                        "id": finding_id,
+                        "kind": "dcr" if event.get("dcr") else "open-question",
+                        "event": kind,
+                        "iteration": event.get("iteration"),
+                        "severity": event.get("severity"),
+                        "applied_decision": event.get("applied_decision"),
+                    }
+                )
+
+    return {
+        "schema": SUMMARY_SCHEMA,
+        "run_id": run_id,
+        "mode": state.get("mode"),
+        "context_pack": state.get("context_pack"),
+        "context_pack_title": state.get("context_pack_title"),
+        "status": state.get("status"),
+        "terminal": state.get("status") in TERMINAL_RUN_STATUSES,
+        "last_decision": state.get("last_decision"),
+        "iteration": state.get("iteration"),
+        "max_iterations": state.get("max_iterations"),
+        "verdict_counts": verdict_counts,
+        "event_counts": event_counts,
+        "blocked_findings": blocked_findings,
+        "created_at": state.get("created_at"),
+        "updated_at": state.get("updated_at"),
+    }
 
 
 def _append_event(root: Path, run_id: str, event: dict[str, Any]) -> None:

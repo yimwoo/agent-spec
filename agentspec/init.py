@@ -105,6 +105,11 @@ _GITIGNORE_BLOCK = f"""{_GITIGNORE_BLOCK_BEGIN}
 # Supervised-run state (per ADR-0003 / Q-014). Keep .gitkeep markers.
 agent/runs/*
 !agent/runs/.gitkeep
+# ADR-0004 committed projection: keep run dirs visible, ignore raw state,
+# but track per-run summaries.
+!agent/runs/*/
+agent/runs/*/*
+!agent/runs/*/summary.yml
 # Generated reports — regenerable via doctor / compile / drift.
 reports/*/*
 !reports/*/.gitkeep
