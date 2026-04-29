@@ -58,6 +58,21 @@ class StatusCLITests(unittest.TestCase):
             self.assertIn("Attention Runs:", text)
             self.assertIn("run-halted", text)
 
+    def test_human_status_includes_active_and_recent_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            text = format_project_status(build_project_status(root))
+
+            self.assertIn("Active Runs:", text)
+            self.assertIn("run-active", text)
+            self.assertIn("Recent Runs:", text)
+            # run-summary-only lives only in the recent block (its status is
+            # `complete`, not active or attention), so its presence proves the
+            # recent block rendered rather than being suppressed.
+            self.assertIn("run-summary-only", text)
+
     def test_status_works_without_optional_folders(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

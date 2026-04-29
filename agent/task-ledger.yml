@@ -329,6 +329,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T04:01:55Z"
+    },
+    "agent/context-packs/T-041-status-active-and-recent-test-coverage.md": {
+      "status": "complete",
+      "reason": "Closes the T-040 review NOTE 1 test-coverage gap: new test_human_status_includes_active_and_recent_blocks method asserts the 'Active Runs:' and 'Recent Runs:' headers plus run-active and run-summary-only run ids appear in the human output. Existing test_human_status_mentions_next_and_attention_runs unchanged. No production change. 5/5 status tests pass; full suite green. Covers R-007, R-128.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T06:00:00Z"
     }
   }
 }
