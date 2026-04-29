@@ -354,6 +354,15 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T20:38:43Z"
+    },
+    "agent/context-packs/T-044-atomic-completion-research-mode-ledger-guard.md": {
+      "status": "complete",
+      "run_id": "complete-t-044-atomic-completion-research-mode-ledger-guard-20260429213355",
+      "reason": "R-146 / DCR-0024: research-mode complete now skips the implementation task ledger and non-research completion writes the ledger before finalizing the state file. Both completion sites (resume_run and complete_context_pack_run) updated. tests/test_run_completion_atomicity.py covers research-mode no-write, implementation-mode regression, and ledger-first ordering via mocked-failure. Full suite 192 -> 195.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T21:33:55Z"
     }
   }
 }

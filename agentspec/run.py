@@ -370,9 +370,13 @@ def resume_run(
                     },
                 )
 
-    _write_state(root, run_id, state)
-    _maybe_write_run_summary(root, run_id, state)
-    if review.decision == "complete":
+    # R-146 / DCR-0024: research-mode `complete` must not write the
+    # implementation task ledger (ADR-0005 / R-142 confines research-mode
+    # writes to reports/dogfood/**, docs/discovery/open-questions.yml, and
+    # docs/change-requests/**). For non-research runs, write the ledger
+    # BEFORE finalizing the state file so a failed ledger write cannot
+    # leave a `complete` state file behind without a matching ledger entry.
+    if review.decision == "complete" and state.get("mode") != "research":
         from .task import record_task_ledger_status
 
         record_task_ledger_status(
@@ -384,6 +388,9 @@ def resume_run(
             test_status=test_status,
             updated_at=str(state["updated_at"]),
         )
+
+    _write_state(root, run_id, state)
+    _maybe_write_run_summary(root, run_id, state)
     return {"state": state, "review": review.to_dict()}
 
 
@@ -562,6 +569,19 @@ def complete_context_pack_run(
         "completion_reason": reason,
         "verification": {"status": test_status},
     }
+    # R-146 / DCR-0024: ledger-first ordering. If the ledger write fails
+    # the state file is never written, and a retry with the same run_id
+    # naturally converges (ledger writes are idempotent inserts and the
+    # _state_exists guard above lets the retry re-enter cleanly).
+    record_task_ledger_status(
+        root,
+        context_pack=str(context_path.relative_to(root)),
+        status="complete",
+        run_id=run_id,
+        reason=reason,
+        test_status=test_status,
+        updated_at=str(state["updated_at"]),
+    )
     _write_state(root, run_id, state)
     _append_event(
         root,
@@ -572,15 +592,6 @@ def complete_context_pack_run(
             "reason": reason,
             "test_summary": {"status": test_status},
         },
-    )
-    record_task_ledger_status(
-        root,
-        context_pack=str(context_path.relative_to(root)),
-        status="complete",
-        run_id=run_id,
-        reason=reason,
-        test_status=test_status,
-        updated_at=str(state["updated_at"]),
     )
     return state
 
