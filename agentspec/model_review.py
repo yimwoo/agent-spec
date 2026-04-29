@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tomllib
 import urllib.error
 import urllib.request
@@ -12,6 +13,56 @@ from typing import Any
 MODEL_REVIEW_SCHEMA = "agentspec.model_review.verdict.v0"
 ALLOWED_MODEL_DECISIONS = {"auto_continue", "pause_for_human", "halt", "complete"}
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
+
+
+# ADR-0005 / R-143: deterministic severity rules for autonomous-mode
+# pause classification. HIGH wins ties because mis-classifying a high
+# concern as minor is the failure mode worth avoiding.
+_HIGH_SEVERITY_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # Security / credentials / compliance.
+    re.compile(r"\b(?:secret|secrets|credential|credentials|token|tokens|api[\s-]*key|password|auth|authentication|authorization|permission(?:s)?|compliance)\b", re.IGNORECASE),
+    # Product / scope / non-goal.
+    re.compile(r"\b(?:product\s+position|scope[\s-]*expand(?:ing|sion|ed)?|expand\s+scope|non[\s-]*goal|deprecate|supersede)\b", re.IGNORECASE),
+    # Architecture / design alternatives.
+    re.compile(r"\b(?:architecture|architectural|fundamental\s+(?:design|change))\b", re.IGNORECASE),
+    # ADR / requirement modification.
+    re.compile(r"\b(?:modify|supersede|change)\s+(?:the\s+)?(?:adr|requirement|r-\d+)\b", re.IGNORECASE),
+    re.compile(r"\bADR-\d+\b"),
+    # Destructive operations.
+    re.compile(r"\bforce[\s-]*push\b", re.IGNORECASE),
+    re.compile(r"\breset\s+--hard\b", re.IGNORECASE),
+    # `drop` followed (within ~3 words) by a destructive-noun.
+    re.compile(r"\bdrop\b(?:\s+\S+){0,3}\s+(?:table|database|index|column|schema|users|all)\b", re.IGNORECASE),
+    re.compile(r"\bdelete\s+(?:all|everything|the\s+\w+)\b", re.IGNORECASE),
+    re.compile(r"\b(?:wipe|destructive)\b", re.IGNORECASE),
+)
+
+_MINOR_SEVERITY_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # Naming / style.
+    re.compile(r"\b(?:rename|renaming|name\s+(?:should|for|this)|naming|style|format(?:ting)?|alias)\b", re.IGNORECASE),
+    re.compile(r"\bwhat\s+(?:should\s+(?:i|we)\s+)?(?:name|call)\b", re.IGNORECASE),
+    # Default values.
+    re.compile(r"\b(?:default\s+value|what\s+default|safe\s+default)\b", re.IGNORECASE),
+    # Equivalent alternatives.
+    re.compile(r"\b(?:either\s+way|both\s+work|equivalent|interchangeable|whichever)\b", re.IGNORECASE),
+    # Routine elaboration.
+    re.compile(r"\b(?:elaborate|expand\s+on|fill\s+in|flesh\s+out|verbose)\b", re.IGNORECASE),
+)
+
+
+def classify_severity(executor_output: str) -> str | None:
+    """Classify a pause-style executor output as `minor`, `high`, or None.
+
+    `high` always wins over `minor` so that a question mentioning both a
+    naming choice and a security concern is treated as high. Returns
+    None when neither rule set matches; the caller should fall back to
+    a conservative default (T-028 path: open-question + halt).
+    """
+    if any(pattern.search(executor_output) for pattern in _HIGH_SEVERITY_PATTERNS):
+        return "high"
+    if any(pattern.search(executor_output) for pattern in _MINOR_SEVERITY_PATTERNS):
+        return "minor"
+    return None
 
 
 def request_model_review(

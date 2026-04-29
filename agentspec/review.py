@@ -5,11 +5,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .model_review import request_model_review
+from .model_review import classify_severity, request_model_review
 from .policy import PolicyVerdict
 
 
 DECISIONS = {"auto_continue", "pause_for_human", "halt", "complete"}
+SEVERITIES = {"minor", "high"}
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,13 @@ class ReviewVerdict:
     requires_human: bool
     policy_flags: list[str]
     evidence_refs: list[str]
+    # R-143: severity is populated when decision == pause_for_human.
+    # Stays None for other decisions.
+    severity: str | None = None
+    # The default value the reviewer is willing to assume for a minor pause.
+    # For minor severity, this is recorded in the open-question entry and
+    # threaded into the next executor handoff. None when not applicable.
+    proposed_default: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -31,6 +39,8 @@ class ReviewVerdict:
             "requires_human": self.requires_human,
             "policy_flags": self.policy_flags,
             "evidence_refs": self.evidence_refs,
+            "severity": self.severity,
+            "proposed_default": self.proposed_default,
         }
 
 
@@ -99,6 +109,7 @@ def classify_executor_output(
             requires_human=True,
             policy_flags=[],
             evidence_refs=[active_context_pack],
+            severity=classify_severity(text),
         )
 
     return ReviewVerdict(
@@ -109,6 +120,7 @@ def classify_executor_output(
         requires_human=True,
         policy_flags=[],
         evidence_refs=[active_context_pack],
+        severity=classify_severity(text),
     )
 
 

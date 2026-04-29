@@ -238,6 +238,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T01:34:42Z"
+    },
+    "agent/context-packs/T-030-autonomous-mode-severity-gating.md": {
+      "status": "complete",
+      "reason": "Severity gating shipped per ADR-0005: classify_severity in model_review.py with HIGH-wins-ties keyword rules; review.ReviewVerdict carries severity + proposed_default; run.py autonomous transform branches into minor (open-question + auto_continue), high (DCR stub + halt), or T-028 fallback (open-question + halt) for unclassified.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:45:20Z"
     }
   }
 }

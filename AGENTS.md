@@ -13,8 +13,9 @@ This repository uses AgentSpec-generated context.
 ## Current Status
 
 - Readiness: 100/100 (normal-implementation)
-- Requirements: 144 (4 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis; R-142..R-144 from ADR-0005 awaiting per-pack implementation. R-127..R-130 closed via T-029 audit; R-135..R-141 shipped via T-025..T-028.)
+- Requirements: 144 (3 in `proposed-pending-acceptance`: R-126 awaiting T-006 drift DCR axis; R-142 (research fallback) and R-144 (dual-reviewer signoff) from ADR-0005 awaiting per-pack implementation. R-143 severity gating shipped via T-030.)
 - DCRs: DCR-0001..DCR-0019 all accepted (DCR-0001 closed via T-029 + ADR-0003; DCR-0019 needs-adr satisfied by ADR-0004 + ADR-0005).
+- Autonomous mode: pause_for_human is severity-routed — high → DCR stub (`needs-adr`) + halt; minor → open-question + auto_continue; unclassified → conservative open-question + halt (T-028 fallback). Hard limits in policy.py (destructive git, remote push, credential pattern, auto-acceptance) always halt regardless of severity.
 - ADRs: 0001-0005 all accepted (0004 = autonomous execution profile; 0005 = research fallback, severity gating, multi-reviewer signoff)
 - `agent/task-ledger.yml` is the committed queue-status projection; local `agent/runs/*` remains ignored execution detail.
 - Historical context packs T-001..T-024 are marked complete in the committed task ledger; `aspec task next` should surface only new ready work.

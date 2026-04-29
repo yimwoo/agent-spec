@@ -142,25 +142,68 @@ def resume_run(
     state["last_decision"] = review.decision
     state["updated_at"] = _now()
 
-    # ADR-0004 / R-135: in autonomous mode, pause_for_human is converted
-    # into a durable blocked finding and the run halts rather than waiting
-    # for a human reply.
+    # ADR-0004 / R-135 (basic autonomous mode) + ADR-0005 / R-143
+    # (severity gating): pause_for_human in autonomous mode is routed
+    # by `severity`. high → DCR stub + halt; minor → open-question +
+    # demote to auto_continue; None → existing T-028 path
+    # (open-question + halt) — the conservative fallback when the
+    # deterministic classifier doesn't match either bucket.
     if review.decision == "pause_for_human" and mode == "autonomous":
-        finding_id = _record_blocked_finding(root, run_id, state, review)
-        state["status"] = "halted"
-        state["autonomous_finding"] = finding_id
-        _append_event(
-            root,
-            run_id,
-            {
-                "kind": "autonomous_pause_to_finding",
-                "iteration": iteration,
-                "finding": finding_id,
-                "original_decision": "pause_for_human",
-                "applied_decision": "halt",
-                "reason": review.reason,
-            },
-        )
+        severity = review.severity
+        if severity == "high":
+            dcr_id = _record_high_pause_dcr_stub(root, run_id, state, review)
+            state["status"] = "halted"
+            state["autonomous_dcr"] = dcr_id
+            _append_event(
+                root,
+                run_id,
+                {
+                    "kind": "autonomous_pause_to_dcr",
+                    "iteration": iteration,
+                    "dcr": dcr_id,
+                    "severity": "high",
+                    "original_decision": "pause_for_human",
+                    "applied_decision": "halt",
+                    "reason": review.reason,
+                },
+            )
+        elif severity == "minor":
+            finding_id = _record_minor_pause_finding(root, run_id, state, review)
+            # Demote decision to auto_continue so the loop keeps moving.
+            state["status"] = _status_for_decision("auto_continue")
+            state["last_decision"] = "auto_continue"
+            state["autonomous_minor_finding"] = finding_id
+            _append_event(
+                root,
+                run_id,
+                {
+                    "kind": "autonomous_pause_to_finding",
+                    "iteration": iteration,
+                    "finding": finding_id,
+                    "severity": "minor",
+                    "original_decision": "pause_for_human",
+                    "applied_decision": "auto_continue",
+                    "reason": review.reason,
+                },
+            )
+        else:
+            # Unclassified pause: T-028's conservative path.
+            finding_id = _record_blocked_finding(root, run_id, state, review)
+            state["status"] = "halted"
+            state["autonomous_finding"] = finding_id
+            _append_event(
+                root,
+                run_id,
+                {
+                    "kind": "autonomous_pause_to_finding",
+                    "iteration": iteration,
+                    "finding": finding_id,
+                    "severity": None,
+                    "original_decision": "pause_for_human",
+                    "applied_decision": "halt",
+                    "reason": review.reason,
+                },
+            )
 
     _write_state(root, run_id, state)
     if review.decision == "complete":
@@ -506,10 +549,55 @@ def _record_blocked_finding(
     state: dict[str, Any],
     review: Any,
 ) -> str:
-    """Append an open-question entry capturing an autonomous-mode pause.
+    """Append an open-question entry capturing an autonomous-mode pause
+    that the deterministic severity classifier could not categorize.
 
-    Returns the new question id (Q-NNN) so callers can store it on state.
+    Conservative T-028 path: log + halt. The caller halts the run.
     """
+    return _append_open_question(
+        root,
+        run_id,
+        state,
+        review,
+        question_prefix=f"Blocked finding from autonomous run {run_id}",
+        severity=None,
+        impact_tags=["autonomous-mode", "blocked-finding"],
+        preserve_marker="autonomous-finding",
+    )
+
+
+def _record_minor_pause_finding(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    review: Any,
+) -> str:
+    """R-143 minor path: log the pause + the chosen default and continue."""
+    return _append_open_question(
+        root,
+        run_id,
+        state,
+        review,
+        question_prefix=f"Minor pause auto-continued in autonomous run {run_id}",
+        severity="minor",
+        impact_tags=["autonomous-mode", "minor-pause"],
+        preserve_marker="autonomous-minor-finding",
+        proposed_default=getattr(review, "proposed_default", None),
+    )
+
+
+def _append_open_question(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    review: Any,
+    *,
+    question_prefix: str,
+    severity: str | None,
+    impact_tags: list[str],
+    preserve_marker: str,
+    proposed_default: str | None = None,
+) -> str:
     questions_path = Path(root) / "docs" / "discovery" / "open-questions.yml"
     questions = load_data(questions_path, []) or []
     next_n = 1
@@ -518,23 +606,78 @@ def _record_blocked_finding(
         if match:
             next_n = max(next_n, int(match.group(1)) + 1)
     finding_id = f"Q-{next_n:03d}"
-    finding = {
+    reason = getattr(review, "reason", None) or "executor paused for human input."
+    finding: dict[str, Any] = {
         "id": finding_id,
-        "question": (
-            f"Blocked finding from autonomous run {run_id}: "
-            + (getattr(review, "reason", None) or "executor paused for human input.")
-        ),
+        "question": f"{question_prefix}: {reason}",
         "status": "open",
-        "impact": ["autonomous-mode", "blocked-finding"],
+        "impact": list(impact_tags),
         "source_sections": [],
         "raised_by": run_id,
-        "preserve": "autonomous-finding",
+        "preserve": preserve_marker,
         "context_pack": state.get("context_pack"),
         "iteration": state.get("iteration"),
     }
+    if severity is not None:
+        finding["severity"] = severity
+    if proposed_default is not None:
+        finding["proposed_default"] = proposed_default
     questions.append(finding)
     write_data(questions_path, questions)
     return finding_id
+
+
+def _record_high_pause_dcr_stub(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    review: Any,
+) -> str:
+    """R-143 high path: draft a DCR stub the human reclassifies later.
+
+    Conservative default classification is `needs-adr` because high-severity
+    autonomous pauses by definition concern product, scope, security, or
+    architecture. The stub Status is `classified` so the metadata table
+    parses; the human reviewer reclassifies as needed.
+    """
+    from .dcr import next_dcr_id  # local import to avoid cycles
+
+    dcr_id = next_dcr_id(root)
+    today = datetime.now(timezone.utc).date().isoformat()
+    reason = getattr(review, "reason", None) or "executor paused for human input."
+    iteration = state.get("iteration", "?")
+    context_pack = state.get("context_pack", "?")
+    slug = slugify(f"autonomous {run_id} i{iteration}") or "autonomous-pause"
+    path = Path(root) / "docs" / "change-requests" / f"{dcr_id}-{slug}.md"
+    body = (
+        f"# {dcr_id}: Autonomous run paused with high-severity question\n\n"
+        f"| Field | Value |\n"
+        f"|---|---|\n"
+        f"| Status | classified |\n"
+        f"| Classification | needs-adr |\n"
+        f"| Submitted | {today} |\n"
+        f"| Submitted by | autonomous run {run_id} |\n"
+        f"| Decided by | TBD |\n"
+        f"| Decided on | TBD |\n"
+        f"| Confidence | medium |\n\n"
+        f"## Summary\n\n"
+        f"An autonomous run halted with a high-severity pause. Human review\n"
+        f"required before this DCR can be classified or accepted.\n\n"
+        f"## Context\n\n"
+        f"- Run: `{run_id}`\n"
+        f"- Iteration: {iteration}\n"
+        f"- Context pack: `{context_pack}`\n"
+        f"- Reviewer reason: {reason}\n\n"
+        f"## Question\n\n"
+        f"<!-- the human triages: was this a real architectural decision, or\n"
+        f"     should the classification be reduced (e.g. defer, reject)? -->\n\n"
+        f"## Suggested Next Step\n\n"
+        f"Reclassify this DCR. The default `needs-adr` is conservative; the\n"
+        f"actual classification depends on whether the pause concerns an ADR-level\n"
+        f"decision or can be reduced to a lower-impact follow-up.\n"
+    )
+    write_text(path, body)
+    return dcr_id
 
 
 def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:
