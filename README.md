@@ -48,6 +48,7 @@ run loop chain.
 aspec init                                    # one-time scaffold
 aspec ingest docs/source/design.md            # snapshot the design doc
 aspec compile                                 # derive sections, reqs, packs
+aspec status                                  # summarize queue/run progress
 aspec task create --requirement R-001         # author a context pack
 aspec task list                               # show ready/blocked work
 aspec task next                               # pick the next ready pack
@@ -82,6 +83,7 @@ TARGET=/path/to/other/repo
 aspec --root "$TARGET" init --mode greenfield --targets claude,codex
 aspec --root "$TARGET" ingest "$TARGET/docs/source/design.md"
 aspec --root "$TARGET" compile
+aspec --root "$TARGET" status
 aspec --root "$TARGET" emit --target claude,codex
 aspec --root "$TARGET" doctor
 ```
@@ -163,6 +165,7 @@ you.
 
 ```bash
 cat "$TARGET/AGENTS.md"                       # working rules + status
+aspec --root "$TARGET" status                 # queue, runs, DCRs, next step
 aspec --root "$TARGET" task next              # next ready pack
 aspec --root "$TARGET" doctor                 # readiness snapshot
 ```
@@ -271,6 +274,7 @@ R-006 and R-023.
 ## Agent Control Plane
 
 ```bash
+aspec status --json
 aspec task list --json
 aspec task next
 aspec run loop
@@ -285,6 +289,8 @@ aspec task complete T-013 --test-status passed
 
 `agent/task-ledger.yml` is the committed queue-status projection. Local
 `agent/runs/*` keeps detailed execution state and remains ignored by git.
+`aspec status` summarizes readiness, requirements, DCRs, task queue state,
+active or blocked runs, recent runs, and the next recommended action.
 `aspec run prompt` renders the next executor handoff from durable run state and
 reviewer events, including any continuation reviewer instruction.
 `aspec run step` combines task selection/start/resume, reviewer verdicts, and

@@ -23,6 +23,7 @@ from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
+from .status import build_project_status, format_project_status
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -55,6 +56,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     readiness = subparsers.add_parser("readiness", help="Print readiness score.")
     readiness.add_argument("--json", action="store_true")
+
+    status = subparsers.add_parser("status", help="Print project progress status.")
+    status.add_argument("--json", action="store_true")
+    status.add_argument("--recent-runs", type=int, default=5)
 
     doctor = subparsers.add_parser("doctor", help="Run read-only brownfield assessment.")
     doctor.add_argument(
@@ -281,6 +286,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(readiness, indent=2))
             else:
                 print(readiness.get("summary", f"Readiness is {readiness.get('score', 0)}/100."))
+            return 0
+
+        if args.command == "status":
+            status_payload = build_project_status(root, recent_limit=args.recent_runs)
+            if args.json:
+                print(json.dumps(status_payload, indent=2))
+            else:
+                print(format_project_status(status_payload))
             return 0
 
         if args.command == "doctor" or (args.command == "repo" and args.repo_command == "scan"):

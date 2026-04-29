@@ -1,0 +1,200 @@
+import io
+import json
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+
+from agentspec.cli import main
+from agentspec.io import write_data
+from agentspec.status import PROJECT_STATUS_SCHEMA, build_project_status, format_project_status
+
+
+class StatusCLITests(unittest.TestCase):
+    def test_build_project_status_summarizes_queue_runs_and_dcrs(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            status = build_project_status(root, recent_limit=2)
+
+            self.assertEqual(status["schema"], PROJECT_STATUS_SCHEMA)
+            self.assertEqual(status["overall"], "attention_needed")
+            self.assertEqual(status["readiness"]["score"], 88)
+            self.assertEqual(status["requirements"]["by_status"], {"accepted": 1, "proposed-pending-acceptance": 1})
+            self.assertEqual(status["dcrs"]["by_status"], {"accepted": 1})
+            self.assertEqual(status["tasks"]["by_status"], {"complete": 1, "halted": 1, "ready": 1})
+            self.assertEqual(status["tasks"]["next"]["id"], "T-003")
+            self.assertEqual(status["runs"]["by_status"], {"complete": 1, "halted": 1, "running": 1})
+            self.assertEqual(status["runs"]["attention"][0]["run_id"], "run-halted")
+            self.assertEqual(status["runs"]["active"][0]["run_id"], "run-active")
+            self.assertEqual(len(status["runs"]["recent"]), 2)
+            self.assertIn("run inspect run-halted", status["recommendation"])
+
+    def test_cli_status_json_outputs_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "status", "--json"])
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["schema"], PROJECT_STATUS_SCHEMA)
+            self.assertEqual(payload["overall"], "attention_needed")
+
+    def test_human_status_mentions_next_and_attention_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            text = format_project_status(build_project_status(root))
+
+            self.assertIn("AgentSpec Status", text)
+            self.assertIn("Overall: attention_needed", text)
+            self.assertIn("Next: T-003", text)
+            self.assertIn("Attention Runs:", text)
+            self.assertIn("run-halted", text)
+
+    def test_status_works_without_optional_folders(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["schema"], PROJECT_STATUS_SCHEMA)
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["requirements"]["total"], 0)
+            self.assertEqual(status["dcrs"]["total"], 0)
+            self.assertEqual(status["tasks"]["total"], 0)
+            self.assertEqual(status["runs"]["total"], 0)
+
+
+def _seed(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "agent" / "runs").mkdir(parents=True)
+    (root / "docs" / "change-requests").mkdir(parents=True)
+    (root / "docs" / "discovery").mkdir(parents=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+
+    write_data(
+        root / "docs" / "discovery" / "readiness.yml",
+        {"score": 88, "mode": "normal-implementation", "summary": "Readiness is 88/100."},
+    )
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [
+            {"id": "R-001", "status": "accepted", "priority": "P0"},
+            {"id": "R-002", "status": "proposed-pending-acceptance", "priority": "P1"},
+        ],
+    )
+    (root / "docs" / "change-requests" / "DCR-0001-test.md").write_text(
+        """# DCR-0001: Test
+
+| Field | Value |
+|---|---|
+| Status | accepted |
+| Classification | implement-now |
+| Submitted | 2026-04-29 |
+| Submitted by | user |
+| Decided by | user |
+| Decided on | 2026-04-29 |
+| Confidence | medium |
+""",
+        encoding="utf-8",
+    )
+    (root / "agent" / "context-packs" / "T-001-ready.md").write_text(
+        """# T-001: Ready Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-001` Ready
+""",
+        encoding="utf-8",
+    )
+    (root / "agent" / "context-packs" / "T-002-complete.md").write_text(
+        """# T-002: Complete Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-002` Complete
+""",
+        encoding="utf-8",
+    )
+    (root / "agent" / "context-packs" / "T-003-ready.md").write_text(
+        """# T-003: Ready Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-001` Ready
+""",
+        encoding="utf-8",
+    )
+    write_data(
+        root / "agent" / "task-ledger.yml",
+        {
+            "schema": "agentspec.task_ledger.v0",
+            "tasks": {
+                "agent/context-packs/T-002-complete.md": {
+                    "status": "complete",
+                    "run_id": "run-complete",
+                    "updated_at": "2026-04-29T00:00:00Z",
+                }
+            },
+        },
+    )
+    write_data(
+        root / "agent" / "runs" / "run-active" / "state.yml",
+        {
+            "run_id": "run-active",
+            "status": "running",
+            "mode": "supervised",
+            "context_pack": "agent/context-packs/T-001-ready.md",
+            "context_pack_title": "T-001: Ready Task",
+            "iteration": 1,
+            "max_iterations": 3,
+            "last_decision": "auto_continue",
+            "updated_at": "2026-04-29T00:01:00Z",
+        },
+    )
+    write_data(
+        root / "agent" / "runs" / "run-halted" / "state.yml",
+        {
+            "run_id": "run-halted",
+            "status": "halted",
+            "mode": "autonomous",
+            "context_pack": "agent/context-packs/T-001-ready.md",
+            "context_pack_title": "T-001: Ready Task",
+            "iteration": 2,
+            "max_iterations": 3,
+            "last_decision": "halt",
+            "updated_at": "2026-04-29T00:02:00Z",
+        },
+    )
+    write_data(
+        root / "agent" / "runs" / "run-summary-only" / "summary.yml",
+        {
+            "schema": "agentspec.supervised_run.summary.v0",
+            "run_id": "run-summary-only",
+            "status": "complete",
+            "mode": "research",
+            "context_pack": "agent/context-packs/T-002-complete.md",
+            "iteration": 1,
+            "max_iterations": 2,
+            "last_decision": "complete",
+            "updated_at": "2026-04-29T00:00:30Z",
+            "terminal": True,
+        },
+    )
+
+
+if __name__ == "__main__":
+    unittest.main()
