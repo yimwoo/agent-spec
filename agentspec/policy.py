@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from fnmatch import fnmatch
+
+from .paths import path_matches_pattern
 
 
 @dataclass(frozen=True)
@@ -117,18 +118,7 @@ def _evaluate_autonomous_content(executor_output: str) -> PolicyVerdict | None:
 
 
 def _is_allowed(path: str, allowed_paths: list[str]) -> bool:
-    normalized = path.strip().lstrip("./")
     for pattern in allowed_paths:
-        candidate = pattern.strip().strip("`").lstrip("./")
-        if not candidate:
-            continue
-        if candidate.endswith("/**") and normalized.startswith(candidate[:-3].rstrip("/") + "/"):
-            return True
-        if candidate.endswith("/"):
-            if normalized.startswith(candidate):
-                return True
-        if fnmatch(normalized, candidate):
-            return True
-        if normalized == candidate:
+        if path_matches_pattern(path, pattern):
             return True
     return False

@@ -3621,5 +3621,37 @@
       "coordinator",
       "architect-reviewer"
     ]
+  },
+  {
+    "id": "R-145",
+    "title": "Globstar path matching is shared by policy and drift",
+    "description": "AgentSpec path pattern matching treats ** as zero or more path segments and * as a single path segment, and both policy enforcement and drift analysis use the same matcher. Generated patterns such as src/**/*.py match src/foo.py and src/sub/bar.py, while src/*.py does not match src/sub/bar.py.",
+    "source_sections": [
+      "D-12.13",
+      "D-12.17",
+      "D-23.4"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0023",
+    "acceptance": [
+      "src/foo.py matches src/**/*.py.",
+      "src/sub/bar.py matches src/**/*.py.",
+      "src/sub/bar.py does not match src/*.py.",
+      "Policy allowed-path checks and drift path matching call the same shared helper."
+    ],
+    "code_targets": [
+      "agentspec/paths.py",
+      "agentspec/policy.py",
+      "agentspec/drift.py"
+    ],
+    "test_targets": [
+      "tests/test_glob_semantics.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
   }
 ]

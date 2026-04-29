@@ -64,6 +64,58 @@ def next_numbered_id(prefix: str, existing_ids: list[str]) -> str:
     return f"{prefix}-{highest + 1:03d}"
 
 
+def path_matches_pattern(path: str, pattern: str) -> bool:
+    """Return True when a repo-relative path matches an AgentSpec path pattern.
+
+    AgentSpec patterns intentionally use common globstar semantics:
+    `**` crosses directory boundaries and `**/` may match zero or more
+    directories, while `*` never crosses `/`.
+    """
+    normalized_path = _normalize_repo_path(path)
+    normalized_pattern = _normalize_repo_path(pattern.strip().strip("`"))
+    if not normalized_path or not normalized_pattern:
+        return False
+
+    if not _has_glob_syntax(normalized_pattern):
+        if normalized_pattern.endswith("/"):
+            return normalized_path.startswith(normalized_pattern)
+        return normalized_path == normalized_pattern or normalized_path.startswith(normalized_pattern.rstrip("/") + "/")
+
+    return re.match(_glob_to_regex(normalized_pattern), normalized_path) is not None
+
+
+def _normalize_repo_path(value: str) -> str:
+    return value.strip().replace("\\", "/").lstrip("./").lstrip("/")
+
+
+def _has_glob_syntax(value: str) -> bool:
+    return any(char in value for char in "*?[")
+
+
+def _glob_to_regex(pattern: str) -> str:
+    out = ["^"]
+    i = 0
+    while i < len(pattern):
+        char = pattern[i]
+        if char == "*":
+            if i + 1 < len(pattern) and pattern[i + 1] == "*":
+                if i + 2 < len(pattern) and pattern[i + 2] == "/":
+                    out.append("(?:.*/)?")
+                    i += 3
+                else:
+                    out.append(".*")
+                    i += 2
+                continue
+            out.append("[^/]*")
+        elif char == "?":
+            out.append("[^/]")
+        else:
+            out.append(re.escape(char))
+        i += 1
+    out.append("$")
+    return "".join(out)
+
+
 def truncate_on_word_boundary(text: str, limit: int = 96) -> str:
     """Truncate `text` on a word boundary at or before `limit` chars.
 
