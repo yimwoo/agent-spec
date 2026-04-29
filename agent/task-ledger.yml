@@ -296,6 +296,14 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T03:45:00Z"
+    },
+    "agent/context-packs/T-037-cross-repo-report-dir.md": {
+      "status": "complete",
+      "reason": "DCR-0020 spike implementation: aspec doctor and aspec drift accept --report-dir <path>; reports redirect to <path>/<command>/ instead of <root>/reports/<command>/. Shared ensure_writable_dir helper in io.py raises PermissionError before analysis runs when the destination is not writable. Default behavior unchanged. 6 new tests in test_report_dir.py cover default, redirect, and read-only paths for both commands. Covers R-005, R-010, R-034, R-035.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T04:30:00Z"
     }
   }
 }

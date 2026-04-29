@@ -3,13 +3,24 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .io import write_data, write_text
+from .io import ensure_writable_dir, write_data, write_text
 
 
 IGNORED_DIRS = {".git", ".agentspec", ".venv", "venv", "__pycache__", "node_modules", ".pytest_cache", ".mypy_cache"}
 
 
-def run_doctor(root: Path) -> dict[str, Any]:
+def run_doctor(root: Path, report_dir: Path | None = None) -> dict[str, Any]:
+    """Run a brownfield assessment.
+
+    Reports default to `<root>/reports/doctor/`. When `report_dir` is
+    given (DCR-0020), reports are written under
+    `<report_dir>/doctor/` instead — used for cross-repo runs where the
+    target checkout is not writable.
+    """
+
+    destination = _doctor_destination(root, report_dir)
+    ensure_writable_dir(destination)
+
     files = _repo_files(root)
     scan = {
         "repo": {
@@ -23,9 +34,16 @@ def run_doctor(root: Path) -> dict[str, Any]:
         },
         "first_safe_tasks": _first_safe_tasks(files),
     }
-    write_data(root / "reports" / "doctor" / "repo-scan.yml", scan)
-    write_text(root / "reports" / "doctor" / "agent-readiness.md", _doctor_report(scan))
+    write_data(destination / "repo-scan.yml", scan)
+    write_text(destination / "agent-readiness.md", _doctor_report(scan))
     return scan
+
+
+def _doctor_destination(root: Path, report_dir: Path | None) -> Path:
+    if report_dir is None:
+        return root / "reports" / "doctor"
+    base = report_dir if report_dir.is_absolute() else root / report_dir
+    return base / "doctor"
 
 
 def _repo_files(root: Path) -> list[str]:

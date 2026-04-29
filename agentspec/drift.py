@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .io import load_data, utc_now_iso, write_text
+from .io import ensure_writable_dir, load_data, utc_now_iso, write_text
 
 
 SENSITIVE_PATH_HINTS = ["auth", "security", "secret", "permission", "policy", "billing"]
@@ -109,7 +109,17 @@ class FileAssessment:
     findings: list[str]
 
 
-def run_drift(root: Path, diff_ref: str | None = None) -> Path:
+def run_drift(root: Path, diff_ref: str | None = None, report_dir: Path | None = None) -> Path:
+    """Generate the spec-drift review report.
+
+    Defaults to `<root>/reports/drift/latest.md`. When `report_dir` is
+    given (DCR-0020), writes to `<report_dir>/drift/latest.md` — used
+    for cross-repo runs where the target checkout is not writable.
+    """
+
+    destination = _drift_destination(root, report_dir)
+    ensure_writable_dir(destination)
+
     diff_text = _diff_text(root, diff_ref)
     changes = _parse_unified_diff(diff_text)
     if not changes:
@@ -119,9 +129,16 @@ def run_drift(root: Path, diff_ref: str | None = None) -> Path:
     context_packs = _context_packs(root)
     adrs = _adr_paths(root)
     report = _report(changes, requirements, sections, context_packs, adrs, diff_ref, bool(diff_text.strip()))
-    path = root / "reports" / "drift" / "latest.md"
+    path = destination / "latest.md"
     write_text(path, report)
     return path
+
+
+def _drift_destination(root: Path, report_dir: Path | None) -> Path:
+    if report_dir is None:
+        return root / "reports" / "drift"
+    base = report_dir if report_dir.is_absolute() else root / report_dir
+    return base / "drift"
 
 
 def _diff_text(root: Path, diff_ref: str | None) -> str:

@@ -53,3 +53,31 @@ def copy_text_file(source: Path, destination: Path) -> None:
 def lines_between(path: Path, start_line: int, end_line: int) -> str:
     lines = path.read_text(encoding="utf-8").splitlines()
     return "\n".join(lines[start_line - 1 : end_line])
+
+
+def ensure_writable_dir(path: Path) -> None:
+    """Create `path` if missing and confirm it is writable.
+
+    Raises PermissionError with the offending path when the directory
+    cannot be created or a probe file cannot be written. This is the
+    pre-flight gate for DCR-0020 cross-repo report destinations: catch
+    a read-only target before doing analysis work, not after.
+    """
+
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except PermissionError as exc:
+        raise PermissionError(f"Report destination is not writable: {path}") from exc
+
+    probe = path / ".agentspec-write-probe"
+    try:
+        probe.write_text("", encoding="utf-8")
+    except PermissionError as exc:
+        raise PermissionError(f"Report destination is not writable: {path}") from exc
+    finally:
+        try:
+            probe.unlink()
+        except FileNotFoundError:
+            pass
+        except PermissionError:
+            pass

@@ -56,11 +56,19 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     readiness = subparsers.add_parser("readiness", help="Print readiness score.")
     readiness.add_argument("--json", action="store_true")
 
-    subparsers.add_parser("doctor", help="Run read-only brownfield assessment.")
+    doctor = subparsers.add_parser("doctor", help="Run read-only brownfield assessment.")
+    doctor.add_argument(
+        "--report-dir",
+        help="Write reports under <path>/doctor/ instead of <root>/reports/doctor/. Use for read-only target checkouts.",
+    )
 
     repo = subparsers.add_parser("repo", help="Repository utilities.")
     repo_subparsers = repo.add_subparsers(dest="repo_command")
-    repo_subparsers.add_parser("scan", help="Alias for doctor.")
+    repo_scan = repo_subparsers.add_parser("scan", help="Alias for doctor.")
+    repo_scan.add_argument(
+        "--report-dir",
+        help="Write reports under <path>/doctor/ instead of <root>/reports/doctor/. Use for read-only target checkouts.",
+    )
 
     task = subparsers.add_parser("task", help="Task utilities.")
     task_subparsers = task.add_subparsers(dest="task_command")
@@ -95,6 +103,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     drift = subparsers.add_parser("drift", help="Generate a spec drift review report.")
     drift.add_argument("--diff")
+    drift.add_argument(
+        "--report-dir",
+        help="Write the drift report under <path>/drift/ instead of <root>/reports/drift/. Use for read-only target checkouts.",
+    )
 
     run = subparsers.add_parser("run", help="Supervised run utilities.")
     run_subparsers = run.add_subparsers(dest="run_command")
@@ -272,8 +284,10 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "doctor" or (args.command == "repo" and args.repo_command == "scan"):
-            scan = run_doctor(root)
-            print(f"Doctor scan complete: {root / 'reports' / 'doctor' / 'repo-scan.yml'}")
+            report_dir = Path(args.report_dir) if args.report_dir else None
+            scan = run_doctor(root, report_dir=report_dir)
+            destination = report_dir / "doctor" if report_dir else root / "reports" / "doctor"
+            print(f"Doctor scan complete: {destination / 'repo-scan.yml'}")
             print(f"Languages: {', '.join(scan['repo']['languages']) or '-'}")
             return 0
 
@@ -327,8 +341,13 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "drift":
-            path = run_drift(root, diff_ref=args.diff)
-            print(f"Wrote drift report: {path.relative_to(root)}")
+            report_dir = Path(args.report_dir) if args.report_dir else None
+            path = run_drift(root, diff_ref=args.diff, report_dir=report_dir)
+            try:
+                display_path: Path | str = path.relative_to(root)
+            except ValueError:
+                display_path = path
+            print(f"Wrote drift report: {display_path}")
             return 0
 
         if args.command == "run":
