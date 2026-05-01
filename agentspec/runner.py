@@ -30,6 +30,7 @@ def package_run(
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     if runner not in ALLOWED_RUNNERS:
         raise ValueError(f"Unknown runner: {runner}. Expected one of {sorted(ALLOWED_RUNNERS)}.")
@@ -45,8 +46,9 @@ def package_run(
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
+        run_dir=run_dir,
     )
-    return build_runner_package(step, runner=runner)
+    return build_runner_package(step, runner=runner, run_dir=_run_dir_arg(root, run_dir))
 
 
 def submit_runner_result(
@@ -56,6 +58,7 @@ def submit_runner_result(
     *,
     runner: str = "generic",
     reviewer_mode: str | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     parsed = parse_runner_result(result)
     mode = reviewer_mode or parsed.get("reviewer_mode")
@@ -67,6 +70,7 @@ def submit_runner_result(
         touched_paths=list(parsed["touched_paths"]),
         test_status=str(parsed["test_status"]),
         reviewer_mode=mode if isinstance(mode, str) else None,
+        run_dir=run_dir,
     )
 
 
@@ -83,6 +87,7 @@ def run_demo(
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     initial_package = package_run(
         root,
@@ -92,6 +97,7 @@ def run_demo(
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
+        run_dir=run_dir,
     )
     actual_run_id = str(initial_package["run_id"])
     transcript: list[dict[str, Any]] = [{"kind": "package", "package": initial_package}]
@@ -113,6 +119,7 @@ def run_demo(
             result,
             runner=runner,
             reviewer_mode=reviewer_mode,
+            run_dir=run_dir,
         )
         transcript.append({"kind": "package", "package": final_package})
 
@@ -142,6 +149,7 @@ def execute_runner(
     order: str = "newest",
     max_iterations: int | None = None,
     timeout_seconds: float | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     if command is not None and not command:
@@ -156,6 +164,7 @@ def execute_runner(
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
+        run_dir=run_dir,
     )
     actual_run_id = str(initial_package["run_id"])
     transcript: list[dict[str, Any]] = [{"kind": "package", "package": initial_package}]
@@ -184,6 +193,7 @@ def execute_runner(
             result,
             runner=runner,
             reviewer_mode=reviewer_mode,
+            run_dir=run_dir,
         )
         transcript.append({"kind": "package", "package": final_package})
 
@@ -231,7 +241,7 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> dict[str, Any]:
+def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_dir: str | None = None) -> dict[str, Any]:
     if runner not in ALLOWED_RUNNERS:
         raise ValueError(f"Unknown runner: {runner}. Expected one of {sorted(ALLOWED_RUNNERS)}.")
 
@@ -239,6 +249,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> di
     should_execute = step.get("next_action") == "continue_executor" and isinstance(prompt, str) and bool(prompt.strip())
     context_pack = step.get("state", {}).get("context_pack") if isinstance(step.get("state"), dict) else None
     run_id = str(step.get("run_id"))
+    run_dir_flags = ["--run-dir", run_dir] if run_dir else []
     package = {
         "schema": RUNNER_PACKAGE_SCHEMA,
         "runner": runner,
@@ -264,6 +275,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> di
                 run_id,
                 "--runner",
                 runner,
+                *run_dir_flags,
                 "--result-json",
                 "<runner-result-json>",
                 "--json",
@@ -281,6 +293,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> di
                 "step",
                 "--run-id",
                 run_id,
+                *run_dir_flags,
                 "--executor-output",
                 "<executor-output>",
                 "--test-status",
@@ -291,6 +304,15 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic") -> di
         },
     }
     return package
+
+
+def _run_dir_arg(root: Path, run_dir: Path | None) -> str | None:
+    if run_dir is None:
+        return None
+    path = Path(run_dir)
+    if not path.is_absolute():
+        path = Path(root).resolve() / path
+    return str(path.resolve())
 
 
 def _runner_argv(runner: str) -> list[str]:

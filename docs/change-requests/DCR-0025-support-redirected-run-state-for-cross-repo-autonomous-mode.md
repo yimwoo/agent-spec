@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | spike |
 | Submitted | 2026-04-30 |
 | Submitted by | user |
 | Decided by | user |
-| Decided on | 2026-04-30 |
+| Decided on | 2026-05-01 |
 | Confidence | medium |
 
 ## Summary

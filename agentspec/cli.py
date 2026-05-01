@@ -168,11 +168,13 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_start = run_subparsers.add_parser("start", help="Create local supervised-run state for a context pack.")
     run_start.add_argument("context_pack")
     run_start.add_argument("--run-id")
+    run_start.add_argument("--run-dir", help="Store run state under <path>/<run-id>/ instead of <root>/agent/runs/<run-id>/.")
     run_start.add_argument("--max-iterations", type=int)
     run_start.add_argument("--mode", default="supervised", choices=["supervised", "autonomous"])
 
     run_resume = run_subparsers.add_parser("resume", help="Record an executor iteration and reviewer verdict.")
     run_resume.add_argument("run_id")
+    run_resume.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_resume.add_argument("--executor-output", required=True)
     run_resume.add_argument("--touched-path", action="append", default=[])
     run_resume.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
@@ -181,6 +183,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_loop = run_subparsers.add_parser("loop", help="Select, start, or resume the next supervised run step.")
     run_loop.add_argument("context_pack", nargs="?")
     run_loop.add_argument("--run-id")
+    run_loop.add_argument("--run-dir", help="Store run state under <path>/<run-id>/ instead of <root>/agent/runs/<run-id>/.")
     run_loop.add_argument("--executor-output")
     run_loop.add_argument("--touched-path", action="append", default=[])
     run_loop.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
@@ -194,6 +197,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_step = run_subparsers.add_parser("step", help="Run one harness control-plane step.")
     run_step.add_argument("context_pack", nargs="?")
     run_step.add_argument("--run-id")
+    run_step.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_step.add_argument("--executor-output")
     run_step.add_argument("--touched-path", action="append", default=[])
     run_step.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
@@ -207,6 +211,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_package.add_argument("context_pack", nargs="?")
     run_package.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
     run_package.add_argument("--run-id")
+    run_package.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_package.add_argument("--executor-output")
     run_package.add_argument("--touched-path", action="append", default=[])
     run_package.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
@@ -219,6 +224,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_result = run_subparsers.add_parser("result", help="Submit a structured runner result and return the next package.")
     run_result.add_argument("run_id")
     run_result.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
+    run_result.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_result.add_argument("--result-json", required=True, help="Runner result JSON, or '-' to read stdin.")
     run_result.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
     run_result.add_argument("--json", action="store_true")
@@ -227,6 +233,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_demo_parser.add_argument("context_pack", nargs="?")
     run_demo_parser.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
     run_demo_parser.add_argument("--run-id")
+    run_demo_parser.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_demo_parser.add_argument("--executor-output", default="Done. Acceptance criteria are met.")
     run_demo_parser.add_argument("--touched-path", action="append", default=[])
     run_demo_parser.add_argument("--test-status", default="passed", choices=["not_run", "passed", "failed"])
@@ -240,6 +247,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_exec.add_argument("context_pack", nargs="?")
     run_exec.add_argument("--runner", default="generic", choices=sorted(ALLOWED_RUNNERS))
     run_exec.add_argument("--run-id")
+    run_exec.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_exec.add_argument("--command", dest="runner_command", help="Shell-like command string to split and execute without a shell.")
     run_exec.add_argument("--command-json", help="JSON array command argv to execute.")
     run_exec.add_argument("--touched-path", action="append", default=[])
@@ -253,13 +261,16 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     run_inspect = run_subparsers.add_parser("inspect", help="Print current supervised-run state.")
     run_inspect.add_argument("run_id")
+    run_inspect.add_argument("--run-dir", help="Read run state under <path>/<run-id>/.")
 
     run_prompt = run_subparsers.add_parser("prompt", help="Print the next executor handoff prompt.")
     run_prompt.add_argument("run_id")
+    run_prompt.add_argument("--run-dir", help="Read run state under <path>/<run-id>/.")
     run_prompt.add_argument("--json", action="store_true")
 
     run_abort = run_subparsers.add_parser("abort", help="Abort a supervised run.")
     run_abort.add_argument("run_id")
+    run_abort.add_argument("--run-dir", help="Read and write run state under <path>/<run-id>/.")
     run_abort.add_argument("--reason", default="Aborted by user.")
 
     dcr = subparsers.add_parser("dcr", help="Design Change Request utilities.")
@@ -510,6 +521,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     run_id=args.run_id,
                     max_iterations=args.max_iterations,
                     mode=args.mode,
+                    run_dir=_run_dir_from_args(args),
                 )
                 print(
                     f"Started run {state['run_id']} for {state['context_pack']} "
@@ -524,6 +536,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     touched_paths=args.touched_path,
                     test_status=args.test_status,
                     reviewer_mode=args.reviewer_mode,
+                    run_dir=_run_dir_from_args(args),
                 )
                 review = result["review"]
                 print(f"{args.run_id}: {review['decision']} ({review['confidence']}) - {review['reason']}")
@@ -544,6 +557,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     order=args.order,
                     max_iterations=args.max_iterations,
                     mode=args.mode,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(result, indent=2))
@@ -555,6 +569,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     print(f"Selected {selected['path']}.")
                 action = "Started" if result.get("started") else "Using"
                 print(f"{action} run {state['run_id']} for {state['context_pack']}.")
+                target_writes = result.get("target_write_requirements")
+                if target_writes:
+                    print(
+                        "Research findings may still require target writes: "
+                        + ", ".join(target_writes)
+                    )
 
                 review = result.get("review")
                 if review:
@@ -577,6 +597,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     task_type=args.task_type,
                     order=args.order,
                     max_iterations=args.max_iterations,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(result, indent=2))
@@ -598,6 +619,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     task_type=args.task_type,
                     order=args.order,
                     max_iterations=args.max_iterations,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(package, indent=2))
@@ -616,6 +638,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     result_payload,
                     runner=args.runner,
                     reviewer_mode=args.reviewer_mode,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(package, indent=2))
@@ -638,6 +661,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     task_type=args.task_type,
                     order=args.order,
                     max_iterations=args.max_iterations,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(demo, indent=2))
@@ -658,6 +682,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     order=args.order,
                     max_iterations=args.max_iterations,
                     timeout_seconds=args.timeout,
+                    run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
                     print(json.dumps(result, indent=2))
@@ -665,18 +690,18 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(f"{result['run_id']}: {result['final_next_action']} runner={result['runner']}")
                 return 0
             if args.run_command == "inspect":
-                info = inspect_run(root, args.run_id)
+                info = inspect_run(root, args.run_id, run_dir=_run_dir_from_args(args))
                 print(json.dumps(info, indent=2))
                 return 0
             if args.run_command == "prompt":
-                handoff = build_next_executor_prompt(root, args.run_id)
+                handoff = build_next_executor_prompt(root, args.run_id, run_dir=_run_dir_from_args(args))
                 if args.json:
                     print(json.dumps(handoff, indent=2))
                 else:
                     print(handoff["prompt"])
                 return 0
             if args.run_command == "abort":
-                state = abort_run(root, args.run_id, reason=args.reason)
+                state = abort_run(root, args.run_id, reason=args.reason, run_dir=_run_dir_from_args(args))
                 print(f"Aborted run {state['run_id']}.")
                 return 0
             parser.print_help()
@@ -810,6 +835,11 @@ def _runner_command_from_args(command: str | None, command_json: str | None) -> 
     if command:
         return shlex.split(command)
     return None
+
+
+def _run_dir_from_args(args: argparse.Namespace) -> Path | None:
+    value = getattr(args, "run_dir", None)
+    return Path(value) if value else None
 
 
 if __name__ == "__main__":

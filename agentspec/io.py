@@ -55,25 +55,25 @@ def lines_between(path: Path, start_line: int, end_line: int) -> str:
     return "\n".join(lines[start_line - 1 : end_line])
 
 
-def ensure_writable_dir(path: Path) -> None:
+def ensure_writable_dir(path: Path, *, label: str = "Report destination") -> None:
     """Create `path` if missing and confirm it is writable.
 
     Raises PermissionError with the offending path when the directory
-    cannot be created or a probe file cannot be written. This is the
-    pre-flight gate for DCR-0020 cross-repo report destinations: catch
-    a read-only target before doing analysis work, not after.
+    cannot be created or a probe file cannot be written. Callers pass
+    `label` so cross-repo report and run-state preflights can keep
+    actionable, domain-specific error messages.
     """
 
     try:
         path.mkdir(parents=True, exist_ok=True)
     except PermissionError as exc:
-        raise PermissionError(f"Report destination is not writable: {path}") from exc
+        raise PermissionError(f"{label} is not writable: {path}") from exc
 
     probe = path / ".agentspec-write-probe"
     try:
         probe.write_text("", encoding="utf-8")
     except PermissionError as exc:
-        raise PermissionError(f"Report destination is not writable: {path}") from exc
+        raise PermissionError(f"{label} is not writable: {path}") from exc
     finally:
         try:
             probe.unlink()

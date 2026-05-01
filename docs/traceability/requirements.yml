@@ -4072,5 +4072,124 @@
       "coordinator",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-159",
+    "title": "Run state storage can be redirected",
+    "description": "aspec run commands can store supervised, autonomous, and research run state under a caller-selected run directory instead of the target repository's agent/runs directory.",
+    "source_sections": [
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0025",
+    "acceptance": [
+      "aspec run start accepts --run-dir <path> and writes state.yml plus events.jsonl under <path>/<run-id>/.",
+      "aspec run loop --mode autonomous --json accepts --run-dir <path> and can start research run state when the target repository's default agent/runs path is not writable.",
+      "The persisted state records the effective run-state root for audit."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/cli.py",
+      "agentspec/io.py"
+    ],
+    "test_targets": [
+      "tests/test_run_dir.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator"
+    ]
+  },
+  {
+    "id": "R-160",
+    "title": "Run subcommands share redirected state consistently",
+    "description": "Every run subcommand that reads, resumes, packages, executes, inspects, prompts, reports, or aborts a run uses the same redirected run-state destination contract.",
+    "source_sections": [
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0025",
+    "acceptance": [
+      "aspec run resume, inspect, prompt, abort, step, package, result, demo, and exec accept --run-dir <path> where applicable and read or mutate <path>/<run-id>/.",
+      "Runner package report-back commands include --run-dir when the source package used redirected state.",
+      "Submitting a runner result to a redirected run appends events to the redirected events.jsonl, not the target repository's agent/runs tree."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/runner.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_run_dir.py",
+      "tests/test_runner_package.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator"
+    ]
+  },
+  {
+    "id": "R-161",
+    "title": "Default run-state behavior and JSON failures stay stable",
+    "description": "Without --run-dir, local run state remains under the target repository's agent/runs directory; unwritable selected run-state destinations fail before mutation with structured JSON errors when --json is requested.",
+    "source_sections": [
+      "D-23.6"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0025",
+    "acceptance": [
+      "Existing calls without --run-dir continue to write and read <root>/agent/runs/<run-id>/.",
+      "An unwritable explicit --run-dir raises a clear PermissionError before writing partial run state.",
+      "A failing --json run command emits the existing agentspec.cli_error.v0 envelope with a non-retryable PermissionError."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/cli.py",
+      "agentspec/io.py"
+    ],
+    "test_targets": [
+      "tests/test_run_dir.py",
+      "tests/test_cli_json_errors.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-reviewer"
+    ]
+  },
+  {
+    "id": "R-162",
+    "title": "Research mode reports remaining target write requirements",
+    "description": "When autonomous empty-queue mode enters research mode with redirected run state, the CLI reports that durable research findings may still require target-repository writes.",
+    "source_sections": [
+      "D-23.4",
+      "D-23.6"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0025",
+    "acceptance": [
+      "The JSON result for a redirected research run includes the remaining durable findings write paths: reports/dogfood/**, docs/discovery/open-questions.yml, and docs/change-requests/**.",
+      "Human-readable run loop output names the same remaining write requirement when research mode starts with --run-dir.",
+      "The message does not imply that --run-dir makes all research artifacts read-only-safe."
+    ],
+    "code_targets": [
+      "agentspec/run.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_run_dir.py",
+      "tests/test_research_mode.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
   }
 ]

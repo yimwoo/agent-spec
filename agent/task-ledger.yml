@@ -462,6 +462,24 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T17:29:12Z"
+    },
+    "agent/context-packs/T-056-redirected-run-state-spike.md": {
+      "status": "complete",
+      "run_id": "complete-t-056-redirected-run-state-spike-20260501185206",
+      "reason": "DCR-0025 spike resolved: report written, R-159..R-162 registered as PPA, and T-057 implementation pack created.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T18:52:06Z"
+    },
+    "agent/context-packs/T-057-redirected-run-state-for-run-commands.md": {
+      "status": "complete",
+      "run_id": "complete-t-057-redirected-run-state-for-run-commands-20260501185736",
+      "reason": "DCR-0025 implementation verified: redirected run state, consistent run subcommands, JSON error envelope, and research target-write reporting covered by tests.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T18:57:36Z"
     }
   }
 }

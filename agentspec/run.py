@@ -9,7 +9,7 @@ from typing import Any
 
 from .archetype import validate_path_provenance
 from .config import load_project_config, merged_runtime_config, resolve_agent_profile
-from .io import load_data, write_data, write_text
+from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy
 from .review import quality_reviewer_signoff, review_executor_output
@@ -31,8 +31,10 @@ RESEARCH_ALLOWED_PATHS: list[str] = [
     "docs/discovery/open-questions.yml",
     "docs/change-requests/**",
 ]
+RESEARCH_TARGET_WRITE_REQUIREMENTS: list[str] = list(RESEARCH_ALLOWED_PATHS)
 RESEARCH_CONTEXT_PACK_SENTINEL = "<research-mode>"
 MAX_RESEARCH_FINDINGS_DEFAULT = 5
+RUN_STATE_DESTINATION_LABEL = "Run state destination"
 _RESEARCH_PATH_PREFIXES: tuple[str, ...] = (
     "reports/dogfood/",
     "docs/discovery/open-questions.yml",
@@ -47,14 +49,15 @@ def start_run(
     run_id: str | None = None,
     max_iterations: int | None = None,
     mode: str = "supervised",
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     context_path = _resolve_context_pack(root, context_pack)
     context = _parse_context_pack(context_path)
     config = merged_runtime_config(load_project_config(root))
     run_id = run_id or _default_run_id(context_path)
-    run_dir = _run_dir(root, run_id)
-    if run_dir.exists() and (run_dir / "state.yml").exists():
+    record_dir = _run_dir(root, run_id, run_dir=run_dir)
+    if record_dir.exists() and (record_dir / "state.yml").exists():
         raise FileExistsError(f"Run already exists: {run_id}")
 
     if mode not in {"supervised", "autonomous"}:
@@ -66,6 +69,7 @@ def start_run(
             f"all allowed paths are inferred (none exist in the repo and none are "
             f"glob patterns). Confirm the scope or run in supervised mode."
         )
+    _ensure_run_state_writable(root, run_dir)
 
     task_type = context.get("task_type", "implementation")
     configured_max = config.get("supervised_runs", {}).get("max_iterations", {}).get(task_type)
@@ -74,6 +78,7 @@ def start_run(
         "run_id": run_id,
         "status": "started",
         "mode": mode,
+        "run_state_dir": str(_run_root(root, run_dir)),
         "context_pack": str(context_path.relative_to(root)),
         "context_pack_title": context.get("title"),
         "task_type": task_type,
@@ -85,9 +90,9 @@ def start_run(
         "updated_at": _now(),
         "last_decision": None,
     }
-    _write_state(root, run_id, state)
-    _append_event(root, run_id, {"kind": "run_started", "state": state})
-    _maybe_write_run_summary(root, run_id, state)
+    _write_state(root, run_id, state, run_dir=run_dir)
+    _append_event(root, run_id, {"kind": "run_started", "state": state}, run_dir=run_dir)
+    _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
     return state
 
 
@@ -97,6 +102,7 @@ def start_research_run(
     run_id: str | None = None,
     max_iterations: int | None = None,
     max_research_findings: int | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Create a research-mode run state per ADR-0005 / R-142.
 
@@ -108,15 +114,17 @@ def start_research_run(
     root = root.resolve()
     config = merged_runtime_config(load_project_config(root))
     run_id = run_id or f"research-{_now_slug()}"
-    run_dir = _run_dir(root, run_id)
-    if run_dir.exists() and (run_dir / "state.yml").exists():
+    record_dir = _run_dir(root, run_id, run_dir=run_dir)
+    if record_dir.exists() and (record_dir / "state.yml").exists():
         raise FileExistsError(f"Run already exists: {run_id}")
+    _ensure_run_state_writable(root, run_dir)
 
     state = {
         "schema": STATE_SCHEMA,
         "run_id": run_id,
         "status": "started",
         "mode": "research",
+        "run_state_dir": str(_run_root(root, run_dir)),
         "context_pack": RESEARCH_CONTEXT_PACK_SENTINEL,
         "context_pack_title": "Research mode (no pack)",
         "task_type": "research",
@@ -130,9 +138,9 @@ def start_research_run(
         "updated_at": _now(),
         "last_decision": None,
     }
-    _write_state(root, run_id, state)
-    _append_event(root, run_id, {"kind": "research_run_started", "state": state})
-    _maybe_write_run_summary(root, run_id, state)
+    _write_state(root, run_id, state, run_dir=run_dir)
+    _append_event(root, run_id, {"kind": "research_run_started", "state": state}, run_dir=run_dir)
+    _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
     return state
 
 
@@ -149,11 +157,13 @@ def resume_run(
     touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
-    state = load_run_state(root, run_id)
+    state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("status") in {"halted", "complete", "aborted"}:
         raise ValueError(f"Run {run_id} is already {state.get('status')}.")
+    _ensure_run_state_writable(root, run_dir)
 
     touched_paths = touched_paths or []
     config = merged_runtime_config(load_project_config(root))
@@ -207,8 +217,8 @@ def resume_run(
         "reviewer_profile": _reviewer_profile_for_decision(state, review.decision),
         **review.to_dict(),
     }
-    _append_event(root, run_id, executor_event)
-    _append_event(root, run_id, reviewer_event)
+    _append_event(root, run_id, executor_event, run_dir=run_dir)
+    _append_event(root, run_id, reviewer_event, run_dir=run_dir)
 
     if review.message_to_executor:
         _append_event(
@@ -219,6 +229,7 @@ def resume_run(
                 "iteration": iteration,
                 "message_to_executor": review.message_to_executor,
             },
+            run_dir=run_dir,
         )
 
     state["iteration"] = iteration
@@ -268,6 +279,7 @@ def resume_run(
                 "quality_decision": quality_decision,
                 "quality_reason": quality_reason,
             },
+            run_dir=run_dir,
         )
         if quality_decision != "approve":
             review = dataclasses.replace(
@@ -305,6 +317,7 @@ def resume_run(
                     "applied_decision": "halt",
                     "reason": review.reason,
                 },
+                run_dir=run_dir,
             )
         elif severity == "minor":
             finding_id = _record_minor_pause_finding(root, run_id, state, review)
@@ -324,6 +337,7 @@ def resume_run(
                     "applied_decision": "auto_continue",
                     "reason": review.reason,
                 },
+                run_dir=run_dir,
             )
         else:
             # Unclassified pause:
@@ -351,6 +365,7 @@ def resume_run(
                         "applied_decision": "auto_continue",
                         "reason": review.reason,
                     },
+                    run_dir=run_dir,
                 )
             else:
                 finding_id = _record_blocked_finding(root, run_id, state, review)
@@ -368,6 +383,7 @@ def resume_run(
                         "applied_decision": "halt",
                         "reason": review.reason,
                     },
+                    run_dir=run_dir,
                 )
 
     # R-146 / DCR-0024: research-mode `complete` must not write the
@@ -389,8 +405,9 @@ def resume_run(
             updated_at=str(state["updated_at"]),
         )
 
-    _write_state(root, run_id, state)
-    _maybe_write_run_summary(root, run_id, state)
+    state["run_state_dir"] = str(_run_root(root, run_dir))
+    _write_state(root, run_id, state, run_dir=run_dir)
+    _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
     return {"state": state, "review": review.to_dict()}
 
 
@@ -407,13 +424,14 @@ def loop_run(
     order: str = "newest",
     max_iterations: int | None = None,
     mode: str = "supervised",
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     selected_task: dict[str, Any] | None = None
     started = False
 
-    if run_id and _state_exists(root, run_id):
-        state = load_run_state(root, run_id)
+    if run_id and _state_exists(root, run_id, run_dir=run_dir):
+        state = load_run_state(root, run_id, run_dir=run_dir)
         if context_pack is not None:
             expected = str(_resolve_context_pack(root, context_pack).relative_to(root))
             if state.get("context_pack") != expected:
@@ -434,6 +452,7 @@ def loop_run(
                         root,
                         run_id=run_id,
                         max_iterations=max_iterations,
+                        run_dir=run_dir,
                     )
                     run_id = str(state["run_id"])
                     started = True
@@ -448,6 +467,7 @@ def loop_run(
                     run_id=run_id,
                     max_iterations=max_iterations,
                     mode=mode,
+                    run_dir=run_dir,
                 )
                 run_id = str(state["run_id"])
                 started = True
@@ -458,6 +478,7 @@ def loop_run(
                 run_id=run_id,
                 max_iterations=max_iterations,
                 mode=mode,
+                run_dir=run_dir,
             )
             run_id = str(state["run_id"])
             started = True
@@ -478,9 +499,13 @@ def loop_run(
             touched_paths=touched_paths or [],
             test_status=test_status,
             reviewer_mode=reviewer_mode,
+            run_dir=run_dir,
         )
         result["state"] = resumed["state"]
         result["review"] = resumed["review"]
+
+    if run_dir is not None and result.get("state", {}).get("mode") == "research":
+        result["target_write_requirements"] = list(RESEARCH_TARGET_WRITE_REQUIREMENTS)
 
     return result
 
@@ -497,6 +522,7 @@ def step_run(
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
+    run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     loop = loop_run(
@@ -510,12 +536,13 @@ def step_run(
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
+        run_dir=run_dir,
     )
     state = loop["state"]
     next_action = _next_action_for_status(str(state.get("status")))
     handoff = None
     if next_action == "continue_executor":
-        handoff = build_next_executor_prompt(root, str(loop["run_id"]))
+        handoff = build_next_executor_prompt(root, str(loop["run_id"]), run_dir=run_dir)
 
     return {
         "schema": HARNESS_STEP_SCHEMA,
@@ -556,6 +583,7 @@ def complete_context_pack_run(
         "schema": STATE_SCHEMA,
         "run_id": run_id,
         "status": "complete",
+        "run_state_dir": str(_run_root(root, None)),
         "context_pack": str(context_path.relative_to(root)),
         "context_pack_title": context.get("title"),
         "task_type": task_type,
@@ -573,6 +601,7 @@ def complete_context_pack_run(
     # the state file is never written, and a retry with the same run_id
     # naturally converges (ledger writes are idempotent inserts and the
     # _state_exists guard above lets the retry re-enter cleanly).
+    _ensure_run_state_writable(root, None)
     record_task_ledger_status(
         root,
         context_pack=str(context_path.relative_to(root)),
@@ -596,16 +625,16 @@ def complete_context_pack_run(
     return state
 
 
-def build_next_executor_prompt(root: Path, run_id: str) -> dict[str, Any]:
+def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
-    state = load_run_state(root, run_id)
+    state = load_run_state(root, run_id, run_dir=run_dir)
     status = str(state.get("status"))
     if status in TERMINAL_RUN_STATUSES:
         raise ValueError(f"Run {run_id} is {status}; no continuation prompt is available.")
     if status == "paused":
         raise ValueError(f"Run {run_id} is paused; a human or reviewer decision is required before continuing.")
 
-    events = _load_events(root, run_id)
+    events = _load_events(root, run_id, run_dir=run_dir)
     controller = _last_event(events, "controller_response")
     reviewer = _last_event(events, "reviewer_verdict")
     allowed_paths = list(state.get("allowed_paths", []))
@@ -635,9 +664,9 @@ def build_next_executor_prompt(root: Path, run_id: str) -> dict[str, Any]:
     }
 
 
-def inspect_run(root: Path, run_id: str) -> dict[str, Any]:
+def inspect_run(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
-    state = load_run_state(root, run_id)
+    state = load_run_state(root, run_id, run_dir=run_dir)
     return {
         "run_id": state.get("run_id"),
         "status": state.get("status"),
@@ -648,23 +677,25 @@ def inspect_run(root: Path, run_id: str) -> dict[str, Any]:
     }
 
 
-def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.") -> dict[str, Any]:
+def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.", run_dir: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
-    state = load_run_state(root, run_id)
+    state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("status") == "aborted":
         return state
-    _append_event(root, run_id, {"kind": "run_aborted", "reason": reason})
+    _ensure_run_state_writable(root, run_dir)
+    _append_event(root, run_id, {"kind": "run_aborted", "reason": reason}, run_dir=run_dir)
     state["status"] = "aborted"
     state["updated_at"] = _now()
     state["last_decision"] = "halt"
-    _write_state(root, run_id, state)
-    _maybe_write_run_summary(root, run_id, state)
+    state["run_state_dir"] = str(_run_root(root, run_dir))
+    _write_state(root, run_id, state, run_dir=run_dir)
+    _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
     return state
 
 
-def load_run_state(root: Path, run_id: str) -> dict[str, Any]:
+def load_run_state(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
-    state = load_data(_run_dir(root, run_id) / "state.yml")
+    state = load_data(_run_dir(root, run_id, run_dir=run_dir) / "state.yml")
     if not isinstance(state, dict):
         raise FileNotFoundError(f"Run not found: {run_id}")
     return state
@@ -945,19 +976,33 @@ def _default_completion_run_id(context_pack: Path) -> str:
     return f"complete-{slugify(context_pack.stem)}-{stamp}"
 
 
-def _run_dir(root: Path, run_id: str) -> Path:
-    return root / "agent" / "runs" / run_id
+def _run_root(root: Path, run_dir: Path | None = None) -> Path:
+    root = Path(root).resolve()
+    if run_dir is None:
+        return root / "agent" / "runs"
+    base = Path(run_dir)
+    if not base.is_absolute():
+        base = root / base
+    return base.resolve()
 
 
-def _state_exists(root: Path, run_id: str) -> bool:
-    return (_run_dir(root, run_id) / "state.yml").exists()
+def _run_dir(root: Path, run_id: str, *, run_dir: Path | None = None) -> Path:
+    return _run_root(root, run_dir) / run_id
 
 
-def _write_state(root: Path, run_id: str, state: dict[str, Any]) -> None:
-    write_data(_run_dir(root, run_id) / "state.yml", state)
+def _state_exists(root: Path, run_id: str, *, run_dir: Path | None = None) -> bool:
+    return (_run_dir(root, run_id, run_dir=run_dir) / "state.yml").exists()
 
 
-def _maybe_write_run_summary(root: Path, run_id: str, state: dict[str, Any]) -> None:
+def _ensure_run_state_writable(root: Path, run_dir: Path | None) -> None:
+    ensure_writable_dir(_run_root(root, run_dir), label=RUN_STATE_DESTINATION_LABEL)
+
+
+def _write_state(root: Path, run_id: str, state: dict[str, Any], *, run_dir: Path | None = None) -> None:
+    write_data(_run_dir(root, run_id, run_dir=run_dir) / "state.yml", state)
+
+
+def _maybe_write_run_summary(root: Path, run_id: str, state: dict[str, Any], *, run_dir: Path | None = None) -> None:
     """Write ADR-0004's committed projection for autonomous-style runs.
 
     The summary intentionally omits executor output excerpts and raw logs.
@@ -967,11 +1012,14 @@ def _maybe_write_run_summary(root: Path, run_id: str, state: dict[str, Any]) -> 
     """
     if state.get("mode") not in SUMMARY_MODES:
         return
-    write_data(_run_dir(root, run_id) / "summary.yml", _run_summary(root, run_id, state))
+    write_data(
+        _run_dir(root, run_id, run_dir=run_dir) / "summary.yml",
+        _run_summary(root, run_id, state, run_dir=run_dir),
+    )
 
 
-def _run_summary(root: Path, run_id: str, state: dict[str, Any]) -> dict[str, Any]:
-    events = _load_events(root, run_id)
+def _run_summary(root: Path, run_id: str, state: dict[str, Any], *, run_dir: Path | None = None) -> dict[str, Any]:
+    events = _load_events(root, run_id, run_dir=run_dir)
     verdict_counts: dict[str, int] = {}
     event_counts: dict[str, int] = {}
     blocked_findings: list[dict[str, Any]] = []
@@ -1019,16 +1067,16 @@ def _run_summary(root: Path, run_id: str, state: dict[str, Any]) -> dict[str, An
     }
 
 
-def _append_event(root: Path, run_id: str, event: dict[str, Any]) -> None:
+def _append_event(root: Path, run_id: str, event: dict[str, Any], *, run_dir: Path | None = None) -> None:
     payload = {"schema": EVENT_SCHEMA, "run_id": run_id, "timestamp": _now(), **event}
-    path = _run_dir(root, run_id) / "events.jsonl"
+    path = _run_dir(root, run_id, run_dir=run_dir) / "events.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, sort_keys=False) + "\n")
 
 
-def _load_events(root: Path, run_id: str) -> list[dict[str, Any]]:
-    path = _run_dir(root, run_id) / "events.jsonl"
+def _load_events(root: Path, run_id: str, *, run_dir: Path | None = None) -> list[dict[str, Any]]:
+    path = _run_dir(root, run_id, run_dir=run_dir) / "events.jsonl"
     if not path.exists():
         return []
     events: list[dict[str, Any]] = []
