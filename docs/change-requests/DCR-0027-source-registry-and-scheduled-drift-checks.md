@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | needs-adr |
 | Submitted | 2026-05-01 |
 | Submitted by | user |

@@ -453,6 +453,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T16:39:13Z"
+    },
+    "agent/context-packs/T-055-source-registry-and-scheduled-source-drift-checks.md": {
+      "status": "complete",
+      "run_id": "t055-source-registry-and-scheduled-source-drift-checks",
+      "reason": "DCR-0027 shipped: source registry add/list/check, explicit candidate evidence, scheduled audit docs; full unittest passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T17:29:12Z"
     }
   }
 }
