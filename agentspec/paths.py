@@ -34,7 +34,6 @@ ARTIFACT_DIRS = [
     ".claude/agents",
     ".claude/skills",
     ".codex/agents",
-    ".agents/skills",
     ".agents/plugins",
     ".github/workflows",
 ]

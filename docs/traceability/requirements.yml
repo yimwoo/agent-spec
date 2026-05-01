@@ -4297,5 +4297,40 @@
       "coordinator",
       "plugin-integrator"
     ]
+  },
+  {
+    "id": "R-166",
+    "title": "Codex dogfooding uses plugin skill surface",
+    "description": "AgentSpec Codex dogfooding uses the installed AgentSpec Codex plugin skills without overlapping repo-local generated AgentSpec skills.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.5",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0031",
+    "acceptance": [
+      "aspec emit --target codex continues to emit .codex/agents/**.",
+      "aspec emit --target codex does not emit .agents/skills/agentspec-*.",
+      "This repository no longer has tracked .agents/skills/agentspec-* skill files.",
+      "Codex prompt discovery exposes installed agentspec-codex-plugin:* skills and does not expose the old repo-local agentspec-* skill names."
+    ],
+    "code_targets": [
+      "agentspec/emit.py",
+      "agentspec/paths.py",
+      ".agents/skills/**"
+    ],
+    "test_targets": [
+      "tests/test_plugin_source_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator"
+    ]
   }
 ]

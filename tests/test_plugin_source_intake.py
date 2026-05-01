@@ -87,19 +87,20 @@ class PluginSourceIntakeTests(unittest.TestCase):
         ]:
             self.assertIn(text, continue_skill)
 
-    def test_emit_codex_includes_manual_source_intake_skill(self) -> None:
+    def test_emit_codex_uses_plugin_skills_instead_of_project_local_skills(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             written = emit_targets(root, "codex")
-            skill_path = root / ".agents" / "skills" / "agentspec-source-intake" / "SKILL.md"
 
-            self.assertIn(skill_path, written)
-            skill = skill_path.read_text(encoding="utf-8")
-            self.assertIn("aspec intake import", skill)
-            self.assertIn("aspec intake diff", skill)
-            self.assertIn("aspec intake promote", skill)
-            self.assertIn("host-provided", skill)
-            self.assertIn("Do not auto-promote", skill)
+            self.assertIn(root / ".codex" / "agents" / "spec-reviewer.toml", written)
+            self.assertFalse(
+                list((root / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
+            )
+
+    def test_repo_does_not_ship_project_local_agentspec_skills(self) -> None:
+        local_skills = list((REPO_ROOT / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
+
+        self.assertEqual([], local_skills)
 
 
 if __name__ == "__main__":

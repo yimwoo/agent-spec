@@ -507,6 +507,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T20:10:09Z"
+    },
+    "agent/context-packs/T-061-codex-plugin-skill-surface-cleanup.md": {
+      "status": "complete",
+      "run_id": "complete-t-061-codex-plugin-skill-surface-cleanup-20260501203916",
+      "reason": "DCR-0031 shipped: Codex emit no longer creates repo-local AgentSpec skills; this repo now relies on the installed agentspec-codex-plugin skill surface for dogfooding; prompt discovery and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T20:39:16Z"
     }
   }
 }
