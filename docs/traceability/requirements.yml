@@ -3882,7 +3882,7 @@
       "D-12.13"
     ],
     "priority": "P1",
-    "status": "proposed-pending-acceptance",
+    "status": "accepted",
     "confidence": "medium",
     "originating_dcr": "DCR-0026",
     "blocked_by": "ADR-0006",

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 from typing import Any
-import re
 
 from .io import load_data, read_text, sha256_text, utc_now_iso, write_data, write_text
 from .markdown import document_title, sectionize_markdown
@@ -26,6 +27,20 @@ SECTION_CHANGE_KINDS = (
     "moved",
     "body-changed",
 )
+API_CONTRACT_CHANGE_KINDS = (
+    "unchanged",
+    "endpoint-added",
+    "endpoint-removed",
+    "path-changed",
+    "method-changed",
+    "request-schema-changed",
+    "response-schema-changed",
+    "auth-scope-changed",
+    "enum-changed",
+)
+_HTTP_METHODS = frozenset(
+    {"get", "put", "post", "delete", "patch", "options", "head", "trace"}
+)
 
 
 def import_candidate(
@@ -43,24 +58,40 @@ def import_candidate(
     source_path = source_path.resolve()
     if not source_path.exists():
         raise FileNotFoundError(f"Source document not found: {source_path}")
-    if kind != "markdown":
-        raise ValueError("Candidate import currently supports markdown only.")
-    if source_path.suffix.lower() not in {".md", ".markdown", ".txt"}:
-        raise ValueError(
-            "Markdown candidate import supports .md, .markdown, and .txt files."
-        )
 
-    markdown = read_text(source_path)
+    source_text = read_text(source_path)
     snapshot_id = _next_snapshot_id(root)
     candidate_dir = root / "docs" / "source" / "candidates" / snapshot_id
-    document = _markdown_spec_document(
-        markdown,
-        source_path=source_path,
-        source_key=source_key,
-        snapshot_id=snapshot_id,
-        classification=classification,
-        storage_mode=storage_mode,
-    )
+    if kind == "markdown":
+        if source_path.suffix.lower() not in {".md", ".markdown", ".txt"}:
+            raise ValueError(
+                "Markdown candidate import supports .md, .markdown, and .txt files."
+            )
+        document = _markdown_spec_document(
+            source_text,
+            source_path=source_path,
+            source_key=source_key,
+            snapshot_id=snapshot_id,
+            classification=classification,
+            storage_mode=storage_mode,
+        )
+    elif kind == "openapi":
+        if source_path.suffix.lower() not in {".json", ".yaml", ".yml"}:
+            raise ValueError(
+                "OpenAPI candidate import supports JSON-compatible .json, "
+                ".yaml, and .yml files."
+            )
+        document = _openapi_spec_document(
+            source_text,
+            source_path=source_path,
+            source_key=source_key,
+            snapshot_id=snapshot_id,
+            classification=classification,
+            storage_mode=storage_mode,
+        )
+    else:
+        raise ValueError("Candidate import currently supports markdown and openapi.")
+
     report = validation_report(document)
     write_data(candidate_dir / "validation.yml", report)
     if not report["valid"]:
@@ -70,7 +101,7 @@ def import_candidate(
     write_data(candidate_dir / "sections.yml", document["sections"])
     write_text(candidate_dir / "intake-report.md", _intake_report(document))
     if storage_mode == "committed":
-        write_text(candidate_dir / "source.md", markdown)
+        write_text(candidate_dir / "source.md", source_text)
 
     return {
         "schema": INTAKE_IMPORT_SCHEMA,
@@ -116,6 +147,14 @@ def diff_candidate(
         kind: sum(1 for change in changes if change["kind"] == kind)
         for kind in SECTION_CHANGE_KINDS
     }
+    api_contract_changes = _api_contract_changes(
+        _baseline_api_contracts(baseline_source),
+        candidate.get("api_contracts", []),
+    )
+    api_contract_summary = {
+        kind: sum(1 for change in api_contract_changes if change["kind"] == kind)
+        for kind in API_CONTRACT_CHANGE_KINDS
+    }
     result = {
         "schema": INTAKE_DIFF_SCHEMA,
         "snapshot_id": snapshot_id,
@@ -126,7 +165,9 @@ def diff_candidate(
         },
         "summary": summary,
         "changes": changes,
-        "recommendation": _recommendation(summary),
+        "api_contract_summary": api_contract_summary,
+        "api_contract_changes": api_contract_changes,
+        "recommendation": _recommendation(summary, api_contract_summary),
     }
     write_data(candidate_dir / "diff.yml", result)
     return result
@@ -253,6 +294,15 @@ def format_diff_report(diff: dict[str, Any]) -> str:
         lines.append("Changes:")
         for change in diff["changes"]:
             lines.append(_format_change(change))
+    api_summary = diff.get("api_contract_summary") or {}
+    if any(api_summary.get(kind, 0) for kind in API_CONTRACT_CHANGE_KINDS):
+        lines.append("API Contract Changes:")
+        for kind in API_CONTRACT_CHANGE_KINDS:
+            lines.append(f"- {kind}: {api_summary.get(kind, 0)}")
+    if diff.get("api_contract_changes"):
+        lines.append("API Contract Details:")
+        for change in diff["api_contract_changes"]:
+            lines.append(_format_api_contract_change(change))
     return "\n".join(lines)
 
 
@@ -293,6 +343,200 @@ def _markdown_spec_document(
         "api_contracts": [],
         "open_questions": [],
     }
+
+
+def _openapi_spec_document(
+    source_text: str,
+    *,
+    source_path: Path,
+    source_key: str,
+    snapshot_id: str,
+    classification: str,
+    storage_mode: str,
+) -> dict[str, Any]:
+    raw_document = _load_json_compatible_openapi(source_text, source_path)
+    normalized = _normalize_json_data(raw_document)
+    body_source = "source.md" if storage_mode == "committed" else "remote_uri"
+    line_count = max(1, len(source_text.splitlines()))
+    info = raw_document.get("info", {})
+    if not isinstance(info, dict):
+        info = {}
+    title = str(info.get("title") or source_path.stem)
+    remote_version = info.get("version")
+    section_body = {
+        "openapi": raw_document.get("openapi"),
+        "info": info,
+        "paths": raw_document.get("paths", {}),
+    }
+    return {
+        "schema": SPEC_DOCUMENT_SCHEMA,
+        "source_key": source_key,
+        "snapshot_id": snapshot_id,
+        "kind": "openapi",
+        "title": title,
+        "remote_uri": str(source_path),
+        "api_version": raw_document.get("openapi"),
+        "remote_version": str(remote_version) if remote_version is not None else None,
+        "content_hash": sha256_text(source_text),
+        "normalized_hash": sha256_text(normalized),
+        "fetched_at": utc_now_iso(),
+        "classification": classification,
+        "storage_mode": storage_mode,
+        "sections": [
+            {
+                "local_id": "D-01",
+                "stable_key": f"{source_key}/openapi-contract",
+                "heading_path": ["OpenAPI Contract"],
+                "content_hash": sha256_text(_normalize_json_data(section_body)),
+                "body_ref": f"{body_source}#L1-L{line_count}",
+            }
+        ],
+        "requirements": [],
+        "api_contracts": _extract_openapi_contracts(raw_document),
+        "open_questions": [],
+    }
+
+
+def _load_json_compatible_openapi(source_text: str, source_path: Path) -> dict[str, Any]:
+    try:
+        parsed = json.loads(source_text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "OpenAPI intake currently accepts YAML-compatible JSON. "
+            f"Could not parse {source_path.name}: {exc.msg}."
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("OpenAPI source must be a JSON/YAML object.")
+    if not parsed.get("openapi"):
+        raise ValueError("OpenAPI source must include an openapi version field.")
+    if not isinstance(parsed.get("paths"), dict):
+        raise ValueError("OpenAPI source must include a paths object.")
+    return parsed
+
+
+def _extract_openapi_contracts(document: dict[str, Any]) -> list[dict[str, Any]]:
+    info = document.get("info", {})
+    version = info.get("version") if isinstance(info, dict) else None
+    contracts: list[dict[str, Any]] = []
+    paths = document.get("paths", {})
+    if not isinstance(paths, dict):
+        return contracts
+
+    for path in sorted(paths):
+        path_item = paths[path]
+        if not isinstance(path_item, dict):
+            continue
+        for method in sorted(path_item):
+            method_lower = method.lower()
+            if method_lower not in _HTTP_METHODS:
+                continue
+            operation = path_item[method]
+            if not isinstance(operation, dict):
+                continue
+            operation_id = str(operation.get("operationId") or f"{method_lower.upper()} {path}")
+            request_schema = _operation_request_schema(operation)
+            response_schemas = _operation_response_schemas(operation)
+            contracts.append(
+                {
+                    "operation_id": operation_id,
+                    "method": method_lower.upper(),
+                    "path": path,
+                    "version": str(version) if version is not None else None,
+                    "request_schema_hash": _hash_json_data(request_schema),
+                    "response_schema_hashes": {
+                        status: _hash_json_data(schema)
+                        for status, schema in response_schemas.items()
+                    },
+                    "auth_scopes": _operation_auth_scopes(operation, document),
+                    "enum_values": {
+                        **_schema_enum_values(request_schema, prefix="request"),
+                        **{
+                            key: value
+                            for status, schema in response_schemas.items()
+                            for key, value in _schema_enum_values(
+                                schema, prefix=f"response.{status}"
+                            ).items()
+                        },
+                    },
+                }
+            )
+    return contracts
+
+
+def _operation_request_schema(operation: dict[str, Any]) -> Any:
+    request_body = operation.get("requestBody")
+    if not isinstance(request_body, dict):
+        return {}
+    return _content_schema(request_body)
+
+
+def _operation_response_schemas(operation: dict[str, Any]) -> dict[str, Any]:
+    responses = operation.get("responses")
+    if not isinstance(responses, dict):
+        return {}
+    return {
+        str(status): _content_schema(response)
+        for status, response in sorted(responses.items())
+        if isinstance(response, dict)
+    }
+
+
+def _content_schema(container: dict[str, Any]) -> Any:
+    content = container.get("content")
+    if not isinstance(content, dict) or not content:
+        return {}
+    media = content.get("application/json")
+    if not isinstance(media, dict):
+        media = next((item for item in content.values() if isinstance(item, dict)), {})
+    schema = media.get("schema") if isinstance(media, dict) else None
+    return schema if schema is not None else {}
+
+
+def _operation_auth_scopes(
+    operation: dict[str, Any],
+    document: dict[str, Any],
+) -> list[str]:
+    security = operation.get("security", document.get("security", []))
+    scopes: list[str] = []
+    if not isinstance(security, list):
+        return scopes
+    for requirement in security:
+        if not isinstance(requirement, dict):
+            continue
+        for scheme, values in requirement.items():
+            if isinstance(values, list) and values:
+                scopes.extend(f"{scheme}:{value}" for value in values)
+            else:
+                scopes.append(str(scheme))
+    return sorted(str(scope) for scope in scopes)
+
+
+def _schema_enum_values(schema: Any, *, prefix: str) -> dict[str, list[Any]]:
+    values: dict[str, list[Any]] = {}
+    if not isinstance(schema, dict):
+        return values
+
+    enum = schema.get("enum")
+    if isinstance(enum, list):
+        values[prefix] = list(enum)
+
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        for name, child in sorted(properties.items()):
+            values.update(_schema_enum_values(child, prefix=f"{prefix}.{name}"))
+
+    items = schema.get("items")
+    if isinstance(items, dict):
+        values.update(_schema_enum_values(items, prefix=f"{prefix}[]"))
+
+    for combiner in ("allOf", "anyOf", "oneOf"):
+        children = schema.get(combiner)
+        if isinstance(children, list):
+            for index, child in enumerate(children):
+                values.update(
+                    _schema_enum_values(child, prefix=f"{prefix}.{combiner}[{index}]")
+                )
+    return values
 
 
 def _accepted_source_for(root: Path, source_key: str) -> dict[str, Any] | None:
@@ -351,7 +595,7 @@ def _accepted_source_record(
         write_text(destination, read_text(candidate_source))
         uri = str(destination.relative_to(root))
 
-    return {
+    record = {
         "id": document["snapshot_id"],
         "snapshot_id": document["snapshot_id"],
         "source_key": document["source_key"],
@@ -371,6 +615,11 @@ def _accepted_source_record(
         "supersedes": prior_source.get("id") if prior_source else None,
         "candidate_path": str(candidate_dir.relative_to(root)),
     }
+    if "api_version" in document:
+        record["api_version"] = document.get("api_version")
+    if "api_contracts" in document:
+        record["api_contracts"] = document.get("api_contracts", [])
+    return record
 
 
 def _accepted_sections(document: dict[str, Any]) -> list[dict[str, Any]]:
@@ -562,10 +811,128 @@ def _change(
     return change
 
 
-def _recommendation(summary: dict[str, int]) -> str:
+def _baseline_api_contracts(baseline_source: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not baseline_source:
+        return []
+    contracts = baseline_source.get("api_contracts", [])
+    if not isinstance(contracts, list):
+        return []
+    return [contract for contract in contracts if isinstance(contract, dict)]
+
+
+def _api_contract_changes(
+    baseline_contracts: Any,
+    candidate_contracts: Any,
+) -> list[dict[str, Any]]:
+    if not isinstance(baseline_contracts, list):
+        baseline_contracts = []
+    if not isinstance(candidate_contracts, list):
+        candidate_contracts = []
+
+    baseline_by_operation = {
+        str(contract.get("operation_id")): contract
+        for contract in baseline_contracts
+        if isinstance(contract, dict) and contract.get("operation_id")
+    }
+    candidate_by_operation = {
+        str(contract.get("operation_id")): contract
+        for contract in candidate_contracts
+        if isinstance(contract, dict) and contract.get("operation_id")
+    }
+    changes: list[dict[str, Any]] = []
+    matched_candidates: set[str] = set()
+
+    for operation_id in sorted(baseline_by_operation):
+        baseline = baseline_by_operation[operation_id]
+        candidate = candidate_by_operation.get(operation_id)
+        if candidate is None:
+            changes.append(_api_contract_change("endpoint-removed", baseline, None))
+            continue
+
+        matched_candidates.add(operation_id)
+        per_operation_changes: list[dict[str, Any]] = []
+        if baseline.get("path") != candidate.get("path"):
+            per_operation_changes.append(
+                _api_contract_change("path-changed", baseline, candidate)
+            )
+        if baseline.get("method") != candidate.get("method"):
+            per_operation_changes.append(
+                _api_contract_change("method-changed", baseline, candidate)
+            )
+        if baseline.get("request_schema_hash") != candidate.get("request_schema_hash"):
+            per_operation_changes.append(
+                _api_contract_change("request-schema-changed", baseline, candidate)
+            )
+        if baseline.get("response_schema_hashes") != candidate.get("response_schema_hashes"):
+            per_operation_changes.append(
+                _api_contract_change("response-schema-changed", baseline, candidate)
+            )
+        if baseline.get("auth_scopes", []) != candidate.get("auth_scopes", []):
+            per_operation_changes.append(
+                _api_contract_change("auth-scope-changed", baseline, candidate)
+            )
+        if baseline.get("enum_values", {}) != candidate.get("enum_values", {}):
+            per_operation_changes.append(_api_contract_change("enum-changed", baseline, candidate))
+
+        if per_operation_changes:
+            changes.extend(per_operation_changes)
+        else:
+            changes.append(_api_contract_change("unchanged", baseline, candidate))
+
+    for operation_id in sorted(candidate_by_operation):
+        if operation_id not in baseline_by_operation and operation_id not in matched_candidates:
+            changes.append(
+                _api_contract_change("endpoint-added", None, candidate_by_operation[operation_id])
+            )
+    return changes
+
+
+def _api_contract_change(
+    kind: str,
+    baseline: dict[str, Any] | None,
+    candidate: dict[str, Any] | None,
+) -> dict[str, Any]:
+    change: dict[str, Any] = {
+        "kind": kind,
+        "operation_id": (
+            (candidate or {}).get("operation_id")
+            or (baseline or {}).get("operation_id")
+            or "-"
+        ),
+    }
+    if baseline is not None:
+        change["baseline"] = _api_contract_ref(baseline)
+    if candidate is not None:
+        change["candidate"] = _api_contract_ref(candidate)
+    return change
+
+
+def _api_contract_ref(contract: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "operation_id": contract.get("operation_id"),
+        "method": contract.get("method"),
+        "path": contract.get("path"),
+        "version": contract.get("version"),
+        "request_schema_hash": contract.get("request_schema_hash"),
+        "response_schema_hashes": contract.get("response_schema_hashes", {}),
+        "auth_scopes": contract.get("auth_scopes", []),
+        "enum_values": contract.get("enum_values", {}),
+    }
+
+
+def _recommendation(
+    summary: dict[str, int],
+    api_contract_summary: dict[str, int] | None = None,
+) -> str:
     changed = sum(
         count for kind, count in summary.items() if kind != "unchanged"
     )
+    if api_contract_summary:
+        changed += sum(
+            count
+            for kind, count in api_contract_summary.items()
+            if kind != "unchanged"
+        )
     return "needs-review" if changed else "doc-only"
 
 
@@ -576,6 +943,26 @@ def _format_change(change: dict[str, Any]) -> str:
     local_id = candidate.get("local_id") or baseline.get("local_id") or "-"
     stable_key = candidate.get("stable_key") or baseline.get("stable_key") or "-"
     return f"- {kind}: {local_id} {stable_key}"
+
+
+def _format_api_contract_change(change: dict[str, Any]) -> str:
+    kind = change["kind"]
+    operation_id = change.get("operation_id") or "-"
+    baseline = change.get("baseline") or {}
+    candidate = change.get("candidate") or {}
+    baseline_route = _api_route_label(baseline)
+    candidate_route = _api_route_label(candidate)
+    if baseline_route and candidate_route and baseline_route != candidate_route:
+        return f"- {kind}: {operation_id} {baseline_route} -> {candidate_route}"
+    return f"- {kind}: {operation_id} {candidate_route or baseline_route or '-'}"
+
+
+def _api_route_label(contract: dict[str, Any]) -> str:
+    method = contract.get("method")
+    path = contract.get("path")
+    if method and path:
+        return f"{method} {path}"
+    return ""
 
 
 def _spec_section(
@@ -603,6 +990,14 @@ def _stable_section_key(source_key: str, heading_path: list[str]) -> str:
 def _normalize_markdown(markdown: str) -> str:
     normalized = "\n".join(line.rstrip() for line in markdown.splitlines()).strip()
     return normalized + "\n" if normalized else ""
+
+
+def _normalize_json_data(data: Any) -> str:
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _hash_json_data(data: Any) -> str:
+    return sha256_text(_normalize_json_data(data))
 
 
 def _next_snapshot_id(root: Path) -> str:

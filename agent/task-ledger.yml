@@ -417,6 +417,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T16:13:28Z"
+    },
+    "agent/context-packs/T-051-structured-api-sources-produce-contract-diffs.md": {
+      "status": "complete",
+      "run_id": "t051-structured-api-sources-produce-contract-diffs",
+      "reason": "Executor reports R-153 OpenAPI contract intake/diff implementation complete and full verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:17:14Z"
     }
   }
 }
