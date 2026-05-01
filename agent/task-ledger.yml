@@ -480,6 +480,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T18:57:36Z"
+    },
+    "agent/context-packs/T-058-run-status-recovery-context.md": {
+      "status": "complete",
+      "run_id": "complete-t-058-run-status-recovery-context-20260501191427",
+      "reason": "DCR-0028 shipped: status run records now include reviewer reason, policy flags, test status, event refs, and recovery commands; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T19:14:27Z"
     }
   }
 }

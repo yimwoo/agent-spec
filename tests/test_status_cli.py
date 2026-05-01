@@ -31,6 +31,18 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(len(status["runs"]["recent"]), 2)
             self.assertIn("run inspect run-halted", status["recommendation"])
 
+            halted = status["runs"]["attention"][0]
+            self.assertEqual(halted["last_review_reason"], "Touched forbidden path.")
+            self.assertEqual(halted["policy_flags"], ["forbidden_path"])
+            self.assertEqual(halted["test_status"], "failed")
+            self.assertEqual(halted["last_event_ref"], "agent/runs/run-halted/events.jsonl:2")
+            self.assertEqual(halted["recovery_command"], "aspec run inspect run-halted")
+
+            active = status["runs"]["active"][0]
+            self.assertEqual(active["last_review_reason"], "Continue scoped work.")
+            self.assertEqual(active["test_status"], "passed")
+            self.assertEqual(active["recovery_command"], "aspec run prompt run-active")
+
     def test_cli_status_json_outputs_schema(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -85,6 +97,23 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(status["dcrs"]["total"], 0)
             self.assertEqual(status["tasks"]["total"], 0)
             self.assertEqual(status["runs"]["total"], 0)
+
+    def test_summary_only_run_has_empty_recovery_context(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            status = build_project_status(root, recent_limit=5)
+            summary_only = next(
+                run for run in status["runs"]["recent"]
+                if run["run_id"] == "run-summary-only"
+            )
+
+            self.assertIsNone(summary_only["last_review_reason"])
+            self.assertEqual(summary_only["policy_flags"], [])
+            self.assertIsNone(summary_only["test_status"])
+            self.assertIsNone(summary_only["last_event_ref"])
+            self.assertEqual(summary_only["recovery_command"], "aspec run inspect run-summary-only")
 
 
 def _seed(root: Path) -> None:
@@ -180,6 +209,28 @@ Type: `implementation`
             "updated_at": "2026-04-29T00:01:00Z",
         },
     )
+    (root / "agent" / "runs" / "run-active" / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "kind": "executor_output",
+                        "test_summary": {"status": "passed"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "kind": "reviewer_verdict",
+                        "decision": "auto_continue",
+                        "reason": "Continue scoped work.",
+                        "policy_flags": [],
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     write_data(
         root / "agent" / "runs" / "run-halted" / "state.yml",
         {
@@ -193,6 +244,28 @@ Type: `implementation`
             "last_decision": "halt",
             "updated_at": "2026-04-29T00:02:00Z",
         },
+    )
+    (root / "agent" / "runs" / "run-halted" / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "kind": "executor_output",
+                        "test_summary": {"status": "failed"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "kind": "reviewer_verdict",
+                        "decision": "halt",
+                        "reason": "Touched forbidden path.",
+                        "policy_flags": ["forbidden_path"],
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
     )
     write_data(
         root / "agent" / "runs" / "run-summary-only" / "summary.yml",

@@ -4191,5 +4191,34 @@
       "coordinator",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-163",
+    "title": "Run status records carry recovery context",
+    "description": "Each run record in the project status payload carries reviewer, policy, verification, event-reference, and recovery-command context so paused or halted runs can be triaged without opening raw run logs first.",
+    "source_sections": [
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0028",
+    "acceptance": [
+      "aspec status --json run records include last_review_reason, policy_flags, test_status, last_event_ref, and recovery_command.",
+      "Paused or halted runs expose the latest reviewer reason and policy flags from events.jsonl when events are available.",
+      "Summary-only runs remain visible and report null or empty recovery context rather than failing.",
+      "Human-readable aspec status output remains backward-compatible."
+    ],
+    "code_targets": [
+      "agentspec/status.py"
+    ],
+    "test_targets": [
+      "tests/test_status_cli.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator"
+    ]
   }
 ]

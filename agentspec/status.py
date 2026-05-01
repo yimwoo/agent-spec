@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+import json
 from pathlib import Path
 from typing import Any
 
@@ -117,6 +118,7 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
         data = state or summary
         if not data:
             continue
+        events = _load_run_events(root, run_dir)
 
         record = {
             "run_id": data.get("run_id") or run_dir.name,
@@ -132,6 +134,7 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
             "terminal": bool(data.get("terminal")) or data.get("status") in {"complete", "halted", "aborted"},
             "source": source,
         }
+        record.update(_recovery_context(run_dir, record, data, events))
         if summary:
             record["summary_path"] = _relative_or_absolute(root, run_dir / "summary.yml")
             record["blocked_findings"] = summary.get("blocked_findings", [])
@@ -148,6 +151,78 @@ def _load_optional_dict(path: Path) -> dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def _load_run_events(root: Path, run_dir: Path) -> list[dict[str, Any]]:
+    path = run_dir / "events.jsonl"
+    if not path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(payload, dict):
+            payload["_event_ref"] = f"{_relative_or_absolute(root, path)}:{line_number}"
+            events.append(payload)
+    return events
+
+
+def _recovery_context(
+    run_dir: Path,
+    record: dict[str, Any],
+    data: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    reviewer = _last_event(events, "reviewer_verdict")
+    executor = _last_event(events, "executor_output")
+    policy_flags = reviewer.get("policy_flags") if reviewer else []
+    if not isinstance(policy_flags, list):
+        policy_flags = []
+
+    return {
+        "last_review_reason": reviewer.get("reason") if reviewer else None,
+        "policy_flags": [str(flag) for flag in policy_flags],
+        "test_status": _test_status_from_event(executor) or _test_status_from_state(data),
+        "last_event_ref": reviewer.get("_event_ref") if reviewer else None,
+        "recovery_command": _recovery_command(str(record.get("run_id") or run_dir.name), str(record.get("status", "unknown"))),
+    }
+
+
+def _last_event(events: list[dict[str, Any]], kind: str) -> dict[str, Any] | None:
+    for event in reversed(events):
+        if event.get("kind") == kind:
+            return event
+    return None
+
+
+def _test_status_from_event(event: dict[str, Any] | None) -> str | None:
+    if not event:
+        return None
+    summary = event.get("test_summary")
+    if isinstance(summary, dict) and isinstance(summary.get("status"), str):
+        return summary["status"]
+    return None
+
+
+def _test_status_from_state(data: dict[str, Any]) -> str | None:
+    verification = data.get("verification")
+    if isinstance(verification, dict) and isinstance(verification.get("status"), str):
+        return verification["status"]
+    return None
+
+
+def _recovery_command(run_id: str, status: str) -> str:
+    if status in ACTIVE_RUN_STATUSES:
+        return f"aspec run prompt {run_id}"
+    return f"aspec run inspect {run_id}"
 
 
 def _list_or_empty(value: Any) -> list[dict[str, Any]]:

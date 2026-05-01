@@ -65,6 +65,11 @@ The top-level `status.recommendation` already names a recovery
 command for the *first* attention run. Per-run records add the same
 clarity for the rest of the queue.
 
+**Resolution 2026-05-01 — promoted to DCR-0028.** Item 1 was lifted out of
+this defer bundle on 2026-05-01 and now lives in
+`DCR-0028-run-status-recovery-context.md` with classification
+`implement-now`. Items 3 and 4 remain in this DCR as `defer`.
+
 ### Item 2 — Completion atomicity for run state + ledger (P2)
 
 Origin: T-040 review finding #3 (`agentspec/run.py:373-386`).
@@ -186,9 +191,9 @@ Classification: `defer`.
 
 Rationale:
 
-- Items 1, 2, 4 are clear in shape but not urgent. They're polish on
-  top of the working T-040 / T-042 surface. Each can be its own
-  small implementation pack when prioritized.
+- Item 4 is clear in shape but not urgent. It is polish on top of the
+  working T-040 / T-042 surface and can be its own small implementation
+  pack when prioritized.
 - Item 3 (metrics surface) is genuinely under-designed and may need
   its own spike DCR before implementation — flagged here so the
   decision isn't lost.
