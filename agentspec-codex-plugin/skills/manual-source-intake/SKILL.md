@@ -26,6 +26,14 @@ accepted snapshots.
    - `classification`
    - `storage_mode`
    - optional external URL, id, or version if the user has it
+
+   When updating a source that was first accepted with `aspec ingest`, use the
+   accepted source id from `docs/source/sources.yml`, such as `SRC-0001`, as the
+   candidate `source_key`. Otherwise `aspec intake diff --baseline accepted`
+   cannot match the candidate to the accepted baseline and will report the
+   sections as all added. For long-lived external sources, prefer importing the
+   first version through intake with a stable source key from the start.
+
 2. Import the file as a candidate:
 
 ```bash

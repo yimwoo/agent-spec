@@ -77,6 +77,8 @@ class PluginSourceIntakeTests(unittest.TestCase):
             "aspec --root \"$TARGET\" init",
             "aspec --root \"$TARGET\" emit --target claude,codex",
             "aspec --root \"$TARGET\" status",
+            "readiness is below 60",
+            "discovery, spike, or scaffold",
         ]:
             self.assertIn(text, init_skill)
         for text in [
@@ -102,6 +104,20 @@ class PluginSourceIntakeTests(unittest.TestCase):
         local_skills = list((REPO_ROOT / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
 
         self.assertEqual([], local_skills)
+
+    def test_manual_source_intake_explains_ingest_baseline_source_key(self) -> None:
+        plugin_root = REPO_ROOT / "agentspec-codex-plugin"
+        skill = (
+            plugin_root / "skills" / "manual-source-intake" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+
+        for text in [
+            "aspec ingest",
+            "accepted source id",
+            "SRC-0001",
+            "source_key",
+        ]:
+            self.assertIn(text, skill)
 
     def test_codex_plugin_public_docs_use_short_aspec_prefix(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"

@@ -4366,5 +4366,38 @@
       "coordinator",
       "plugin-integrator"
     ]
+  },
+  {
+    "id": "R-168",
+    "title": "Codex plugin documents dogfood recovery guidance",
+    "description": "AgentSpec Codex plugin guidance covers readiness-gate recovery after init and source-key selection for candidate diffs after initial ingest.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.5",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0033",
+    "acceptance": [
+      "aspec:init-project skill guidance explains what to do when readiness is below 60 after bootstrap.",
+      "aspec:manual-source-intake skill guidance explains how to choose source_key when diffing against an accepted source created by aspec ingest.",
+      "Tests assert both guidance points."
+    ],
+    "code_targets": [
+      "agentspec-codex-plugin/skills/init-project/SKILL.md",
+      "agentspec-codex-plugin/skills/manual-source-intake/SKILL.md"
+    ],
+    "test_targets": [
+      "tests/test_plugin_source_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator"
+    ]
   }
 ]

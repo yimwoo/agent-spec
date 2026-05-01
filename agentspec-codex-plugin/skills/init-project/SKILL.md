@@ -33,6 +33,11 @@ aspec --root "$TARGET" compile
 aspec --root "$TARGET" status
 ```
 
+If `aspec status` reports that readiness is below 60, do not create an
+implementation task yet. Enrich the source material or create discovery, spike,
+or scaffold tasks. In short: discovery, spike, or scaffold work comes before
+normal implementation when the readiness gate is closed.
+
 For changing external design sources, use candidate intake:
 
 ```bash

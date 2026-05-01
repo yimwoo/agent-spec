@@ -525,6 +525,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T21:17:46Z"
+    },
+    "agent/context-packs/T-063-plugin-dogfood-recovery-guidance.md": {
+      "status": "complete",
+      "run_id": "complete-t-063-plugin-dogfood-recovery-guidance-20260501225458",
+      "reason": "DCR-0033 shipped: plugin dogfood validated aspec init, continue, and manual-source-intake flows; init guidance now covers readiness below 60; manual source intake guidance now covers source_key selection after aspec ingest; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T22:54:58Z"
     }
   }
 }
