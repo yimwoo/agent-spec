@@ -157,7 +157,12 @@ def promote_candidate(
     source_key = str(candidate["source_key"])
     prior_source = _accepted_source_for(root, source_key)
     promoted_sections = _accepted_sections(candidate)
-    source_record = _accepted_source_record(root, candidate_dir, candidate)
+    source_record = _accepted_source_record(
+        root,
+        candidate_dir,
+        candidate,
+        prior_source=prior_source,
+    )
 
     sources_path = root / "docs" / "source" / "sources.yml"
     sources = load_data(sources_path, []) or []
@@ -169,6 +174,7 @@ def promote_candidate(
             continue
         if prior_source and source.get("id") == prior_source.get("id"):
             superseded = dict(source)
+            superseded["source_key"] = source_key
             superseded["state"] = "superseded"
             superseded["superseded_by"] = snapshot_id
             updated_sources.append(superseded)
@@ -177,18 +183,32 @@ def promote_candidate(
     updated_sources.append(source_record)
     write_data(sources_path, updated_sources)
 
-    replacement_source_ids = {snapshot_id}
-    if prior_source and prior_source.get("id"):
-        replacement_source_ids.add(str(prior_source["id"]))
     sections_path = root / "docs" / "source" / "sections.yml"
     existing_sections = load_data(sections_path, []) or []
-    retained_sections = [
-        section
-        for section in existing_sections
-        if not isinstance(section, dict)
-        or str(section.get("source_id", "")) not in replacement_source_ids
-    ]
-    write_data(sections_path, retained_sections + promoted_sections)
+    retained_sections: list[dict[str, Any]] = []
+    superseded_sections: list[dict[str, Any]] = []
+    prior_source_id = str(prior_source["id"]) if prior_source and prior_source.get("id") else None
+    for section in existing_sections:
+        if not isinstance(section, dict):
+            continue
+        source_id = str(section.get("source_id", ""))
+        if source_id == snapshot_id:
+            continue
+        if (
+            prior_source_id
+            and source_id == prior_source_id
+            and section.get("state", "accepted") == "accepted"
+        ):
+            superseded_sections.append(
+                _superseded_section(
+                    section,
+                    source_key=source_key,
+                    superseded_by_snapshot=snapshot_id,
+                )
+            )
+            continue
+        retained_sections.append(section)
+    write_data(sections_path, retained_sections + superseded_sections + promoted_sections)
 
     result = {
         "schema": INTAKE_PROMOTE_SCHEMA,
@@ -311,6 +331,8 @@ def _accepted_source_record(
     root: Path,
     candidate_dir: Path,
     document: dict[str, Any],
+    *,
+    prior_source: dict[str, Any] | None,
 ) -> dict[str, Any]:
     storage_mode = str(document["storage_mode"])
     uri = str(document.get("remote_uri", ""))
@@ -331,9 +353,11 @@ def _accepted_source_record(
 
     return {
         "id": document["snapshot_id"],
+        "snapshot_id": document["snapshot_id"],
         "source_key": document["source_key"],
         "kind": document["kind"],
         "uri": uri,
+        "remote_uri": document.get("remote_uri"),
         "original_uri": document.get("remote_uri"),
         "title": document.get("title") or document["source_key"],
         "version": document.get("remote_version"),
@@ -344,29 +368,40 @@ def _accepted_source_record(
         "classification": document["classification"],
         "storage_mode": storage_mode,
         "state": "accepted",
+        "supersedes": prior_source.get("id") if prior_source else None,
         "candidate_path": str(candidate_dir.relative_to(root)),
     }
 
 
 def _accepted_sections(document: dict[str, Any]) -> list[dict[str, Any]]:
     source_id = str(document["snapshot_id"])
+    source_key = str(document["source_key"])
     sections: list[dict[str, Any]] = []
     for section in document.get("sections", []):
         heading_path = list(section.get("heading_path", []))
         start_line, end_line = _line_range_from_body_ref(str(section.get("body_ref", "")))
         local_id = str(section["local_id"])
+        section_id = _source_key_section_id(source_key, local_id)
+        parent_local_id = _parent_section_id(local_id)
         sections.append(
             {
-                "id": local_id,
+                "id": section_id,
+                "local_id": local_id,
                 "source_id": source_id,
+                "source_key": source_key,
+                "snapshot_id": source_id,
+                "snapshot_section_id": _snapshot_section_id(source_id, local_id),
                 "stable_key": section.get("stable_key"),
                 "title": heading_path[-1] if heading_path else local_id,
                 "heading_path": heading_path,
                 "start_line": start_line,
                 "end_line": end_line,
                 "content_hash": section["content_hash"],
-                "parent": _parent_section_id(local_id),
+                "parent": _source_key_section_id(source_key, parent_local_id)
+                if parent_local_id
+                else None,
                 "children": [],
+                "state": "accepted",
             }
         )
 
@@ -376,6 +411,59 @@ def _accepted_sections(document: dict[str, Any]) -> list[dict[str, Any]]:
         if parent in by_id:
             by_id[parent]["children"].append(section["id"])
     return sections
+
+
+def _superseded_section(
+    section: dict[str, Any],
+    *,
+    source_key: str,
+    superseded_by_snapshot: str,
+) -> dict[str, Any]:
+    source_id = str(section.get("source_id", ""))
+    local_id = _local_section_id(section)
+    snapshot_id = str(section.get("snapshot_id") or source_id)
+    snapshot_section_id = str(
+        section.get("snapshot_section_id") or _snapshot_section_id(snapshot_id, local_id)
+    )
+    parent_local_id = _local_section_id({"id": section.get("parent")}) if section.get("parent") else None
+    children = [
+        _snapshot_section_id(snapshot_id, _local_section_id({"id": child}))
+        for child in section.get("children", [])
+    ]
+    superseded = dict(section)
+    superseded.update(
+        {
+            "id": snapshot_section_id,
+            "local_id": local_id,
+            "source_key": section.get("source_key") or source_key,
+            "snapshot_id": snapshot_id,
+            "snapshot_section_id": snapshot_section_id,
+            "parent": _snapshot_section_id(snapshot_id, parent_local_id)
+            if parent_local_id
+            else None,
+            "children": children,
+            "state": "superseded",
+            "superseded_by": _source_key_section_id(source_key, local_id),
+            "superseded_by_snapshot": superseded_by_snapshot,
+        }
+    )
+    return superseded
+
+
+def _source_key_section_id(source_key: str, local_id: str) -> str:
+    return f"{source_key}:{local_id}"
+
+
+def _snapshot_section_id(snapshot_id: str, local_id: str) -> str:
+    return f"{snapshot_id}:{local_id}"
+
+
+def _local_section_id(section: dict[str, Any]) -> str:
+    local_id = section.get("local_id")
+    if isinstance(local_id, str) and local_id:
+        return local_id
+    section_id = str(section.get("id", ""))
+    return section_id.split(":", 1)[1] if ":" in section_id else section_id
 
 
 def _line_range_from_body_ref(body_ref: str) -> tuple[int, int]:

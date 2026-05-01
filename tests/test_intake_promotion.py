@@ -31,6 +31,20 @@ The accepted design uses the V2 payments API.
 The rollout starts with internal merchants.
 """
 
+PAYMENTS_GOALS_MARKDOWN = """# Payments Design
+
+## Goals
+
+The payments API must capture idempotency keys.
+"""
+
+AUTH_GOALS_MARKDOWN = """# Auth Design
+
+## Goals
+
+The auth API must reject invalid tokens.
+"""
+
 
 class IntakePromotionTests(unittest.TestCase):
     def test_promote_is_explicit_and_import_diff_do_not_mutate_accepted_projection(self) -> None:
@@ -104,8 +118,14 @@ class IntakePromotionTests(unittest.TestCase):
                 [("SRC-0001", "superseded"), ("SRC-0002", "accepted")],
             )
             sections = load_data(root / "docs" / "source" / "sections.yml")
-            self.assertEqual({section["source_id"] for section in sections}, {"SRC-0002"})
-            self.assertEqual([section["id"] for section in sections], ["D-01", "D-02"])
+            accepted_sections = [
+                section for section in sections if section.get("state", "accepted") == "accepted"
+            ]
+            self.assertEqual({section["source_id"] for section in accepted_sections}, {"SRC-0002"})
+            self.assertEqual(
+                [section["id"] for section in accepted_sections],
+                ["payments-design:D-01", "payments-design:D-02"],
+            )
 
     def test_promote_does_not_accept_or_classify_dcr_governance_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -278,12 +298,147 @@ class IntakePromotionTests(unittest.TestCase):
                 (root / "docs" / "source" / "src-0002-payments-design.md").exists()
             )
 
+    def test_promote_records_source_and_section_lineage(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _seed_workspace_with_accepted_source(root)
+            candidate = root / "candidate.md"
+            candidate.write_text(CANDIDATE_MARKDOWN, encoding="utf-8")
+            _import_candidate(root, candidate, source_key="payments-design")
+
+            promote_payload = _run_json(
+                [
+                    "--root",
+                    str(root),
+                    "intake",
+                    "promote",
+                    "SRC-0002",
+                    "--decision",
+                    "accepted",
+                    "--json",
+                ]
+            )
+
+            self.assertEqual(promote_payload["accepted_source"]["snapshot_id"], "SRC-0002")
+            self.assertEqual(promote_payload["accepted_source"]["source_key"], "payments-design")
+            self.assertEqual(promote_payload["accepted_source"]["remote_uri"], str(candidate.resolve()))
+            self.assertTrue(
+                promote_payload["accepted_source"]["content_hash"].startswith("sha256:")
+            )
+            self.assertTrue(
+                promote_payload["accepted_source"]["normalized_hash"].startswith("sha256:")
+            )
+            self.assertEqual(promote_payload["accepted_source"]["supersedes"], "SRC-0001")
+
+            sources = {
+                source["id"]: source
+                for source in load_data(root / "docs" / "source" / "sources.yml")
+            }
+            self.assertEqual(sources["SRC-0001"]["state"], "superseded")
+            self.assertEqual(sources["SRC-0001"]["source_key"], "payments-design")
+            self.assertEqual(sources["SRC-0001"]["superseded_by"], "SRC-0002")
+
+            sections = {
+                section["id"]: section
+                for section in load_data(root / "docs" / "source" / "sections.yml")
+            }
+            self.assertIn("SRC-0001:D-01", sections)
+            self.assertEqual(sections["SRC-0001:D-01"]["state"], "superseded")
+            self.assertEqual(sections["SRC-0001:D-01"]["snapshot_section_id"], "SRC-0001:D-01")
+
+            self.assertIn("payments-design:D-01", sections)
+            self.assertEqual(sections["payments-design:D-01"]["state"], "accepted")
+            self.assertEqual(sections["payments-design:D-01"]["source_key"], "payments-design")
+            self.assertEqual(sections["payments-design:D-01"]["snapshot_id"], "SRC-0002")
+            self.assertEqual(sections["payments-design:D-01"]["snapshot_section_id"], "SRC-0002:D-01")
+            self.assertEqual(sections["payments-design:D-01"]["local_id"], "D-01")
+
+    def test_compile_uses_source_key_qualified_current_sections_after_promotion(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _run(["--root", str(root), "init"])
+            payments = root / "payments.md"
+            payments.write_text(PAYMENTS_GOALS_MARKDOWN, encoding="utf-8")
+            auth = root / "auth.md"
+            auth.write_text(AUTH_GOALS_MARKDOWN, encoding="utf-8")
+
+            _import_candidate(root, payments, source_key="payments-design")
+            _run_json(
+                [
+                    "--root",
+                    str(root),
+                    "intake",
+                    "promote",
+                    "SRC-0001",
+                    "--decision",
+                    "accepted",
+                    "--json",
+                ]
+            )
+            _import_candidate(root, auth, source_key="auth-design")
+            _run_json(
+                [
+                    "--root",
+                    str(root),
+                    "intake",
+                    "promote",
+                    "SRC-0002",
+                    "--decision",
+                    "accepted",
+                    "--json",
+                ]
+            )
+
+            _run(["--root", str(root), "compile"])
+
+            spec_index = load_data(root / "docs" / "spec" / "spec-index.yml")
+            cited_sections = {
+                section_id
+                for shard in spec_index
+                for section_id in shard.get("source_sections", [])
+            }
+            self.assertIn("payments-design:D-01", cited_sections)
+            self.assertIn("auth-design:D-01", cited_sections)
+            self.assertNotIn("D-01", cited_sections)
+
+            requirements = load_data(root / "docs" / "traceability" / "requirements.yml")
+            requirement_sections = {
+                section_id
+                for requirement in requirements
+                for section_id in requirement.get("source_sections", [])
+            }
+            self.assertIn("payments-design:D-01", requirement_sections)
+            self.assertIn("auth-design:D-01", requirement_sections)
+            self.assertNotIn("D-01", requirement_sections)
+
 
 def _seed_workspace_with_accepted_source(root: Path) -> None:
     accepted = root / "accepted.md"
     accepted.write_text(ACCEPTED_MARKDOWN, encoding="utf-8")
     _run(["--root", str(root), "init"])
     _run(["--root", str(root), "ingest", str(accepted)])
+
+
+def _import_candidate(root: Path, source: Path, *, source_key: str) -> dict[str, object]:
+    return _run_json(
+        [
+            "--root",
+            str(root),
+            "intake",
+            "import",
+            str(source),
+            "--kind",
+            "markdown",
+            "--source-key",
+            source_key,
+            "--classification",
+            "internal",
+            "--storage-mode",
+            "committed",
+            "--as-candidate",
+            "--json",
+        ]
+    )
 
 
 def _seed_governance_artifacts(root: Path) -> None:

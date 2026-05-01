@@ -399,6 +399,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T16:08:05Z"
+    },
+    "agent/context-packs/T-049-promotion-preserves-source-snapshot-lineage.md": {
+      "status": "complete",
+      "run_id": "t049-promotion-preserves-source-snapshot-lineage",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:11:01Z"
     }
   }
 }

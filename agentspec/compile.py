@@ -29,7 +29,7 @@ REQUIREMENT_WORD_RE = re.compile(
 
 
 def compile_project(root: Path) -> dict[str, Any]:
-    sections = load_data(root / "docs" / "source" / "sections.yml", [])
+    sections = _accepted_sections(load_data(root / "docs" / "source" / "sections.yml", []))
     sources = load_data(root / "docs" / "source" / "sources.yml", [])
     if not sections:
         raise ValueError("No source sections found. Run `agentspec ingest <design.md>` first.")
@@ -68,6 +68,14 @@ def compile_project(root: Path) -> dict[str, Any]:
 
     _validate_requirements(source_derived_requirements, {section["id"] for section in sections})
     return {"requirements": requirements, "assumptions": assumptions, "open_questions": open_questions, "readiness": readiness, "spec_shards": shards}
+
+
+def _accepted_sections(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        section
+        for section in sections
+        if isinstance(section, dict) and section.get("state", "accepted") == "accepted"
+    ]
 
 
 def _is_dcr_originated_requirement(requirement: dict[str, Any]) -> bool:
