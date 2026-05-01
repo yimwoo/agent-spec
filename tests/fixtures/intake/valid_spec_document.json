@@ -1,0 +1,26 @@
+{
+  "schema": "agentspec.spec_document.v0",
+  "source_key": "payments-design",
+  "snapshot_id": "SRC-0002",
+  "kind": "markdown",
+  "title": "Payments API V2 Design",
+  "remote_uri": "/tmp/payments-design.md",
+  "remote_version": null,
+  "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "normalized_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "fetched_at": "2026-05-01T00:00:00Z",
+  "classification": "internal",
+  "storage_mode": "committed",
+  "sections": [
+    {
+      "local_id": "D-01",
+      "stable_key": "payments-api-v2/overview",
+      "heading_path": ["Overview"],
+      "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "body_ref": "source.md#L1-L40"
+    }
+  ],
+  "requirements": [],
+  "api_contracts": [],
+  "open_questions": []
+}
