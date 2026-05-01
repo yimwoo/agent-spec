@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import re
 
 from .io import load_data, read_text, sha256_text, utc_now_iso, write_data, write_text
 from .markdown import document_title, sectionize_markdown
@@ -16,6 +17,7 @@ from .spec_document import (
 
 INTAKE_IMPORT_SCHEMA = "agentspec.intake.import.v0"
 INTAKE_DIFF_SCHEMA = "agentspec.intake.diff.v0"
+INTAKE_PROMOTE_SCHEMA = "agentspec.intake.promote.v0"
 SECTION_CHANGE_KINDS = (
     "unchanged",
     "added",
@@ -130,6 +132,93 @@ def diff_candidate(
     return result
 
 
+def promote_candidate(
+    root: Path,
+    snapshot_id: str,
+    *,
+    decision: str,
+    run_compile: bool = False,
+) -> dict[str, Any]:
+    """Promote a validated candidate snapshot into accepted source projection."""
+
+    if decision != "accepted":
+        raise ValueError("intake promote currently accepts --decision accepted only.")
+
+    candidate_dir = root / "docs" / "source" / "candidates" / snapshot_id
+    candidate = load_data(candidate_dir / "spec-document.yml")
+    if not isinstance(candidate, dict):
+        raise FileNotFoundError(f"Candidate SpecDocument not found: {snapshot_id}")
+
+    report = validation_report(candidate)
+    write_data(candidate_dir / "validation.yml", report)
+    if not report["valid"]:
+        raise SpecDocumentValidationError(_issues_from_report(report))
+
+    source_key = str(candidate["source_key"])
+    prior_source = _accepted_source_for(root, source_key)
+    promoted_sections = _accepted_sections(candidate)
+    source_record = _accepted_source_record(root, candidate_dir, candidate)
+
+    sources_path = root / "docs" / "source" / "sources.yml"
+    sources = load_data(sources_path, []) or []
+    updated_sources: list[dict[str, Any]] = []
+    for source in sources:
+        if not isinstance(source, dict):
+            continue
+        if source.get("id") == snapshot_id:
+            continue
+        if prior_source and source.get("id") == prior_source.get("id"):
+            superseded = dict(source)
+            superseded["state"] = "superseded"
+            superseded["superseded_by"] = snapshot_id
+            updated_sources.append(superseded)
+            continue
+        updated_sources.append(source)
+    updated_sources.append(source_record)
+    write_data(sources_path, updated_sources)
+
+    replacement_source_ids = {snapshot_id}
+    if prior_source and prior_source.get("id"):
+        replacement_source_ids.add(str(prior_source["id"]))
+    sections_path = root / "docs" / "source" / "sections.yml"
+    existing_sections = load_data(sections_path, []) or []
+    retained_sections = [
+        section
+        for section in existing_sections
+        if not isinstance(section, dict)
+        or str(section.get("source_id", "")) not in replacement_source_ids
+    ]
+    write_data(sections_path, retained_sections + promoted_sections)
+
+    result = {
+        "schema": INTAKE_PROMOTE_SCHEMA,
+        "snapshot_id": snapshot_id,
+        "source_key": source_key,
+        "decision": decision,
+        "approval": {
+            "mode": "explicit-command",
+        },
+        "accepted_source": source_record,
+        "sections_promoted": len(promoted_sections),
+    }
+    if run_compile:
+        from .compile import compile_project
+
+        compile_result = compile_project(root)
+        result["compile"] = {
+            "ran": True,
+            "spec_shards": len(compile_result["spec_shards"]),
+            "requirements": len(compile_result["requirements"]),
+            "open_questions": len(compile_result["open_questions"]),
+        }
+    else:
+        result["compile"] = {
+            "ran": False,
+            "command": "aspec compile",
+        }
+    return result
+
+
 def format_diff_report(diff: dict[str, Any]) -> str:
     baseline = diff.get("baseline", {})
     lines = [
@@ -192,7 +281,12 @@ def _accepted_source_for(root: Path, source_key: str) -> dict[str, Any] | None:
             continue
         if source.get("state", "accepted") != "accepted":
             continue
-        if source.get("source_key") == source_key or source.get("id") == source_key:
+        legacy_title_key = slugify(str(source.get("title", "")), "source")
+        if (
+            source.get("source_key") == source_key
+            or source.get("id") == source_key
+            or legacy_title_key == source_key
+        ):
             return source
     return None
 
@@ -211,6 +305,90 @@ def _baseline_sections(
             continue
         sections.append(_baseline_diff_section(section, source_key))
     return sections
+
+
+def _accepted_source_record(
+    root: Path,
+    candidate_dir: Path,
+    document: dict[str, Any],
+) -> dict[str, Any]:
+    storage_mode = str(document["storage_mode"])
+    uri = str(document.get("remote_uri", ""))
+    if storage_mode == "committed":
+        candidate_source = candidate_dir / "source.md"
+        if not candidate_source.exists():
+            raise FileNotFoundError(
+                f"Committed candidate source body not found: {candidate_source}"
+            )
+        destination = (
+            root
+            / "docs"
+            / "source"
+            / f"{str(document['snapshot_id']).lower()}-{slugify(str(document['source_key']), 'source')}.md"
+        )
+        write_text(destination, read_text(candidate_source))
+        uri = str(destination.relative_to(root))
+
+    return {
+        "id": document["snapshot_id"],
+        "source_key": document["source_key"],
+        "kind": document["kind"],
+        "uri": uri,
+        "original_uri": document.get("remote_uri"),
+        "title": document.get("title") or document["source_key"],
+        "version": document.get("remote_version"),
+        "remote_version": document.get("remote_version"),
+        "content_hash": document["content_hash"],
+        "normalized_hash": document["normalized_hash"],
+        "fetched_at": document["fetched_at"],
+        "classification": document["classification"],
+        "storage_mode": storage_mode,
+        "state": "accepted",
+        "candidate_path": str(candidate_dir.relative_to(root)),
+    }
+
+
+def _accepted_sections(document: dict[str, Any]) -> list[dict[str, Any]]:
+    source_id = str(document["snapshot_id"])
+    sections: list[dict[str, Any]] = []
+    for section in document.get("sections", []):
+        heading_path = list(section.get("heading_path", []))
+        start_line, end_line = _line_range_from_body_ref(str(section.get("body_ref", "")))
+        local_id = str(section["local_id"])
+        sections.append(
+            {
+                "id": local_id,
+                "source_id": source_id,
+                "stable_key": section.get("stable_key"),
+                "title": heading_path[-1] if heading_path else local_id,
+                "heading_path": heading_path,
+                "start_line": start_line,
+                "end_line": end_line,
+                "content_hash": section["content_hash"],
+                "parent": _parent_section_id(local_id),
+                "children": [],
+            }
+        )
+
+    by_id = {section["id"]: section for section in sections}
+    for section in sections:
+        parent = section["parent"]
+        if parent in by_id:
+            by_id[parent]["children"].append(section["id"])
+    return sections
+
+
+def _line_range_from_body_ref(body_ref: str) -> tuple[int, int]:
+    match = re.search(r"#L(\d+)-L(\d+)$", body_ref)
+    if not match:
+        raise ValueError(f"Cannot promote section without line range body_ref: {body_ref}")
+    return int(match.group(1)), int(match.group(2))
+
+
+def _parent_section_id(local_id: str) -> str | None:
+    if "." not in local_id:
+        return None
+    return local_id.rsplit(".", 1)[0]
 
 
 def _baseline_diff_section(

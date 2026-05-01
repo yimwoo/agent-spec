@@ -390,6 +390,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T15:50:27Z"
+    },
+    "agent/context-packs/T-048-candidate-promotion-requires-human-approval.md": {
+      "status": "complete",
+      "run_id": "t048-candidate-promotion-requires-human-approval",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:08:05Z"
     }
   }
 }

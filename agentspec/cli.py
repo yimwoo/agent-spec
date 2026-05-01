@@ -19,7 +19,7 @@ from .doctor import run_doctor
 from .drift import run_drift
 from .emit import emit_targets
 from .ingest import ingest_source
-from .intake import diff_candidate, format_diff_report, import_candidate
+from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
@@ -70,6 +70,11 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     intake_diff.add_argument("snapshot_id")
     intake_diff.add_argument("--baseline", default="accepted", choices=["accepted"])
     intake_diff.add_argument("--json", action="store_true")
+    intake_promote = intake_subparsers.add_parser("promote", help="Promote a candidate snapshot into accepted source projection.")
+    intake_promote.add_argument("snapshot_id")
+    intake_promote.add_argument("--decision", required=True, choices=["accepted"])
+    intake_promote.add_argument("--compile", action="store_true")
+    intake_promote.add_argument("--json", action="store_true")
 
     subparsers.add_parser("compile", help="Compile source sections into specs, requirements, assumptions, questions, and readiness.")
 
@@ -311,6 +316,23 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     print(json.dumps(result, indent=2))
                 else:
                     print(format_diff_report(result))
+                return 0
+            if args.intake_command == "promote":
+                result = promote_candidate(
+                    root,
+                    args.snapshot_id,
+                    decision=args.decision,
+                    run_compile=args.compile,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(
+                        f"Promoted {result['snapshot_id']} as accepted source "
+                        f"{result['accepted_source']['id']}."
+                    )
+                    if not result["compile"]["ran"]:
+                        print(f"Next: {result['compile']['command']}")
                 return 0
             parser.print_help()
             return 0
