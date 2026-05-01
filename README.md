@@ -4,6 +4,8 @@ AgentSpec is a local-first CLI that turns a Markdown design document into
 durable, agent-ready repository context:
 
 - canonical source snapshots and source sections
+- candidate snapshots from external sources such as exported docs, OpenAPI
+  contracts, and connector fixtures
 - spec shards
 - requirements with source references
 - assumptions and open questions
@@ -64,6 +66,30 @@ the MVP can run with only the Python standard library.
 For working **on a different repository**, see the next two sections — one
 written for humans, one written for code agents.
 
+## Project Model
+
+AgentSpec separates the place where a design lives from the repo-local
+baseline that agents are allowed to implement.
+
+- **External source of truth:** the living design or contract, such as a
+  Confluence page, exported Markdown/PDF/HTML, or OpenAPI document. This may
+  change without the repository changing.
+- **Candidate snapshot:** an immutable import under `docs/source/candidates/`.
+  It records source identity, remote URI, remote version, fetch time,
+  `content_hash`, `normalized_hash`, classification, storage mode, sections,
+  and optional API contracts. Importing a candidate does not change accepted
+  specs or requirements.
+- **Accepted repo snapshot:** the promoted material in `docs/source/` that
+  `aspec compile` uses to generate `docs/spec/`,
+  `docs/traceability/requirements.yml`, open questions, and task packs.
+- **Context pack:** the bounded unit of implementation work in
+  `agent/context-packs/`. Code agents should work from this, not from an
+  external document directly.
+
+The practical rule: if Confluence changes, treat that as new evidence. Import
+it as a candidate, diff it, review it, and promote it only when the human wants
+the repo-local baseline to move.
+
 ## For Humans: Bootstrap A Project
 
 You point AgentSpec at a target repository with `--root $TARGET`. The
@@ -118,6 +144,75 @@ context packs are the unit of work AgentSpec actually enforces.
   `docs/source/` in place — this preserves traceability.
 - Promote individual requirements with
   `aspec requirement accept <R-id>` once their context pack ships.
+
+## External Source Intake
+
+Use `aspec ingest` for the simple first bootstrap from a trusted local
+Markdown design. Use `aspec intake` when the source may keep changing outside
+the repo or needs human review before it becomes the accepted baseline.
+
+Current MVP support:
+
+- `markdown`: local `.md`, `.markdown`, or `.txt` files.
+- `openapi`: JSON-compatible `.json`, `.yaml`, or `.yml` OpenAPI documents.
+  The MVP intentionally parses YAML-compatible JSON with the Python standard
+  library; broader YAML support can come later.
+- `confluence`: a local JSON fixture that represents a fetched Confluence
+  page. Live Confluence/Jira/Drive connectors are planned as adapters over the
+  same snapshot protocol, not as privileged compile inputs.
+
+Candidate-first update flow:
+
+```bash
+TARGET=/path/to/repo
+aspec --root "$TARGET" intake import ./design-v2.md \
+  --kind markdown \
+  --source-key payments-design \
+  --classification internal \
+  --storage-mode committed \
+  --as-candidate \
+  --json
+
+aspec --root "$TARGET" intake diff SRC-0002 --baseline accepted --json
+aspec --root "$TARGET" intake promote SRC-0002 --decision accepted --compile --json
+aspec --root "$TARGET" status
+```
+
+For Confluence-style input in the current MVP, export or fetch the page into a
+fixture:
+
+```json
+{
+  "remote_uri": "confluence://PAY/pages/12345",
+  "remote_version": "42",
+  "fetched_at": "2026-05-01T00:00:00Z",
+  "title": "Payments Design",
+  "body": "# Payments Design\n\n## Overview\n\n..."
+}
+```
+
+Then import it through the same candidate lane:
+
+```bash
+aspec --root "$TARGET" intake import ./confluence-page.json \
+  --kind confluence \
+  --source-key payments-design \
+  --classification internal \
+  --storage-mode committed \
+  --as-candidate \
+  --json
+```
+
+For sensitive material, prefer `--storage-mode pointer-only` with
+`--classification restricted` or `confidential`. The candidate records URI and
+hash metadata while source excerpts are redacted from prompts and generated
+context.
+
+Hash behavior is explicit but not yet scheduled polling. Every import records
+`content_hash` and `normalized_hash`; `intake diff` compares the candidate to
+the accepted source for the same `source_key`; `promote` moves the accepted
+baseline only after an explicit command. A future source registry and scheduled
+drift check will automate the read-only "has this source changed?" check.
 
 ## For Code Agents: Bootstrap A New Project
 
@@ -207,7 +302,9 @@ open question (`Q-NNN`) blocks the next pack, or a user request implies
 scope outside the active pack.
 
 ```bash
-aspec --root "$TARGET" dcr create --title "Short title" --slug short-title
+aspec --root "$TARGET" dcr create \
+  --title "Short title" \
+  --classification implement-now
 # Edit the generated DCR file in docs/change-requests/ to add context.
 ```
 
@@ -239,14 +336,33 @@ aspec --root "$TARGET" run start --mode autonomous agent/context-packs/T-001-exa
 aspec --root "$TARGET" run loop --mode autonomous --json
 ```
 
-Autonomous mode is deliberately bounded. It refuses context packs whose allowed
-paths are only inferred, applies hard policy gates, records blocked findings,
-and requires stronger review before completing. When `run loop --mode
-autonomous` finds no ready context pack, it can enter research mode and write
-bounded findings under the configured research paths instead of editing product
-code. Autonomous and research runs also write a committed
-`agent/runs/<run-id>/summary.yml` projection so the audit trail is visible
-in normal git history; raw `state.yml` and `events.jsonl` stay local.
+`run loop` is the controller step. With no active run, it selects a ready
+context pack and starts one; with an active run, it records executor output,
+asks the reviewer, and returns the next action.
+
+```bash
+aspec --root "$TARGET" run loop \
+  --run-id run-001 \
+  --executor-output "Implemented R-001. Tests passed." \
+  --touched-path src/example.ts \
+  --test-status passed \
+  --json
+```
+
+Autonomous mode is deliberately bounded. It runs one context pack at a time,
+refuses packs whose allowed paths are only inferred, applies hard policy gates,
+records blocked findings, and requires dual reviewer signoff before completing.
+It may not push, accept requirements, accept DCRs, bypass allowed paths, or
+continue past destructive/credential policy limits.
+
+When `run loop --mode autonomous` finds no ready context pack, it can enter
+research mode and write bounded findings under configured research paths
+instead of editing product code. Research mode is for discovery, not hidden
+implementation.
+
+Use autonomous mode when the scope is already encoded in a context pack and the
+failure behavior is acceptable. Use supervised mode when requirements, source
+changes, security boundaries, or acceptance decisions still need human judgment.
 
 ## What To Commit In The Target Repo
 
