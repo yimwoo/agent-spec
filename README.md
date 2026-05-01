@@ -208,11 +208,56 @@ For sensitive material, prefer `--storage-mode pointer-only` with
 hash metadata while source excerpts are redacted from prompts and generated
 context.
 
-Hash behavior is explicit but not yet scheduled polling. Every import records
-`content_hash` and `normalized_hash`; `intake diff` compares the candidate to
-the accepted source for the same `source_key`; `promote` moves the accepted
-baseline only after an explicit command. A future source registry and scheduled
-drift check will automate the read-only "has this source changed?" check.
+Hash behavior is explicit. Every import records `content_hash` and
+`normalized_hash`; `intake diff` compares the candidate to the accepted source
+for the same `source_key`; `promote` moves the accepted baseline only after an
+explicit command.
+
+## Source Registry And Scheduled Drift Checks
+
+Use `aspec source` when a team wants AgentSpec to remember which external
+sources should be checked again later. The registry lives at
+`docs/source/source-registry.yml`; it records the logical `source_key`,
+connector kind, remote locator, classification, storage mode, and last accepted
+snapshot metadata.
+
+Register or update a source:
+
+```bash
+aspec --root "$TARGET" source add payments-design ./confluence-page.json \
+  --kind confluence \
+  --classification internal \
+  --storage-mode committed \
+  --poll-cadence daily \
+  --json
+
+aspec --root "$TARGET" source list --json
+```
+
+Check one source without writing candidate evidence:
+
+```bash
+aspec --root "$TARGET" source check payments-design --json
+```
+
+If the hash changed, the result includes the current hash, baseline hash, and
+next command. To write candidate evidence explicitly:
+
+```bash
+aspec --root "$TARGET" source check payments-design --as-candidate --json
+aspec --root "$TARGET" intake diff SRC-0002 --baseline accepted --json
+```
+
+Scheduled audits should call the read-only all-source command:
+
+```bash
+aspec --root "$TARGET" source check --all --json
+```
+
+This is CI-friendly output for cron, GitHub Actions, Buildkite, Jenkins, or
+another scheduler. It reports `changed`, `unchanged`, `failed`, and
+`policy-blocked` sources. Scheduled checks do not promote candidates, update
+accepted specs, accept requirements, classify DCRs, or create context packs.
 
 ## For Code Agents: Bootstrap A New Project
 

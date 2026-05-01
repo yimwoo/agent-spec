@@ -25,6 +25,14 @@ from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
+from .source_registry import (
+    add_source_record,
+    check_registered_sources,
+    format_source_check,
+    format_source_list,
+    list_source_records,
+    source_check_exit_code,
+)
 from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import build_project_status, format_project_status
@@ -75,6 +83,24 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     intake_promote.add_argument("--decision", required=True, choices=["accepted"])
     intake_promote.add_argument("--compile", action="store_true")
     intake_promote.add_argument("--json", action="store_true")
+
+    source = subparsers.add_parser("source", help="Registered external source utilities.")
+    source_subparsers = source.add_subparsers(dest="source_command")
+    source_add = source_subparsers.add_parser("add", help="Add or update a registered external source.")
+    source_add.add_argument("source_key")
+    source_add.add_argument("remote_uri")
+    source_add.add_argument("--kind", required=True, choices=sorted(ALLOWED_KINDS))
+    source_add.add_argument("--classification", required=True, choices=sorted(SOURCE_CLASSIFICATIONS))
+    source_add.add_argument("--storage-mode", required=True, choices=sorted(ALLOWED_STORAGE_MODES))
+    source_add.add_argument("--poll-cadence")
+    source_add.add_argument("--json", action="store_true")
+    source_list = source_subparsers.add_parser("list", help="List registered external sources.")
+    source_list.add_argument("--json", action="store_true")
+    source_check = source_subparsers.add_parser("check", help="Check registered sources for source drift.")
+    source_check.add_argument("source_key", nargs="?")
+    source_check.add_argument("--all", action="store_true", dest="all_sources")
+    source_check.add_argument("--as-candidate", action="store_true")
+    source_check.add_argument("--json", action="store_true")
 
     subparsers.add_parser("compile", help="Compile source sections into specs, requirements, assumptions, questions, and readiness.")
 
@@ -334,6 +360,51 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     if not result["compile"]["ran"]:
                         print(f"Next: {result['compile']['command']}")
                 return 0
+            parser.print_help()
+            return 0
+
+        if args.command == "source":
+            if args.source_command == "add":
+                result = add_source_record(
+                    root,
+                    source_key=args.source_key,
+                    remote_uri=args.remote_uri,
+                    kind=args.kind,
+                    classification=args.classification,
+                    storage_mode=args.storage_mode,
+                    poll_cadence=args.poll_cadence,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(
+                        f"{result['action'].title()} source "
+                        f"{result['record']['source_key']} -> {result['record']['remote_uri']}."
+                    )
+                return 0
+            if args.source_command == "list":
+                result = list_source_records(root)
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(format_source_list(result))
+                return 0
+            if args.source_command == "check":
+                if args.all_sources and args.source_key:
+                    raise ValueError("source check accepts either <source-key> or --all, not both.")
+                if not args.all_sources and not args.source_key:
+                    raise ValueError("source check requires <source-key> or --all.")
+                result = check_registered_sources(
+                    root,
+                    source_key=args.source_key,
+                    all_sources=args.all_sources,
+                    as_candidate=args.as_candidate,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(format_source_check(result))
+                return source_check_exit_code(result)
             parser.print_help()
             return 0
 

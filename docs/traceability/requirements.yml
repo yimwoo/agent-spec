@@ -3935,5 +3935,142 @@
       "spec-compiler",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-155",
+    "title": "AgentSpec stores a source registry for external source identities",
+    "description": "AgentSpec stores a source registry for logical external source identities, remote locators, connector kind, classification, storage mode, and last accepted snapshot metadata.",
+    "source_sections": [
+      "D-03",
+      "D-12.1",
+      "D-12.5",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0027",
+    "blocked_by": "ADR-0007",
+    "acceptance": [
+      "docs/source/source-registry.yml is loaded and written with schema agentspec.source_registry.v0.",
+      "Registry validation requires source_key, kind, remote_uri, classification, storage_mode, and supported policy combinations.",
+      "aspec source add writes or updates one logical source record without mutating accepted source/spec/requirements artifacts.",
+      "aspec source list reports registry records in human-readable and JSON formats."
+    ],
+    "code_targets": [
+      "agentspec/source_registry.py",
+      "agentspec/cli.py",
+      "docs/source/source-registry.yml",
+      "README.md"
+    ],
+    "test_targets": [
+      "tests/test_source_registry.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-156",
+    "title": "Registered source drift checks are read-only by default",
+    "description": "AgentSpec can run a read-only source drift check for one registered source or all registered sources without mutating accepted compile inputs.",
+    "source_sections": [
+      "D-12.1",
+      "D-12.13",
+      "D-23.4",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0027",
+    "blocked_by": "ADR-0007",
+    "acceptance": [
+      "aspec source check <source-key> compares the fetched source hash against the registered or accepted baseline hash.",
+      "aspec source check --all checks every registry record and emits a structured result for each source.",
+      "Default source checks do not mutate docs/source/sources.yml, docs/source/sections.yml, docs/spec/**, docs/traceability/requirements.yml, docs/adr/**, docs/change-requests/**, or agent/context-packs/**."
+    ],
+    "code_targets": [
+      "agentspec/source_registry.py",
+      "agentspec/cli.py",
+      "agentspec/connectors/",
+      "agentspec/intake.py"
+    ],
+    "test_targets": [
+      "tests/test_source_drift.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-157",
+    "title": "Changed registered sources produce candidate evidence on request",
+    "description": "When a registered source changed, AgentSpec creates or references a candidate snapshot and emits a structured drift result.",
+    "source_sections": [
+      "D-12.3",
+      "D-12.13",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0027",
+    "blocked_by": "ADR-0007",
+    "acceptance": [
+      "Changed source check results include current hash, baseline hash, remote version, and a next command when no candidate is written.",
+      "aspec source check <source-key> --as-candidate writes a candidate snapshot only under docs/source/candidates/**.",
+      "Candidate-writing source checks still leave accepted source/spec/requirements/DCR/task artifacts unchanged and do not promote or classify anything automatically."
+    ],
+    "code_targets": [
+      "agentspec/source_registry.py",
+      "agentspec/intake.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_source_drift.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-158",
+    "title": "Scheduled source drift checks are CI-friendly",
+    "description": "Scheduled source drift checks can run in CI and report changed, unchanged, failed, and policy-blocked sources.",
+    "source_sections": [
+      "D-03",
+      "D-12.16",
+      "D-23.4",
+      "D-28.11"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0027",
+    "blocked_by": "ADR-0007",
+    "acceptance": [
+      "aspec source check --all --json emits changed, unchanged, failed, and policy-blocked statuses in one machine-readable payload.",
+      "Connector failures and policy failures include retryability/error details and leave accepted artifacts unchanged.",
+      "README documents the scheduled audit command and clarifies that scheduled checks do not promote candidates."
+    ],
+    "code_targets": [
+      "agentspec/source_registry.py",
+      "agentspec/cli.py",
+      "README.md"
+    ],
+    "test_targets": [
+      "tests/test_source_drift.py",
+      "tests/test_source_registry.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
   }
 ]
