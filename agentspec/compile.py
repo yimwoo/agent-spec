@@ -7,6 +7,7 @@ from typing import Any
 from .archetype import detect_archetype, infer_code_targets, infer_test_targets
 from .io import lines_between, load_data, sha256_text, write_data, write_text
 from .paths import slugify
+from .policy import can_emit_source_body, source_body_redaction
 
 
 SPEC_SHARDS = [
@@ -125,6 +126,8 @@ def _section_text(root: Path, section: dict[str, Any], source_by_id: dict[str, d
     source = source_by_id.get(section["source_id"])
     if not source:
         return ""
+    if not can_emit_source_body(source):
+        return source_body_redaction(source, section)
     source_path = root / source["uri"]
     return lines_between(source_path, int(section["start_line"]), int(section["end_line"]))
 

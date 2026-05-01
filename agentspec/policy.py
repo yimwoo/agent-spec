@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Any
 
 from .paths import path_matches_pattern
 
@@ -43,6 +44,9 @@ _AUTO_ACCEPTANCE_RE = re.compile(
     r"\baspec\s+(?:dcr\s+accept|requirement\s+accept)\b",
     re.IGNORECASE,
 )
+
+_BODY_EMIT_CLASSIFICATIONS = frozenset({"public", "internal"})
+_BODY_EMIT_STORAGE_MODES = frozenset({"committed"})
 
 
 def evaluate_policy(
@@ -122,3 +126,41 @@ def _is_allowed(path: str, allowed_paths: list[str]) -> bool:
         if path_matches_pattern(path, pattern):
             return True
     return False
+
+
+def can_emit_source_body(source: dict[str, Any]) -> bool:
+    """Return whether source body text may be emitted into generated artifacts."""
+
+    classification = str(source.get("classification", "internal"))
+    storage_mode = str(source.get("storage_mode", "committed"))
+    return (
+        classification in _BODY_EMIT_CLASSIFICATIONS
+        and storage_mode in _BODY_EMIT_STORAGE_MODES
+    )
+
+
+def source_body_redaction(
+    source: dict[str, Any],
+    section: dict[str, Any] | None = None,
+) -> str:
+    """Metadata-only placeholder for sources whose body must not be emitted."""
+
+    source_id = str(source.get("id", "-"))
+    section_id = str((section or {}).get("id", "-"))
+    classification = str(source.get("classification", "internal"))
+    storage_mode = str(source.get("storage_mode", "committed"))
+    uri = str(source.get("uri") or source.get("remote_uri") or "-")
+    content_hash = str(
+        (section or {}).get("content_hash")
+        or source.get("content_hash")
+        or "-"
+    )
+    return (
+        "[Source content withheld: "
+        f"classification={classification}, "
+        f"storage_mode={storage_mode}, "
+        f"source_id={source_id}, "
+        f"section_id={section_id}, "
+        f"uri={uri}, "
+        f"content_hash={content_hash}]"
+    )

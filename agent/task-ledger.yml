@@ -408,6 +408,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T16:11:01Z"
+    },
+    "agent/context-packs/T-050-intake-enforces-source-storage-modes.md": {
+      "status": "complete",
+      "run_id": "t050-intake-enforces-source-storage-modes",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:13:28Z"
     }
   }
 }

@@ -8,6 +8,7 @@ from .archetype import validate_path_provenance
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
 from .paths import slugify, truncate_on_word_boundary
+from .policy import can_emit_source_body, source_body_redaction
 
 
 TASK_LEDGER_SCHEMA = "agentspec.task_ledger.v0"
@@ -385,7 +386,14 @@ def _pack_text(
     for section_id in source_sections:
         section = section_by_id[section_id]
         source = source_by_id[section["source_id"]]
-        excerpt = lines_between(root / source["uri"], int(section["start_line"]), int(section["end_line"]))
+        if can_emit_source_body(source):
+            excerpt = lines_between(
+                root / source["uri"],
+                int(section["start_line"]),
+                int(section["end_line"]),
+            )
+        else:
+            excerpt = source_body_redaction(source, section)
         out.append(f"### {section_id} {section['title']}")
         out.append("")
         out.append("```text")
