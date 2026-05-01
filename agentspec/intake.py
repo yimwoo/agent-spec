@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .connectors import FetchedSource, fetch_source
 from .io import load_data, read_text, sha256_text, utc_now_iso, write_data, write_text
 from .markdown import document_title, sectionize_markdown
 from .paths import ensure_dirs, slugify
@@ -55,18 +56,18 @@ def import_candidate(
     """Import an external source as a candidate snapshot only."""
 
     ensure_dirs(root)
-    source_path = source_path.resolve()
-    if not source_path.exists():
-        raise FileNotFoundError(f"Source document not found: {source_path}")
-
-    source_text = read_text(source_path)
+    source_ref = source_path
     snapshot_id = _next_snapshot_id(root)
     candidate_dir = root / "docs" / "source" / "candidates" / snapshot_id
     if kind == "markdown":
+        source_path = source_ref.resolve()
+        if not source_path.exists():
+            raise FileNotFoundError(f"Source document not found: {source_path}")
         if source_path.suffix.lower() not in {".md", ".markdown", ".txt"}:
             raise ValueError(
                 "Markdown candidate import supports .md, .markdown, and .txt files."
             )
+        source_text = read_text(source_path)
         document = _markdown_spec_document(
             source_text,
             source_path=source_path,
@@ -76,11 +77,15 @@ def import_candidate(
             storage_mode=storage_mode,
         )
     elif kind == "openapi":
+        source_path = source_ref.resolve()
+        if not source_path.exists():
+            raise FileNotFoundError(f"Source document not found: {source_path}")
         if source_path.suffix.lower() not in {".json", ".yaml", ".yml"}:
             raise ValueError(
                 "OpenAPI candidate import supports JSON-compatible .json, "
                 ".yaml, and .yml files."
             )
+        source_text = read_text(source_path)
         document = _openapi_spec_document(
             source_text,
             source_path=source_path,
@@ -89,8 +94,24 @@ def import_candidate(
             classification=classification,
             storage_mode=storage_mode,
         )
+    elif kind == "confluence":
+        connector_ref = (
+            str(source_ref.resolve()) if source_ref.exists() else str(source_ref)
+        )
+        fetched = fetch_source(kind, connector_ref)
+        source_text = fetched.body
+        document = _connector_spec_document(
+            fetched,
+            source_key=source_key,
+            snapshot_id=snapshot_id,
+            kind=kind,
+            classification=classification,
+            storage_mode=storage_mode,
+        )
     else:
-        raise ValueError("Candidate import currently supports markdown and openapi.")
+        raise ValueError(
+            "Candidate import currently supports markdown, openapi, and confluence."
+        )
 
     report = validation_report(document)
     write_data(candidate_dir / "validation.yml", report)
@@ -393,6 +414,45 @@ def _openapi_spec_document(
         ],
         "requirements": [],
         "api_contracts": _extract_openapi_contracts(raw_document),
+        "open_questions": [],
+    }
+
+
+def _connector_spec_document(
+    fetched: FetchedSource,
+    *,
+    source_key: str,
+    snapshot_id: str,
+    kind: str,
+    classification: str,
+    storage_mode: str,
+) -> dict[str, Any]:
+    body = fetched.body
+    sections = sectionize_markdown(body, source_id=snapshot_id)
+    body_source = "source.md" if storage_mode == "committed" else "remote_uri"
+    return {
+        "schema": SPEC_DOCUMENT_SCHEMA,
+        "source_key": source_key,
+        "snapshot_id": snapshot_id,
+        "kind": kind,
+        "title": fetched.title or document_title(body, source_key),
+        "remote_uri": fetched.remote_uri,
+        "remote_version": fetched.remote_version,
+        "content_hash": sha256_text(body),
+        "normalized_hash": sha256_text(_normalize_markdown(body)),
+        "fetched_at": fetched.fetched_at or utc_now_iso(),
+        "classification": classification,
+        "storage_mode": storage_mode,
+        "sections": [
+            _spec_section(
+                source_key,
+                section,
+                body_source=body_source,
+            )
+            for section in sections
+        ],
+        "requirements": [],
+        "api_contracts": [],
         "open_questions": [],
     }
 
