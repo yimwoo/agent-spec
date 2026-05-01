@@ -4399,5 +4399,36 @@
       "coordinator",
       "plugin-integrator"
     ]
+  },
+  {
+    "id": "R-169",
+    "title": "CLI exposes recovery-oriented next-action aliases",
+    "description": "AgentSpec exposes top-level recovery aliases that dispatch to the current project status recommendation without changing underlying run semantics.",
+    "source_sections": [
+      "D-10.2",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P3",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0034",
+    "acceptance": [
+      "aspec next-action inspects an attention-needed run when one exists.",
+      "aspec continue prints the active run prompt when no attention run exists and an active run is available.",
+      "aspec next-action starts the run loop for the next ready task when no attention or active run exists.",
+      "If there is no action, the command prints the existing status recommendation and exits non-zero.",
+      "Existing aspec status, aspec task next, and aspec run behavior remains backward-compatible."
+    ],
+    "code_targets": [
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_status_cli.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator"
+    ]
   }
 ]

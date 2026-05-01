@@ -534,6 +534,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T22:54:58Z"
+    },
+    "agent/context-packs/T-064-recovery-oriented-cli-aliases.md": {
+      "status": "complete",
+      "run_id": "complete-t-064-recovery-oriented-cli-aliases-20260501230434",
+      "reason": "DCR-0034 shipped: DCR-0022 Item 4 promoted and implemented as top-level next-action/continue aliases; aliases dispatch to inspect, prompt, run loop, or no-action recommendation; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T23:04:34Z"
     }
   }
 }

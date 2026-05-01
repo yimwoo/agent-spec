@@ -111,6 +111,12 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     status.add_argument("--json", action="store_true")
     status.add_argument("--recent-runs", type=int, default=5)
 
+    subparsers.add_parser(
+        "next-action",
+        help="Dispatch the next recovery or continuation action from project status.",
+    )
+    subparsers.add_parser("continue", help="Alias for next-action.")
+
     doctor = subparsers.add_parser("doctor", help="Run read-only brownfield assessment.")
     doctor.add_argument(
         "--report-dir",
@@ -445,6 +451,9 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             else:
                 print(format_project_status(status_payload))
             return 0
+
+        if args.command in {"next-action", "continue"}:
+            return _dispatch_next_action(root)
 
         if args.command == "doctor" or (args.command == "repo" and args.repo_command == "scan"):
             report_dir = Path(args.report_dir) if args.report_dir else None
@@ -822,6 +831,48 @@ def _command_label(args: argparse.Namespace, prog: str) -> str:
     if cmd:
         parts.append(str(cmd))
     return " ".join(parts)
+
+
+def _dispatch_next_action(root: Path) -> int:
+    status_payload = build_project_status(root)
+    runs = status_payload.get("runs") if isinstance(status_payload.get("runs"), dict) else {}
+    tasks = status_payload.get("tasks") if isinstance(status_payload.get("tasks"), dict) else {}
+
+    attention_runs = runs.get("attention") if isinstance(runs, dict) else []
+    if isinstance(attention_runs, list) and attention_runs:
+        run_id = str(attention_runs[0].get("run_id"))
+        info = inspect_run(root, run_id)
+        print(json.dumps(info, indent=2))
+        return 0
+
+    active_runs = runs.get("active") if isinstance(runs, dict) else []
+    if isinstance(active_runs, list) and active_runs:
+        run_id = str(active_runs[0].get("run_id"))
+        handoff = build_next_executor_prompt(root, run_id)
+        print(handoff["prompt"])
+        return 0
+
+    next_task = tasks.get("next") if isinstance(tasks, dict) else None
+    if isinstance(next_task, dict) and next_task.get("path"):
+        result = loop_run(root, Path(str(next_task["path"])))
+        selected = result.get("selected_task")
+        if selected:
+            print(f"Selected {selected['path']}.")
+        state = result["state"]
+        action = "Started" if result.get("started") else "Using"
+        print(f"{action} run {state['run_id']} for {state['context_pack']}.")
+        review = result.get("review")
+        if review:
+            print(f"{state['run_id']}: {review['decision']} ({review['confidence']}) - {review['reason']}")
+            message = review.get("message_to_executor")
+            if message:
+                print(message)
+        else:
+            print(f"Status: {state['status']}.")
+        return 0
+
+    print(status_payload.get("recommendation"))
+    return 1
 
 
 def _runner_command_from_args(command: str | None, command_json: str | None) -> list[str] | None:

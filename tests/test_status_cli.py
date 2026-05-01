@@ -1,5 +1,6 @@
 import io
 import json
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -114,6 +115,62 @@ class StatusCLITests(unittest.TestCase):
             self.assertIsNone(summary_only["test_status"])
             self.assertIsNone(summary_only["last_event_ref"])
             self.assertEqual(summary_only["recovery_command"], "aspec run inspect run-summary-only")
+
+    def test_next_action_inspects_attention_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "next-action"])
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["run_id"], "run-halted")
+            self.assertEqual(payload["status"], "halted")
+
+    def test_continue_prints_active_run_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            shutil.rmtree(root / "agent" / "runs" / "run-halted")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "continue"])
+
+            self.assertEqual(code, 0)
+            text = output.getvalue()
+            self.assertIn("Continue AgentSpec supervised run `run-active`.", text)
+            self.assertIn("Reviewer reason: Continue scoped work.", text)
+
+    def test_next_action_starts_ready_task_when_no_run_needs_attention(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            shutil.rmtree(root / "agent" / "runs" / "run-active")
+            shutil.rmtree(root / "agent" / "runs" / "run-halted")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "next-action"])
+
+            self.assertEqual(code, 0)
+            text = output.getvalue()
+            self.assertIn("Started run", text)
+            self.assertIn("agent/context-packs/T-003-ready.md", text)
+
+    def test_next_action_reports_no_action(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "next-action"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("No ready task context pack found", output.getvalue())
 
 
 def _seed(root: Path) -> None:

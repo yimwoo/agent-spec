@@ -169,6 +169,11 @@ underlying command.
 Pure ergonomics over existing surface. No new behavior, no new
 schema. Smallest possible follow-up.
 
+**Resolution 2026-05-01 — promoted to DCR-0034.** Item 4 was lifted out of
+this defer bundle on 2026-05-01 and now lives in
+`DCR-0034-promote-dcr-0022-recovery-cli-aliases.md` with classification
+`implement-now`. Item 3 remains in this DCR as `defer`.
+
 ## Impact Assessment
 
 - Supports `R-007` by improving CLI ergonomics and harness reliability.
@@ -191,9 +196,7 @@ Classification: `defer`.
 
 Rationale:
 
-- Item 4 is clear in shape but not urgent. It is polish on top of the
-  working T-040 / T-042 surface and can be its own small implementation
-  pack when prioritized.
+- Item 4 has been promoted to DCR-0034.
 - Item 3 (metrics surface) is genuinely under-designed and may need
   its own spike DCR before implementation — flagged here so the
   decision isn't lost.
