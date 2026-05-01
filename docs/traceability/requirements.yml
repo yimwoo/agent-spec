@@ -3683,5 +3683,257 @@
       "coordinator",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-147",
+    "title": "Candidate source snapshots do not change accepted compile inputs",
+    "description": "AgentSpec supports candidate source snapshots that can be imported and diffed without changing accepted compile inputs.",
+    "source_sections": [
+      "D-12.3",
+      "D-12.5",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "Candidate import writes under docs/source/candidates/** rather than docs/source/sections.yml or docs/source/sources.yml.",
+      "Candidate diff can run against an accepted baseline without modifying docs/spec/** or docs/traceability/requirements.yml.",
+      "aspec status reports the proposed requirement until its implementation slice ships and the requirement is accepted."
+    ],
+    "code_targets": [
+      "agentspec/intake.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_intake_candidate.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-148",
+    "title": "External sources normalize into a validated SpecDocument schema",
+    "description": "AgentSpec normalizes supported external sources into a validated SpecDocument schema before diff or promotion.",
+    "source_sections": [
+      "D-12.4",
+      "D-12.5",
+      "D-12.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "SpecDocument validation requires source_key, snapshot_id, kind, hashes, classification, storage_mode, fetched_at, and section records.",
+      "Markdown candidate import produces a SpecDocument with stable section ids, stable keys, content hashes, and body references.",
+      "Invalid SpecDocument input exits non-zero with a structured validation error and does not update accepted compile inputs."
+    ],
+    "code_targets": [
+      "agentspec/spec_document.py",
+      "agentspec/intake.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_spec_document.py",
+      "tests/test_intake_candidate.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-149",
+    "title": "Candidate snapshots produce reviewable baseline diffs",
+    "description": "AgentSpec produces a reviewable diff between a candidate snapshot and the accepted baseline for the same source identity.",
+    "source_sections": [
+      "D-12.13",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "aspec intake diff reports unchanged, added, removed, renamed, moved, and body-changed sections.",
+      "Diff output includes an intake recommendation without writing or changing DCR classifications.",
+      "Diff output is available in human-readable and JSON formats."
+    ],
+    "code_targets": [
+      "agentspec/intake.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_intake_diff.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-150",
+    "title": "Candidate promotion requires human approval",
+    "description": "AgentSpec requires human approval before a candidate snapshot is promoted into accepted repo spec artifacts. Policy-based auto-promotion is out of scope until a follow-up DCR or ADR defines the policy surface.",
+    "source_sections": [
+      "D-23.4",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "aspec intake promote requires an explicit human-gated command and never runs as an implicit side effect of import or diff.",
+      "Promotion does not call dcr accept, requirement accept, or auto-classify a DCR.",
+      "Tests demonstrate that candidate import and diff cannot mutate accepted source/spec/requirements artifacts."
+    ],
+    "code_targets": [
+      "agentspec/intake.py",
+      "agentspec/cli.py",
+      "agentspec/policy.py"
+    ],
+    "test_targets": [
+      "tests/test_intake_promotion.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-151",
+    "title": "Promotion preserves source snapshot lineage",
+    "description": "Promotion preserves prior accepted snapshots and records lineage from source identity to snapshot to section to requirement/task.",
+    "source_sections": [
+      "D-06",
+      "D-12.3",
+      "D-23.6"
+    ],
+    "priority": "P0",
+    "status": "proposed-pending-acceptance",
+    "confidence": "high",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "Promoting a candidate records source_key, snapshot_id, remote_uri, content_hash, normalized_hash, and supersedes lineage.",
+      "Prior accepted snapshots remain addressable by snapshot-qualified section id.",
+      "Multi-source projects cite accepted sections with source_key:D-* rather than ambiguous bare D-* ids."
+    ],
+    "code_targets": [
+      "agentspec/intake.py",
+      "agentspec/compile.py"
+    ],
+    "test_targets": [
+      "tests/test_intake_promotion.py",
+      "tests/test_compile_preserves_dcr_material.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-152",
+    "title": "Intake enforces source storage modes",
+    "description": "Intake supports storage modes for committed, pointer-only, local-secure-cache, and enterprise-object-store source material without leaking restricted content into prompts.",
+    "source_sections": [
+      "D-23.1",
+      "D-23.2",
+      "D-23.3"
+    ],
+    "priority": "P0",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "SpecDocument validation accepts only the supported source classification and storage-mode enums.",
+      "pointer-only snapshots store URI and hashes without committing source body text.",
+      "Restricted source content remains delimited as untrusted evidence and is not emitted into task context packs unless policy allows it."
+    ],
+    "code_targets": [
+      "agentspec/intake.py",
+      "agentspec/spec_document.py",
+      "agentspec/policy.py"
+    ],
+    "test_targets": [
+      "tests/test_intake_storage.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer"
+    ]
+  },
+  {
+    "id": "R-153",
+    "title": "Structured API sources produce contract diffs",
+    "description": "Structured API sources such as YAML/OpenAPI produce structural contract diffs, not only prose diffs.",
+    "source_sections": [
+      "D-12.5",
+      "D-12.13"
+    ],
+    "priority": "P1",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "YAML/OpenAPI intake records endpoints, methods, paths, request schemas, response schemas, auth scopes, enum values, and version metadata.",
+      "Diff output flags endpoint additions/removals, path or method changes, schema changes, auth-scope changes, and enum changes.",
+      "Structured API diffs are available in human-readable and JSON formats."
+    ],
+    "code_targets": [
+      "agentspec/spec_document.py",
+      "agentspec/intake.py"
+    ],
+    "test_targets": [
+      "tests/test_openapi_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler"
+    ]
+  },
+  {
+    "id": "R-154",
+    "title": "Enterprise connectors are adapters over candidate snapshots",
+    "description": "Live enterprise connectors such as Confluence, Jira, SharePoint, Google Drive, GitHub Enterprise, and similar systems are adapters over the same candidate snapshot protocol rather than privileged compile inputs.",
+    "source_sections": [
+      "D-03",
+      "D-12.15",
+      "D-28.11"
+    ],
+    "priority": "P2",
+    "status": "proposed-pending-acceptance",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0026",
+    "blocked_by": "ADR-0006",
+    "acceptance": [
+      "Connector fetch providers return source bytes plus metadata to the candidate snapshot protocol instead of writing accepted compile inputs directly.",
+      "A Confluence-style fixture records remote_uri, remote_version, fetched_at, content_hash, and normalized_hash.",
+      "Connector failures leave accepted source/spec/requirements artifacts unchanged and return structured errors."
+    ],
+    "code_targets": [
+      "agentspec/connectors/",
+      "agentspec/intake.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_enterprise_connectors.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "security-reviewer"
+    ]
   }
 ]

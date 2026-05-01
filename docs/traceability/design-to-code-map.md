@@ -146,3 +146,5 @@
 | `R-142` Autonomous run supports a research fallback when no executable pack is ready | D-07, D-11.4, D-23.4 | agentspec/run.py, agentspec/policy.py, agentspec/cli.py | tests/test_autonomous_mode.py |
 | `R-143` Reviewer classifies pause_for_human severity (minor vs high) and autonomous mode acts on it | D-07, D-12.17 | agentspec/review.py, agentspec/model_review.py, agentspec/run.py | tests/test_autonomous_mode.py, tests/test_model_review.py |
 | `R-144` Autonomous-mode complete requires both continuation_reviewer and quality_reviewer signoff | D-07 | agentspec/run.py, agentspec/review.py | tests/test_autonomous_mode.py |
+| `R-145` Globstar path matching is shared by policy and drift | D-12.13, D-12.17, D-23.4 | agentspec/paths.py, agentspec/policy.py, agentspec/drift.py | tests/test_glob_semantics.py |
+| `R-146` Run completion is atomic and respects the research-mode write surface | D-07, D-23.4, D-23.6 | agentspec/run.py | tests/test_run_completion_atomicity.py |

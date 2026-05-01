@@ -19,11 +19,14 @@ from .doctor import run_doctor
 from .drift import run_drift
 from .emit import emit_targets
 from .ingest import ingest_source
+from .intake import diff_candidate, format_diff_report, import_candidate
 from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
+from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
+from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import build_project_status, format_project_status
 from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
@@ -52,6 +55,21 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     ingest.add_argument("path")
     ingest.add_argument("--classification", default="internal", choices=["public", "internal", "confidential", "restricted"])
     ingest.add_argument("--storage-mode", default="committed", choices=["committed", "local-secure-cache", "enterprise-object-store", "pointer-only"])
+
+    intake = subparsers.add_parser("intake", help="Import external sources as candidate snapshots.")
+    intake_subparsers = intake.add_subparsers(dest="intake_command")
+    intake_import = intake_subparsers.add_parser("import", help="Import a source as a candidate snapshot.")
+    intake_import.add_argument("path")
+    intake_import.add_argument("--kind", required=True, choices=sorted(ALLOWED_KINDS))
+    intake_import.add_argument("--source-key", required=True)
+    intake_import.add_argument("--classification", required=True, choices=sorted(SOURCE_CLASSIFICATIONS))
+    intake_import.add_argument("--storage-mode", required=True, choices=sorted(ALLOWED_STORAGE_MODES))
+    intake_import.add_argument("--as-candidate", action="store_true")
+    intake_import.add_argument("--json", action="store_true")
+    intake_diff = intake_subparsers.add_parser("diff", help="Diff a candidate snapshot against a baseline.")
+    intake_diff.add_argument("snapshot_id")
+    intake_diff.add_argument("--baseline", default="accepted", choices=["accepted"])
+    intake_diff.add_argument("--json", action="store_true")
 
     subparsers.add_parser("compile", help="Compile source sections into specs, requirements, assumptions, questions, and readiness.")
 
@@ -268,6 +286,33 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
         if args.command == "ingest":
             result = ingest_source(root, Path(args.path), classification=args.classification, storage_mode=args.storage_mode)
             print(f"Ingested {result['source']['uri']} as {result['source']['id']} with {len(result['sections'])} sections.")
+            return 0
+
+        if args.command == "intake":
+            if args.intake_command == "import":
+                if not args.as_candidate:
+                    raise ValueError("intake import requires --as-candidate.")
+                result = import_candidate(
+                    root,
+                    Path(args.path),
+                    kind=args.kind,
+                    source_key=args.source_key,
+                    classification=args.classification,
+                    storage_mode=args.storage_mode,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(f"Imported {result['source_key']} as candidate {result['snapshot_id']}.")
+                return 0
+            if args.intake_command == "diff":
+                result = diff_candidate(root, args.snapshot_id, baseline=args.baseline)
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(format_diff_report(result))
+                return 0
+            parser.print_help()
             return 0
 
         if args.command == "compile":
@@ -638,7 +683,7 @@ def _is_retryable(exc: BaseException) -> bool:
 
 
 def _build_error_envelope(exc: BaseException, prog: str, args: argparse.Namespace) -> dict[str, Any]:
-    return {
+    envelope = {
         "schema": CLI_ERROR_SCHEMA,
         "error": {
             "type": type(exc).__name__,
@@ -647,6 +692,10 @@ def _build_error_envelope(exc: BaseException, prog: str, args: argparse.Namespac
             "command": _command_label(args, prog),
         },
     }
+    to_dict = getattr(exc, "to_dict", None)
+    if callable(to_dict):
+        envelope["error"]["details"] = to_dict()
+    return envelope
 
 
 def _command_label(args: argparse.Namespace, prog: str) -> str:

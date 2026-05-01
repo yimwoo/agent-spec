@@ -363,6 +363,33 @@
         "status": "passed"
       },
       "updated_at": "2026-04-29T21:33:55Z"
+    },
+    "agent/context-packs/T-045-specdocument-schema-validators.md": {
+      "status": "complete",
+      "run_id": "t045-specdocument-schema-validators",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:20:50Z"
+    },
+    "agent/context-packs/T-046-markdown-candidate-import.md": {
+      "status": "complete",
+      "run_id": "t046-markdown-candidate-import",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:25:50Z"
+    },
+    "agent/context-packs/T-047-candidate-baseline-diff.md": {
+      "status": "complete",
+      "run_id": "t047-candidate-baseline-diff",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:50:27Z"
     }
   }
 }
