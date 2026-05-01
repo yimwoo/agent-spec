@@ -29,6 +29,7 @@ Plugin dogfood recovery guidance
 
 - `agent/context-packs/T-063-plugin-dogfood-recovery-guidance.md`
 - `agent/task-ledger.yml`
+- `agentspec-codex-plugin/.codex-plugin/plugin.json`
 - `agentspec-codex-plugin/skills/init-project/SKILL.md`
 - `agentspec-codex-plugin/skills/manual-source-intake/SKILL.md`
 - `docs/change-requests/DCR-0033-improve-plugin-dogfood-guidance.md`
@@ -41,6 +42,7 @@ Plugin dogfood recovery guidance
 |---|---|
 | `agent/context-packs/T-063-plugin-dogfood-recovery-guidance.md` | confirmed; active implementation pack |
 | `agent/task-ledger.yml` | confirmed; task status projection |
+| `agentspec-codex-plugin/.codex-plugin/plugin.json` | confirmed; plugin manifest version for installed skill refresh |
 | `agentspec-codex-plugin/skills/init-project/SKILL.md` | confirmed; code target |
 | `agentspec-codex-plugin/skills/manual-source-intake/SKILL.md` | confirmed; code target |
 | `docs/change-requests/DCR-0033-improve-plugin-dogfood-guidance.md` | confirmed; originating DCR |
