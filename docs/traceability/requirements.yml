@@ -4220,5 +4220,48 @@
       "coordinator",
       "runner-integrator"
     ]
+  },
+  {
+    "id": "R-164",
+    "title": "Plugin source intake routes manual content through core intake",
+    "description": "AgentSpec plugin source intake accepts manual or host-provided external-source content, records source metadata where supported, and routes the content through aspec intake without plugin-owned parsing, diffing, or promotion.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.4",
+      "D-10.5",
+      "D-20.6",
+      "D-21.2",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0029",
+    "acceptance": [
+      "The first plugin-source workflow accepts a local file or host-provided export and routes it through aspec intake import --as-candidate.",
+      "The workflow validates and diffs the resulting candidate without mutating accepted source/spec artifacts.",
+      "The workflow presents, but does not auto-run, the promote command.",
+      "Documentation states that host MCP connector fetching is allowed only as a provider of local content for this slice.",
+      "Documentation states that AgentSpec-managed remote connectors and scheduled polling are future work."
+    ],
+    "code_targets": [
+      "agentspec/emit.py",
+      "agentspec/cli.py",
+      "agentspec/intake.py",
+      "agentspec-codex-plugin/**"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py",
+      "tests/test_intake_candidate.py",
+      "tests/test_plugin_source_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator",
+      "security-reviewer"
+    ]
   }
 ]

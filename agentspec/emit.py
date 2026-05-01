@@ -110,7 +110,7 @@ instructions = \"\"\"Read AgentSpec artifacts first. Report findings with source
         )
         written.append(path)
 
-    for skill in ["agentspec-compile", "agentspec-task", "agentspec-drift"]:
+    for skill in ["agentspec-compile", "agentspec-task", "agentspec-drift", "agentspec-source-intake"]:
         path = root / ".agents" / "skills" / skill / "SKILL.md"
         write_text(path, _skill_doc(skill))
         written.append(path)
@@ -172,6 +172,53 @@ def _agent_role_markdown(name: str, description: str) -> str:
 
 
 def _skill_doc(skill: str) -> str:
+    if skill == "agentspec-source-intake":
+        return """---
+name: agentspec-source-intake
+description: Import manual or host-provided design content into AgentSpec as a candidate snapshot, then validate and diff through the core CLI.
+---
+
+# agentspec-source-intake
+
+Use this skill when a user provides a local design export, pasted content saved
+to a file, or a file produced by a host-provided MCP connector for systems such
+as Confluence, Jira, Drive, SharePoint, GitHub, or GitLab.
+
+This project-local skill is CLI-backed. It does not fetch Confluence or Jira,
+does not store connector credentials, and does not own source parsing, diffing,
+promotion, or accepted snapshots.
+
+## Workflow
+
+1. Confirm the file path plus `source_key`, `kind`, `classification`, and
+   `storage_mode`.
+2. Import the provided file as a candidate:
+
+```bash
+aspec intake import <path> \
+  --kind markdown \
+  --source-key <source-key> \
+  --classification internal \
+  --storage-mode committed \
+  --as-candidate \
+  --json
+```
+
+3. Diff the resulting snapshot:
+
+```bash
+aspec intake diff <snapshot-id> --baseline accepted --json
+```
+
+4. Present the explicit promote command for human review:
+
+```bash
+aspec intake promote <snapshot-id> --decision accepted --compile --json
+```
+
+Do not auto-promote. Promotion changes the accepted repo-local source/spec
+projection and requires human review.
+"""
     return f"""---
 name: {skill}
 description: AgentSpec helper skill generated for this repository.

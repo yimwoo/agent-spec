@@ -1,0 +1,41 @@
+{
+  "name": "agentspec-codex-plugin",
+  "version": "0.1.0",
+  "description": "Codex skills for AgentSpec project context, task execution, drift review, and manual external-source intake.",
+  "author": {
+    "name": "AgentSpec",
+    "email": "maintainers@example.com",
+    "url": "https://github.com/yimwoo/agent-spec-engine"
+  },
+  "homepage": "https://github.com/yimwoo/agent-spec-engine",
+  "repository": "https://github.com/yimwoo/agent-spec-engine",
+  "license": "MIT",
+  "keywords": [
+    "agentspec",
+    "codex",
+    "requirements",
+    "source-intake"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AgentSpec for Codex",
+    "shortDescription": "Run AgentSpec workflows from Codex without bypassing repo governance.",
+    "longDescription": "Provides Codex skills that invoke the AgentSpec CLI for project status, task context, drift review, and manual or host-provided external-source intake. The plugin does not own parsing, diffing, promotion, credentials, or accepted snapshots.",
+    "developerName": "AgentSpec",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "CLI",
+      "Governance"
+    ],
+    "websiteURL": "https://github.com/yimwoo/agent-spec-engine",
+    "privacyPolicyURL": "https://github.com/yimwoo/agent-spec-engine",
+    "termsOfServiceURL": "https://github.com/yimwoo/agent-spec-engine",
+    "defaultPrompt": [
+      "Show AgentSpec status for this repo.",
+      "Import this design export as a candidate.",
+      "Diff the latest AgentSpec candidate."
+    ],
+    "brandColor": "#2563EB"
+  }
+}
