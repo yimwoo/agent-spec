@@ -3,6 +3,7 @@
 Covers R-136 and R-137 (DCR-0019).
 """
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -122,6 +123,118 @@ class InferTestTargetsTests(unittest.TestCase):
         self.assertFalse(any(t.endswith(".py") for t in targets), f"leaked python: {targets}")
 
 
+class CreateTaskContextPackScopeTests(unittest.TestCase):
+    def test_generated_pack_allows_declared_test_targets(self) -> None:
+        from agentspec.task import create_task_context_pack
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_task_workspace(
+                root,
+                [
+                    _requirement(
+                        "R-005",
+                        "Validate trace event envelopes",
+                        code_targets=["src/**/*.py"],
+                        test_targets=["tests/**/*.py"],
+                    )
+                ],
+            )
+
+            path = create_task_context_pack(
+                root,
+                requirement_id="R-005",
+                task_type="scaffold",
+                title="Validate trace event envelopes",
+            )
+            text = path.read_text(encoding="utf-8")
+
+            allowed_paths = _markdown_list_after_heading(text, "Allowed Paths")
+            tests_to_update = _markdown_list_after_heading(text, "Tests To Add Or Update")
+            self.assertIn("src/**/*.py", allowed_paths)
+            self.assertIn("tests/**/*.py", allowed_paths)
+            self.assertEqual(allowed_paths.count("tests/**/*.py"), 1)
+            self.assertIn("tests/**/*.py", tests_to_update)
+            self.assertIn("| `tests/**/*.py` | pattern; task verification |", text)
+            self.assertNotIn("examples/**", allowed_paths)
+            self.assertNotIn("scripts/**", allowed_paths)
+
+    def test_default_tests_section_is_allowed_when_no_test_targets_exist(self) -> None:
+        from agentspec.task import create_task_context_pack
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_task_workspace(
+                root,
+                [
+                    _requirement(
+                        "R-006",
+                        "Implement feature",
+                        code_targets=["src/**/*.py"],
+                        test_targets=[],
+                    )
+                ],
+            )
+
+            path = create_task_context_pack(root, requirement_id="R-006")
+            text = path.read_text(encoding="utf-8")
+
+            self.assertIn("tests/", _markdown_list_after_heading(text, "Allowed Paths"))
+            self.assertIn("| `tests/` | confirmed; task verification |", text)
+
+    def test_docs_fallback_remains_when_only_default_tests_are_known(self) -> None:
+        from agentspec.task import create_task_context_pack
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_task_workspace(
+                root,
+                [
+                    _requirement(
+                        "R-007",
+                        "Document generated context",
+                        code_targets=[],
+                        test_targets=[],
+                    )
+                ],
+            )
+
+            path = create_task_context_pack(root, requirement_id="R-007")
+            text = path.read_text(encoding="utf-8")
+            allowed_paths = _markdown_list_after_heading(text, "Allowed Paths")
+
+            self.assertIn("docs/**", allowed_paths)
+            self.assertIn("tests/", allowed_paths)
+            self.assertIn("| `docs/**` | pattern; fallback scope |", text)
+
+    def test_explicit_support_targets_join_allowed_scope(self) -> None:
+        from agentspec.task import create_task_context_pack
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            requirement = _requirement(
+                "R-008",
+                "Add local example artifact validation",
+                code_targets=["src/**/*.py"],
+                test_targets=["tests/**/*.py"],
+            )
+            requirement["example_targets"] = ["examples/filtered_workload.json"]
+            requirement["support_targets"] = ["scripts/smoke_check.sh"]
+            requirement["verification_targets"] = ["fixtures/**"]
+            _seed_task_workspace(root, [requirement])
+
+            path = create_task_context_pack(root, requirement_id="R-008")
+            text = path.read_text(encoding="utf-8")
+            allowed_paths = _markdown_list_after_heading(text, "Allowed Paths")
+
+            self.assertIn("examples/filtered_workload.json", allowed_paths)
+            self.assertIn("scripts/smoke_check.sh", allowed_paths)
+            self.assertIn("fixtures/**", allowed_paths)
+            self.assertIn("| `examples/filtered_workload.json` | inferred; example artifact |", text)
+            self.assertIn("| `scripts/smoke_check.sh` | inferred; support artifact |", text)
+            self.assertIn("| `fixtures/**` | pattern; verification support |", text)
+
+
 class ValidatePathProvenanceTests(unittest.TestCase):
     def test_confirmed_path(self) -> None:
         from agentspec.archetype import validate_path_provenance
@@ -183,6 +296,65 @@ class IsPackAutonomousEligibleTests(unittest.TestCase):
             root = Path(td)
             pack = self._write_pack(root, ["agentspec/missing.py", "docs/missing.md"])
             self.assertFalse(is_pack_autonomous_eligible(pack, root))
+
+
+def _requirement(
+    requirement_id: str,
+    title: str,
+    *,
+    code_targets: list[str],
+    test_targets: list[str],
+) -> dict[str, object]:
+    return {
+        "id": requirement_id,
+        "title": title,
+        "description": title,
+        "source_sections": [],
+        "priority": "P1",
+        "status": "accepted",
+        "confidence": "medium",
+        "acceptance": ["Generated context pack scope is internally consistent."],
+        "code_targets": code_targets,
+        "test_targets": test_targets,
+    }
+
+
+def _seed_task_workspace(root: Path, requirements: list[dict[str, object]]) -> None:
+    for sub in [
+        "agent/context-packs",
+        "docs/discovery",
+        "docs/source",
+        "docs/traceability",
+        "src",
+        "tests",
+    ]:
+        (root / sub).mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "traceability" / "requirements.yml").write_text(
+        json.dumps(requirements),
+        encoding="utf-8",
+    )
+    (root / "docs" / "source" / "sections.yml").write_text("[]", encoding="utf-8")
+    (root / "docs" / "source" / "sources.yml").write_text("[]", encoding="utf-8")
+    (root / "docs" / "discovery" / "assumptions.yml").write_text("[]", encoding="utf-8")
+    (root / "docs" / "discovery" / "readiness.yml").write_text(
+        json.dumps({"score": 100, "mode": "normal-implementation"}),
+        encoding="utf-8",
+    )
+
+
+def _markdown_list_after_heading(text: str, heading: str) -> list[str]:
+    lines = text.splitlines()
+    items: list[str] = []
+    in_section = False
+    for line in lines:
+        if line.strip() == f"## {heading}":
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section and line.strip().startswith("- `") and line.strip().endswith("`"):
+            items.append(line.strip()[3:-1])
+    return items
 
 
 if __name__ == "__main__":

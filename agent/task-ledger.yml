@@ -444,6 +444,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T16:28:25Z"
+    },
+    "agent/context-packs/T-054-include-verification-targets-in-allowed-paths.md": {
+      "status": "complete",
+      "run_id": "issue-4-allowed-test-targets",
+      "reason": "R-136/R-137 issue #4 fix: generated context packs include verification/test targets in Allowed Paths; full unittest suite and diff check passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:39:13Z"
     }
   }
 }

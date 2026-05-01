@@ -12,6 +12,11 @@ from .policy import can_emit_source_body, source_body_redaction
 
 
 TASK_LEDGER_SCHEMA = "agentspec.task_ledger.v0"
+_SUPPORT_TARGET_FIELDS: tuple[tuple[str, str], ...] = (
+    ("verification_targets", "verification support"),
+    ("example_targets", "example artifact"),
+    ("support_targets", "support artifact"),
+)
 
 
 def create_task_context_pack(
@@ -319,8 +324,9 @@ def _pack_text(
     source_by_id = {source["id"]: source for source in sources}
     section_by_id = {section["id"]: section for section in sections}
     source_sections = sorted({section_id for requirement in requirements for section_id in requirement.get("source_sections", [])})
-    allowed_paths = sorted({path for requirement in requirements for path in requirement.get("code_targets", [])}) or ["docs/**"]
-    test_targets = sorted({path for requirement in requirements for path in requirement.get("test_targets", [])})
+    test_targets = _paths_from_requirements(requirements, "test_targets")
+    tests_to_update = test_targets or ["tests/"]
+    allowed_paths, allowed_path_sources = _allowed_path_scope(requirements, tests_to_update)
 
     out = [
         f"# {task_id}: {title}",
@@ -365,7 +371,9 @@ def _pack_text(
     provenance = {path: validate_path_provenance(path, root) for path in allowed_paths}
     out.extend(["", "## Allowed Paths Provenance", "", "| Path | Provenance |", "|---|---|"])
     for path in allowed_paths:
-        out.append(f"| `{path}` | {provenance[path]} |")
+        out.append(
+            f"| `{path}` | {_format_allowed_path_provenance(provenance[path], allowed_path_sources[path])} |"
+        )
     if allowed_paths and all(p == "inferred" for p in provenance.values()):
         out.extend([
             "",
@@ -373,8 +381,18 @@ def _pack_text(
             "Confirm the scope before executing — autonomous mode will refuse this pack.",
         ])
 
-    out.extend(["", "## Forbidden Paths", "", "- Anything outside the allowed paths unless the task is explicitly revised.", "", "## Tests To Add Or Update", ""])
-    for path in test_targets or ["tests/"]:
+    out.extend([
+        "",
+        "## Forbidden Paths",
+        "",
+        "- Anything outside the allowed paths unless the task is explicitly revised.",
+        "- If verification needs examples, scripts, fixtures, or bookkeeping not listed above, "
+        "revise Allowed Paths before execution.",
+        "",
+        "## Tests To Add Or Update",
+        "",
+    ])
+    for path in tests_to_update:
         out.append(f"- `{path}`")
 
     out.extend(["", "## Acceptance Criteria", ""])
@@ -402,3 +420,48 @@ def _pack_text(
         out.append("")
 
     return "\n".join(out).rstrip() + "\n"
+
+
+def _allowed_path_scope(
+    requirements: list[dict[str, Any]],
+    tests_to_update: list[str],
+) -> tuple[list[str], dict[str, list[str]]]:
+    sources_by_path: dict[str, list[str]] = {}
+    allowed_paths: list[str] = []
+
+    def add(paths: list[str], source: str) -> None:
+        for path in paths:
+            if path not in sources_by_path:
+                allowed_paths.append(path)
+                sources_by_path[path] = []
+            if source not in sources_by_path[path]:
+                sources_by_path[path].append(source)
+
+    add(_paths_from_requirements(requirements, "code_targets"), "code target")
+    for field, source in _SUPPORT_TARGET_FIELDS:
+        add(_paths_from_requirements(requirements, field), source)
+    if not allowed_paths:
+        add(["docs/**"], "fallback scope")
+    add(tests_to_update, "task verification")
+    return allowed_paths, sources_by_path
+
+
+def _paths_from_requirements(requirements: list[dict[str, Any]], field: str) -> list[str]:
+    paths: set[str] = set()
+    for requirement in requirements:
+        paths.update(_path_values(requirement.get(field)))
+    return sorted(paths)
+
+
+def _path_values(value: Any) -> list[str]:
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list):
+        return []
+    return [item.strip() for item in value if isinstance(item, str) and item.strip()]
+
+
+def _format_allowed_path_provenance(provenance: str, sources: list[str]) -> str:
+    if not sources:
+        return provenance
+    return f"{provenance}; {', '.join(sources)}"
