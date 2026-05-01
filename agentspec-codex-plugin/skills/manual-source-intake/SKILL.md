@@ -1,6 +1,6 @@
 ---
 name: manual-source-intake
-description: Import manual or host-provided design content into AgentSpec as a candidate snapshot, then validate and diff through the core CLI.
+description: Import manual or host-provided design content from Confluence, Jira, HTML, PDF, Markdown, YAML, or OpenAPI into AgentSpec as a candidate snapshot through the core CLI.
 ---
 
 # Manual Source Intake

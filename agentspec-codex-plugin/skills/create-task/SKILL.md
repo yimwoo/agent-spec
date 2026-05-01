@@ -1,6 +1,6 @@
 ---
 name: create-task
-description: Create an AgentSpec task context pack from an existing requirement through the core CLI.
+description: Create an AgentSpec task context pack for an existing repo from a ready requirement through the core CLI.
 ---
 
 # Create Task

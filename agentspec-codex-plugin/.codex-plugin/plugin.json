@@ -1,7 +1,7 @@
 {
   "name": "agentspec-codex-plugin",
-  "version": "0.1.0",
-  "description": "Codex skills for AgentSpec project context, task execution, drift review, and manual external-source intake.",
+  "version": "0.1.1",
+  "description": "Initialize AgentSpec repositories and continue AgentSpec work from Codex using CLI-backed skills for status, tasks, drift, and manual source intake.",
   "author": {
     "name": "AgentSpec",
     "email": "maintainers@example.com",
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "AgentSpec for Codex",
     "shortDescription": "Run AgentSpec workflows from Codex without bypassing repo governance.",
-    "longDescription": "Provides Codex skills that invoke the AgentSpec CLI for project status, task context, drift review, and manual or host-provided external-source intake. The plugin does not own parsing, diffing, promotion, credentials, or accepted snapshots.",
+    "longDescription": "Provides Codex skills that invoke the AgentSpec CLI to initialize new or existing repositories, continue ready AgentSpec work, inspect project status, create task context packs, run drift review, and import manual or host-provided external-source content. The plugin does not own parsing, diffing, promotion, credentials, or accepted snapshots.",
     "developerName": "AgentSpec",
     "category": "Developer Tools",
     "capabilities": [
@@ -32,9 +32,9 @@
     "privacyPolicyURL": "https://github.com/yimwoo/agent-spec-engine",
     "termsOfServiceURL": "https://github.com/yimwoo/agent-spec-engine",
     "defaultPrompt": [
-      "Show AgentSpec status for this repo.",
-      "Import this design export as a candidate.",
-      "Diff the latest AgentSpec candidate."
+      "Initialize AgentSpec in this repo.",
+      "Continue AgentSpec work",
+      "Import this design export as a candidate."
     ],
     "brandColor": "#2563EB"
   }

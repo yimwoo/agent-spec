@@ -498,6 +498,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T19:51:46Z"
+    },
+    "agent/context-packs/T-060-codex-plugin-onboarding-and-continuation-usage.md": {
+      "status": "complete",
+      "run_id": "complete-t-060-codex-plugin-onboarding-and-continuation-usage-20260501201009",
+      "reason": "DCR-0030 shipped: Codex plugin README and skills now document CLI and plugin paths for repo initialization and continuation; installed plugin refreshed to 0.1.1; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T20:10:09Z"
     }
   }
 }

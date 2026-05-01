@@ -4263,5 +4263,39 @@
       "plugin-integrator",
       "security-reviewer"
     ]
+  },
+  {
+    "id": "R-165",
+    "title": "Codex plugin documents init and continue workflows",
+    "description": "AgentSpec Codex plugin usage documentation and skill metadata explain how to initialize a new or existing repository and continue work using either CLI commands or plugin skills.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.5",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0030",
+    "acceptance": [
+      "Plugin README shows CLI and plugin paths for initializing a repository.",
+      "Plugin README shows CLI and plugin paths for continuing work in an existing AgentSpec repository.",
+      "Plugin skills include discoverable descriptions for init/new-repo and continue-existing-repo workflows.",
+      "Tests verify the plugin package includes the init, continue, status, and manual source-intake guidance.",
+      "Installed local Codex plugin copy is refreshed after the repo package update."
+    ],
+    "code_targets": [
+      "agentspec-codex-plugin/**"
+    ],
+    "test_targets": [
+      "tests/test_plugin_source_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator"
+    ]
   }
 ]
