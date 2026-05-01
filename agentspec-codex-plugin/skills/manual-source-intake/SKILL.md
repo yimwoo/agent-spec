@@ -5,6 +5,8 @@ description: Import manual or host-provided design content from Confluence, Jira
 
 # Manual Source Intake
 
+Call this skill as `aspec:manual-source-intake`.
+
 Use this skill when a user provides a local design export, pasted content saved
 to a file, or a file produced by a host-provided MCP connector for systems such
 as Confluence, Jira, Drive, SharePoint, GitHub, or GitLab.

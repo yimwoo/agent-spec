@@ -20,8 +20,8 @@ class PluginSourceIntakeTests(unittest.TestCase):
         skill = skill_path.read_text(encoding="utf-8")
         status_skill = status_skill_path.read_text(encoding="utf-8")
 
-        self.assertEqual(manifest["name"], "agentspec-codex-plugin")
-        self.assertIn("AgentSpec", manifest["interface"]["displayName"])
+        self.assertEqual(manifest["name"], "aspec")
+        self.assertEqual(manifest["interface"]["displayName"], "aspec")
         for skill_name in [
             "compile-spec",
             "continue-work",
@@ -55,11 +55,12 @@ class PluginSourceIntakeTests(unittest.TestCase):
             "Initialize a repository",
             "Continue work in a repository",
             "aspec --root \"$TARGET\" init",
-            "agentspec-codex-plugin:init-project",
+            "aspec:init-project",
             "aspec status",
-            "agentspec-codex-plugin:continue-work",
+            "aspec:continue-work",
         ]:
             self.assertIn(text, readme)
+        self.assertNotIn("agentspec-codex-plugin:", readme)
 
     def test_init_and_continue_skills_are_cli_backed(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"
@@ -101,6 +102,19 @@ class PluginSourceIntakeTests(unittest.TestCase):
         local_skills = list((REPO_ROOT / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
 
         self.assertEqual([], local_skills)
+
+    def test_codex_plugin_public_docs_use_short_aspec_prefix(self) -> None:
+        plugin_root = REPO_ROOT / "agentspec-codex-plugin"
+        docs = [
+            plugin_root / "README.md",
+            *sorted((plugin_root / "skills").glob("*/SKILL.md")),
+        ]
+
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in docs)
+
+        self.assertIn("aspec:init-project", combined)
+        self.assertIn("aspec:continue-work", combined)
+        self.assertNotIn("agentspec-codex-plugin:", combined)
 
 
 if __name__ == "__main__":

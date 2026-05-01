@@ -5,6 +5,8 @@ description: Initialize AgentSpec in a new repository or add AgentSpec to an exi
 
 # Init Project
 
+Call this skill as `aspec:init-project`.
+
 Use this skill when the user wants to set up AgentSpec in a new repository or
 bootstrap AgentSpec artifacts in an existing repository.
 

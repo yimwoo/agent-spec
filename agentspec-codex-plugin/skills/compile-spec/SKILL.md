@@ -5,6 +5,8 @@ description: Compile AgentSpec source snapshots into repo-local spec, requiremen
 
 # Compile Spec
 
+Call this skill as `aspec:compile-spec`.
+
 Use this skill when AgentSpec source snapshots have changed and the user wants
 to refresh generated project context.
 

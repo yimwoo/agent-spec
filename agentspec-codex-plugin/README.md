@@ -1,4 +1,4 @@
-# AgentSpec Codex Plugin
+# aspec Codex Plugin
 
 This plugin packages Codex skills for AgentSpec workflows while keeping the
 core CLI as the source of truth. Users can run the CLI directly or ask Codex to
@@ -34,7 +34,7 @@ aspec --root "$TARGET" intake import ./design-export.md \
 
 ### Plugin path
 
-Ask Codex to use `agentspec-codex-plugin:init-project`.
+Ask Codex to use `aspec:init-project`.
 
 The skill should identify the target repo, choose greenfield or existing-repo
 initialization, run the same `aspec --root "$TARGET" ...` commands, and inspect
@@ -64,15 +64,15 @@ Promotion remains a human-reviewed action.
 
 ### Plugin path
 
-Ask Codex to use `agentspec-codex-plugin:continue-work`.
+Ask Codex to use `aspec:continue-work`.
 
 Use related skills for specific jobs:
 
-- `agentspec-codex-plugin:project-status`
-- `agentspec-codex-plugin:create-task`
-- `agentspec-codex-plugin:compile-spec`
-- `agentspec-codex-plugin:drift-review`
-- `agentspec-codex-plugin:manual-source-intake`
+- `aspec:project-status`
+- `aspec:create-task`
+- `aspec:compile-spec`
+- `aspec:drift-review`
+- `aspec:manual-source-intake`
 
 ## Boundaries
 

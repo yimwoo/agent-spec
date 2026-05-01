@@ -5,6 +5,8 @@ description: Run AgentSpec drift review from the repository root and inspect the
 
 # Drift Review
 
+Call this skill as `aspec:drift-review`.
+
 Use this skill to compare current code changes with AgentSpec requirements,
 ADRs, and task context packs.
 

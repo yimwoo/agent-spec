@@ -5,6 +5,8 @@ description: Continue work in an existing AgentSpec repository by reading status
 
 # Continue Work
 
+Call this skill as `aspec:continue-work`.
+
 Use this skill when the user wants to continue work in a repository that already
 has AgentSpec artifacts.
 

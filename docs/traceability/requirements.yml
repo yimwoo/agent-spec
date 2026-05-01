@@ -4332,5 +4332,39 @@
       "coordinator",
       "plugin-integrator"
     ]
+  },
+  {
+    "id": "R-167",
+    "title": "Codex plugin uses short aspec skill prefix",
+    "description": "AgentSpec Codex plugin skills use the short aspec:* call prefix instead of the implementation-oriented agentspec-codex-plugin:* prefix.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.5",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0032",
+    "acceptance": [
+      "Plugin manifest name is aspec.",
+      "Plugin README and skill guidance use aspec:* examples.",
+      "Tests assert the short prefix and reject the old long prefix in public docs.",
+      "Local installed plugin/cache/marketplace are refreshed under the aspec identity.",
+      "Codex prompt discovery exposes aspec:* skills and does not expose agentspec-codex-plugin:*."
+    ],
+    "code_targets": [
+      "agentspec-codex-plugin/**"
+    ],
+    "test_targets": [
+      "tests/test_plugin_source_intake.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator"
+    ]
   }
 ]

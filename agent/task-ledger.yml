@@ -516,6 +516,15 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T20:39:16Z"
+    },
+    "agent/context-packs/T-062-short-aspec-plugin-skill-prefix.md": {
+      "status": "complete",
+      "run_id": "complete-t-062-short-aspec-plugin-skill-prefix-20260501211746",
+      "reason": "DCR-0032 shipped: Codex plugin identity now uses aspec, public docs and skills use aspec:* calls, local plugin install/cache/marketplace refreshed, old agentspec-codex-plugin identity removed, prompt discovery and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T21:17:46Z"
     }
   }
 }

@@ -5,6 +5,8 @@ description: Create an AgentSpec task context pack for an existing repo from a r
 
 # Create Task
 
+Call this skill as `aspec:create-task`.
+
 Use this skill when a requirement is ready for implementation and needs a task
 context pack.
 

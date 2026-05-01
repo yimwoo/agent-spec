@@ -5,6 +5,8 @@ description: Inspect AgentSpec status for a new or existing repo, including read
 
 # Project Status
 
+Call this skill as `aspec:project-status`.
+
 Use this skill before starting or continuing AgentSpec work in a repository. It
 reads repo-local AgentSpec artifacts through the CLI and does not modify source,
 spec, requirements, or task state.
