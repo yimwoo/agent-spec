@@ -33,6 +33,13 @@ quality reviewer expects.
   reviewer required explicit acceptance-criteria evidence in the executor
   output, even though the output named the proposal artifact, verification
   commands, and covered requirements.
+- Follow-up dogfood run `research-20260502T045240Z` in agentracing produced
+  the same minor pause when the first `aspec run result` payload omitted the
+  advertised runner-result fields. Resubmitting with
+  `schema=agentspec.runner_result.v0`, `touched_paths`, and
+  `test_status=passed` completed successfully. The issue is therefore not only
+  reviewer wording; the CLI/reviewer contract should either reject underspecified
+  result payloads before review or make the required fields unmistakable.
 
 ## Proposed Change
 
