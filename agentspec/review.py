@@ -52,6 +52,7 @@ def classify_executor_output(
     active_context_pack: str,
     policy_verdict: PolicyVerdict,
     test_status: str = "not_run",
+    acceptance_evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
     if policy_verdict.decision == "halt":
         return ReviewVerdict(
@@ -66,6 +67,17 @@ def classify_executor_output(
 
     text = executor_output.strip()
     task_id = _task_id_from_context_pack(active_context_pack)
+
+    if _is_research_context_pack(active_context_pack) and acceptance_evidence is not None and test_status == "passed":
+        return ReviewVerdict(
+            decision="complete",
+            confidence="high",
+            reason="Research acceptance evidence is valid and verification passed.",
+            message_to_executor=None,
+            requires_human=False,
+            policy_flags=[],
+            evidence_refs=[active_context_pack, "acceptance_evidence"],
+        )
 
     if _looks_complete(text) and test_status == "passed":
         return ReviewVerdict(
@@ -134,12 +146,14 @@ def review_executor_output(
     test_status: str = "not_run",
     reviewer_mode: str = "deterministic",
     reviewer_profile: dict[str, Any] | None = None,
+    acceptance_evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
     deterministic = classify_executor_output(
         executor_output=executor_output,
         active_context_pack=active_context_pack,
         policy_verdict=policy_verdict,
         test_status=test_status,
+        acceptance_evidence=acceptance_evidence,
     )
     if reviewer_mode == "deterministic" or deterministic.decision != "pause_for_human":
         return deterministic
@@ -217,6 +231,10 @@ def _task_id_from_context_pack(context_pack: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _is_research_context_pack(context_pack: str) -> bool:
+    return context_pack == "<research-mode>"
+
+
 def _mentions_task(text: str, task_id: str) -> bool:
     return re.search(rf"\b{re.escape(task_id)}\b", text, flags=re.IGNORECASE) is not None
 
@@ -248,6 +266,7 @@ def quality_reviewer_signoff(
     *,
     profile: dict[str, Any] | None = None,
     reviewer_mode: str = "deterministic",
+    acceptance_evidence: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Return ('approve', reason) or ('reject', reason).
 
@@ -265,6 +284,11 @@ def quality_reviewer_signoff(
             "reject",
             f"Quality reviewer requires test_status=passed; got {test_status!r}.",
         )
+    if acceptance_evidence is not None:
+        return (
+            "approve",
+            "Research acceptance evidence is valid and verification passed.",
+        )
 
     lowered = executor_output.lower()
     has_acceptance = "acceptance" in lowered
@@ -279,6 +303,96 @@ def quality_reviewer_signoff(
         "reject",
         "Quality reviewer requires explicit acceptance-criteria evidence in the executor output.",
     )
+
+
+RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA = "agentspec.research_acceptance_evidence.v0"
+_RESEARCH_EVIDENCE_PATH_PREFIXES: tuple[str, ...] = (
+    "reports/dogfood/",
+    "docs/change-requests/",
+)
+_RESEARCH_EVIDENCE_EXACT_PATHS: frozenset[str] = frozenset(
+    {"docs/discovery/open-questions.yml"}
+)
+
+
+def research_acceptance_evidence_template() -> dict[str, Any]:
+    return {
+        "schema": RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA,
+        "durable_artifacts": [],
+        "allowed_path_confirmation": False,
+        "verification_commands": [
+            {"command": "git diff --check", "status": "<passed|failed>"},
+            {"command": "aspec doctor", "status": "<passed|failed>"},
+        ],
+        "covered_requirements": [],
+        "covered_questions": [],
+        "source_checks": [],
+        "no_task_context_pack_reason": "<required for research-only proposals>",
+    }
+
+
+def validate_research_acceptance_evidence(evidence: Any) -> dict[str, Any]:
+    if not isinstance(evidence, dict):
+        raise ValueError("acceptance_evidence must be a JSON object.")
+    if evidence.get("schema") != RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA:
+        raise ValueError(f"acceptance_evidence schema must be {RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA}.")
+
+    durable_artifacts = _string_list(evidence.get("durable_artifacts"))
+    if not durable_artifacts:
+        raise ValueError("acceptance_evidence.durable_artifacts must be a non-empty list of paths.")
+    disallowed = [path for path in durable_artifacts if not _is_research_evidence_path(path)]
+    if disallowed:
+        raise ValueError(
+            "acceptance_evidence.durable_artifacts must stay inside the research write surface: "
+            + ", ".join(disallowed)
+        )
+
+    if evidence.get("allowed_path_confirmation") is not True:
+        raise ValueError("acceptance_evidence.allowed_path_confirmation must be true.")
+
+    verification_commands = evidence.get("verification_commands")
+    if not isinstance(verification_commands, list) or not verification_commands:
+        raise ValueError("acceptance_evidence.verification_commands must be a non-empty list.")
+    normalized_commands: list[dict[str, str]] = []
+    for item in verification_commands:
+        if not isinstance(item, dict) or not isinstance(item.get("command"), str):
+            raise ValueError("acceptance_evidence.verification_commands entries require a command string.")
+        if item.get("status") != "passed":
+            raise ValueError("acceptance_evidence.verification_commands entries must all have status=passed.")
+        normalized_commands.append({"command": item["command"], "status": "passed"})
+
+    covered_requirements = _string_list(evidence.get("covered_requirements", []))
+    covered_questions = _string_list(evidence.get("covered_questions", []))
+    source_checks = _string_list(evidence.get("source_checks", []))
+    if not (covered_requirements or covered_questions or source_checks):
+        raise ValueError(
+            "acceptance_evidence requires at least one covered requirement, covered question, or source check."
+        )
+
+    no_task_reason = evidence.get("no_task_context_pack_reason")
+    if not isinstance(no_task_reason, str) or not no_task_reason.strip():
+        raise ValueError("acceptance_evidence.no_task_context_pack_reason is required.")
+
+    return {
+        "schema": RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA,
+        "durable_artifacts": durable_artifacts,
+        "allowed_path_confirmation": True,
+        "verification_commands": normalized_commands,
+        "covered_requirements": covered_requirements,
+        "covered_questions": covered_questions,
+        "source_checks": source_checks,
+        "no_task_context_pack_reason": no_task_reason,
+    }
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+        return []
+    return list(value)
+
+
+def _is_research_evidence_path(path: str) -> bool:
+    return path in _RESEARCH_EVIDENCE_EXACT_PATHS or path.startswith(_RESEARCH_EVIDENCE_PATH_PREFIXES)
 
 
 CODE_REVIEW_SCHEMA = "agentspec.code_review.v0"

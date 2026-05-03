@@ -12,7 +12,7 @@ from .config import load_project_config, merged_runtime_config, resolve_agent_pr
 from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy
-from .review import quality_reviewer_signoff, review_executor_output
+from .review import quality_reviewer_signoff, review_executor_output, validate_research_acceptance_evidence
 
 
 STATE_SCHEMA = "agentspec.supervised_run.state.v0"
@@ -157,6 +157,7 @@ def resume_run(
     touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
+    acceptance_evidence: dict[str, Any] | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
@@ -171,6 +172,10 @@ def resume_run(
     reviewer_mode = reviewer_mode or configured_reviewer_mode
     iteration = int(state.get("iteration", 0)) + 1
     mode = state.get("mode", "supervised")
+    if acceptance_evidence is not None:
+        acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
+        if mode != "research":
+            acceptance_evidence = None
 
     # R-142: research-mode findings counter — credit research-allowed
     # touched paths toward the run's max_research_findings cap. The cap
@@ -199,6 +204,7 @@ def resume_run(
         test_status=test_status,
         reviewer_mode=reviewer_mode,
         reviewer_profile=state.get("profiles", {}).get("continuation_reviewer"),
+        acceptance_evidence=acceptance_evidence,
     )
 
     executor_event = {
@@ -211,6 +217,8 @@ def resume_run(
         "test_summary": {"status": test_status},
         "reviewer_mode": reviewer_mode,
     }
+    if acceptance_evidence is not None:
+        executor_event["acceptance_evidence"] = acceptance_evidence
     reviewer_event = {
         "kind": "reviewer_verdict",
         "iteration": iteration,
@@ -268,6 +276,7 @@ def resume_run(
         quality_decision, quality_reason = quality_reviewer_signoff(
             executor_output,
             test_status,
+            acceptance_evidence=acceptance_evidence,
         )
         _append_event(
             root,
@@ -420,6 +429,7 @@ def loop_run(
     touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
+    acceptance_evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -499,6 +509,7 @@ def loop_run(
             touched_paths=touched_paths or [],
             test_status=test_status,
             reviewer_mode=reviewer_mode,
+            acceptance_evidence=acceptance_evidence,
             run_dir=run_dir,
         )
         result["state"] = resumed["state"]
@@ -519,6 +530,7 @@ def step_run(
     touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
+    acceptance_evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -533,6 +545,7 @@ def step_run(
         touched_paths=touched_paths or [],
         test_status=test_status,
         reviewer_mode=reviewer_mode,
+        acceptance_evidence=acceptance_evidence,
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,

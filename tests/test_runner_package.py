@@ -2,12 +2,13 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import main
-from agentspec.io import write_data
+from agentspec.io import load_data, write_data
 from agentspec.runner import RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
+from agentspec.run import start_research_run
 
 
 class RunnerPackageTests(unittest.TestCase):
@@ -161,6 +162,113 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(package["schema"], "agentspec.runner_package.v0")
             self.assertEqual(package["next_action"], "complete")
             self.assertFalse(package["should_execute"])
+
+    def test_research_package_includes_acceptance_evidence_template(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research")
+
+            package = package_run(root, run_id="pkg-research", runner="generic")
+
+            template = package["report_back"]["result_template"]
+            evidence = template["acceptance_evidence"]
+            self.assertEqual(evidence["schema"], "agentspec.research_acceptance_evidence.v0")
+            self.assertIn("durable_artifacts", evidence)
+            self.assertIn("allowed_path_confirmation", evidence)
+            self.assertIn("verification_commands", evidence)
+            self.assertIn("no_task_context_pack_reason", evidence)
+
+    def test_passed_research_result_requires_acceptance_evidence_before_state_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research")
+            state_path = root / "agent" / "runs" / "pkg-research" / "state.yml"
+            before = load_data(state_path)
+
+            with self.assertRaisesRegex(ValueError, "acceptance_evidence"):
+                submit_runner_result(
+                    root,
+                    "pkg-research",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done.",
+                        "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                        "test_status": "passed",
+                    },
+                    runner="generic",
+                )
+
+            self.assertEqual(load_data(state_path), before)
+
+    def test_cli_result_rejects_passed_research_result_without_acceptance_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research")
+            state_path = root / "agent" / "runs" / "pkg-research" / "state.yml"
+            before = load_data(state_path)
+            result = json.dumps(
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                }
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output), redirect_stderr(io.StringIO()):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "run",
+                        "result",
+                        "pkg-research",
+                        "--result-json",
+                        result,
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["schema"], "agentspec.cli_error.v0")
+            self.assertIn("acceptance_evidence", payload["error"]["message"])
+            self.assertEqual(load_data(state_path), before)
+
+    def test_invalid_research_acceptance_evidence_is_rejected_before_state_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research")
+            state_path = root / "agent" / "runs" / "pkg-research" / "state.yml"
+            before = load_data(state_path)
+
+            with self.assertRaisesRegex(ValueError, "durable_artifacts"):
+                submit_runner_result(
+                    root,
+                    "pkg-research",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done.",
+                        "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                        "test_status": "passed",
+                        "acceptance_evidence": {
+                            "schema": "agentspec.research_acceptance_evidence.v0",
+                            "durable_artifacts": [],
+                            "allowed_path_confirmation": True,
+                            "verification_commands": [{"command": "git diff --check", "status": "passed"}],
+                            "covered_requirements": ["R-142"],
+                            "no_task_context_pack_reason": "Research-only proposal.",
+                        },
+                    },
+                    runner="generic",
+                )
+
+            self.assertEqual(load_data(state_path), before)
 
 
 def _seed(root: Path) -> None:

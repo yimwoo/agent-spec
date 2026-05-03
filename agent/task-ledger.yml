@@ -577,6 +577,23 @@
         "path": "agent/reviews/REVIEW-0002.yml"
       },
       "updated_at": "2026-05-03T03:25:33Z"
+    },
+    "agent/context-packs/T-067-research-mode-acceptance-evidence-contract.md": {
+      "status": "complete",
+      "run_id": "complete-t-067-research-mode-acceptance-evidence-contract-20260503033952",
+      "reason": "DCR-0037 shipped: research-mode runner results now support structured acceptance evidence, research packages advertise the evidence template, passed research results require valid evidence before state mutation, reviewers consume evidence for deterministic completion, and hard limits remain intact; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0003",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0037 implementation: research acceptance evidence schema validation, research runner package template, passed-result guard before state mutation, reviewer/quality signoff evidence threading, hard-limit preservation, and focused tests. No blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0003.yml"
+      },
+      "updated_at": "2026-05-03T03:39:52Z"
     }
   }
 }

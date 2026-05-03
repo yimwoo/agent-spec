@@ -15,6 +15,7 @@ from agentspec.run import (
     resume_run,
     start_research_run,
 )
+from agentspec.runner import RUNNER_RESULT_SCHEMA, submit_runner_result
 
 
 def _seed_workspace(root: Path) -> None:
@@ -150,6 +151,79 @@ class ResearchHardLimitsTests(unittest.TestCase):
             self.assertEqual(state["status"], "halted")
             self.assertIn("auto_acceptance", result["review"].get("policy_flags", []))
 
+    def test_destructive_git_halts_even_with_acceptance_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-git-evidence")
+
+            package = submit_runner_result(
+                root,
+                "r-git-evidence",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Ran git push --force origin main.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                },
+            )
+
+            step = package["step"]
+            self.assertEqual(step["state"]["status"], "halted")
+            self.assertIn("destructive_git", step["review"].get("policy_flags", []))
+
+
+class ResearchAcceptanceEvidenceTests(unittest.TestCase):
+    def test_valid_research_evidence_completes_with_terse_output(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-evidence")
+
+            package = submit_runner_result(
+                root,
+                "r-evidence",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                },
+            )
+
+            step = package["step"]
+            self.assertEqual(step["state"]["status"], "complete")
+            self.assertEqual(step["review"]["decision"], "complete")
+            self.assertIn("acceptance_evidence", step["review"]["evidence_refs"])
+
+            event_path = root / "agent" / "runs" / "r-evidence" / "events.jsonl"
+            events = [json.loads(line) for line in event_path.read_text(encoding="utf-8").splitlines()]
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertEqual(
+                executor_event["acceptance_evidence"]["schema"],
+                "agentspec.research_acceptance_evidence.v0",
+            )
+
+    def test_unclassified_research_pause_without_evidence_still_auto_continues(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-unclear")
+
+            result = resume_run(
+                root,
+                "r-unclear",
+                executor_output="Logged a finding.",
+                touched_paths=["reports/dogfood/2026-05-02-finding.md"],
+                test_status="not_run",
+            )
+
+            self.assertEqual(result["state"]["status"], "running")
+            self.assertEqual(result["state"]["last_decision"], "auto_continue")
+            self.assertEqual(result["review"]["decision"], "pause_for_human")
+
 
 class LoopAutonomousFallbackTests(unittest.TestCase):
     def test_loop_autonomous_with_empty_queue_enters_research_mode(self) -> None:
@@ -167,3 +241,22 @@ class LoopAutonomousFallbackTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _valid_research_evidence() -> dict:
+    return {
+        "schema": "agentspec.research_acceptance_evidence.v0",
+        "durable_artifacts": [
+            "docs/change-requests/DCR-0099-research.md",
+            "docs/discovery/open-questions.yml",
+        ],
+        "allowed_path_confirmation": True,
+        "verification_commands": [
+            {"command": "git diff --check", "status": "passed"},
+            {"command": "aspec doctor", "status": "passed"},
+        ],
+        "covered_requirements": ["R-142"],
+        "covered_questions": ["Q-024"],
+        "source_checks": ["DCR parses with aspec dcr list"],
+        "no_task_context_pack_reason": "Research mode intentionally produced proposal artifacts only.",
+    }

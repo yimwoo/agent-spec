@@ -5,7 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .run import step_run
+from .review import research_acceptance_evidence_template, validate_research_acceptance_evidence
+from .run import load_run_state, step_run
 
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
@@ -27,6 +28,7 @@ def package_run(
     touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
+    acceptance_evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -43,6 +45,7 @@ def package_run(
         touched_paths=touched_paths or [],
         test_status=test_status,
         reviewer_mode=reviewer_mode,
+        acceptance_evidence=acceptance_evidence,
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
@@ -61,6 +64,12 @@ def submit_runner_result(
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
     parsed = parse_runner_result(result)
+    try:
+        state = load_run_state(root, run_id, run_dir=run_dir)
+    except FileNotFoundError:
+        state = {}
+    if state.get("mode") == "research" and parsed["test_status"] == "passed" and parsed.get("acceptance_evidence") is None:
+        raise ValueError("Research-mode passed runner results require acceptance_evidence.")
     mode = reviewer_mode or parsed.get("reviewer_mode")
     return package_run(
         root,
@@ -70,6 +79,7 @@ def submit_runner_result(
         touched_paths=list(parsed["touched_paths"]),
         test_status=str(parsed["test_status"]),
         reviewer_mode=mode if isinstance(mode, str) else None,
+        acceptance_evidence=parsed.get("acceptance_evidence"),
         run_dir=run_dir,
     )
 
@@ -232,12 +242,17 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
     if reviewer_mode is not None and reviewer_mode not in ALLOWED_REVIEWER_MODES:
         raise ValueError(f"Runner result field reviewer_mode must be one of {sorted(ALLOWED_REVIEWER_MODES)}.")
 
+    acceptance_evidence = result.get("acceptance_evidence")
+    if acceptance_evidence is not None:
+        acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
+
     return {
         "schema": schema or RUNNER_RESULT_SCHEMA,
         "executor_output": executor_output,
         "touched_paths": touched_paths,
         "test_status": test_status,
         "reviewer_mode": reviewer_mode,
+        "acceptance_evidence": acceptance_evidence,
     }
 
 
@@ -248,6 +263,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
     prompt = step.get("prompt")
     should_execute = step.get("next_action") == "continue_executor" and isinstance(prompt, str) and bool(prompt.strip())
     context_pack = step.get("state", {}).get("context_pack") if isinstance(step.get("state"), dict) else None
+    mode = step.get("state", {}).get("mode") if isinstance(step.get("state"), dict) else None
     run_id = str(step.get("run_id"))
     run_dir_flags = ["--run-dir", run_dir] if run_dir else []
     package = {
@@ -303,6 +319,8 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
             "touched_path_flag": "--touched-path",
         },
     }
+    if mode == "research":
+        package["report_back"]["result_template"]["acceptance_evidence"] = research_acceptance_evidence_template()
     return package
 
 

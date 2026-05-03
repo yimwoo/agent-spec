@@ -4500,5 +4500,41 @@
       "runner-integrator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-172",
+    "title": "Research-mode acceptance evidence contract",
+    "description": "Research-mode runner results use structured acceptance evidence for deterministic completion.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-23.4",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0037",
+    "acceptance": [
+      "Research-mode runner packages include an acceptance_evidence result template.",
+      "aspec run result rejects passed research results that omit or provide invalid acceptance_evidence, and run state remains unchanged.",
+      "A research-only proposal with valid evidence can complete even when executor_output is terse.",
+      "An unclassified research pause without valid completion evidence still logs a finding and auto-continues.",
+      "Research-mode hard limits still halt before evidence can approve the run."
+    ],
+    "code_targets": [
+      "agentspec/runner.py",
+      "agentspec/run.py",
+      "agentspec/review.py"
+    ],
+    "test_targets": [
+      "tests/test_runner_package.py",
+      "tests/test_research_mode.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator",
+      "test-eval-reviewer"
+    ]
   }
 ]
