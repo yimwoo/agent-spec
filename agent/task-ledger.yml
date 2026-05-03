@@ -560,6 +560,23 @@
         "path": "agent/reviews/REVIEW-0001.yml"
       },
       "updated_at": "2026-05-03T03:21:54Z"
+    },
+    "agent/context-packs/T-066-research-mode-review-evidence-contract-spike.md": {
+      "status": "complete",
+      "run_id": "complete-t-066-research-mode-review-evidence-contract-spike-20260503032533",
+      "reason": "DCR-0035 spike completed: research-mode acceptance evidence contract, runtime contract, test plan, hard-limit preservation, and implementation slices documented; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0002",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0035 spike deliverables: R-171/T-066 bookkeeping, accepted DCR metadata, and research-mode review evidence contract report. The report defines the evidence schema, runtime contract, test plan, hard-limit preservation, and follow-up implementation slices. No blocking findings.",
+        "reviewer": "codex",
+        "range": "HEAD~1...HEAD",
+        "path": "agent/reviews/REVIEW-0002.yml"
+      },
+      "updated_at": "2026-05-03T03:25:33Z"
     }
   }
 }

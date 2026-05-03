@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | spike |
 | Submitted | 2026-05-02 |
 | Submitted by | automation dogfood |
-| Decided by | pending |
-| Decided on | pending |
+| Decided by | user |
+| Decided on | 2026-05-02 |
 | Confidence | medium |
 
 ## Summary
@@ -73,3 +73,7 @@ Affected requirements:
   unclassified pause that auto-continues, and a genuinely high-severity pause
   that still produces a DCR and halts.
 - Existing autonomous-mode hard limits remain unchanged.
+
+## Spike Outcome
+
+See `docs/discovery/spikes/research-mode-review-evidence-contract.md`.
