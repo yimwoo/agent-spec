@@ -543,6 +543,23 @@
         "status": "passed"
       },
       "updated_at": "2026-05-01T23:04:34Z"
+    },
+    "agent/context-packs/T-065-pre-commit-code-review-gate.md": {
+      "status": "complete",
+      "run_id": "complete-t-065-pre-commit-code-review-gate-20260503032154",
+      "reason": "DCR-0036 shipped: code review artifacts, review CLI, task completion review linkage, and agent-facing pre-commit review guidance implemented; full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0001",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0036 implementation: review artifact schema, CLI parser, task completion review linkage, not-ready and context-mismatch guards, AGENTS guidance, and tests. No blocking findings.",
+        "reviewer": "codex",
+        "range": "origin/main...HEAD",
+        "path": "agent/reviews/REVIEW-0001.yml"
+      },
+      "updated_at": "2026-05-03T03:21:54Z"
     }
   }
 }

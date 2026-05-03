@@ -564,17 +564,26 @@ def complete_context_pack_run(
     run_id: str | None = None,
     reason: str = "Marked complete by user.",
     test_status: str = "not_run",
+    review_id: str | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     context_path = _resolve_context_pack_selector(root, selector)
     context = _parse_context_pack(context_path)
     config = merged_runtime_config(load_project_config(root))
+    from .review import validate_completion_review
     from .task import load_task_ledger, record_task_ledger_status
 
     load_task_ledger(root)
     task_type = context.get("task_type", "implementation")
     configured_max = config.get("supervised_runs", {}).get("max_iterations", {}).get(task_type)
     run_id = run_id or _default_completion_run_id(context_path)
+    code_review = None
+    if review_id is not None:
+        code_review = validate_completion_review(
+            root,
+            review_id,
+            context_pack=str(context_path.relative_to(root)),
+        )
 
     if _state_exists(root, run_id):
         raise FileExistsError(f"Run already exists: {run_id}")
@@ -597,6 +606,8 @@ def complete_context_pack_run(
         "completion_reason": reason,
         "verification": {"status": test_status},
     }
+    if code_review is not None:
+        state["code_review"] = code_review
     # R-146 / DCR-0024: ledger-first ordering. If the ledger write fails
     # the state file is never written, and a retry with the same run_id
     # naturally converges (ledger writes are idempotent inserts and the
@@ -610,18 +621,18 @@ def complete_context_pack_run(
         reason=reason,
         test_status=test_status,
         updated_at=str(state["updated_at"]),
+        code_review=code_review,
     )
     _write_state(root, run_id, state)
-    _append_event(
-        root,
-        run_id,
-        {
-            "kind": "task_marked_complete",
-            "context_pack": state["context_pack"],
-            "reason": reason,
-            "test_summary": {"status": test_status},
-        },
-    )
+    event = {
+        "kind": "task_marked_complete",
+        "context_pack": state["context_pack"],
+        "reason": reason,
+        "test_summary": {"status": test_status},
+    }
+    if code_review is not None:
+        event["code_review"] = code_review
+    _append_event(root, run_id, event)
     return state
 
 

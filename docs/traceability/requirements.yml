@@ -4430,5 +4430,42 @@
       "coordinator",
       "runner-integrator"
     ]
+  },
+  {
+    "id": "R-170",
+    "title": "Pre-commit code-review evidence gate",
+    "description": "AgentSpec records pre-commit code-review evidence and links passing review verdicts to task completion.",
+    "source_sections": [
+      "D-10.2",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0036",
+    "acceptance": [
+      "aspec review code records a review artifact under agent/reviews/ with schema, review id, context pack, verdict, summary, reviewer, range, and timestamp.",
+      "aspec task complete --review REVIEW-#### links a ready or ready-with-warnings review into the completion state and task ledger.",
+      "aspec task complete --review REVIEW-#### rejects not-ready reviews and context-pack mismatches before writing run state.",
+      "Agent-facing instructions document the code-review step before final commit.",
+      "Existing task completion and run completion behavior remains backward compatible when no review is supplied."
+    ],
+    "code_targets": [
+      "AGENTS.md",
+      "agentspec/cli.py",
+      "agentspec/review.py",
+      "agentspec/run.py",
+      "agentspec/task.py"
+    ],
+    "test_targets": [
+      "tests/test_code_review_cli.py",
+      "tests/test_task_completion.py"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator",
+      "test-eval-reviewer"
+    ]
   }
 ]

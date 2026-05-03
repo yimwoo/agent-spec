@@ -23,6 +23,7 @@ from .intake import diff_candidate, format_diff_report, import_candidate, promot
 from .init import init_project
 from .io import load_data
 from .requirement import accept_requirement
+from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
 from .source_registry import (
@@ -131,6 +132,16 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         help="Write reports under <path>/doctor/ instead of <root>/reports/doctor/. Use for read-only target checkouts.",
     )
 
+    review = subparsers.add_parser("review", help="Review evidence utilities.")
+    review_subparsers = review.add_subparsers(dest="review_command")
+    review_code = review_subparsers.add_parser("code", help="Record task-level code review evidence.")
+    review_code.add_argument("--task", required=True, help="Task id or context pack path.")
+    review_code.add_argument("--verdict", required=True, choices=sorted(ALLOWED_CODE_REVIEW_VERDICTS))
+    review_code.add_argument("--summary", required=True)
+    review_code.add_argument("--reviewer", default="human")
+    review_code.add_argument("--range", dest="range_ref", default="worktree")
+    review_code.add_argument("--json", action="store_true")
+
     task = subparsers.add_parser("task", help="Task utilities.")
     task_subparsers = task.add_subparsers(dest="task_command")
     task_create = task_subparsers.add_parser("create", help="Create a task context pack.")
@@ -150,6 +161,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     task_complete.add_argument("--run-id")
     task_complete.add_argument("--reason", default="Marked complete by user.")
     task_complete.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    task_complete.add_argument("--review", dest="review_id", help="Code review id to link before completion.")
     task_complete.add_argument("--json", action="store_true")
 
     context = subparsers.add_parser("context", help="Context pack utilities.")
@@ -463,6 +475,24 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             print(f"Languages: {', '.join(scan['repo']['languages']) or '-'}")
             return 0
 
+        if args.command == "review":
+            if args.review_command == "code":
+                record = record_code_review(
+                    root,
+                    task_selector=args.task,
+                    verdict=args.verdict,
+                    summary=args.summary,
+                    reviewer=args.reviewer,
+                    range_ref=args.range_ref,
+                )
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(f"Recorded code review {record['id']} ({record['verdict']}).")
+                return 0
+            parser.print_help()
+            return 0
+
         if args.command == "task" and args.task_command == "create":
             path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
             print(f"Created task context pack: {path.relative_to(root)}")
@@ -495,6 +525,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 run_id=args.run_id,
                 reason=args.reason,
                 test_status=args.test_status,
+                review_id=args.review_id,
             )
             if args.json:
                 print(json.dumps(state, indent=2))

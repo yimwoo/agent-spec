@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .io import load_data, utc_now_iso, write_data
 from .model_review import classify_severity, request_model_review
 from .policy import PolicyVerdict
+from .task import list_task_context_packs
 
 
 DECISIONS = {"auto_continue", "pause_for_human", "halt", "complete"}
@@ -277,3 +279,143 @@ def quality_reviewer_signoff(
         "reject",
         "Quality reviewer requires explicit acceptance-criteria evidence in the executor output.",
     )
+
+
+CODE_REVIEW_SCHEMA = "agentspec.code_review.v0"
+ALLOWED_CODE_REVIEW_VERDICTS = frozenset(
+    {"ready", "ready-with-warnings", "not-ready"}
+)
+PASSING_CODE_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
+
+
+def record_code_review(
+    root: Path,
+    *,
+    task_selector: str,
+    verdict: str,
+    summary: str,
+    reviewer: str = "human",
+    range_ref: str = "worktree",
+) -> dict[str, Any]:
+    root = root.resolve()
+    if verdict not in ALLOWED_CODE_REVIEW_VERDICTS:
+        allowed = ", ".join(sorted(ALLOWED_CODE_REVIEW_VERDICTS))
+        raise ValueError(f"Invalid code review verdict {verdict!r}; expected one of: {allowed}.")
+    if not summary.strip():
+        raise ValueError("Code review summary is required.")
+
+    context_pack = _resolve_review_context_pack(root, task_selector)
+    review_id = _next_review_id(root)
+    record = {
+        "schema": CODE_REVIEW_SCHEMA,
+        "id": review_id,
+        "task": {
+            "selector": task_selector,
+            "context_pack": context_pack,
+        },
+        "verdict": verdict,
+        "summary": summary,
+        "reviewer": reviewer,
+        "range": range_ref,
+        "created_at": utc_now_iso(),
+    }
+    write_data(_review_path(root, review_id), record)
+    return record
+
+
+def load_code_review(root: Path, review_id: str) -> dict[str, Any]:
+    path = _review_path(root.resolve(), review_id)
+    record = load_data(path)
+    if not isinstance(record, dict):
+        raise FileNotFoundError(f"Code review not found: {review_id}")
+    if record.get("schema") != CODE_REVIEW_SCHEMA:
+        raise ValueError(f"Invalid code review schema in {path}.")
+    if record.get("verdict") not in ALLOWED_CODE_REVIEW_VERDICTS:
+        raise ValueError(f"Invalid code review verdict in {path}: {record.get('verdict')!r}.")
+    return record
+
+
+def validate_completion_review(
+    root: Path,
+    review_id: str,
+    *,
+    context_pack: str,
+) -> dict[str, Any]:
+    root = root.resolve()
+    record = load_code_review(root, review_id)
+    verdict = str(record.get("verdict"))
+    if verdict not in PASSING_CODE_REVIEW_VERDICTS:
+        raise ValueError(f"Code review {record.get('id')} is {verdict}; task completion is blocked.")
+
+    task = record.get("task")
+    reviewed_context_pack = task.get("context_pack") if isinstance(task, dict) else None
+    if reviewed_context_pack != context_pack:
+        raise ValueError(
+            f"Code review {record.get('id')} belongs to {reviewed_context_pack}, "
+            f"not {context_pack}."
+        )
+    return code_review_summary(root, record)
+
+
+def code_review_summary(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+    review_id = str(record.get("id"))
+    return {
+        "id": review_id,
+        "verdict": record.get("verdict"),
+        "summary": record.get("summary"),
+        "reviewer": record.get("reviewer"),
+        "range": record.get("range"),
+        "path": _relative_or_absolute(root.resolve(), _review_path(root.resolve(), review_id)),
+    }
+
+
+def _resolve_review_context_pack(root: Path, selector: str) -> str:
+    records = list_task_context_packs(root)
+
+    by_id = [record for record in records if record.get("id") == selector]
+    if len(by_id) == 1:
+        return str(by_id[0]["path"])
+    if len(by_id) > 1:
+        raise ValueError(f"Task selector is ambiguous: {selector}")
+
+    candidate = Path(selector)
+    candidate_path = candidate if candidate.is_absolute() else root / candidate
+    if candidate_path.exists():
+        try:
+            rel = str(candidate_path.relative_to(root))
+        except ValueError:
+            rel = str(candidate_path)
+        if any(record.get("path") == rel for record in records):
+            return rel
+
+    raise FileNotFoundError(f"Task not found: {selector}")
+
+
+def _next_review_id(root: Path) -> str:
+    review_dir = root / "agent" / "reviews"
+    highest = 0
+    for path in review_dir.glob("REVIEW-*.yml"):
+        stem = path.stem
+        if stem.startswith("REVIEW-") and stem.split("-", 1)[1].isdigit():
+            highest = max(highest, int(stem.split("-", 1)[1]))
+    return f"REVIEW-{highest + 1:04d}"
+
+
+def _review_path(root: Path, review_id: str) -> Path:
+    candidate = Path(review_id)
+    if candidate.is_absolute():
+        return candidate
+    if candidate.suffix == ".yml":
+        if len(candidate.parts) > 1:
+            return root / candidate
+        return root / "agent" / "reviews" / candidate.name
+    if len(candidate.parts) > 1:
+        return root / candidate
+    return root / "agent" / "reviews" / f"{review_id}.yml"
+
+
+def _relative_or_absolute(root: Path, path: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)

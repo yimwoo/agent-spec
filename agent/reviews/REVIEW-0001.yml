@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0001",
+  "task": {
+    "selector": "T-065",
+    "context_pack": "agent/context-packs/T-065-pre-commit-code-review-gate.md"
+  },
+  "verdict": "ready",
+  "summary": "Reviewed DCR-0036 implementation: review artifact schema, CLI parser, task completion review linkage, not-ready and context-mismatch guards, AGENTS guidance, and tests. No blocking findings.",
+  "reviewer": "codex",
+  "range": "origin/main...HEAD",
+  "created_at": "2026-05-03T03:21:43Z"
+}

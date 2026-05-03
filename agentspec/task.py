@@ -102,6 +102,7 @@ def record_task_ledger_status(
     reason: str | None = None,
     test_status: str | None = None,
     updated_at: str | None = None,
+    code_review: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     ledger = load_task_ledger(root)
@@ -115,6 +116,7 @@ def record_task_ledger_status(
         "run_id": run_id,
         "reason": reason,
         "verification": {"status": test_status or "not_run"},
+        "code_review": code_review,
         "updated_at": updated_at or utc_now_iso(),
     }
     tasks[rel] = {key: value for key, value in entry.items() if value is not None}
