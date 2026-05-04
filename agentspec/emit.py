@@ -105,7 +105,7 @@ def _emit_codex(root: Path) -> list[Path]:
             path,
             f"""name = "{name}"
 description = "{description}"
-instructions = \"\"\"Read AgentSpec artifacts first. Report findings with source section IDs, requirement IDs, confidence, and recommended next action. Stay read-only unless a task context pack grants write scope.\"\"\"
+developer_instructions = \"\"\"Read AgentSpec artifacts first. Report findings with source section IDs, requirement IDs, confidence, and recommended next action. Stay read-only unless a task context pack grants write scope.\"\"\"
 """,
         )
         written.append(path)

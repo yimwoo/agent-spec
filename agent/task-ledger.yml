@@ -594,6 +594,23 @@
         "path": "agent/reviews/REVIEW-0003.yml"
       },
       "updated_at": "2026-05-03T03:39:52Z"
+    },
+    "agent/context-packs/T-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so.md": {
+      "status": "complete",
+      "run_id": "complete-t-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so-20260504023117",
+      "reason": "R-173 compatibility fix verified: Codex emitter writes developer_instructions and regression tests plus target-project TOML parse checks pass.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0004",
+        "verdict": "ready",
+        "summary": "R-173: emitter now writes developer_instructions for Codex role TOML; tests parse emitted roles and reject obsolete instructions key. Verification: python -m unittest discover -s tests; target project TOML parse check passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0004.yml"
+      },
+      "updated_at": "2026-05-04T02:31:17Z"
     }
   }
 }

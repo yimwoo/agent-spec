@@ -4536,5 +4536,43 @@
       "runner-integrator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-173",
+    "title": "Codex agent role emission uses developer_instructions",
+    "description": "AgentSpec emits Codex custom-agent role files with the current developer_instructions field so generated .codex/agents/*.toml files load without Codex startup warnings.",
+    "source_sections": [
+      "D-10.5",
+      "D-22.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0038",
+    "acceptance": [
+      "aspec emit --target codex writes .codex/agents/*.toml files with developer_instructions.",
+      "Generated Codex role files do not include the obsolete instructions field.",
+      "Tests cover the generated Codex role schema."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_plugin_source_intake.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so.md",
+      "agent/reviews/REVIEW-0004.yml",
+      "agent/task-ledger.yml",
+      "docs/change-requests/DCR-0038-codex-agent-roles-use-developer-instructions.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator"
+    ]
   }
 ]

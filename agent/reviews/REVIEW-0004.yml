@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0004",
+  "task": {
+    "selector": "T-068",
+    "context_pack": "agent/context-packs/T-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so.md"
+  },
+  "verdict": "ready",
+  "summary": "R-173: emitter now writes developer_instructions for Codex role TOML; tests parse emitted roles and reject obsolete instructions key. Verification: python -m unittest discover -s tests; target project TOML parse check passed.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-04T02:31:10Z"
+}

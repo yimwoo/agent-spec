@@ -1,5 +1,6 @@
 import json
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -96,6 +97,14 @@ class PluginSourceIntakeTests(unittest.TestCase):
             written = emit_targets(root, "codex")
 
             self.assertIn(root / ".codex" / "agents" / "spec-reviewer.toml", written)
+            for role in ["spec-reviewer", "security-reviewer", "brownfield-mapper"]:
+                role_path = root / ".codex" / "agents" / f"{role}.toml"
+                role_text = role_path.read_text(encoding="utf-8")
+                role_config = tomllib.loads(role_text)
+
+                self.assertIn("\ndeveloper_instructions =", role_text)
+                self.assertIn("developer_instructions", role_config)
+                self.assertNotIn("instructions", role_config)
             self.assertFalse(
                 list((root / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
             )
