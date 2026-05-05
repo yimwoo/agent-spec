@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0018",
+  "task": {
+    "selector": "T-080",
+    "context_pack": "agent/context-packs/T-080-close-next-stale-answered-open-questions.md"
+  },
+  "verdict": "ready",
+  "summary": "R-185 metadata cleanup reviewed: only Q-009 and Q-015 changed, both cite accepted decision evidence, unresolved strategic questions remain open, ledgers parse, and full unittest verification passed.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T23:13:12Z"
+}

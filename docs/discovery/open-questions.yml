@@ -93,7 +93,8 @@
   {
     "id": "Q-009",
     "question": "How strict should readiness gates be by default?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0033/R-168; R-104",
     "impact": [
       "product"
     ],
@@ -178,7 +179,8 @@
   {
     "id": "Q-015",
     "question": "Should DCR IDs be globally sequential across the repository, or namespaced per source document or per area? Defaulting to global until first conflict.",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "ADR-0002; docs/change-requests/README.md",
     "impact": [
       "dcr",
       "schema"

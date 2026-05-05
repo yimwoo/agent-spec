@@ -5038,5 +5038,43 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-185",
+    "title": "Next stale answered open questions cite accepted decision evidence",
+    "description": "Open-question entries Q-009 and Q-015 are marked answered because accepted AgentSpec artifacts already define the default readiness gate and DCR ID numbering policy; unresolved strategic questions remain open.",
+    "source_sections": [
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0050",
+    "acceptance": [
+      "Q-009 has status answered with answered_by DCR-0033/R-168; R-104.",
+      "Q-015 has status answered with answered_by ADR-0002; docs/change-requests/README.md.",
+      "Existing impact, source_sections, and raised_by metadata on both entries is preserved.",
+      "Questions without accepted decision evidence remain open.",
+      "The open-question and requirement ledgers remain parseable."
+    ],
+    "code_targets": [
+      "docs/discovery/open-questions.yml"
+    ],
+    "test_targets": [],
+    "support_targets": [
+      "agent/context-packs/T-080-close-next-stale-answered-open-questions.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0050-close-next-stale-answered-open-questions.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]
