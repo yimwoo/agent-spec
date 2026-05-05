@@ -4849,5 +4849,40 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-181",
+    "title": "Local Codex runtime config is ignored while generated Codex agent roles stay trackable",
+    "description": "The repository ignores the local .codex/config.toml runtime configuration file without ignoring generated .codex/agents/*.toml role artifacts that are intended to remain tracked.",
+    "source_sections": [
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0046",
+    "acceptance": [
+      ".gitignore contains .codex/config.toml.",
+      ".gitignore does not ignore all of .codex/.",
+      "git status --short no longer lists .codex/config.toml as untracked.",
+      "Existing tracked .codex/agents/*.toml files remain tracked."
+    ],
+    "code_targets": [
+      ".gitignore"
+    ],
+    "test_targets": [],
+    "support_targets": [
+      "agent/context-packs/T-076-ignore-local-codex-runtime-config.md",
+      "agent/reviews/REVIEW-0013.yml",
+      "agent/task-ledger.yml",
+      "docs/change-requests/DCR-0046-ignore-local-codex-runtime-config.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]

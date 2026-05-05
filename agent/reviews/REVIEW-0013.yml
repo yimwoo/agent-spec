@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0013",
+  "task": {
+    "selector": "T-076",
+    "context_pack": "agent/context-packs/T-076-ignore-local-codex-runtime-config.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. R-181 adds a narrow .codex/config.toml ignore rule, keeps .codex/agents tracked, and verification passed with python -m unittest discover tests.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T21:40:02Z"
+}
