@@ -35,7 +35,29 @@ class InitLayoutTests(unittest.TestCase):
 
             self.assertEqual(config["agent_profiles"]["main_executor"]["adapter"], "current-host")
             self.assertEqual(config["agent_profiles"]["main_executor"]["model"], "host-default")
+            self.assertIn("test_eval_reviewer", config["agent_profiles"])
             self.assertEqual(config["supervised_runs"]["executor_profile"], "main_executor")
+            self.assertEqual(config["supervised_runs"]["quality_reviewer_profile"], "test_eval_reviewer")
+
+    def test_init_creates_app_build_planner_evaluator_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            init_project(root)
+
+            workflow = root / "agent" / "workflows" / "app-build.md"
+            planner = root / "agent" / "roles" / "app-planner.md"
+            evaluator = root / "agent" / "roles" / "app-evaluator.md"
+
+            self.assertTrue(workflow.exists())
+            self.assertTrue(planner.exists())
+            self.assertTrue(evaluator.exists())
+            workflow_text = workflow.read_text(encoding="utf-8")
+            self.assertIn("Planner", workflow_text)
+            self.assertIn("Generator", workflow_text)
+            self.assertIn("Evaluator", workflow_text)
+            self.assertIn("external code agent", workflow_text)
+            self.assertIn("screenshots", workflow_text)
+            self.assertIn("DOM snapshots", workflow_text)
 
     def test_init_creates_dogfood_directory(self) -> None:
         """R-139: reports/dogfood/ exists in the artifact layout after init."""

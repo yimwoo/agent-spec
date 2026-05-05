@@ -11,7 +11,9 @@ from typing import Any
 
 
 MODEL_REVIEW_SCHEMA = "agentspec.model_review.verdict.v0"
+QUALITY_REVIEW_SCHEMA = "agentspec.quality_review.verdict.v0"
 ALLOWED_MODEL_DECISIONS = {"auto_continue", "pause_for_human", "halt", "complete"}
+ALLOWED_QUALITY_DECISIONS = {"approve", "reject"}
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
 
 
@@ -85,6 +87,26 @@ def request_model_review(
     return parse_model_review_response(raw)
 
 
+def request_quality_review(
+    *,
+    profile: dict[str, Any],
+    executor_output: str,
+    test_status: str,
+    deterministic_reason: str,
+    acceptance_evidence: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    prompt = build_quality_review_prompt(
+        executor_output=executor_output,
+        test_status=test_status,
+        deterministic_reason=deterministic_reason,
+        acceptance_evidence=acceptance_evidence,
+    )
+    raw = _raw_model_response(profile, prompt)
+    if raw is None:
+        return None
+    return parse_quality_review_response(raw)
+
+
 def build_model_review_prompt(
     *,
     executor_output: str,
@@ -114,6 +136,43 @@ def build_model_review_prompt(
             f"Active context pack: {active_context_pack}",
             f"Deterministic reviewer reason: {deterministic_reason}",
             f"Test status: {test_status}",
+            "Executor output:",
+            executor_output[:4000],
+        ]
+    )
+
+
+def build_quality_review_prompt(
+    *,
+    executor_output: str,
+    test_status: str,
+    deterministic_reason: str,
+    acceptance_evidence: dict[str, Any] | None = None,
+) -> str:
+    evidence_note = (
+        json.dumps(acceptance_evidence, sort_keys=True)[:2000]
+        if acceptance_evidence is not None
+        else "null"
+    )
+    return "\n".join(
+        [
+            "You are an AgentSpec test/eval reviewer.",
+            "Return only JSON with this schema:",
+            "{",
+            f'  "schema": "{QUALITY_REVIEW_SCHEMA}",',
+            '  "decision": "approve|reject",',
+            '  "confidence": "low|medium|high",',
+            '  "reason": "short reason"',
+            "}",
+            "",
+            "Rules:",
+            "- Approve only when verification passed and the executor output or evidence supports the acceptance criteria.",
+            "- Reject when tests failed, evidence is missing, scope is unclear, or the output does not support task completion.",
+            "- For app/UI tasks, expect browser-oriented evidence when the runner reports it.",
+            "",
+            f"Deterministic quality result: {deterministic_reason}",
+            f"Test status: {test_status}",
+            f"Acceptance evidence: {evidence_note}",
             "Executor output:",
             executor_output[:4000],
         ]
@@ -150,6 +209,35 @@ def parse_model_review_response(raw: str) -> dict[str, Any]:
         "confidence": confidence,
         "reason": reason.strip(),
         "message_to_executor": message.strip() if isinstance(message, str) and message.strip() else None,
+    }
+
+
+def parse_quality_review_response(raw: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Quality reviewer response must be JSON.") from exc
+
+    if not isinstance(payload, dict):
+        raise ValueError("Quality reviewer response must be a JSON object.")
+    schema = payload.get("schema")
+    if schema != QUALITY_REVIEW_SCHEMA:
+        raise ValueError(f"Quality reviewer schema must be {QUALITY_REVIEW_SCHEMA}.")
+    decision = payload.get("decision")
+    if decision not in ALLOWED_QUALITY_DECISIONS:
+        raise ValueError(f"Quality reviewer decision must be one of {sorted(ALLOWED_QUALITY_DECISIONS)}.")
+    confidence = payload.get("confidence", "medium")
+    if confidence not in ALLOWED_CONFIDENCE:
+        confidence = "medium"
+    reason = payload.get("reason")
+    if not isinstance(reason, str) or not reason.strip():
+        reason = "Quality reviewer returned a structured verdict."
+
+    return {
+        "schema": schema,
+        "decision": decision,
+        "confidence": confidence,
+        "reason": reason.strip(),
     }
 
 

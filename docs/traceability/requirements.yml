@@ -4574,5 +4574,245 @@
       "coordinator",
       "plugin-integrator"
     ]
+  },
+  {
+    "id": "R-174",
+    "title": "Doctor reports stale generated agent instruction artifacts",
+    "description": "aspec doctor reports stale or missing generated agent instruction artifacts with a recovery command so code agents can refresh durable project context before implementation.",
+    "source_sections": [
+      "D-03",
+      "D-04",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0039",
+    "acceptance": [
+      "aspec doctor reports a warning when AGENTS.md is missing but AgentSpec source-of-truth artifacts exist.",
+      "aspec doctor reports a warning when AGENTS.md, CLAUDE.md, or generated .codex/agents/*.toml files are older than requirements.yml, readiness.yml, or agent/task-ledger.yml.",
+      "The warning includes aspec emit --target claude,codex as the recovery command.",
+      "Fresh generated agent-context files do not produce the warning.",
+      "Tests cover missing, stale, and fresh cases."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-069-agent-knowledge-freshness-lint.md",
+      "docs/change-requests/DCR-0039-agent-knowledge-freshness-lint.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-175",
+    "title": "Runner results support structured UI validation evidence artifacts",
+    "description": "Runner results support structured evidence artifacts for UI and browser validation so code agents can report screenshots, DOM snapshots, navigation traces, console logs, network logs, videos, traces, and verification commands in a durable control-plane shape.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0040",
+    "acceptance": [
+      "Runner packages include an evidence result template with UI-relevant artifact kinds such as screenshot, DOM snapshot, navigation trace, console log, network log, video, and trace.",
+      "aspec run result accepts valid evidence and records it in the executor event.",
+      "Invalid evidence is rejected before run state changes.",
+      "Existing runner results without evidence remain valid.",
+      "Tests cover package template shape, valid evidence threading, and invalid evidence rejection."
+    ],
+    "code_targets": [
+      "agentspec/runner.py",
+      "agentspec/run.py"
+    ],
+    "test_targets": [
+      "tests/test_runner_package.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-070-runner-evidence-artifacts-for-ui-validation.md",
+      "docs/change-requests/DCR-0040-runner-evidence-artifacts-for-ui-validation.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "runner-integrator",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-176",
+    "title": "Doctor evaluates repo-local project invariants",
+    "description": "aspec doctor evaluates optional repo-local project invariants so projects can encode required paths and forbidden path patterns as mechanical checks rather than relying only on prose instructions.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0041",
+    "acceptance": [
+      "With no agent/policies/invariants.yml, aspec doctor reports invariant status as not_configured.",
+      "required_path invariants pass when the path exists and fail when it is missing.",
+      "forbidden_path invariants pass when no files match and fail when files match the configured pattern.",
+      "repo-scan.yml records invariant results with id, kind, status, message, and severity.",
+      "agent-readiness.md includes a Project Invariants section.",
+      "Tests cover missing config, passing invariants, and failing invariants."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py",
+      "agentspec/policy.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-071-project-invariant-checks-in-doctor.md",
+      "docs/change-requests/DCR-0041-project-invariant-checks-in-doctor.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-177",
+    "title": "Doctor diagnostics are complete and non-fatal for generated agent context and project invariants",
+    "description": "aspec doctor reports missing generated Codex agent TOML output and converts invalid project invariant configuration into structured diagnostics so agent-readiness checks remain complete and actionable.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0042",
+    "acceptance": [
+      "When AgentSpec source artifacts exist and .codex/agents/*.toml has no files, aspec doctor reports a missing generated Codex agent warning with aspec emit --target claude,codex as recovery.",
+      "Existing stale checks still report stale generated Codex agent TOML files.",
+      "Invalid agent/policies/invariants.yml top-level content is reported as invalid_config in repo-scan.yml and agent-readiness.md; doctor exits successfully.",
+      "Invalid individual invariant entries are reported as invalid results without preventing valid invariant entries from being evaluated.",
+      "Tests cover missing Codex agent TOML output and invalid invariant diagnostics."
+    ],
+    "code_targets": [
+      "agentspec/doctor.py",
+      "agentspec/policy.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-072-harden-doctor-diagnostics-for-agent-context-and-invariants.md",
+      "docs/change-requests/DCR-0042-harden-doctor-diagnostics-for-agent-context-and-invariants.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "security-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-178",
+    "title": "AgentSpec exposes an app-build planner/generator/evaluator harness and configurable test-eval reviewer profile",
+    "description": "AgentSpec exposes an app-build harness that maps planner, generator, and evaluator responsibilities onto durable role/workflow artifacts, and provides a configurable test-eval reviewer profile so evaluation can run on a different model than implementation.",
+    "source_sections": [
+      "D-07",
+      "D-10.5",
+      "D-12.14",
+      "D-12.17",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0043",
+    "acceptance": [
+      "Fresh aspec init output includes app planner and app evaluator role artifacts and an app-build workflow.",
+      "Fresh runtime config includes a test_eval_reviewer profile that can carry a project-specific model string independently of main_executor.",
+      "Terminal quality review binds to test_eval_reviewer by default while preserving explicit quality_reviewer_profile overrides.",
+      "Model-backed autonomous/research quality signoff uses the configured evaluator profile when --reviewer model or --reviewer auto is enabled.",
+      "The app-build workflow states that the generator is the external code runner and that evaluators should require UI/browser evidence for app tasks.",
+      "Tests cover profile defaults/overrides, emitted app-build roles/workflow, and model-backed quality signoff."
+    ],
+    "code_targets": [
+      "agentspec/config.py",
+      "agentspec/emit.py",
+      "agentspec/init.py",
+      "agentspec/model_review.py",
+      "agentspec/paths.py",
+      "agentspec/run.py",
+      "agentspec/review.py"
+    ],
+    "test_targets": [
+      "tests/test_config_profiles.py",
+      "tests/test_dual_reviewer_signoff.py",
+      "tests/test_init_layout.py",
+      "tests/test_model_review.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile.md",
+      "docs/change-requests/DCR-0043-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-179",
+    "title": "AgentSpec dogfood config uses the test-eval reviewer profile",
+    "description": "AgentSpec's own committed runtime config uses the test_eval_reviewer profile for terminal quality review so the repository dogfoods the evaluator model path added for app-build and long-running agent work.",
+    "source_sections": [
+      "D-07",
+      "D-12.17",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0044",
+    "acceptance": [
+      ".agentspec/config.yml contains a test_eval_reviewer profile.",
+      "The dogfood test_eval_reviewer profile uses model oca/gpt5.3-codex.",
+      "supervised_runs.quality_reviewer_profile points at test_eval_reviewer.",
+      "Existing quality_reviewer profile remains available.",
+      "Targeted config tests and full unittest discovery pass."
+    ],
+    "code_targets": [
+      ".agentspec/config.yml"
+    ],
+    "test_targets": [
+      "tests/test_config_profiles.py",
+      "tests/test_dual_reviewer_signoff.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-074-activate-test-eval-reviewer-profile-in-dogfood-config.md",
+      "docs/change-requests/DCR-0044-activate-test-eval-reviewer-profile-in-dogfood-config.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]

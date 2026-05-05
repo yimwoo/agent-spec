@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0006",
+  "task": {
+    "selector": "T-070",
+    "context_pack": "agent/context-packs/T-070-runner-evidence-artifacts-for-ui-validation.md"
+  },
+  "verdict": "ready",
+  "summary": "Reviewed R-175/DCR-0040 implementation: runner_result evidence schema/template, UI artifact kinds, validation before state mutation, evidence threading into executor events, and package/result tests. Full test discovery passed; no blocking findings.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-05T20:49:37Z"
+}

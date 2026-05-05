@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
-from agentspec.runner import RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
+from agentspec.runner import RUNNER_EVIDENCE_SCHEMA, RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
 from agentspec.run import start_research_run
 
 
@@ -31,7 +31,33 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(package["report_back"]["argv"][:4], ["aspec", "run", "result", "pkg-001"])
             self.assertEqual(package["report_back"]["result_schema"], RUNNER_RESULT_SCHEMA)
             self.assertEqual(package["report_back"]["result_template"]["schema"], RUNNER_RESULT_SCHEMA)
+            self.assertEqual(package["report_back"]["result_template"]["evidence"]["schema"], RUNNER_EVIDENCE_SCHEMA)
             self.assertEqual(package["report_back"]["touched_path_flag"], "--touched-path")
+
+    def test_package_includes_ui_evidence_template(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            package = package_run(root, run_id="pkg-001", runner="generic")
+
+            evidence = package["report_back"]["result_template"]["evidence"]
+            self.assertEqual(evidence["schema"], RUNNER_EVIDENCE_SCHEMA)
+            self.assertEqual(
+                set(evidence["artifact_kinds"]),
+                {
+                    "console_log",
+                    "dom_snapshot",
+                    "navigation_trace",
+                    "network_log",
+                    "screenshot",
+                    "trace",
+                    "video",
+                    "other",
+                },
+            )
+            self.assertIn("artifacts", evidence)
+            self.assertIn("verification_commands", evidence)
 
     def test_codex_package_uses_codex_command_hint(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -97,6 +123,48 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(package["step"]["state"]["status"], "complete")
             self.assertEqual(package["step"]["review"]["decision"], "complete")
 
+    def test_submit_runner_result_records_valid_evidence_event(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            package_run(root, run_id="pkg-001", runner="generic")
+            evidence = {
+                "schema": RUNNER_EVIDENCE_SCHEMA,
+                "artifacts": [
+                    {
+                        "kind": "screenshot",
+                        "path": "reports/ui/pkg-001/home.png",
+                        "description": "Home page after the fix.",
+                    },
+                    {
+                        "kind": "dom_snapshot",
+                        "path": "reports/ui/pkg-001/home.dom.json",
+                        "description": "DOM snapshot showing the visible submit button.",
+                    },
+                ],
+                "verification_commands": [
+                    {"command": "npm run test:e2e", "status": "passed"},
+                ],
+                "notes": "Browser validation evidence captured by the runner.",
+            }
+
+            submit_runner_result(
+                root,
+                "pkg-001",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are met.",
+                    "touched_paths": ["agentspec/runner.py"],
+                    "test_status": "passed",
+                    "evidence": evidence,
+                },
+                runner="generic",
+            )
+
+            events = _events(root, "pkg-001")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertEqual(executor_event["evidence"], evidence)
+
     def test_invalid_runner_result_is_rejected_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -111,6 +179,39 @@ class RunnerPackageTests(unittest.TestCase):
                 )
 
             self.assertFalse((root / "agent" / "runs" / "pkg-001" / "state.yml").exists())
+
+    def test_invalid_evidence_is_rejected_before_state_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            package_run(root, run_id="pkg-001", runner="generic")
+            state_path = root / "agent" / "runs" / "pkg-001" / "state.yml"
+            before = load_data(state_path)
+
+            with self.assertRaisesRegex(ValueError, "evidence.artifacts"):
+                submit_runner_result(
+                    root,
+                    "pkg-001",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done. Acceptance criteria are met.",
+                        "touched_paths": ["agentspec/runner.py"],
+                        "test_status": "passed",
+                        "evidence": {
+                            "schema": RUNNER_EVIDENCE_SCHEMA,
+                            "artifacts": [
+                                {
+                                    "kind": "unrecognized",
+                                    "path": "reports/ui/pkg-001/home.png",
+                                    "description": "Invalid kind.",
+                                }
+                            ],
+                        },
+                    },
+                    runner="generic",
+                )
+
+            self.assertEqual(load_data(state_path), before)
 
     def test_cli_package_json_outputs_runner_package(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -322,6 +423,15 @@ Type: `implementation`
 """,
         encoding="utf-8",
     )
+
+
+def _events(root: Path, run_id: str) -> list[dict]:
+    events_path = root / "agent" / "runs" / run_id / "events.jsonl"
+    return [
+        json.loads(line)
+        for line in events_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 if __name__ == "__main__":

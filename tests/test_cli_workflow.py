@@ -1,5 +1,6 @@
 import contextlib
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -126,9 +127,213 @@ class CliWorkflowTests(unittest.TestCase):
 
                 self.assertEqual(main(["doctor"]), 0)
                 self.assertTrue((project / "reports" / "doctor" / "repo-scan.yml").exists())
+                scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+                self.assertEqual(scan["agent_context"]["status"], "fresh")
+                self.assertEqual(scan["project_invariants"]["status"], "not_configured")
 
                 self.assertEqual(main(["drift"]), 0)
                 self.assertTrue((project / "reports" / "drift" / "latest.md").exists())
+
+    def test_doctor_warns_when_agent_context_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_agent_context_sources(project)
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            warnings = scan["agent_context"]["warnings"]
+            self.assertEqual(scan["agent_context"]["status"], "warning")
+            self.assertTrue(
+                any(warning["kind"] == "missing" and warning["path"] == "AGENTS.md" for warning in warnings),
+                warnings,
+            )
+            self.assertTrue(
+                all(warning["recovery_command"] == "aspec emit --target claude,codex" for warning in warnings),
+                warnings,
+            )
+            report = (project / "reports" / "doctor" / "agent-readiness.md").read_text(encoding="utf-8")
+            self.assertIn("aspec emit --target claude,codex", report)
+
+    def test_doctor_warns_when_codex_agent_context_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_agent_context_sources(project)
+            (project / "AGENTS.md").write_text("# AGENTS.md\n", encoding="utf-8")
+            (project / "CLAUDE.md").write_text("# CLAUDE.md\n", encoding="utf-8")
+            (project / ".codex" / "agents").mkdir(parents=True)
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            warnings = scan["agent_context"]["warnings"]
+            self.assertEqual(scan["agent_context"]["status"], "warning")
+            self.assertIn(".codex/agents/*.toml", scan["agent_context"]["checked_artifacts"])
+            self.assertTrue(
+                any(
+                    warning["kind"] == "missing" and warning["path"] == ".codex/agents/*.toml"
+                    for warning in warnings
+                ),
+                warnings,
+            )
+
+    def test_doctor_warns_when_agent_context_is_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_agent_context_sources(project)
+            _write_agent_context_outputs(project)
+            old_time = 1_700_000_000_000_000_000
+            new_time = old_time + 1_000_000_000
+            for relative in ["AGENTS.md", "CLAUDE.md", ".codex/agents/spec-reviewer.toml"]:
+                _set_mtime(project / relative, old_time)
+            _set_mtime(project / "docs" / "traceability" / "requirements.yml", new_time)
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            stale_paths = {
+                warning["path"]
+                for warning in scan["agent_context"]["warnings"]
+                if warning["kind"] == "stale"
+            }
+            self.assertEqual(scan["agent_context"]["status"], "warning")
+            self.assertIn("AGENTS.md", stale_paths)
+            self.assertIn("CLAUDE.md", stale_paths)
+            self.assertIn(".codex/agents/spec-reviewer.toml", stale_paths)
+
+    def test_doctor_accepts_fresh_agent_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_agent_context_sources(project)
+            _write_agent_context_outputs(project)
+            old_time = 1_700_000_000_000_000_000
+            new_time = old_time + 1_000_000_000
+            _set_mtime(project / "docs" / "traceability" / "requirements.yml", old_time)
+            _set_mtime(project / "docs" / "discovery" / "readiness.yml", old_time)
+            _set_mtime(project / "agent" / "task-ledger.yml", old_time)
+            for relative in ["AGENTS.md", "CLAUDE.md", ".codex/agents/spec-reviewer.toml"]:
+                _set_mtime(project / relative, new_time)
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            self.assertEqual(scan["agent_context"]["status"], "fresh")
+            self.assertEqual(scan["agent_context"]["warnings"], [])
+
+    def test_doctor_reports_missing_project_invariant_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            self.assertEqual(scan["project_invariants"]["status"], "not_configured")
+            self.assertEqual(scan["project_invariants"]["path"], "agent/policies/invariants.yml")
+            report = (project / "reports" / "doctor" / "agent-readiness.md").read_text(encoding="utf-8")
+            self.assertIn("## Project Invariants", report)
+
+    def test_doctor_reports_passing_project_invariants(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            (project / "AGENTS.md").write_text("# AGENTS\n", encoding="utf-8")
+            _write_json(
+                project / "agent" / "policies" / "invariants.yml",
+                [
+                    {
+                        "id": "INV-001",
+                        "kind": "required_path",
+                        "path": "AGENTS.md",
+                        "description": "Agent instructions exist.",
+                        "severity": "error",
+                    },
+                    {
+                        "id": "INV-002",
+                        "kind": "forbidden_path",
+                        "pattern": "dist/**/*.js",
+                        "description": "Generated JS is not committed.",
+                        "severity": "warning",
+                    },
+                ],
+            )
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            self.assertEqual(scan["project_invariants"]["status"], "passed")
+            self.assertTrue(all(result["status"] == "passed" for result in scan["project_invariants"]["results"]))
+
+    def test_doctor_reports_failing_project_invariants(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            (project / "dist").mkdir(parents=True)
+            (project / "dist" / "app.js").write_text("console.log('built');\n", encoding="utf-8")
+            _write_json(
+                project / "agent" / "policies" / "invariants.yml",
+                [
+                    {
+                        "id": "INV-001",
+                        "kind": "required_path",
+                        "path": "AGENTS.md",
+                        "severity": "error",
+                    },
+                    {
+                        "id": "INV-002",
+                        "kind": "forbidden_path",
+                        "pattern": "dist/**/*.js",
+                        "severity": "warning",
+                    },
+                ],
+            )
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            results = {result["id"]: result for result in scan["project_invariants"]["results"]}
+            self.assertEqual(scan["project_invariants"]["status"], "failed")
+            self.assertEqual(results["INV-001"]["status"], "failed")
+            self.assertEqual(results["INV-001"]["severity"], "error")
+            self.assertIn("AGENTS.md", results["INV-001"]["message"])
+            self.assertEqual(results["INV-002"]["status"], "failed")
+            self.assertEqual(results["INV-002"]["matches"], ["dist/app.js"])
+
+    def test_doctor_reports_invalid_project_invariant_config_without_failing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_json(project / "agent" / "policies" / "invariants.yml", {"id": "INV-001"})
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            self.assertEqual(scan["project_invariants"]["status"], "invalid_config")
+            self.assertEqual(scan["project_invariants"]["results"][0]["status"], "invalid")
+            report = (project / "reports" / "doctor" / "agent-readiness.md").read_text(encoding="utf-8")
+            self.assertIn("invalid_config", report)
+
+    def test_doctor_reports_invalid_invariant_entries_without_hiding_valid_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            (project / "AGENTS.md").write_text("# AGENTS\n", encoding="utf-8")
+            _write_json(
+                project / "agent" / "policies" / "invariants.yml",
+                [
+                    {
+                        "id": "INV-001",
+                        "kind": "required_path",
+                        "path": "AGENTS.md",
+                        "severity": "error",
+                    },
+                    {"id": "INV-002", "kind": "not_supported", "severity": "warning"},
+                ],
+            )
+
+            self.assertEqual(main(["--root", str(project), "doctor"]), 0)
+
+            scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
+            results = {result["id"]: result for result in scan["project_invariants"]["results"]}
+            self.assertEqual(scan["project_invariants"]["status"], "invalid_config")
+            self.assertEqual(results["INV-001"]["status"], "passed")
+            self.assertEqual(results["INV-002"]["status"], "invalid")
+            self.assertIn("Unknown project invariant kind", results["INV-002"]["message"])
 
     def test_drift_maps_diff_to_requirements_context_pack_and_tests(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -287,6 +492,24 @@ diff --git a/tests/test_cli_workflow.py b/tests/test_cli_workflow.py
 def _write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value), encoding="utf-8")
+
+
+def _write_agent_context_sources(project: Path) -> None:
+    _write_json(project / "docs" / "traceability" / "requirements.yml", [])
+    _write_json(project / "docs" / "discovery" / "readiness.yml", {"score": 100, "mode": "normal-implementation"})
+    _write_json(project / "agent" / "task-ledger.yml", {"schema": "agentspec.task_ledger.v0", "tasks": {}})
+
+
+def _write_agent_context_outputs(project: Path) -> None:
+    (project / "AGENTS.md").write_text("# AGENTS.md\n", encoding="utf-8")
+    (project / "CLAUDE.md").write_text("# CLAUDE.md\n", encoding="utf-8")
+    codex_agent = project / ".codex" / "agents" / "spec-reviewer.toml"
+    codex_agent.parent.mkdir(parents=True, exist_ok=True)
+    codex_agent.write_text('name = "spec-reviewer"\n', encoding="utf-8")
+
+
+def _set_mtime(path: Path, ns: int) -> None:
+    os.utime(path, ns=(ns, ns))
 
 
 if __name__ == "__main__":

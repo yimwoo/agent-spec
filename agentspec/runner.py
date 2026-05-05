@@ -11,11 +11,22 @@ from .run import load_run_state, step_run
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
 RUNNER_RESULT_SCHEMA = "agentspec.runner_result.v0"
+RUNNER_EVIDENCE_SCHEMA = "agentspec.runner_evidence.v0"
 RUNNER_DEMO_SCHEMA = "agentspec.runner_demo.v0"
 RUNNER_EXEC_SCHEMA = "agentspec.runner_exec.v0"
 ALLOWED_RUNNERS = {"generic", "codex", "claude"}
 ALLOWED_TEST_STATUSES = {"not_run", "passed", "failed"}
 ALLOWED_REVIEWER_MODES = {"deterministic", "model", "auto"}
+ALLOWED_EVIDENCE_ARTIFACT_KINDS = {
+    "console_log",
+    "dom_snapshot",
+    "navigation_trace",
+    "network_log",
+    "screenshot",
+    "trace",
+    "video",
+    "other",
+}
 
 
 def package_run(
@@ -29,6 +40,7 @@ def package_run(
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -46,6 +58,7 @@ def package_run(
         test_status=test_status,
         reviewer_mode=reviewer_mode,
         acceptance_evidence=acceptance_evidence,
+        evidence=evidence,
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,
@@ -80,6 +93,7 @@ def submit_runner_result(
         test_status=str(parsed["test_status"]),
         reviewer_mode=mode if isinstance(mode, str) else None,
         acceptance_evidence=parsed.get("acceptance_evidence"),
+        evidence=parsed.get("evidence"),
         run_dir=run_dir,
     )
 
@@ -246,6 +260,10 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
     if acceptance_evidence is not None:
         acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
 
+    evidence = result.get("evidence")
+    if evidence is not None:
+        evidence = validate_runner_evidence(evidence)
+
     return {
         "schema": schema or RUNNER_RESULT_SCHEMA,
         "executor_output": executor_output,
@@ -253,7 +271,111 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
         "test_status": test_status,
         "reviewer_mode": reviewer_mode,
         "acceptance_evidence": acceptance_evidence,
+        "evidence": evidence,
     }
+
+
+def runner_evidence_template() -> dict[str, Any]:
+    return {
+        "schema": RUNNER_EVIDENCE_SCHEMA,
+        "artifact_kinds": sorted(ALLOWED_EVIDENCE_ARTIFACT_KINDS),
+        "artifacts": [
+            {
+                "kind": "screenshot",
+                "path": "<repo-relative-artifact-path>",
+                "description": "<what this artifact proves>",
+            }
+        ],
+        "verification_commands": [
+            {
+                "command": "<command>",
+                "status": "<not_run|passed|failed>",
+            }
+        ],
+        "notes": "<optional evidence notes>",
+    }
+
+
+def validate_runner_evidence(evidence: Any) -> dict[str, Any]:
+    if not isinstance(evidence, dict):
+        raise ValueError("evidence must be a JSON object.")
+    if evidence.get("schema") != RUNNER_EVIDENCE_SCHEMA:
+        raise ValueError(f"evidence schema must be {RUNNER_EVIDENCE_SCHEMA}.")
+
+    artifacts = evidence.get("artifacts", [])
+    if not isinstance(artifacts, list):
+        raise ValueError("evidence.artifacts must be a list.")
+    normalized_artifacts = [_validate_evidence_artifact(item) for item in artifacts]
+
+    verification_commands = evidence.get("verification_commands", [])
+    if not isinstance(verification_commands, list):
+        raise ValueError("evidence.verification_commands must be a list.")
+    normalized_commands = [
+        _validate_evidence_command(item)
+        for item in verification_commands
+    ]
+
+    notes = evidence.get("notes")
+    if notes is not None and not isinstance(notes, str):
+        raise ValueError("evidence.notes must be a string when provided.")
+    if not normalized_artifacts and not normalized_commands:
+        raise ValueError("evidence requires at least one artifact or verification command.")
+
+    normalized: dict[str, Any] = {
+        "schema": RUNNER_EVIDENCE_SCHEMA,
+        "artifacts": normalized_artifacts,
+        "verification_commands": normalized_commands,
+    }
+    if notes is not None:
+        normalized["notes"] = notes
+    return normalized
+
+
+def _validate_evidence_artifact(item: Any) -> dict[str, str]:
+    if not isinstance(item, dict):
+        raise ValueError("evidence.artifacts entries must be JSON objects.")
+    kind = item.get("kind")
+    if kind not in ALLOWED_EVIDENCE_ARTIFACT_KINDS:
+        raise ValueError(
+            "evidence.artifacts entries require kind to be one of "
+            f"{sorted(ALLOWED_EVIDENCE_ARTIFACT_KINDS)}."
+        )
+    path = item.get("path")
+    if not isinstance(path, str) or not path.strip():
+        raise ValueError("evidence.artifacts entries require a path string.")
+    _validate_relative_evidence_path(path)
+    description = item.get("description")
+    if not isinstance(description, str) or not description.strip():
+        raise ValueError("evidence.artifacts entries require a description string.")
+    return {
+        "kind": kind,
+        "path": path,
+        "description": description,
+    }
+
+
+def _validate_evidence_command(item: Any) -> dict[str, str]:
+    if not isinstance(item, dict):
+        raise ValueError("evidence.verification_commands entries must be JSON objects.")
+    command = item.get("command")
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError("evidence.verification_commands entries require a command string.")
+    status = item.get("status")
+    if status not in ALLOWED_TEST_STATUSES:
+        raise ValueError(
+            "evidence.verification_commands entries require status to be one of "
+            f"{sorted(ALLOWED_TEST_STATUSES)}."
+        )
+    return {
+        "command": command,
+        "status": status,
+    }
+
+
+def _validate_relative_evidence_path(path: str) -> None:
+    candidate = Path(path)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise ValueError("evidence artifact paths must be repo-relative and must not contain '..'.")
 
 
 def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_dir: str | None = None) -> dict[str, Any]:
@@ -302,6 +424,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
                 "executor_output": "<executor-output>",
                 "touched_paths": [],
                 "test_status": "<not_run|passed|failed>",
+                "evidence": runner_evidence_template(),
             },
             "legacy_step_argv": [
                 "aspec",

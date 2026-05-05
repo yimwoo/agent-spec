@@ -7,9 +7,11 @@ from pathlib import Path
 ROLE_NAMES = [
     "coordinator",
     "spec-compiler",
+    "app-planner",
     "architect-reviewer",
     "security-reviewer",
     "test-eval-reviewer",
+    "app-evaluator",
     "brownfield-mapper",
 ]
 

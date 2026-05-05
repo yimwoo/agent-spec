@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 from agentspec.cli import main
-from agentspec.model_review import MODEL_REVIEW_SCHEMA, _resolve_chat_settings
+from agentspec.model_review import MODEL_REVIEW_SCHEMA, QUALITY_REVIEW_SCHEMA, _resolve_chat_settings, parse_quality_review_response
 from agentspec.run import resume_run, start_run
 
 
@@ -223,6 +223,21 @@ base_url = "https://example.test/20250206/app/litellm"
 
             self.assertEqual(settings["model"], "oca/gpt-5.4")
             self.assertEqual(settings["base_url"], "https://example.test/20250206/app/litellm")
+
+    def test_quality_review_response_accepts_approve_reject_schema(self) -> None:
+        payload = parse_quality_review_response(
+            json.dumps(
+                {
+                    "schema": QUALITY_REVIEW_SCHEMA,
+                    "decision": "approve",
+                    "confidence": "high",
+                    "reason": "Browser evidence and tests cover the acceptance criteria.",
+                }
+            )
+        )
+
+        self.assertEqual(payload["decision"], "approve")
+        self.assertEqual(payload["confidence"], "high")
 
 
 def _seed(root: Path, reviewer_response: str | None) -> None:

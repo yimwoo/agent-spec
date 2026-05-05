@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import load_data, utc_now_iso, write_data
-from .model_review import classify_severity, request_model_review
+from .model_review import classify_severity, request_model_review, request_quality_review
 from .policy import PolicyVerdict
 from .task import list_task_context_packs
 
@@ -276,9 +276,49 @@ def quality_reviewer_signoff(
     verbs above). Naked "Done." passes continuation_reviewer but does
     not satisfy quality.
 
-    The model-backed branch is reserved for a future enhancement; for
-    R-144's MVP it falls through to the deterministic check.
+    In model-backed modes, the deterministic result becomes input to the
+    configured test/eval reviewer profile. `auto` falls back to the
+    deterministic result if the model is unavailable; `model` treats an
+    unavailable or invalid model response as a rejection.
     """
+    deterministic_decision, deterministic_reason = _deterministic_quality_reviewer_signoff(
+        executor_output,
+        test_status,
+        acceptance_evidence=acceptance_evidence,
+    )
+    if test_status != "passed":
+        return deterministic_decision, deterministic_reason
+
+    if reviewer_mode in {"model", "auto"} and profile is not None:
+        try:
+            model_payload = request_quality_review(
+                profile=profile,
+                executor_output=executor_output,
+                test_status=test_status,
+                deterministic_reason=deterministic_reason,
+                acceptance_evidence=acceptance_evidence,
+            )
+        except ValueError as exc:
+            if reviewer_mode == "model":
+                return "reject", f"Model quality reviewer response was invalid: {exc}"
+            return deterministic_decision, deterministic_reason
+        if model_payload is not None:
+            return (
+                str(model_payload["decision"]),
+                f"Model quality reviewer: {model_payload['reason']}",
+            )
+        if reviewer_mode == "model":
+            return "reject", "Model quality reviewer was unavailable."
+
+    return deterministic_decision, deterministic_reason
+
+
+def _deterministic_quality_reviewer_signoff(
+    executor_output: str,
+    test_status: str,
+    *,
+    acceptance_evidence: dict[str, Any] | None = None,
+) -> tuple[str, str]:
     if test_status != "passed":
         return (
             "reject",

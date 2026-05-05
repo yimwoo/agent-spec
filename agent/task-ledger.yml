@@ -611,6 +611,108 @@
         "path": "agent/reviews/REVIEW-0004.yml"
       },
       "updated_at": "2026-05-04T02:31:17Z"
+    },
+    "agent/context-packs/T-069-agent-knowledge-freshness-lint.md": {
+      "status": "complete",
+      "run_id": "complete-t-069-agent-knowledge-freshness-lint-20260505204339",
+      "reason": "R-174 shipped: doctor now reports missing/stale generated agent context and points to aspec emit --target claude,codex; tests cover missing, stale, and fresh cases.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0005",
+        "verdict": "ready",
+        "summary": "Reviewed R-174/DCR-0039 implementation: doctor agent_context freshness scan, recovery command reporting, markdown report output, and missing/stale/fresh workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0005.yml"
+      },
+      "updated_at": "2026-05-05T20:43:39Z"
+    },
+    "agent/context-packs/T-070-runner-evidence-artifacts-for-ui-validation.md": {
+      "status": "complete",
+      "run_id": "complete-t-070-runner-evidence-artifacts-for-ui-validation-20260505204942",
+      "reason": "R-175 shipped: runner results now support structured UI/browser evidence artifacts, validation before state mutation, and event persistence.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0006",
+        "verdict": "ready",
+        "summary": "Reviewed R-175/DCR-0040 implementation: runner_result evidence schema/template, UI artifact kinds, validation before state mutation, evidence threading into executor events, and package/result tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0006.yml"
+      },
+      "updated_at": "2026-05-05T20:49:42Z"
+    },
+    "agent/context-packs/T-071-project-invariant-checks-in-doctor.md": {
+      "status": "complete",
+      "run_id": "complete-t-071-project-invariant-checks-in-doctor-20260505205404",
+      "reason": "R-176 shipped: doctor now evaluates repo-local required_path and forbidden_path invariants and reports structured results.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0007",
+        "verdict": "ready",
+        "summary": "Reviewed R-176/DCR-0041 implementation: doctor project_invariants output, policy invariant evaluator for required_path and forbidden_path, markdown report section, and missing/passing/failing workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0007.yml"
+      },
+      "updated_at": "2026-05-05T20:54:04Z"
+    },
+    "agent/context-packs/T-072-harden-doctor-diagnostics-for-agent-context-and-invariants.md": {
+      "status": "complete",
+      "run_id": "complete-t-072-harden-doctor-diagnostics-for-agent-context-and-invariants-20260505205949",
+      "reason": "R-177 shipped: doctor now reports missing generated Codex agent TOML output and keeps project invariant diagnostics non-fatal, including invalid top-level config and invalid individual entries.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0008",
+        "verdict": "ready",
+        "summary": "Reviewed R-177/DCR-0042 implementation: generated Codex agent TOML missing detection, non-fatal project invariant invalid_config diagnostics, per-entry invalid invariant handling, and focused/full workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0008.yml"
+      },
+      "updated_at": "2026-05-05T20:59:49Z"
+    },
+    "agent/context-packs/T-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile.md": {
+      "status": "complete",
+      "run_id": "complete-t-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile-20260505211348",
+      "reason": "R-178 shipped: app-build planner/evaluator workflow and roles are emitted, test_eval_reviewer is a configurable evaluator model profile, and model-backed autonomous quality signoff uses the configured evaluator profile.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0009",
+        "verdict": "ready",
+        "summary": "Reviewed R-178/DCR-0043 implementation: app-build planner/evaluator roles and workflow, test_eval_reviewer profile defaults and override path, quality-review model schema, model-backed autonomous signoff through configured evaluator profile, and focused/full tests. Full unittest discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0009.yml"
+      },
+      "updated_at": "2026-05-05T21:13:48Z"
+    },
+    "agent/context-packs/T-074-activate-test-eval-reviewer-profile-in-dogfood-config.md": {
+      "status": "complete",
+      "run_id": "complete-t-074-activate-test-eval-reviewer-profile-in-dogfood-config-20260505212647",
+      "reason": "R-179 shipped: dogfood config now routes terminal quality review to test_eval_reviewer using model oca/gpt5.3-codex while preserving quality_reviewer.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0011",
+        "verdict": "ready",
+        "summary": "Reviewed R-179/DCR-0044 fix for REVIEW-0010: dogfood .agentspec/config.yml now defines test_eval_reviewer with model oca/gpt5.3-codex, routes supervised quality review to that profile, and preserves the existing quality_reviewer profile. Targeted config verification and full unittest discovery passed; no blocking findings.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0011.yml"
+      },
+      "updated_at": "2026-05-05T21:26:47Z"
     }
   }
 }

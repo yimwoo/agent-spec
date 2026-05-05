@@ -27,12 +27,19 @@
       "config_source": "codex-config",
       "model": "oca/gpt-5.5",
       "reasoning": "high"
+    },
+    "test_eval_reviewer": {
+      "adapter": "codex",
+      "credential_source": "codex-auth",
+      "config_source": "codex-config",
+      "model": "oca/gpt5.3-codex",
+      "reasoning": "high"
     }
   },
   "supervised_runs": {
     "executor_profile": "main_executor",
     "continuation_reviewer_profile": "continuation_reviewer",
-    "quality_reviewer_profile": "quality_reviewer",
+    "quality_reviewer_profile": "test_eval_reviewer",
     "max_iterations": {
       "implementation": 3,
       "spike": 2,

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
+from .io import load_data
 from .paths import path_matches_pattern
 
 
@@ -164,3 +166,157 @@ def source_body_redaction(
         f"uri={uri}, "
         f"content_hash={content_hash}]"
     )
+
+
+def evaluate_project_invariants(root: Path, files: list[str] | None = None) -> dict[str, Any]:
+    """Evaluate optional repo-local invariants for doctor/reporting."""
+
+    path = root / "agent" / "policies" / "invariants.yml"
+    rel_path = "agent/policies/invariants.yml"
+    if not path.exists():
+        return {
+            "status": "not_configured",
+            "path": rel_path,
+            "results": [],
+        }
+
+    try:
+        invariants = load_data(path, [])
+    except ValueError as exc:
+        return _invalid_project_invariants_config(rel_path, f"Invalid JSON content: {exc}")
+    if not isinstance(invariants, list):
+        return _invalid_project_invariants_config(rel_path, "agent/policies/invariants.yml must contain a list of invariants.")
+    repo_files = files if files is not None else _repo_file_list(root)
+    results = []
+    for index, invariant in enumerate(invariants, start=1):
+        try:
+            results.append(_evaluate_project_invariant(root, repo_files, invariant))
+        except ValueError as exc:
+            results.append(_invalid_project_invariant_result(invariant, index, str(exc)))
+    if any(result["status"] == "invalid" for result in results):
+        status = "invalid_config"
+    elif any(result["status"] == "failed" for result in results):
+        status = "failed"
+    else:
+        status = "passed"
+    return {
+        "status": status,
+        "path": rel_path,
+        "results": results,
+    }
+
+
+def _evaluate_project_invariant(root: Path, files: list[str], invariant: Any) -> dict[str, Any]:
+    if not isinstance(invariant, dict):
+        raise ValueError("Project invariant entries must be JSON objects.")
+    invariant_id = _required_invariant_string(invariant, "id")
+    kind = _required_invariant_string(invariant, "kind")
+    severity = str(invariant.get("severity", "warning"))
+    description = str(invariant.get("description", invariant_id))
+
+    if kind == "required_path":
+        rel_path = _required_invariant_path(invariant, "path")
+        exists = (root / rel_path).exists()
+        return _invariant_result(
+            invariant_id,
+            kind,
+            severity,
+            "passed" if exists else "failed",
+            description,
+            f"Required path exists: {rel_path}" if exists else f"Required path is missing: {rel_path}",
+            path=rel_path,
+        )
+
+    if kind == "forbidden_path":
+        pattern = _required_invariant_string(invariant, "pattern")
+        matches = [path for path in files if path_matches_pattern(path, pattern)]
+        return _invariant_result(
+            invariant_id,
+            kind,
+            severity,
+            "failed" if matches else "passed",
+            description,
+            f"Forbidden path pattern matched: {', '.join(matches)}" if matches else f"No files match forbidden pattern: {pattern}",
+            pattern=pattern,
+            matches=matches,
+        )
+
+    raise ValueError(f"Unknown project invariant kind {kind!r}.")
+
+
+def _invalid_project_invariants_config(path: str, message: str) -> dict[str, Any]:
+    return {
+        "status": "invalid_config",
+        "path": path,
+        "results": [
+            _invariant_result(
+                "INVALID-CONFIG",
+                "invalid_config",
+                "error",
+                "invalid",
+                "Invalid project invariant configuration.",
+                message,
+            )
+        ],
+    }
+
+
+def _invalid_project_invariant_result(invariant: Any, index: int, message: str) -> dict[str, Any]:
+    if isinstance(invariant, dict):
+        invariant_id = invariant.get("id")
+        kind = invariant.get("kind")
+        severity = invariant.get("severity")
+        description = invariant.get("description")
+    else:
+        invariant_id = None
+        kind = None
+        severity = None
+        description = None
+    return _invariant_result(
+        invariant_id if isinstance(invariant_id, str) and invariant_id.strip() else f"INVALID-{index:03d}",
+        kind if isinstance(kind, str) and kind.strip() else "invalid_config",
+        severity if isinstance(severity, str) and severity.strip() else "error",
+        "invalid",
+        description if isinstance(description, str) and description.strip() else "Invalid project invariant entry.",
+        message,
+    )
+
+
+def _invariant_result(
+    invariant_id: str,
+    kind: str,
+    severity: str,
+    status: str,
+    description: str,
+    message: str,
+    **extra: Any,
+) -> dict[str, Any]:
+    result = {
+        "id": invariant_id,
+        "kind": kind,
+        "status": status,
+        "severity": severity,
+        "description": description,
+        "message": message,
+    }
+    result.update(extra)
+    return result
+
+
+def _required_invariant_string(invariant: dict[str, Any], field: str) -> str:
+    value = invariant.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Project invariant requires non-empty string field {field!r}.")
+    return value.strip()
+
+
+def _required_invariant_path(invariant: dict[str, Any], field: str) -> str:
+    value = _required_invariant_string(invariant, field)
+    candidate = Path(value)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise ValueError(f"Project invariant field {field!r} must be repo-relative and must not contain '..'.")
+    return value
+
+
+def _repo_file_list(root: Path) -> list[str]:
+    return sorted(str(path.relative_to(root)) for path in root.rglob("*") if path.is_file())

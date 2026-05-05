@@ -22,6 +22,13 @@ def default_agent_profiles() -> dict[str, dict[str, Any]]:
             "model": None,
             "reasoning": "low",
         },
+        "test_eval_reviewer": {
+            "adapter": "codex",
+            "credential_source": "codex-auth",
+            "config_source": "codex-config",
+            "model": None,
+            "reasoning": "high",
+        },
         "quality_reviewer": {
             "adapter": "codex",
             "credential_source": "codex-auth",
@@ -36,7 +43,7 @@ def default_supervised_run_config() -> dict[str, Any]:
     return {
         "executor_profile": "main_executor",
         "continuation_reviewer_profile": "continuation_reviewer",
-        "quality_reviewer_profile": "quality_reviewer",
+        "quality_reviewer_profile": "test_eval_reviewer",
         "reviewer_mode": "deterministic",
         "max_iterations": {
             "implementation": 3,

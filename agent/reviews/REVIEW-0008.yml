@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0008",
+  "task": {
+    "selector": "T-072",
+    "context_pack": "agent/context-packs/T-072-harden-doctor-diagnostics-for-agent-context-and-invariants.md"
+  },
+  "verdict": "ready",
+  "summary": "Reviewed R-177/DCR-0042 implementation: generated Codex agent TOML missing detection, non-fatal project invariant invalid_config diagnostics, per-entry invalid invariant handling, and focused/full workflow tests. Full test discovery passed; no blocking findings.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-05T20:59:25Z"
+}

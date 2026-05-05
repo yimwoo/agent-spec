@@ -158,6 +158,7 @@ def resume_run(
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
@@ -219,6 +220,8 @@ def resume_run(
     }
     if acceptance_evidence is not None:
         executor_event["acceptance_evidence"] = acceptance_evidence
+    if evidence is not None:
+        executor_event["evidence"] = evidence
     reviewer_event = {
         "kind": "reviewer_verdict",
         "iteration": iteration,
@@ -276,6 +279,8 @@ def resume_run(
         quality_decision, quality_reason = quality_reviewer_signoff(
             executor_output,
             test_status,
+            profile=state.get("profiles", {}).get("quality_reviewer"),
+            reviewer_mode=reviewer_mode,
             acceptance_evidence=acceptance_evidence,
         )
         _append_event(
@@ -430,6 +435,7 @@ def loop_run(
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -510,6 +516,7 @@ def loop_run(
             test_status=test_status,
             reviewer_mode=reviewer_mode,
             acceptance_evidence=acceptance_evidence,
+            evidence=evidence,
             run_dir=run_dir,
         )
         result["state"] = resumed["state"]
@@ -531,6 +538,7 @@ def step_run(
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
     task_type: str | None = None,
     order: str = "newest",
     max_iterations: int | None = None,
@@ -546,6 +554,7 @@ def step_run(
         test_status=test_status,
         reviewer_mode=reviewer_mode,
         acceptance_evidence=acceptance_evidence,
+        evidence=evidence,
         task_type=task_type,
         order=order,
         max_iterations=max_iterations,

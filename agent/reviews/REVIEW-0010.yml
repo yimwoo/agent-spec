@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0010",
+  "task": {
+    "selector": "T-073",
+    "context_pack": "agent/context-packs/T-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile.md"
+  },
+  "verdict": "ready-with-warnings",
+  "summary": "Test-eval reviewer validation: targeted tests and full unittest discovery passed. The implementation supports a distinct test_eval_reviewer model profile and model-backed autonomous quality signoff uses that profile when configured. Warning: the current repository .agentspec/config.yml explicitly still binds supervised_runs.quality_reviewer_profile to quality_reviewer, so this checkout will not use test_eval_reviewer until that project config is updated.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T21:23:02Z"
+}

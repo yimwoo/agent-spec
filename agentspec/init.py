@@ -66,6 +66,7 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
         "docs/change-requests/README.md": _change_requests_readme(),
         "agent/context-packs/template.md": _context_pack_template(),
         "agent/workflows/implement-feature.md": _workflow_template("Implement Feature", "implementation"),
+        "agent/workflows/app-build.md": _app_build_workflow(),
         "agent/workflows/review-diff.md": _workflow_template("Review Diff", "review"),
         "agent/workflows/compile-spec.md": _workflow_template("Compile Spec", "spec"),
         "agent/workflows/brownfield-doctor.md": _workflow_template("Brownfield Doctor", "review"),
@@ -240,6 +241,21 @@ Task type: `{task_type}`
 """
 
 
+def _app_build_workflow() -> str:
+    return """# App Build
+
+Task type: `implementation`
+
+Use this workflow for web, UI, and long-running app-build tasks.
+
+1. Planner: expand the requirement into user-visible behavior, acceptance criteria, allowed paths, and required evidence.
+2. Generator: run the external code agent or runner against the bounded context pack. AgentSpec does not own code generation.
+3. Evaluator: review the implementation against requirements, tests, and runner evidence before completion.
+4. For UI changes, require browser-oriented evidence such as screenshots, DOM snapshots, navigation traces, console logs, network logs, videos, or traces.
+5. Record the evaluator verdict and cite requirement IDs in task completion summaries.
+"""
+
+
 def _agents_md() -> str:
     return """# Agent Instructions
 
@@ -257,6 +273,53 @@ Use AgentSpec artifacts as durable project context. Prefer requirements, source 
 
 
 def _role_doc(role: str) -> str:
+    if role == "app-planner":
+        return """# App Planner
+
+## Authority
+
+This role plans app-build work from AgentSpec sources. It does not write production code.
+
+## Required Inputs
+
+- Canonical source sections
+- Requirements
+- Accepted assumptions
+- Relevant ADRs
+- Existing task context pack or proposed app-build scope
+
+## Output
+
+- User-visible behavior to implement
+- Bounded generator task slices
+- Acceptance criteria
+- Required UI/browser evidence
+- Open questions
+"""
+
+    if role == "app-evaluator":
+        return """# App Evaluator
+
+## Authority
+
+This role evaluates app-build output. It is a reviewer, not the implementation agent.
+
+## Required Inputs
+
+- Task context pack
+- Requirement IDs and acceptance criteria
+- Touched paths
+- Test results
+- Runner evidence artifacts
+
+## Output
+
+- Requirement coverage verdict
+- UI/browser evidence assessment
+- Findings with severity and file references
+- Recommended next action
+"""
+
     title = role.replace("-", " ").title()
     return f"""# {title}
 
