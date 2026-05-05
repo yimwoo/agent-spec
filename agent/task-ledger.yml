@@ -713,6 +713,23 @@
         "path": "agent/reviews/REVIEW-0011.yml"
       },
       "updated_at": "2026-05-05T21:26:47Z"
+    },
+    "agent/context-packs/T-075-close-stale-answered-open-questions.md": {
+      "status": "complete",
+      "run_id": "complete-t-075-close-stale-answered-open-questions-20260505213610",
+      "reason": "R-180 open-question cleanup completed; six stale questions now cite accepted decision evidence and unittest discovery passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0012",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-180 open-question cleanup is metadata-only, preserves existing fields, and verification passed with python -m unittest discover tests.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0012.yml"
+      },
+      "updated_at": "2026-05-05T21:36:10Z"
     }
   }
 }

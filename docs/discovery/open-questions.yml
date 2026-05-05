@@ -46,7 +46,8 @@
   {
     "id": "Q-005",
     "question": "Should enterprise source snapshots ever be committed to git by default?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0026/R-152",
     "impact": [
       "enterprise"
     ],
@@ -57,7 +58,8 @@
   {
     "id": "Q-006",
     "question": "What plugin should be built first: Claude Code or Codex?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0029",
     "impact": [
       "plugin"
     ],
@@ -79,7 +81,8 @@
   {
     "id": "Q-008",
     "question": "What is the best default schema format: YAML, JSON, TOML, or Markdown frontmatter?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "A-002",
     "impact": [
       "schema"
     ],
@@ -188,7 +191,8 @@
   {
     "id": "Q-016",
     "question": "When a DCR is classified `defer`, is downstream context-pack creation blocked, or merely warned with an override flag?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0002/R-123",
     "impact": [
       "dcr",
       "context-pack",
@@ -296,7 +300,8 @@
   {
     "id": "Q-023",
     "question": "How does continuation_reviewer classify pause severity (rule-based, model-based, or hybrid)? MVP starts with a small rule list covering security/scope/architecture vs naming/defaults, with model fallback for ambiguous cases.",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0019/R-143",
     "impact": [
       "autonomous-mode",
       "reviewer",
@@ -340,7 +345,8 @@
   {
     "id": "Q-026",
     "question": "When should `quality_reviewer` gain a model-backed branch beyond the deterministic test-status + acceptance-evidence rule? ADR-0003 says reviewer profiles `should` use a stronger model for quality signoff and gives an example config (`oca/gpt-5.5`); the MVP shipped a deterministic-only `quality_reviewer_signoff` with `request_model_review` reserved for future enhancement (see `agentspec/review.py:243+`). The gap is intentional until concrete miss cases \u2014 false approvals or missed regressions \u2014 motivate the model-backed branch. Until then, dual-reviewer signoff per ADR-0005 keeps autonomous-mode `complete` honest with deterministic rules.",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0043/R-178; DCR-0044/R-179",
     "impact": [
       "supervised-runs",
       "reviewer",

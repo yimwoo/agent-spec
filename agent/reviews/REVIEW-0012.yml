@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0012",
+  "task": {
+    "selector": "T-075",
+    "context_pack": "agent/context-packs/T-075-close-stale-answered-open-questions.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. R-180 open-question cleanup is metadata-only, preserves existing fields, and verification passed with python -m unittest discover tests.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T21:36:05Z"
+}

@@ -4814,5 +4814,40 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-180",
+    "title": "Answered open questions cite accepted decision evidence",
+    "description": "Open-question entries that are resolved by accepted AgentSpec artifacts are marked answered and cite the ADR, DCR, requirement, or assumption that resolved them, while unresolved strategic questions remain open.",
+    "source_sections": [
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0045",
+    "acceptance": [
+      "Q-005, Q-006, Q-008, Q-016, Q-023, and Q-026 have status answered with answered_by references.",
+      "The original impact, source_sections, raised_by, and hand-curated context fields are preserved.",
+      "Questions without accepted decision evidence remain open.",
+      "The open-question and requirement ledgers remain parseable."
+    ],
+    "code_targets": [
+      "docs/discovery/open-questions.yml"
+    ],
+    "test_targets": [],
+    "support_targets": [
+      "agent/context-packs/T-075-close-stale-answered-open-questions.md",
+      "agent/reviews/REVIEW-0012.yml",
+      "agent/task-ledger.yml",
+      "docs/change-requests/DCR-0045-close-stale-answered-open-questions.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]
