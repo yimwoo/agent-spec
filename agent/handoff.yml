@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-05T23:32:18Z",
+  "updated_at": "2026-05-05T23:38:40Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-082",
-    "context_pack": "agent/context-packs/T-082-project-metrics-surface-for-feedback-loops.md",
-    "title": "T-082: Project metrics surface for feedback loops",
-    "run_id": "complete-t-082-project-metrics-surface-for-feedback-loops-20260505233218",
-    "reason": "R-187 completed: aspec metrics now exposes a read-only feedback-loop metrics schema and human summary over status, run, task, DCR, verification, policy-flag, cycle-time, and Quality GC data; DCR-0022 Item 3 is promoted/resolved; focused and full unittest verification passed.",
-    "updated_at": "2026-05-05T23:32:18Z",
+    "id": "T-083",
+    "context_pack": "agent/context-packs/T-083-close-first-implementation-language-question.md",
+    "title": "T-083: Close first implementation language question",
+    "run_id": "complete-t-083-close-first-implementation-language-question-20260505233840",
+    "reason": "R-188 completed: Q-002 is answered by DCR-0053/R-188, preserving existing question metadata and documenting Python as AgentSpec V1 core's first implementation language while keeping non-Python target support separate; full unittest verification passed.",
+    "updated_at": "2026-05-05T23:38:40Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0020",
+      "id": "REVIEW-0022",
       "verdict": "ready",
       "reviewer": "test_eval_reviewer",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0020.yml"
+      "path": "agent/reviews/REVIEW-0022.yml"
     }
   },
   "current_state": {
@@ -29,38 +29,38 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 187,
+      "total": 188,
       "by_status": {
-        "accepted": 187
+        "accepted": 188
       }
     },
     "dcrs": {
-      "total": 52,
+      "total": 53,
       "by_status": {
-        "accepted": 52
+        "accepted": 53
       }
     },
     "tasks": {
-      "total": 80,
+      "total": 81,
       "by_status": {
-        "complete": 80
+        "complete": 81
       },
       "by_type": {
-        "implementation": 73,
+        "implementation": 74,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 93,
+      "total": 94,
       "by_status": {
         "aborted": 4,
-        "complete": 89
+        "complete": 90
       },
       "by_mode": {
         "research": 1,
-        "supervised": 92
+        "supervised": 93
       }
     }
   },
@@ -76,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0020.yml"
+    "last_code_review": "agent/reviews/REVIEW-0022.yml"
   }
 }

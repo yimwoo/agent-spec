@@ -14,11 +14,11 @@ This repository uses AgentSpec-generated context.
 ## Current Status
 
 - Readiness: 100/100 (normal-implementation)
-- Requirements: 187 (accepted=187)
-- DCRs: 52 (accepted=52)
-- Tasks: 80 (complete=80)
-- Runs: 93 (aborted=4, complete=89)
-- Handoff: agent/handoff.yml last_completed=T-082
+- Requirements: 188 (accepted=188)
+- DCRs: 53 (accepted=53)
+- Tasks: 81 (complete=81)
+- Runs: 94 (aborted=4, complete=90)
+- Handoff: agent/handoff.yml last_completed=T-083
 - Next action: idle -> `aspec status --json`
 
 ## Key Commands

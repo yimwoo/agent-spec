@@ -13,7 +13,8 @@
   {
     "id": "Q-002",
     "question": "Should the first implementation language be Python, TypeScript, or a split architecture?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0053/R-188",
     "impact": [
       "language"
     ],

@@ -5178,5 +5178,50 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-188",
+    "title": "First implementation language question is answered",
+    "description": "Q-002 is resolved by recording Python as the first implementation language for AgentSpec's core local-first CLI/package, while preserving support for non-Python target repositories and future adapter-specific language decisions.",
+    "source_sections": [
+      "D-30"
+    ],
+    "priority": "P2",
+    "status": "accepted",
+    "confidence": "high",
+    "originating_dcr": "DCR-0053",
+    "acceptance": [
+      "Q-002 has status answered with answered_by DCR-0053/R-188.",
+      "The answer states that AgentSpec V1 core is Python-first and not a split core architecture.",
+      "Existing impact and source_sections metadata on Q-002 is preserved.",
+      "No other open question is closed by this task.",
+      "Open-question and requirement ledgers remain parseable."
+    ],
+    "code_targets": [
+      "docs/discovery/open-questions.yml"
+    ],
+    "test_targets": [],
+    "support_targets": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".claude/agents/*.md",
+      ".claude/skills/**/SKILL.md",
+      ".codex/agents/*.toml",
+      "agent/context-packs/T-083-close-first-implementation-language-question.md",
+      "agent/reviews/*.yml",
+      "agent/roles/*.md",
+      "agent/task-ledger.yml",
+      "agent/workflows/*.md",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0053-close-first-implementation-language-question.md",
+      "docs/traceability/requirements.yml",
+      "reports/quality/latest.yml",
+      "reports/quality/latest.md"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]
