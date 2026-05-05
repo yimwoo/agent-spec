@@ -12,6 +12,11 @@ from .policy import can_emit_source_body, source_body_redaction
 
 
 TASK_LEDGER_SCHEMA = "agentspec.task_ledger.v0"
+STANDARD_VERIFICATION_SUPPORT_PATHS: tuple[str, ...] = (
+    "agent/reviews/*.yml",
+    "agent/task-ledger.yml",
+    "agent/handoff.yml",
+)
 _SUPPORT_TARGET_FIELDS: tuple[tuple[str, str], ...] = (
     ("verification_targets", "verification support"),
     ("example_targets", "example artifact"),
@@ -376,10 +381,11 @@ def _pack_text(
         out.append(
             f"| `{path}` | {_format_allowed_path_provenance(provenance[path], allowed_path_sources[path])} |"
         )
-    if allowed_paths and all(p == "inferred" for p in provenance.values()):
+    substantive_paths = [path for path in allowed_paths if path not in STANDARD_VERIFICATION_SUPPORT_PATHS]
+    if substantive_paths and all(provenance[path] == "inferred" for path in substantive_paths):
         out.extend([
             "",
-            "> Warning: every allowed path is inferred (no matching file in the repo). "
+            "> Warning: every non-verification allowed path is inferred (no matching file in the repo). "
             "Confirm the scope before executing — autonomous mode will refuse this pack.",
         ])
 
@@ -444,6 +450,7 @@ def _allowed_path_scope(
         add(_paths_from_requirements(requirements, field), source)
     if not allowed_paths:
         add(["docs/**"], "fallback scope")
+    add(list(STANDARD_VERIFICATION_SUPPORT_PATHS), "verification support")
     add(tests_to_update, "task verification")
     return allowed_paths, sources_by_path
 

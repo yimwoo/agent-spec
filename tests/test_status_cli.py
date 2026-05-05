@@ -86,6 +86,36 @@ class StatusCLITests(unittest.TestCase):
             # recent block rendered rather than being suppressed.
             self.assertIn("run-summary-only", text)
 
+    def test_status_includes_latest_handoff_when_present(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-05T00:00:00Z",
+                    "last_completed_task": {
+                        "id": "T-002",
+                        "context_pack": "agent/context-packs/T-002-complete.md",
+                        "run_id": "run-complete",
+                    },
+                    "next_action": {
+                        "kind": "start_task",
+                        "command": "aspec run loop agent/context-packs/T-003-ready.md",
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+            self.assertEqual(status["handoff"]["path"], "agent/handoff.yml")
+            self.assertEqual(status["handoff"]["last_completed_task"]["id"], "T-002")
+            self.assertEqual(status["handoff"]["next_action"]["kind"], "start_task")
+
+            text = format_project_status(status)
+            self.assertIn("Handoff: agent/handoff.yml", text)
+            self.assertIn("start_task", text)
+
     def test_status_works_without_optional_folders(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

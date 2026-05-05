@@ -41,6 +41,15 @@ class TaskCompletionTests(unittest.TestCase):
             self.assertEqual(ledger["tasks"]["agent/context-packs/T-013-task.md"]["verification"]["status"], "passed")
             self.assertEqual(json.loads(event_path.read_text(encoding="utf-8").strip())["kind"], "task_marked_complete")
 
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["schema"], "agentspec.project_handoff.v0")
+            self.assertEqual(handoff["root"], ".")
+            self.assertEqual(handoff["last_completed_task"]["id"], "T-013")
+            self.assertEqual(handoff["last_completed_task"]["context_pack"], "agent/context-packs/T-013-task.md")
+            self.assertEqual(handoff["last_completed_task"]["run_id"], "complete-t013")
+            self.assertEqual(handoff["next_action"]["kind"], "idle")
+            self.assertEqual(handoff["commands"]["status"], "aspec status --json")
+
     def test_complete_context_pack_by_path_updates_task_list_status(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -129,6 +129,11 @@ class TaskLedgerTests(unittest.TestCase):
             self.assertEqual(entry["run_id"], "run-001")
             self.assertEqual(entry["verification"]["status"], "passed")
 
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["schema"], "agentspec.project_handoff.v0")
+            self.assertEqual(handoff["last_completed_task"]["id"], "T-001")
+            self.assertEqual(handoff["last_completed_task"]["run_id"], "run-001")
+
 
 def _seed(root: Path) -> None:
     (root / "agent" / "context-packs").mkdir(parents=True)

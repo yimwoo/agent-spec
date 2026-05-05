@@ -4884,5 +4884,54 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-182",
+    "title": "Task packs include verification support scope and completion writes handoff state",
+    "description": "Generated task context packs include standard verification support artifacts in allowed scope, and task completion writes a compact committed agent/handoff.yml state so later sessions can resume from the latest task outcome and next action without rereading the whole repository.",
+    "source_sections": [
+      "D-03",
+      "D-07",
+      "D-12.12",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0047",
+    "acceptance": [
+      "Newly generated task context packs include agent/reviews/*.yml, agent/task-ledger.yml, and agent/handoff.yml in Allowed Paths.",
+      "Completing a task writes agent/handoff.yml with schema, last completed task, status counts, next action, and continuation commands.",
+      "aspec status --json includes the handoff payload when present.",
+      "Human aspec status output mentions the handoff path and next action.",
+      "Q-011 is marked answered by DCR-0047/R-182.",
+      "Full unittest discovery passes."
+    ],
+    "code_targets": [
+      "agentspec/task.py",
+      "agentspec/run.py",
+      "agentspec/status.py",
+      "agentspec/handoff.py",
+      "docs/discovery/open-questions.yml"
+    ],
+    "test_targets": [
+      "tests/test_task_queue.py",
+      "tests/test_task_completion.py",
+      "tests/test_task_ledger.py",
+      "tests/test_status_cli.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-077-first-class-verification-scope-and-session-handoff.md",
+      "agent/reviews/REVIEW-0014.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0047-first-class-verification-scope-and-session-handoff.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]

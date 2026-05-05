@@ -35,6 +35,13 @@ RESEARCH_TARGET_WRITE_REQUIREMENTS: list[str] = list(RESEARCH_ALLOWED_PATHS)
 RESEARCH_CONTEXT_PACK_SENTINEL = "<research-mode>"
 MAX_RESEARCH_FINDINGS_DEFAULT = 5
 RUN_STATE_DESTINATION_LABEL = "Run state destination"
+_STANDARD_VERIFICATION_SUPPORT_PATHS = frozenset(
+    {
+        "agent/reviews/*.yml",
+        "agent/task-ledger.yml",
+        "agent/handoff.yml",
+    }
+)
 _RESEARCH_PATH_PREFIXES: tuple[str, ...] = (
     "reports/dogfood/",
     "docs/discovery/open-questions.yml",
@@ -422,6 +429,8 @@ def resume_run(
     state["run_state_dir"] = str(_run_root(root, run_dir))
     _write_state(root, run_id, state, run_dir=run_dir)
     _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
+    if review.decision == "complete" and state.get("mode") != "research":
+        _write_completion_handoff(root, state)
     return {"state": state, "review": review.to_dict()}
 
 
@@ -655,7 +664,19 @@ def complete_context_pack_run(
     if code_review is not None:
         event["code_review"] = code_review
     _append_event(root, run_id, event)
+    _write_completion_handoff(root, state)
     return state
+
+
+def _write_completion_handoff(root: Path, state: dict[str, Any]) -> None:
+    from .handoff import write_project_handoff
+    from .status import build_project_status
+
+    write_project_handoff(
+        root,
+        completed_state=state,
+        project_status=build_project_status(root),
+    )
 
 
 def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
@@ -964,6 +985,8 @@ def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:
     if not allowed_paths:
         return False
     for path in allowed_paths:
+        if path in _STANDARD_VERIFICATION_SUPPORT_PATHS:
+            continue
         provenance = validate_path_provenance(path, Path(root))
         if provenance in {"confirmed", "pattern"}:
             return True

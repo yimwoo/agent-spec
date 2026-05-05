@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import write_data
-from agentspec.task import list_task_context_packs, next_task_context_pack
+from agentspec.task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
 class TaskQueueTests(unittest.TestCase):
@@ -80,6 +80,20 @@ class TaskQueueTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(output.getvalue().strip(), "agent/context-packs/T-001-oldest-ready.md")
 
+    def test_created_task_pack_includes_standard_verification_support_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_for_create(root)
+
+            path = create_task_context_pack(root, requirement_id="R-010", title="Scoped task")
+            text = path.read_text(encoding="utf-8")
+
+            self.assertIn("- `agent/reviews/*.yml`", text)
+            self.assertIn("- `agent/task-ledger.yml`", text)
+            self.assertIn("- `agent/handoff.yml`", text)
+            self.assertIn("| `agent/reviews/*.yml` | pattern; verification support |", text)
+            self.assertIn("every non-verification allowed path is inferred", text)
+
 
 def _seed(root: Path) -> None:
     (root / "agent" / "context-packs").mkdir(parents=True)
@@ -131,6 +145,34 @@ def _seed(root: Path) -> None:
             "updated_at": "2026-04-28T20:00:00Z",
         },
     )
+
+
+def _seed_for_create(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "agent").mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+    (root / "docs" / "source").mkdir(parents=True)
+    (root / "docs" / "discovery").mkdir(parents=True)
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [
+            {
+                "id": "R-010",
+                "title": "Requirement",
+                "description": "Update task handling.",
+                "status": "accepted",
+                "priority": "P1",
+                "confidence": "medium",
+                "source_sections": [],
+                "code_targets": ["agentspec/task.py"],
+                "test_targets": ["tests/test_task_queue.py"],
+            }
+        ],
+    )
+    write_data(root / "docs" / "source" / "sections.yml", [])
+    write_data(root / "docs" / "source" / "sources.yml", [])
+    write_data(root / "docs" / "discovery" / "assumptions.yml", [])
+    write_data(root / "docs" / "discovery" / "readiness.yml", {"score": 100})
 
 
 def _write_pack(path: Path, task_id: str, title: str, task_type: str, requirement_id: str) -> None:

@@ -115,7 +115,8 @@
   {
     "id": "Q-011",
     "question": "Should task context packs automatically include test targets and verification-generated artifacts in the allowed write scope, or model them as a separate verification scope?",
-    "status": "open",
+    "status": "answered",
+    "answered_by": "DCR-0047/R-182",
     "impact": [
       "context-pack",
       "dogfood",

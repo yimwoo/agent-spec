@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .dcr import list_dcrs
+from .handoff import load_project_handoff
 from .io import load_data
 from .task import list_task_context_packs, next_task_context_pack
 
@@ -29,7 +30,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
 
-    return {
+    payload = {
         "schema": PROJECT_STATUS_SCHEMA,
         "root": str(root),
         "overall": _overall_status(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs),
@@ -65,6 +66,10 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             "recent": recent_runs,
         },
     }
+    handoff = load_project_handoff(root)
+    if handoff is not None:
+        payload["handoff"] = handoff
+    return payload
 
 
 def format_project_status(status: dict[str, Any]) -> str:
@@ -86,6 +91,14 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Next: {_next_text(tasks.get('next'))}",
         f"Recommendation: {status.get('recommendation')}",
     ]
+
+    handoff = status.get("handoff")
+    if isinstance(handoff, dict):
+        next_action = handoff.get("next_action") if isinstance(handoff.get("next_action"), dict) else {}
+        lines.append(
+            f"Handoff: {handoff.get('path', 'agent/handoff.yml')} "
+            f"({next_action.get('kind', 'unknown')}) -> {next_action.get('command', '-')}"
+        )
 
     attention = runs.get("attention") if isinstance(runs, dict) else []
     if attention:
