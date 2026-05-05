@@ -764,6 +764,40 @@
         "path": "agent/reviews/REVIEW-0014.yml"
       },
       "updated_at": "2026-05-05T22:37:11Z"
+    },
+    "agent/context-packs/T-078-recurring-quality-gc-scan.md": {
+      "status": "complete",
+      "run_id": "complete-t-078-quality-gc-final-20260505",
+      "reason": "R-183 completed: final quality GC scan supports JSON/report-dir/cadence CLI options, writes trackable latest quality reports, surfaces stale agent context and missing golden-principle config, emits quality-gc reviewer roles, and focused/full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0016",
+        "verdict": "ready",
+        "summary": "No blocking findings after final review. R-183 adds a read-only quality GC scan, CLI/report-dir/json/cadence options, trackable latest quality reports, stale agent-context findings, quality-gc reviewer role surfacing, and focused/full unittest coverage.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0016.yml"
+      },
+      "updated_at": "2026-05-05T22:51:47Z"
+    },
+    "agent/context-packs/T-079-quality-gc-task-completion-cadence.md": {
+      "status": "complete",
+      "run_id": "complete-t-079-quality-gc-task-completion-cadence-20260505230457",
+      "reason": "R-184 completed: task completion now records opt-in Quality GC ran/skipped/error outcomes, this repo enables the cadence at interval 3, and focused/full verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0017",
+        "verdict": "ready",
+        "summary": "R-184 implementation reviewed: quality_gc runtime defaults are safe, task completion records ran/skipped/error outcomes, cadence checks avoid report writes when not due, and focused plus full unittest verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0017.yml"
+      },
+      "updated_at": "2026-05-05T23:04:57Z"
     }
   }
 }

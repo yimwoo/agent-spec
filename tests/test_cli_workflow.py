@@ -123,7 +123,9 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertIn("aspec compile", (project / "AGENTS.md").read_text(encoding="utf-8"))
                 self.assertTrue((project / "CLAUDE.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
+                self.assertTrue((project / ".claude" / "agents" / "agentspec-quality-gc-reviewer.md").exists())
                 self.assertTrue((project / ".codex" / "agents" / "spec-reviewer.toml").exists())
+                self.assertTrue((project / ".codex" / "agents" / "quality-gc-reviewer.toml").exists())
 
                 self.assertEqual(main(["doctor"]), 0)
                 self.assertTrue((project / "reports" / "doctor" / "repo-scan.yml").exists())
@@ -133,6 +135,10 @@ class CliWorkflowTests(unittest.TestCase):
 
                 self.assertEqual(main(["drift"]), 0)
                 self.assertTrue((project / "reports" / "drift" / "latest.md").exists())
+
+                self.assertEqual(main(["quality"]), 0)
+                self.assertTrue((project / "reports" / "quality" / "latest.yml").exists())
+                self.assertTrue((project / "reports" / "quality" / "latest.md").exists())
 
     def test_doctor_warns_when_agent_context_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

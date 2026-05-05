@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0016",
+  "task": {
+    "selector": "T-078",
+    "context_pack": "agent/context-packs/T-078-recurring-quality-gc-scan.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings after final review. R-183 adds a read-only quality GC scan, CLI/report-dir/json/cadence options, trackable latest quality reports, stale agent-context findings, quality-gc reviewer role surfacing, and focused/full unittest coverage.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T22:51:38Z"
+}

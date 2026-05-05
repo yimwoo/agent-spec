@@ -47,10 +47,12 @@ class InitLayoutTests(unittest.TestCase):
             workflow = root / "agent" / "workflows" / "app-build.md"
             planner = root / "agent" / "roles" / "app-planner.md"
             evaluator = root / "agent" / "roles" / "app-evaluator.md"
+            quality_gc = root / "agent" / "roles" / "quality-gc-reviewer.md"
 
             self.assertTrue(workflow.exists())
             self.assertTrue(planner.exists())
             self.assertTrue(evaluator.exists())
+            self.assertTrue(quality_gc.exists())
             workflow_text = workflow.read_text(encoding="utf-8")
             self.assertIn("Planner", workflow_text)
             self.assertIn("Generator", workflow_text)
@@ -66,6 +68,8 @@ class InitLayoutTests(unittest.TestCase):
             init_project(root)
             self.assertTrue((root / "reports" / "dogfood").is_dir())
             self.assertTrue((root / "reports" / "dogfood" / ".gitkeep").exists())
+            self.assertTrue((root / "reports" / "quality").is_dir())
+            self.assertTrue((root / "reports" / "quality" / ".gitkeep").exists())
 
     def test_init_creates_gitignore_with_runs_block(self) -> None:
         """R-140: fresh init writes a .gitignore that ignores runtime state.
@@ -83,6 +87,8 @@ class InitLayoutTests(unittest.TestCase):
             self.assertIn("reports/", gitignore)
             self.assertIn(".agentspec/cache", gitignore)
             self.assertIn("!reports/dogfood/*.md", gitignore)
+            self.assertIn("!reports/quality/latest.yml", gitignore)
+            self.assertIn("!reports/quality/latest.md", gitignore)
 
     def test_init_appends_to_existing_gitignore_idempotently(self) -> None:
         """R-140: init must not duplicate the AgentSpec block on re-run, and

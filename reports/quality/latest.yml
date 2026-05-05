@@ -1,0 +1,143 @@
+{
+  "schema": "agentspec.quality_gc_report.v0",
+  "generated_at": "2026-05-05T23:05:05Z",
+  "grade": "B",
+  "summary": "0 error(s), 5 warning(s), 2 info finding(s).",
+  "findings": [
+    {
+      "id": "QG-AGENT-CONTEXT-001",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": "AGENTS.md is older than agent/task-ledger.yml.",
+      "path": "AGENTS.md",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-002",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": "CLAUDE.md is older than agent/task-ledger.yml.",
+      "path": "CLAUDE.md",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-003",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/brownfield-mapper.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/brownfield-mapper.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-004",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/security-reviewer.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/security-reviewer.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-005",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/spec-reviewer.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/spec-reviewer.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-INVARIANTS-001",
+      "category": "golden_principles",
+      "severity": "info",
+      "title": "Project golden principles are not configured.",
+      "message": "No agent/policies/invariants.yml file is configured for mechanical project rules.",
+      "path": "agent/policies/invariants.yml",
+      "recovery_command": "Create agent/policies/invariants.yml with project-specific required_path or forbidden_path rules."
+    },
+    {
+      "id": "QG-OPEN-QUESTIONS-001",
+      "category": "open_questions",
+      "severity": "info",
+      "title": "Open questions remain.",
+      "message": "13 open question(s) remain in discovery state.",
+      "path": "docs/discovery/open-questions.yml",
+      "count": 13
+    }
+  ],
+  "project_status": {
+    "overall": "idle",
+    "readiness": {
+      "score": 100,
+      "mode": "normal-implementation",
+      "summary": "Readiness is 100/100 (normal-implementation)."
+    },
+    "requirements": {
+      "total": 184,
+      "by_status": {
+        "accepted": 184
+      }
+    },
+    "dcrs": {
+      "total": 49,
+      "by_status": {
+        "accepted": 48,
+        "classified": 1
+      }
+    },
+    "tasks": {
+      "total": 77,
+      "by_status": {
+        "complete": 77
+      },
+      "by_type": {
+        "implementation": 70,
+        "review": 3,
+        "spec": 1,
+        "spike": 3
+      }
+    },
+    "runs": {
+      "total": 90,
+      "by_status": {
+        "aborted": 4,
+        "complete": 86
+      },
+      "by_mode": {
+        "research": 1,
+        "supervised": 89
+      }
+    },
+    "next_task": null
+  },
+  "doctor": {
+    "agent_context_status": "warning",
+    "agent_context_warning_count": 5,
+    "agent_context_recovery_command": "aspec emit --target claude,codex",
+    "project_invariants_status": "not_configured",
+    "project_invariants_path": "agent/policies/invariants.yml"
+  },
+  "handoff": {
+    "present": true,
+    "path": "agent/handoff.yml",
+    "updated_at": "2026-05-05T23:04:57Z",
+    "last_completed_task": "T-079",
+    "next_action": "idle",
+    "next_command": "aspec status --json"
+  },
+  "cadence": {
+    "task_interval": 3,
+    "completed_tasks": 77,
+    "completed_tasks_at_last_quality": 76,
+    "completed_tasks_since_last_quality": 1,
+    "was_due": false,
+    "next_recommended_completed_tasks": 80
+  },
+  "reports": {
+    "structured": "reports/quality/latest.yml",
+    "markdown": "reports/quality/latest.md"
+  }
+}

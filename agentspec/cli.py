@@ -22,6 +22,7 @@ from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .init import init_project
 from .io import load_data
+from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
@@ -111,6 +112,11 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     status = subparsers.add_parser("status", help="Print project progress status.")
     status.add_argument("--json", action="store_true")
     status.add_argument("--recent-runs", type=int, default=5)
+
+    quality = subparsers.add_parser("quality", help="Run recurring quality garbage-collection diagnostics.")
+    quality.add_argument("--json", action="store_true")
+    quality.add_argument("--report-dir", help="Write reports under <path>/quality/ instead of <root>/reports/quality/.")
+    quality.add_argument("--task-interval", type=int, default=3, help="Completed-task interval for quality GC cadence hints.")
 
     subparsers.add_parser(
         "next-action",
@@ -462,6 +468,17 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(status_payload, indent=2))
             else:
                 print(format_project_status(status_payload))
+            return 0
+
+        if args.command == "quality":
+            report_dir = Path(args.report_dir) if args.report_dir else None
+            report = run_quality_gc(root, report_dir=report_dir, task_interval=args.task_interval)
+            if args.json:
+                print(json.dumps(report, indent=2))
+            else:
+                markdown = report.get("reports", {}).get("markdown", "reports/quality/latest.md")
+                print(f"Quality GC grade: {report['grade']} ({len(report['findings'])} finding(s)).")
+                print(f"Report: {markdown}")
             return 0
 
         if args.command in {"next-action", "continue"}:

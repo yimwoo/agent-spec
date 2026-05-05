@@ -47,5 +47,10 @@
       "review": 2
     }
   },
+  "quality_gc": {
+    "run_on_task_complete": true,
+    "task_interval": 3,
+    "report_dir": null
+  },
   "generated_by": "agentspec"
 }

@@ -68,11 +68,20 @@ def default_autonomous_mode_config() -> dict[str, Any]:
     }
 
 
+def default_quality_gc_config() -> dict[str, Any]:
+    return {
+        "run_on_task_complete": False,
+        "task_interval": 3,
+        "report_dir": None,
+    }
+
+
 def default_runtime_config() -> dict[str, Any]:
     return {
         "agent_profiles": default_agent_profiles(),
         "supervised_runs": default_supervised_run_config(),
         "autonomous_mode": default_autonomous_mode_config(),
+        "quality_gc": default_quality_gc_config(),
     }
 
 
@@ -95,6 +104,12 @@ def merged_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
     autonomous = merged.setdefault("autonomous_mode", {})
     for key, value in defaults["autonomous_mode"].items():
         autonomous.setdefault(key, value)
+    quality_gc = merged.setdefault("quality_gc", {})
+    if isinstance(quality_gc, dict):
+        for key, value in defaults["quality_gc"].items():
+            quality_gc.setdefault(key, value)
+    else:
+        merged["quality_gc"] = deepcopy(defaults["quality_gc"])
     return merged
 
 

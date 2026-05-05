@@ -85,7 +85,7 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
             write_text(path, _role_doc(role))
             written.append(path)
 
-    for keep in ["agent/runs/.gitkeep", "reports/drift/.gitkeep", "reports/doctor/.gitkeep", "reports/traceability/.gitkeep", "reports/eval/.gitkeep", "reports/dogfood/.gitkeep"]:
+    for keep in ["agent/runs/.gitkeep", "reports/drift/.gitkeep", "reports/doctor/.gitkeep", "reports/traceability/.gitkeep", "reports/eval/.gitkeep", "reports/quality/.gitkeep", "reports/dogfood/.gitkeep"]:
         path = root / keep
         if not path.exists():
             write_text(path, "")
@@ -116,6 +116,9 @@ reports/*/*
 !reports/*/.gitkeep
 # Dogfood notes (R-139) are durable artifacts; keep them tracked.
 !reports/dogfood/*.md
+# Latest quality grade is durable agent-facing state.
+!reports/quality/latest.yml
+!reports/quality/latest.md
 {_GITIGNORE_BLOCK_END}
 """
 
@@ -318,6 +321,29 @@ This role evaluates app-build output. It is a reviewer, not the implementation a
 - UI/browser evidence assessment
 - Findings with severity and file references
 - Recommended next action
+"""
+
+    if role == "quality-gc-reviewer":
+        return """# Quality GC Reviewer
+
+## Authority
+
+This role reviews recurring codebase entropy and agent-context freshness. It is read-only unless a task context pack grants explicit cleanup scope.
+
+## Required Inputs
+
+- `aspec status --json`
+- `aspec doctor`
+- `agent/handoff.yml`
+- `agent/policies/invariants.yml` when present
+- Latest `reports/quality/` artifacts
+
+## Output
+
+- Quality grade
+- Mechanical findings with severity
+- Recovery commands
+- Recommended small cleanup tasks or DCRs
 """
 
     title = role.replace("-", " ").title()

@@ -35,11 +35,17 @@ class TaskCompletionTests(unittest.TestCase):
             ledger_path = root / "agent" / "task-ledger.yml"
             self.assertTrue(state_path.exists())
             self.assertTrue(ledger_path.exists())
-            self.assertEqual(load_data(state_path)["completion_reason"], "Historical backfill after verification.")
+            stored_state = load_data(state_path)
+            self.assertEqual(stored_state["completion_reason"], "Historical backfill after verification.")
+            self.assertEqual(stored_state["quality_gc"]["status"], "skipped")
+            self.assertEqual(stored_state["quality_gc"]["reason"], "disabled")
             ledger = load_data(ledger_path)
             self.assertEqual(ledger["tasks"]["agent/context-packs/T-013-task.md"]["status"], "complete")
             self.assertEqual(ledger["tasks"]["agent/context-packs/T-013-task.md"]["verification"]["status"], "passed")
-            self.assertEqual(json.loads(event_path.read_text(encoding="utf-8").strip())["kind"], "task_marked_complete")
+            events = _load_events(event_path)
+            self.assertEqual(events[0]["kind"], "task_marked_complete")
+            self.assertEqual(events[-1]["kind"], "quality_gc_completion")
+            self.assertEqual(events[-1]["quality_gc"]["status"], "skipped")
 
             handoff = load_data(root / "agent" / "handoff.yml")
             self.assertEqual(handoff["schema"], "agentspec.project_handoff.v0")
@@ -87,11 +93,7 @@ class TaskCompletionTests(unittest.TestCase):
             entry = ledger["tasks"]["agent/context-packs/T-013-task.md"]
             self.assertEqual(entry["code_review"]["id"], "REVIEW-0001")
             self.assertEqual(entry["code_review"]["verdict"], "ready")
-            event = json.loads(
-                (root / "agent" / "runs" / "complete-t013" / "events.jsonl")
-                .read_text(encoding="utf-8")
-                .strip()
-            )
+            event = _load_events(root / "agent" / "runs" / "complete-t013" / "events.jsonl")[0]
             self.assertEqual(event["code_review"]["id"], "REVIEW-0001")
 
     def test_cli_task_complete_links_code_review(self) -> None:
@@ -207,6 +209,7 @@ class TaskCompletionTests(unittest.TestCase):
             payload = json.loads(output.getvalue())
             self.assertEqual(payload["status"], "complete")
             self.assertEqual(payload["verification"]["status"], "passed")
+            self.assertEqual(payload["quality_gc"]["status"], "skipped")
 
             err = io.StringIO()
             with redirect_stderr(err):
@@ -223,6 +226,61 @@ class TaskCompletionTests(unittest.TestCase):
                 )
             self.assertEqual(code, 1)
             self.assertIn("Run already exists", err.getvalue())
+
+    def test_task_complete_runs_quality_gc_when_enabled_and_due(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_config(root, run_on_task_complete=True, task_interval=3)
+
+            state = complete_context_pack_run(root, "T-013", run_id="complete-t013", test_status="passed")
+
+            self.assertEqual(state["quality_gc"]["status"], "ran")
+            self.assertEqual(state["quality_gc"]["reason"], "cadence_due")
+            self.assertEqual(state["quality_gc"]["cadence"]["completed_tasks"], 1)
+            self.assertTrue((root / "reports" / "quality" / "latest.yml").exists())
+            self.assertTrue((root / "reports" / "quality" / "latest.md").exists())
+            stored_state = load_data(root / "agent" / "runs" / "complete-t013" / "state.yml")
+            self.assertEqual(stored_state["quality_gc"]["status"], "ran")
+            events = _load_events(root / "agent" / "runs" / "complete-t013" / "events.jsonl")
+            self.assertEqual(events[-1]["kind"], "quality_gc_completion")
+            self.assertEqual(events[-1]["quality_gc"]["status"], "ran")
+
+    def test_task_complete_skips_quality_gc_when_cadence_not_due(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_config(root, run_on_task_complete=True, task_interval=3)
+            write_data(
+                root / "reports" / "quality" / "latest.yml",
+                {"cadence": {"completed_tasks": 0}, "marker": "preserve"},
+            )
+
+            state = complete_context_pack_run(root, "T-013", run_id="complete-t013")
+
+            self.assertEqual(state["quality_gc"]["status"], "skipped")
+            self.assertEqual(state["quality_gc"]["reason"], "cadence_not_due")
+            self.assertEqual(state["quality_gc"]["cadence"]["completed_tasks_since_last_quality"], 1)
+            latest = load_data(root / "reports" / "quality" / "latest.yml")
+            self.assertEqual(latest["marker"], "preserve")
+            self.assertFalse((root / "reports" / "quality" / "latest.md").exists())
+
+    def test_task_complete_records_quality_gc_errors_without_blocking_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_config(root, run_on_task_complete=True, task_interval=3, report_dir="blocked")
+            (root / "blocked").write_text("not a directory", encoding="utf-8")
+
+            state = complete_context_pack_run(root, "T-013", run_id="complete-t013")
+
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["quality_gc"]["status"], "error")
+            self.assertEqual(state["quality_gc"]["error_type"], "NotADirectoryError")
+            ledger = load_data(root / "agent" / "task-ledger.yml")
+            self.assertEqual(ledger["tasks"]["agent/context-packs/T-013-task.md"]["status"], "complete")
+            stored_state = load_data(root / "agent" / "runs" / "complete-t013" / "state.yml")
+            self.assertEqual(stored_state["quality_gc"]["status"], "error")
 
 
 def _seed(root: Path) -> None:
@@ -269,6 +327,34 @@ def _write_review(root: Path, review_id: str, context_pack: str, verdict: str) -
             "created_at": "2026-05-02T00:00:00Z",
         },
     )
+
+
+def _write_config(
+    root: Path,
+    *,
+    run_on_task_complete: bool,
+    task_interval: int,
+    report_dir: str | None = None,
+) -> None:
+    write_data(
+        root / ".agentspec" / "config.yml",
+        {
+            "version": 1,
+            "quality_gc": {
+                "run_on_task_complete": run_on_task_complete,
+                "task_interval": task_interval,
+                "report_dir": report_dir,
+            },
+        },
+    )
+
+
+def _load_events(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 if __name__ == "__main__":

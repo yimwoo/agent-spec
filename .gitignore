@@ -32,6 +32,9 @@ reports/*/*
 !reports/*/.gitkeep
 # Dogfood notes (R-139) are durable artifacts; keep them tracked.
 !reports/dogfood/*.md
+# Latest quality grade is durable agent-facing state.
+!reports/quality/latest.yml
+!reports/quality/latest.md
 
 # Supervised-run state. Raw events/state stay local, but ADR-0004 requires
 # committed summary projections for autonomous-style runs.

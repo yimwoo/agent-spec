@@ -12,6 +12,7 @@ ROLE_NAMES = [
     "security-reviewer",
     "test-eval-reviewer",
     "app-evaluator",
+    "quality-gc-reviewer",
     "brownfield-mapper",
 ]
 
@@ -32,6 +33,7 @@ ARTIFACT_DIRS = [
     "reports/doctor",
     "reports/traceability",
     "reports/eval",
+    "reports/quality",
     "reports/dogfood",
     ".claude/agents",
     ".claude/skills",

@@ -47,6 +47,20 @@ class ConfigProfileTests(unittest.TestCase):
             self.assertEqual(runs["quality_reviewer_profile"], "test_eval_reviewer")
             self.assertEqual(runs["max_iterations"]["implementation"], 3)
 
+    def test_runtime_config_merges_quality_gc_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            init_project(root)
+
+            config = load_data(root / ".agentspec" / "config.yml")
+            quality_gc = config["quality_gc"]
+            merged = merged_runtime_config({"version": 1})
+
+            self.assertEqual(quality_gc["run_on_task_complete"], False)
+            self.assertEqual(quality_gc["task_interval"], 3)
+            self.assertIsNone(quality_gc["report_dir"])
+            self.assertEqual(merged["quality_gc"], quality_gc)
+
     def test_resolve_agent_profile_merges_defaults_for_existing_configs(self) -> None:
         profile = resolve_agent_profile({"version": 1}, "main_executor")
 

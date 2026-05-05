@@ -665,7 +665,61 @@ def complete_context_pack_run(
         event["code_review"] = code_review
     _append_event(root, run_id, event)
     _write_completion_handoff(root, state)
+    state["quality_gc"] = _task_completion_quality_gc(root, config)
+    _write_state(root, run_id, state)
+    _append_event(
+        root,
+        run_id,
+        {"kind": "quality_gc_completion", "quality_gc": state["quality_gc"]},
+    )
     return state
+
+
+def _task_completion_quality_gc(root: Path, config: dict[str, Any]) -> dict[str, Any]:
+    settings = config.get("quality_gc", {})
+    if not isinstance(settings, dict) or not bool(settings.get("run_on_task_complete", False)):
+        return {
+            "status": "skipped",
+            "reason": "disabled",
+            "run_on_task_complete": False,
+        }
+
+    try:
+        from .quality import DEFAULT_TASK_INTERVAL, quality_gc_cadence_status, run_quality_gc
+
+        raw_interval = settings.get("task_interval", DEFAULT_TASK_INTERVAL)
+        task_interval = DEFAULT_TASK_INTERVAL if raw_interval is None else int(raw_interval)
+        raw_report_dir = settings.get("report_dir")
+        report_dir = None if raw_report_dir in (None, "") else Path(str(raw_report_dir))
+        cadence = quality_gc_cadence_status(root, report_dir=report_dir, task_interval=task_interval)
+        if not bool(cadence.get("was_due")):
+            return {
+                "status": "skipped",
+                "reason": "cadence_not_due",
+                "run_on_task_complete": True,
+                "cadence": cadence,
+            }
+
+        report = run_quality_gc(root, report_dir=report_dir, task_interval=task_interval)
+        findings = report.get("findings", [])
+        finding_count = len(findings) if isinstance(findings, list) else 0
+        return {
+            "status": "ran",
+            "reason": "cadence_due",
+            "run_on_task_complete": True,
+            "grade": report.get("grade"),
+            "summary": report.get("summary"),
+            "finding_count": finding_count,
+            "cadence": report.get("cadence", cadence),
+            "reports": report.get("reports", {}),
+        }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "reason": str(exc),
+            "run_on_task_complete": True,
+            "error_type": exc.__class__.__name__,
+        }
 
 
 def _write_completion_handoff(root: Path, state: dict[str, Any]) -> None:

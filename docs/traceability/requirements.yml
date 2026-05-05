@@ -4933,5 +4933,110 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-183",
+    "title": "AgentSpec exposes a recurring quality GC scan",
+    "description": "AgentSpec provides a read-only recurring quality garbage-collection scan that summarizes agent-context freshness, project invariant status, handoff state, open-question load, and task-count cadence into reports/quality artifacts with a simple grade and recommended cleanup commands.",
+    "source_sections": [
+      "D-03",
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0048",
+    "acceptance": [
+      "aspec quality writes reports/quality/latest.yml and reports/quality/latest.md.",
+      "The structured report includes schema, generated timestamp, grade, findings, project status summary, doctor summary, handoff summary, and cadence hints.",
+      "Stale generated agent context from aspec doctor becomes a quality finding with recovery command aspec emit --target claude,codex.",
+      "Missing agent/policies/invariants.yml becomes an informational finding so projects can see that golden principles are not configured.",
+      "The CLI supports --json, --report-dir, and --task-interval.",
+      "Init/emit surfaces include a quality-gc-reviewer role.",
+      ".gitignore keeps reports/quality/latest.yml and reports/quality/latest.md trackable while continuing to ignore regenerable report output by default.",
+      "Focused tests and full unittest discovery pass."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/quality.py",
+      "agentspec/paths.py",
+      "agentspec/init.py",
+      "agentspec/emit.py",
+      ".gitignore"
+    ],
+    "test_targets": [
+      "tests/test_quality_gc.py",
+      "tests/test_init_layout.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-078-recurring-quality-gc-scan.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "agent/roles/quality-gc-reviewer.md",
+      "reports/quality/.gitkeep",
+      "reports/quality/latest.yml",
+      "reports/quality/latest.md",
+      ".gitignore",
+      "docs/change-requests/DCR-0048-recurring-quality-gc-scan.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-184",
+    "title": "Task completion can run Quality GC when configured cadence is due",
+    "description": "AgentSpec task completion can automatically run the read-only Quality GC scan after completion when project config opts in and the completed-task cadence is due; disabled, not-due, and error outcomes are recorded without blocking task completion.",
+    "source_sections": [
+      "D-03",
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0049",
+    "acceptance": [
+      "Runtime config exposes quality_gc.run_on_task_complete, quality_gc.task_interval, and quality_gc.report_dir with safe defaults.",
+      "This repository's .agentspec/config.yml enables task-completion Quality GC cadence with a task interval of 3.",
+      "aspec task complete runs Quality GC after completion when configured and due.",
+      "aspec task complete records quality_gc.status=skipped when disabled or not due.",
+      "Quality GC errors are recorded as quality_gc.status=error without blocking task completion.",
+      "Focused tests and full unittest discovery pass."
+    ],
+    "code_targets": [
+      "agentspec/config.py",
+      "agentspec/run.py",
+      "agentspec/quality.py",
+      ".agentspec/config.yml"
+    ],
+    "test_targets": [
+      "tests/test_config_profiles.py",
+      "tests/test_task_completion.py",
+      "tests/test_quality_gc.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-079-quality-gc-task-completion-cadence.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "reports/quality/latest.yml",
+      "reports/quality/latest.md",
+      "docs/change-requests/DCR-0049-quality-gc-task-completion-cadence.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

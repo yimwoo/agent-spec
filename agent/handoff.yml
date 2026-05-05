@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-05T22:37:11Z",
+  "updated_at": "2026-05-05T23:04:57Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-077",
-    "context_pack": "agent/context-packs/T-077-first-class-verification-scope-and-session-handoff.md",
-    "title": "T-077: First-class verification scope and session handoff",
-    "run_id": "complete-t-077-session-handoff-final-20260505",
-    "reason": "R-182 completed: generated task packs include verification support scope, completion writes portable agent/handoff.yml, status surfaces continuation state, Q-011 is answered, and focused/full unittest verification passed.",
-    "updated_at": "2026-05-05T22:37:11Z",
+    "id": "T-079",
+    "context_pack": "agent/context-packs/T-079-quality-gc-task-completion-cadence.md",
+    "title": "T-079: Quality GC task completion cadence",
+    "run_id": "complete-t-079-quality-gc-task-completion-cadence-20260505230457",
+    "reason": "R-184 completed: task completion now records opt-in Quality GC ran/skipped/error outcomes, this repo enables the cadence at interval 3, and focused/full verification passed.",
+    "updated_at": "2026-05-05T23:04:57Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0014",
+      "id": "REVIEW-0017",
       "verdict": "ready",
       "reviewer": "test_eval_reviewer",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0014.yml"
+      "path": "agent/reviews/REVIEW-0017.yml"
     }
   },
   "current_state": {
@@ -29,39 +29,39 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 182,
+      "total": 184,
       "by_status": {
-        "accepted": 182
+        "accepted": 184
       }
     },
     "dcrs": {
-      "total": 47,
+      "total": 49,
       "by_status": {
-        "accepted": 46,
+        "accepted": 48,
         "classified": 1
       }
     },
     "tasks": {
-      "total": 75,
+      "total": 77,
       "by_status": {
-        "complete": 75
+        "complete": 77
       },
       "by_type": {
-        "implementation": 68,
+        "implementation": 70,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 87,
+      "total": 90,
       "by_status": {
         "aborted": 4,
-        "complete": 83
+        "complete": 86
       },
       "by_mode": {
         "research": 1,
-        "supervised": 86
+        "supervised": 89
       }
     }
   },
@@ -77,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0014.yml"
+    "last_code_review": "agent/reviews/REVIEW-0017.yml"
   }
 }
