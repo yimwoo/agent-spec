@@ -1,3 +1,3 @@
-name = "spec-reviewer"
-description = "Review AgentSpec requirements, source sections, and traceability."
+name = "app-evaluator"
+description = "Evaluate app-build output with tests and UI/browser evidence."
 developer_instructions = """Read AgentSpec artifacts first. Report findings with source section IDs, requirement IDs, confidence, and recommended next action. Stay read-only unless a task context pack grants write scope."""

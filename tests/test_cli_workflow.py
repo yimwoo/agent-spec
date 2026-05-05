@@ -120,7 +120,11 @@ class CliWorkflowTests(unittest.TestCase):
 
                 self.assertEqual(main(["emit", "--target", "agents-md,claude,codex"]), 0)
                 self.assertTrue((project / "AGENTS.md").exists())
-                self.assertIn("aspec compile", (project / "AGENTS.md").read_text(encoding="utf-8"))
+                agents_text = (project / "AGENTS.md").read_text(encoding="utf-8")
+                self.assertIn("aspec compile", agents_text)
+                self.assertIn("Before final commit or task completion", agents_text)
+                self.assertIn("Requirements:", agents_text)
+                self.assertIn("Next action:", agents_text)
                 self.assertTrue((project / "CLAUDE.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-quality-gc-reviewer.md").exists())
@@ -340,6 +344,36 @@ class CliWorkflowTests(unittest.TestCase):
             self.assertEqual(results["INV-001"]["status"], "passed")
             self.assertEqual(results["INV-002"]["status"], "invalid")
             self.assertIn("Unknown project invariant kind", results["INV-002"]["message"])
+
+    def test_emit_agents_md_includes_latest_handoff_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            _write_agent_context_sources(project)
+            _write_json(
+                project / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-05T00:00:00Z",
+                    "root": ".",
+                    "last_completed_task": {
+                        "id": "T-080",
+                        "context_pack": "agent/context-packs/T-080-test.md",
+                    },
+                    "next_action": {
+                        "kind": "start_task",
+                        "command": "aspec run loop agent/context-packs/T-081-test.md",
+                    },
+                },
+            )
+
+            self.assertEqual(main(["--root", str(project), "emit", "--target", "agents-md"]), 0)
+
+            agents_text = (project / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Handoff: agent/handoff.yml last_completed=T-080", agents_text)
+            self.assertIn(
+                "Next action: start_task -> `aspec run loop agent/context-packs/T-081-test.md`",
+                agents_text,
+            )
 
     def test_drift_maps_diff_to_requirements_context_pack_and_tests(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

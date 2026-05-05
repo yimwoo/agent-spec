@@ -815,6 +815,23 @@
         "path": "agent/reviews/REVIEW-0018.yml"
       },
       "updated_at": "2026-05-05T23:13:27Z"
+    },
+    "agent/context-packs/T-081-refresh-generated-agent-context-and-configure-quality-invariants.md": {
+      "status": "complete",
+      "run_id": "complete-t-081-refresh-generated-agent-context-and-configure-quality-invariants-20260505232414",
+      "reason": "R-186 completed: generated AGENTS.md keeps review/status/handoff context, Claude/Codex agent context is refreshed, project invariants pass, and Quality GC warnings are cleared.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0019",
+        "verdict": "ready",
+        "summary": "R-186 implementation reviewed: AGENTS.md emission now preserves working rules plus status/handoff cues, generated context and Quality GC reviewer roles are refreshed, invariants are configured and passing, Quality GC is grade A, and focused/full verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0019.yml"
+      },
+      "updated_at": "2026-05-05T23:24:14Z"
     }
   }
 }

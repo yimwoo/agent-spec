@@ -5076,5 +5076,54 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-186",
+    "title": "Generated agent context stays current and project invariants are configured",
+    "description": "AgentSpec refreshes generated agent-context artifacts without dropping required working rules, exposes current status and handoff cues in AGENTS.md, and configures repo-local required-path invariants so doctor and Quality GC can continuously verify core project memory.",
+    "source_sections": [
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0051",
+    "acceptance": [
+      "aspec emit --target claude,codex produces an AGENTS.md that includes the code-review gate, current status counts, and latest handoff command.",
+      "Generated Claude and Codex role files are refreshed and include the current quality-gc role surface.",
+      "agent/policies/invariants.yml exists and aspec doctor reports project_invariants.status=passed.",
+      "aspec quality --json no longer reports agent-context freshness warnings or missing invariant configuration.",
+      "Focused tests and full unittest discovery pass."
+    ],
+    "code_targets": [
+      "agentspec/emit.py",
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".claude/agents/*.md",
+      ".claude/skills/**/SKILL.md",
+      ".codex/agents/*.toml",
+      "agent/roles/*.md",
+      "agent/policies/invariants.yml",
+      "reports/quality/latest.yml",
+      "reports/quality/latest.md"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-081-refresh-generated-agent-context-and-configure-quality-invariants.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0051-refresh-generated-agent-context-and-configure-quality-invariants.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

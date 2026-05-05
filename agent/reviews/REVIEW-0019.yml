@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0019",
+  "task": {
+    "selector": "T-081",
+    "context_pack": "agent/context-packs/T-081-refresh-generated-agent-context-and-configure-quality-invariants.md"
+  },
+  "verdict": "ready",
+  "summary": "R-186 implementation reviewed: AGENTS.md emission now preserves working rules plus status/handoff cues, generated context and Quality GC reviewer roles are refreshed, invariants are configured and passing, Quality GC is grade A, and focused/full verification passed.",
+  "reviewer": "test_eval_reviewer",
+  "range": "worktree",
+  "created_at": "2026-05-05T23:23:57Z"
+}
