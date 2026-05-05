@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | classified |
+| Status | accepted |
 | Classification | defer |
 | Submitted | 2026-04-28 |
 | Submitted by | user |
 | Decided by | user |
-| Decided on | 2026-04-28 |
+| Decided on | 2026-05-05 |
 | Confidence | medium |
 
 ## Summary
@@ -155,6 +155,11 @@ Until those are resolved, no implementation work. `events.jsonl` and
 the per-run state files already contain the raw data; this item is
 purely about rolling them up.
 
+**Resolution 2026-05-05 — promoted to DCR-0052.** Item 3 was lifted out of
+this defer bundle on 2026-05-05 and now lives in
+`DCR-0052-project-metrics-surface-for-feedback-loops.md` with classification
+`implement-now`.
+
 ### Item 4 — Recovery-oriented CLI aliases (P3, ergonomics)
 
 Origin: T-040 review finding #6 (`agentspec/cli.py:116-214`).
@@ -197,9 +202,7 @@ Classification: `defer`.
 Rationale:
 
 - Item 4 has been promoted to DCR-0034.
-- Item 3 (metrics surface) is genuinely under-designed and may need
-  its own spike DCR before implementation — flagged here so the
-  decision isn't lost.
+- Item 3 has been promoted to DCR-0052.
 - The four items share enough thematic coherence ("operability
   tightening on the just-shipped status surface") that a single
   bundle DCR captures the rationale better than four micro-DCRs.

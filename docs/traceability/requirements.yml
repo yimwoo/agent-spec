@@ -5125,5 +5125,58 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-187",
+    "title": "AgentSpec exposes a read-only project metrics surface",
+    "description": "AgentSpec provides a read-only CLI metrics surface that aggregates existing project status, run, task, DCR, verification, policy-flag, cycle-time, and Quality GC data into a stable schema for harnesses, dashboards, and feedback-loop evaluators.",
+    "source_sections": [
+      "D-07",
+      "D-23.6",
+      "D-24"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0052",
+    "acceptance": [
+      "aspec metrics --json emits schema agentspec.metrics.v0.",
+      "The metrics payload includes readiness, requirements, DCRs, tasks, runs, verification, policy flags, cycle-time rollups, and latest Quality GC summary when available.",
+      "Rates are deterministic and handle empty denominators without division errors.",
+      "Human aspec metrics output summarizes the most important feedback-loop signals.",
+      "DCR-0022 records Item 3 as promoted to DCR-0052.",
+      "Focused metrics tests and full unittest discovery pass."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/metrics.py",
+      "agentspec/status.py"
+    ],
+    "test_targets": [
+      "tests/test_metrics_cli.py"
+    ],
+    "support_targets": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".claude/agents/*.md",
+      ".claude/skills/**/SKILL.md",
+      ".codex/agents/*.toml",
+      "agent/context-packs/T-082-project-metrics-surface-for-feedback-loops.md",
+      "agent/reviews/*.yml",
+      "agent/roles/*.md",
+      "agent/task-ledger.yml",
+      "agent/workflows/*.md",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0022-post-t040-operability-bundle.md",
+      "docs/change-requests/DCR-0052-project-metrics-surface-for-feedback-loops.md",
+      "docs/traceability/requirements.yml",
+      "reports/quality/latest.yml",
+      "reports/quality/latest.md"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

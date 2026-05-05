@@ -20,6 +20,7 @@ from .drift import run_drift
 from .emit import emit_targets
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
+from .metrics import build_project_metrics, format_project_metrics
 from .init import init_project
 from .io import load_data
 from .quality import run_quality_gc
@@ -117,6 +118,9 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     quality.add_argument("--json", action="store_true")
     quality.add_argument("--report-dir", help="Write reports under <path>/quality/ instead of <root>/reports/quality/.")
     quality.add_argument("--task-interval", type=int, default=3, help="Completed-task interval for quality GC cadence hints.")
+
+    metrics = subparsers.add_parser("metrics", help="Print read-only project feedback-loop metrics.")
+    metrics.add_argument("--json", action="store_true")
 
     subparsers.add_parser(
         "next-action",
@@ -479,6 +483,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 markdown = report.get("reports", {}).get("markdown", "reports/quality/latest.md")
                 print(f"Quality GC grade: {report['grade']} ({len(report['findings'])} finding(s)).")
                 print(f"Report: {markdown}")
+            return 0
+
+        if args.command == "metrics":
+            metrics_payload = build_project_metrics(root)
+            if args.json:
+                print(json.dumps(metrics_payload, indent=2))
+            else:
+                print(format_project_metrics(metrics_payload))
             return 0
 
         if args.command in {"next-action", "continue"}:

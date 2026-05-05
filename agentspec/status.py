@@ -72,6 +72,12 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     return payload
 
 
+def load_run_records(root: Path) -> list[dict[str, Any]]:
+    """Return normalized run records with recovery context."""
+
+    return _load_runs(root.resolve())
+
+
 def format_project_status(status: dict[str, Any]) -> str:
     readiness = status.get("readiness", {})
     requirements = status.get("requirements", {})
