@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-05T23:38:40Z",
+  "updated_at": "2026-05-06T18:01:14Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-083",
-    "context_pack": "agent/context-packs/T-083-close-first-implementation-language-question.md",
-    "title": "T-083: Close first implementation language question",
-    "run_id": "complete-t-083-close-first-implementation-language-question-20260505233840",
-    "reason": "R-188 completed: Q-002 is answered by DCR-0053/R-188, preserving existing question metadata and documenting Python as AgentSpec V1 core's first implementation language while keeping non-Python target support separate; full unittest verification passed.",
-    "updated_at": "2026-05-05T23:38:40Z",
+    "id": "T-084",
+    "context_pack": "agent/context-packs/T-084-add-claude-code-plugin-package.md",
+    "title": "T-084: Add Claude Code plugin package",
+    "run_id": "complete-t-084-add-claude-code-plugin-package-20260506180114",
+    "reason": "R-189 completed: added the Claude Code plugin package with CLI-backed AgentSpec skills, local validation guidance, thin-adapter boundaries, Claude plugin validation, focused tests, and full unittest verification.",
+    "updated_at": "2026-05-06T18:01:14Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0022",
+      "id": "REVIEW-0023",
       "verdict": "ready",
       "reviewer": "test_eval_reviewer",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0022.yml"
+      "path": "agent/reviews/REVIEW-0023.yml"
     }
   },
   "current_state": {
@@ -29,38 +29,38 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 188,
+      "total": 189,
       "by_status": {
-        "accepted": 188
+        "accepted": 189
       }
     },
     "dcrs": {
-      "total": 53,
+      "total": 54,
       "by_status": {
-        "accepted": 53
+        "accepted": 54
       }
     },
     "tasks": {
-      "total": 81,
+      "total": 82,
       "by_status": {
-        "complete": 81
+        "complete": 82
       },
       "by_type": {
-        "implementation": 74,
+        "implementation": 75,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 94,
+      "total": 95,
       "by_status": {
         "aborted": 4,
-        "complete": 90
+        "complete": 91
       },
       "by_mode": {
         "research": 1,
-        "supervised": 93
+        "supervised": 94
       }
     }
   },
@@ -76,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0022.yml"
+    "last_code_review": "agent/reviews/REVIEW-0023.yml"
   }
 }

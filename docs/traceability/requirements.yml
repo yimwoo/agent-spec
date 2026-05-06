@@ -5223,5 +5223,49 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-189",
+    "title": "Claude Code plugin package mirrors AgentSpec workflow skills",
+    "description": "AgentSpec ships a distributable Claude Code plugin package with CLI-backed workflow skills for initialization, continuation, status inspection, task creation, spec compilation, drift review, and manual source intake while preserving the core-before-plugins boundary.",
+    "source_sections": [
+      "D-03.2",
+      "D-10.4",
+      "D-21.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0054",
+    "acceptance": [
+      "Claude Code plugin package includes .claude-plugin/plugin.json.",
+      "Claude Code plugin package includes discoverable skills for init, continuation, status, task creation, compile, drift review, and manual source intake workflows.",
+      "README documents local Claude Code plugin loading/validation and the matching CLI paths.",
+      "Skill guidance remains CLI-backed and states that the plugin does not own parsing, promotion, credentials, or accepted snapshots.",
+      "Tests validate the package layout, manifest metadata, skill frontmatter, and public guidance.",
+      "claude plugin validate agentspec-claude-plugin passes when Claude Code is installed."
+    ],
+    "code_targets": [
+      "agentspec-claude-plugin/**"
+    ],
+    "test_targets": [
+      "tests/test_claude_code_plugin.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-084-add-claude-code-plugin-package.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0054-add-claude-code-plugin-package.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "plugin-integrator",
+      "test-eval-reviewer"
+    ]
   }
 ]

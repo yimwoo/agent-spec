@@ -1,0 +1,19 @@
+{
+  "name": "aspec",
+  "description": "Run AgentSpec workflows from Claude Code without bypassing repository governance.",
+  "version": "0.1.3",
+  "author": {
+    "name": "AgentSpec",
+    "email": "maintainers@example.com"
+  },
+  "homepage": "https://github.com/yimwoo/agent-spec-engine",
+  "repository": "https://github.com/yimwoo/agent-spec-engine",
+  "license": "MIT",
+  "keywords": [
+    "aspec",
+    "agentspec",
+    "claude-code",
+    "requirements",
+    "source-intake"
+  ]
+}
