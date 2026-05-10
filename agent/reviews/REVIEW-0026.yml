@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0026",
+  "task": {
+    "selector": "T-086",
+    "context_pack": "agent/context-packs/T-086-add-session-worktree-lease-governance.md"
+  },
+  "verdict": "ready",
+  "summary": "R-191 session lease governance is implemented with CLI lifecycle commands, status integration, fresh-project markers, and passing focused/full pytest verification.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-10T20:16:07Z"
+}

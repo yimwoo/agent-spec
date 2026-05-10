@@ -99,6 +99,9 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertTrue((project / ".agentspec" / "config.yml").exists())
                 self.assertTrue((project / "agent" / "context-packs" / "template.md").exists())
                 self.assertTrue((project / "agent" / "outcomes.yml").exists())
+                self.assertTrue((project / "agent" / "maturity.yml").exists())
+                self.assertTrue((project / "agent" / "sessions" / "active" / ".gitkeep").exists())
+                self.assertTrue((project / "agent" / "sessions" / "archived" / ".gitkeep").exists())
 
                 self.assertEqual(main(["ingest", str(design)]), 0)
                 sections = load_data(project / "docs" / "source" / "sections.yml")
@@ -148,6 +151,10 @@ class CliWorkflowTests(unittest.TestCase):
                 status_payload = json.loads(status_output.getvalue())
                 self.assertIn("outcomes", status_payload)
                 self.assertEqual(status_payload["outcomes"]["readiness"], "not_configured")
+                self.assertIn("maturity", status_payload)
+                self.assertEqual(status_payload["maturity"]["level"], "lightweight")
+                self.assertIn("sessions", status_payload)
+                self.assertEqual(status_payload["sessions"]["counts"], {"active": 0, "archived": 0})
 
                 self.assertEqual(main(["drift"]), 0)
                 self.assertTrue((project / "reports" / "drift" / "latest.md").exists())

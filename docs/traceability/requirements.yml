@@ -5324,5 +5324,107 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-191",
+    "title": "AgentSpec records multi-session worktree leases",
+    "description": "AgentSpec adds repo-local session leases for multi-agent and multi-session work, recording the task context pack, owner mode, branch/worktree metadata, allowed paths, status, finish disposition, and status summaries without requiring every developer to use the same plugin.",
+    "source_sections": [
+      "D-03.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0056",
+    "acceptance": [
+      "aspec session start --task <T-id> --json creates an active session lease with schema agentspec.session_lease.v0.",
+      "aspec session list --json reports active and archived session summaries.",
+      "aspec session inspect <session-id> --json reads the active or archived lease.",
+      "aspec session finish <session-id> --disposition keep --json moves the lease from active to archived and records terminal disposition.",
+      "aspec session release <session-id> --json archives a released lease without requiring review completion.",
+      "aspec status --json includes session summary counts and active session records.",
+      "Fresh projects include agent/sessions/active/ and agent/sessions/archived/ markers.",
+      "Tests cover session CLI behavior and status integration."
+    ],
+    "code_targets": [
+      "agentspec/session.py",
+      "agentspec/cli.py",
+      "agentspec/status.py",
+      "agentspec/init.py",
+      "agentspec/paths.py"
+    ],
+    "test_targets": [
+      "tests/test_session_cli.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-086-add-session-worktree-lease-governance.md",
+      "agent/sessions/active/.gitkeep",
+      "agent/sessions/archived/.gitkeep",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0056-add-session-worktree-lease-governance.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-192",
+    "title": "AgentSpec supports progressive maturity profiles",
+    "description": "AgentSpec adds repo-local maturity profiles so teams can adopt lightweight Markdown/status guidance, governed implementation discipline, and production-readiness gates progressively without requiring every developer to use the same plugin or maximum strictness from the start.",
+    "source_sections": [
+      "D-03.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0057",
+    "acceptance": [
+      "Missing agent/maturity.yml defaults to a lightweight profile in aspec maturity status --json.",
+      "Fresh projects include agent/maturity.yml.",
+      "aspec init --maturity governed-implementation writes the selected profile.",
+      "aspec maturity set production-readiness --enforcement block --json updates the profile artifact.",
+      "aspec maturity check --json reports level, enforcement, score, missing checks, warnings, and blocking checks.",
+      "aspec status --json includes maturity status.",
+      "Human aspec status includes a maturity summary line.",
+      "Tests cover maturity CLI behavior and status/init integration."
+    ],
+    "code_targets": [
+      "agentspec/maturity.py",
+      "agentspec/cli.py",
+      "agentspec/status.py",
+      "agentspec/init.py"
+    ],
+    "test_targets": [
+      "tests/test_maturity_cli.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-087-add-progressive-maturity-profiles.md",
+      "agent/maturity.yml",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0057-add-progressive-maturity-profiles.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

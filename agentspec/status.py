@@ -8,7 +8,9 @@ from typing import Any
 from .dcr import list_dcrs
 from .handoff import load_project_handoff
 from .io import load_data
+from .maturity import build_maturity_status
 from .outcome import build_outcome_status
+from .session import build_session_status
 from .task import list_task_context_packs, next_task_context_pack
 
 
@@ -27,6 +29,8 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     runs = _load_runs(root)
     next_task = next_task_context_pack(root)
     outcomes = build_outcome_status(root)
+    maturity = build_maturity_status(root)
+    sessions = build_session_status(root)
 
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
@@ -43,6 +47,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             "summary": readiness.get("summary"),
         },
         "outcomes": outcomes,
+        "maturity": maturity,
         "requirements": {
             "total": len(requirements),
             "by_status": _counts(record.get("status") for record in requirements),
@@ -68,6 +73,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             "attention": attention_runs,
             "recent": recent_runs,
         },
+        "sessions": sessions,
     }
     handoff = load_project_handoff(root)
     if handoff is not None:
@@ -87,6 +93,8 @@ def format_project_status(status: dict[str, Any]) -> str:
     dcrs = status.get("dcrs", {})
     tasks = status.get("tasks", {})
     runs = status.get("runs", {})
+    sessions = status.get("sessions", {})
+    maturity = status.get("maturity", {})
     outcomes = status.get("outcomes", {})
 
     lines = [
@@ -95,10 +103,12 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Overall: {status.get('overall')}",
         f"Readiness: {_readiness_text(readiness)}",
         f"Product Outcomes: {_outcomes_text(outcomes)}",
+        f"Maturity: {_maturity_text(maturity)}",
         f"Requirements: {_count_text(requirements)}",
         f"DCRs: {_count_text(dcrs)}",
         f"Tasks: {_count_text(tasks)}",
         f"Runs: {_count_text(runs)}",
+        f"Sessions: {_count_text(sessions)}",
         f"Next: {_next_text(tasks.get('next'))}",
         f"Recommendation: {status.get('recommendation')}",
     ]
@@ -120,6 +130,11 @@ def format_project_status(status: dict[str, Any]) -> str:
     if active:
         lines.extend(["", "Active Runs:"])
         lines.extend(f"- {_run_text(run)}" for run in active)
+
+    active_sessions = sessions.get("active") if isinstance(sessions, dict) else []
+    if active_sessions:
+        lines.extend(["", "Active Sessions:"])
+        lines.extend(f"- {_session_text(session)}" for session in active_sessions)
 
     recent = runs.get("recent") if isinstance(runs, dict) else []
     if recent:
@@ -320,6 +335,18 @@ def _outcomes_text(outcomes: Any) -> str:
     return f"{outcomes.get('readiness', 'unknown')} ({score_text})"
 
 
+def _maturity_text(maturity: Any) -> str:
+    if not isinstance(maturity, dict):
+        return "unknown"
+    score = maturity.get("score")
+    score_text = f"{score}/100" if isinstance(score, int) else "n/a"
+    return (
+        f"{maturity.get('level', 'unknown')} "
+        f"{maturity.get('readiness', 'unknown')} "
+        f"({score_text}, enforcement={maturity.get('enforcement', 'unknown')})"
+    )
+
+
 def _next_text(next_task: Any) -> str:
     if not isinstance(next_task, dict):
         return "none"
@@ -340,6 +367,27 @@ def _run_text(run: dict[str, Any]) -> str:
     if iteration is not None and max_iterations is not None:
         bits.append(f"iter {iteration}/{max_iterations}")
     updated_at = run.get("updated_at")
+    if updated_at:
+        bits.append(f"updated {updated_at}")
+    return " | ".join(bits)
+
+
+def _session_text(session: dict[str, Any]) -> str:
+    bits = [
+        str(session.get("session_id")),
+        str(session.get("status")),
+        str(session.get("mode")),
+    ]
+    context_pack = session.get("context_pack")
+    if context_pack:
+        bits.append(str(context_pack))
+    branch = session.get("branch")
+    if branch:
+        bits.append(f"branch {branch}")
+    worktree = session.get("worktree")
+    if worktree:
+        bits.append(f"worktree {worktree}")
+    updated_at = session.get("updated_at")
     if updated_at:
         bits.append(f"updated {updated_at}")
     return " | ".join(bits)

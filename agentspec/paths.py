@@ -29,6 +29,8 @@ ARTIFACT_DIRS = [
     "agent/roles",
     "agent/workflows",
     "agent/runs",
+    "agent/sessions/active",
+    "agent/sessions/archived",
     "reports/drift",
     "reports/doctor",
     "reports/traceability",

@@ -4,10 +4,18 @@ from pathlib import Path
 
 from .config import default_runtime_config
 from .io import write_data, write_text
+from .maturity import DEFAULT_MATURITY_ENFORCEMENT, DEFAULT_MATURITY_LEVEL, default_maturity_config
 from .paths import ROLE_NAMES, ensure_dirs
 
 
-def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,codex", archetype: str = "code-agent-tooling") -> list[Path]:
+def init_project(
+    root: Path,
+    mode: str = "greenfield",
+    targets: str = "claude,codex",
+    archetype: str = "code-agent-tooling",
+    maturity: str = DEFAULT_MATURITY_LEVEL,
+    maturity_enforcement: str = DEFAULT_MATURITY_ENFORCEMENT,
+) -> list[Path]:
     ensure_dirs(root)
     written: list[Path] = []
 
@@ -56,6 +64,10 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
                 "Define P0 product workflows here so agents can distinguish task completion from production outcome readiness."
             ],
         },
+        "agent/maturity.yml": default_maturity_config(
+            level=maturity,
+            enforcement=maturity_enforcement,
+        ),
     }
     for relative_path, payload in defaults.items():
         path = root / relative_path
@@ -92,7 +104,17 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
             write_text(path, _role_doc(role))
             written.append(path)
 
-    for keep in ["agent/runs/.gitkeep", "reports/drift/.gitkeep", "reports/doctor/.gitkeep", "reports/traceability/.gitkeep", "reports/eval/.gitkeep", "reports/quality/.gitkeep", "reports/dogfood/.gitkeep"]:
+    for keep in [
+        "agent/runs/.gitkeep",
+        "agent/sessions/active/.gitkeep",
+        "agent/sessions/archived/.gitkeep",
+        "reports/drift/.gitkeep",
+        "reports/doctor/.gitkeep",
+        "reports/traceability/.gitkeep",
+        "reports/eval/.gitkeep",
+        "reports/quality/.gitkeep",
+        "reports/dogfood/.gitkeep",
+    ]:
         path = root / keep
         if not path.exists():
             write_text(path, "")

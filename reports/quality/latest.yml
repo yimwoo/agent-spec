@@ -1,9 +1,81 @@
 {
   "schema": "agentspec.quality_gc_report.v0",
-  "generated_at": "2026-05-05T23:38:49Z",
-  "grade": "A",
-  "summary": "0 error(s), 0 warning(s), 1 info finding(s).",
+  "generated_at": "2026-05-10T20:16:11Z",
+  "grade": "B",
+  "summary": "0 error(s), 8 warning(s), 1 info finding(s).",
   "findings": [
+    {
+      "id": "QG-AGENT-CONTEXT-001",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": "AGENTS.md is older than agent/task-ledger.yml.",
+      "path": "AGENTS.md",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-002",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": "CLAUDE.md is older than agent/task-ledger.yml.",
+      "path": "CLAUDE.md",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-003",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/app-evaluator.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/app-evaluator.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-004",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/app-planner.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/app-planner.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-005",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/brownfield-mapper.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/brownfield-mapper.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-006",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/quality-gc-reviewer.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/quality-gc-reviewer.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-007",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/security-reviewer.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/security-reviewer.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
+    {
+      "id": "QG-AGENT-CONTEXT-008",
+      "category": "agent_context_freshness",
+      "severity": "warning",
+      "title": "Generated agent context is stale or missing.",
+      "message": ".codex/agents/spec-reviewer.toml is older than agent/task-ledger.yml.",
+      "path": ".codex/agents/spec-reviewer.toml",
+      "recovery_command": "aspec emit --target claude,codex"
+    },
     {
       "id": "QG-OPEN-QUESTIONS-001",
       "category": "open_questions",
@@ -22,45 +94,57 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 188,
+      "total": 191,
       "by_status": {
-        "accepted": 188
+        "accepted": 191
       }
     },
     "dcrs": {
-      "total": 53,
+      "total": 56,
       "by_status": {
-        "accepted": 53
+        "accepted": 56
       }
     },
     "tasks": {
-      "total": 81,
+      "total": 84,
       "by_status": {
-        "complete": 81
+        "complete": 84
       },
       "by_type": {
-        "implementation": 74,
+        "implementation": 77,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 94,
+      "total": 98,
       "by_status": {
         "aborted": 4,
-        "complete": 90
+        "complete": 94
       },
       "by_mode": {
         "research": 1,
-        "supervised": 93
+        "supervised": 97
+      }
+    },
+    "outcomes": {
+      "readiness": "ready",
+      "score": 100,
+      "counts": {
+        "outcomes": 1,
+        "ready_outcomes": 1,
+        "blocked_outcomes": 0,
+        "required_gates": 3,
+        "ready_required_gates": 3,
+        "blocked_required_gates": 0
       }
     },
     "next_task": null
   },
   "doctor": {
-    "agent_context_status": "fresh",
-    "agent_context_warning_count": 0,
+    "agent_context_status": "warning",
+    "agent_context_warning_count": 8,
     "agent_context_recovery_command": "aspec emit --target claude,codex",
     "project_invariants_status": "passed",
     "project_invariants_path": "agent/policies/invariants.yml"
@@ -68,18 +152,18 @@
   "handoff": {
     "present": true,
     "path": "agent/handoff.yml",
-    "updated_at": "2026-05-05T23:38:40Z",
-    "last_completed_task": "T-083",
+    "updated_at": "2026-05-10T20:16:11Z",
+    "last_completed_task": "T-086",
     "next_action": "idle",
     "next_command": "aspec status --json"
   },
   "cadence": {
     "task_interval": 3,
-    "completed_tasks": 81,
-    "completed_tasks_at_last_quality": 80,
-    "completed_tasks_since_last_quality": 1,
-    "was_due": false,
-    "next_recommended_completed_tasks": 84
+    "completed_tasks": 84,
+    "completed_tasks_at_last_quality": 81,
+    "completed_tasks_since_last_quality": 3,
+    "was_due": true,
+    "next_recommended_completed_tasks": 87
   },
   "reports": {
     "structured": "reports/quality/latest.yml",

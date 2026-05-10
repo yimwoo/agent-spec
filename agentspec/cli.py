@@ -23,12 +23,31 @@ from .intake import diff_candidate, format_diff_report, import_candidate, promot
 from .metrics import build_project_metrics, format_project_metrics
 from .init import init_project
 from .io import load_data
+from .maturity import (
+    ALLOWED_MATURITY_ENFORCEMENT,
+    ALLOWED_MATURITY_LEVELS,
+    build_maturity_status,
+    format_maturity_status,
+    set_maturity_config,
+)
 from .outcome import build_outcome_status, format_outcome_status
 from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
+from .session import (
+    ALLOWED_FINISH_DISPOSITIONS,
+    ALLOWED_SESSION_MODES,
+    ALLOWED_TEST_STATUSES,
+    finish_session,
+    format_session_list,
+    format_session_record,
+    inspect_session,
+    list_sessions,
+    release_session,
+    start_session,
+)
 from .source_registry import (
     add_source_record,
     check_registered_sources,
@@ -62,6 +81,8 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     init.add_argument("--mode", default="greenfield", choices=["greenfield", "brownfield", "dogfood"])
     init.add_argument("--targets", default="claude,codex")
     init.add_argument("--archetype", default="code-agent-tooling")
+    init.add_argument("--maturity", default="lightweight", choices=sorted(ALLOWED_MATURITY_LEVELS))
+    init.add_argument("--maturity-enforcement", default="warn", choices=sorted(ALLOWED_MATURITY_ENFORCEMENT))
 
     ingest = subparsers.add_parser("ingest", help="Import and sectionize a Markdown source document.")
     ingest.add_argument("path")
@@ -125,6 +146,46 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
+
+    maturity = subparsers.add_parser("maturity", help="Print or update progressive maturity profile status.")
+    maturity_subparsers = maturity.add_subparsers(dest="maturity_command")
+    maturity_status = maturity_subparsers.add_parser("status", help="Print maturity profile status.")
+    maturity_status.add_argument("--json", action="store_true")
+    maturity_check = maturity_subparsers.add_parser("check", help="Check maturity profile readiness.")
+    maturity_check.add_argument("--json", action="store_true")
+    maturity_set = maturity_subparsers.add_parser("set", help="Set the maturity profile level.")
+    maturity_set.add_argument("level", choices=sorted(ALLOWED_MATURITY_LEVELS))
+    maturity_set.add_argument("--enforcement", default="warn", choices=sorted(ALLOWED_MATURITY_ENFORCEMENT))
+    maturity_set.add_argument("--json", action="store_true")
+
+    session = subparsers.add_parser("session", help="Multi-session worktree lease utilities.")
+    session_subparsers = session.add_subparsers(dest="session_command")
+    session_start = session_subparsers.add_parser("start", help="Create an active AgentSpec session lease.")
+    session_start.add_argument("--task", required=True, help="Task id (for example T-086) or context pack path.")
+    session_start.add_argument("--owner", help="Human, agent, or tool claiming the lease.")
+    session_start.add_argument("--mode", default="owner", choices=sorted(ALLOWED_SESSION_MODES))
+    session_start.add_argument("--branch", help="Associated git branch, if any.")
+    session_start.add_argument("--worktree", help="Associated git worktree path, if any.")
+    session_start.add_argument("--session-id", help="Override the generated session id.")
+    session_start.add_argument("--run-id", help="Associated AgentSpec run id, if any.")
+    session_start.add_argument("--note", help="Optional session note.")
+    session_start.add_argument("--json", action="store_true")
+    session_list = session_subparsers.add_parser("list", help="List active and archived session leases.")
+    session_list.add_argument("--json", action="store_true")
+    session_inspect = session_subparsers.add_parser("inspect", help="Inspect one active or archived session lease.")
+    session_inspect.add_argument("session_id")
+    session_inspect.add_argument("--json", action="store_true")
+    session_finish = session_subparsers.add_parser("finish", help="Archive an active session lease with a disposition.")
+    session_finish.add_argument("session_id")
+    session_finish.add_argument("--disposition", required=True, choices=sorted(ALLOWED_FINISH_DISPOSITIONS))
+    session_finish.add_argument("--review", dest="review_id", help="Linked review id, if completion had review evidence.")
+    session_finish.add_argument("--test-status", default="not_run", choices=sorted(ALLOWED_TEST_STATUSES))
+    session_finish.add_argument("--note", help="Optional finish note.")
+    session_finish.add_argument("--json", action="store_true")
+    session_release = session_subparsers.add_parser("release", help="Archive an active session lease without completion.")
+    session_release.add_argument("session_id")
+    session_release.add_argument("--reason", help="Optional release reason.")
+    session_release.add_argument("--json", action="store_true")
 
     subparsers.add_parser(
         "next-action",
@@ -353,7 +414,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
 
     try:
         if args.command == "init":
-            written = init_project(root, mode=args.mode, targets=args.targets, archetype=args.archetype)
+            written = init_project(
+                root,
+                mode=args.mode,
+                targets=args.targets,
+                archetype=args.archetype,
+                maturity=args.maturity,
+                maturity_enforcement=args.maturity_enforcement,
+            )
             print(f"Initialized AgentSpec workspace at {root} ({len(written)} files created).")
             return 0
 
@@ -503,6 +571,87 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(outcome_payload, indent=2))
             else:
                 print(format_outcome_status(outcome_payload))
+            return 0
+
+        if args.command == "maturity":
+            if args.maturity_command in {"status", "check"}:
+                maturity_payload = build_maturity_status(root)
+                if args.json:
+                    print(json.dumps(maturity_payload, indent=2))
+                else:
+                    print(format_maturity_status(maturity_payload))
+                return 0
+            if args.maturity_command == "set":
+                maturity_payload = set_maturity_config(
+                    root,
+                    level=args.level,
+                    enforcement=args.enforcement,
+                )
+                if args.json:
+                    print(json.dumps(maturity_payload, indent=2))
+                else:
+                    print(format_maturity_status(maturity_payload))
+                return 0
+            parser.print_help()
+            return 0
+
+        if args.command == "session":
+            if args.session_command == "start":
+                record = start_session(
+                    root,
+                    task_selector=args.task,
+                    owner=args.owner,
+                    mode=args.mode,
+                    branch=args.branch,
+                    worktree=args.worktree,
+                    session_id=args.session_id,
+                    run_id=args.run_id,
+                    note=args.note,
+                )
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(f"Started session {record['session_id']} for {record['context_pack']}.")
+                return 0
+            if args.session_command == "list":
+                payload = list_sessions(root)
+                if args.json:
+                    print(json.dumps(payload, indent=2))
+                else:
+                    print(format_session_list(payload))
+                return 0
+            if args.session_command == "inspect":
+                record = inspect_session(root, args.session_id)
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(format_session_record(record))
+                return 0
+            if args.session_command == "finish":
+                record = finish_session(
+                    root,
+                    args.session_id,
+                    disposition=args.disposition,
+                    review_id=args.review_id,
+                    test_status=args.test_status,
+                    note=args.note,
+                )
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(
+                        f"Finished session {record['session_id']} "
+                        f"with disposition {record['disposition']}."
+                    )
+                return 0
+            if args.session_command == "release":
+                record = release_session(root, args.session_id, reason=args.reason)
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(f"Released session {record['session_id']}.")
+                return 0
+            parser.print_help()
             return 0
 
         if args.command in {"next-action", "continue"}:

@@ -1,0 +1,8 @@
+{
+  "schema": "agentspec.maturity.v1",
+  "level": "governed-implementation",
+  "enforcement": "warn",
+  "notes": [
+    "Maturity profiles are progressive: lightweight for adoption, governed-implementation for normal enterprise work, production-readiness for production claims."
+  ]
+}

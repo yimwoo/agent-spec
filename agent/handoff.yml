@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-10T19:21:31Z",
+  "updated_at": "2026-05-10T23:25:54Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-085",
-    "context_pack": "agent/context-packs/T-085-add-outcome-gates-and-unified-lifecycle-skills.md",
-    "title": "T-085: Add outcome gates and unified lifecycle skills",
-    "run_id": "complete-t-085-add-outcome-gates-and-unified-lifecycle-skills-20260510192131",
-    "reason": "R-190 completed in final state: product outcome gates, unified lifecycle skills, DCR/task traceability, and full pytest verification are in place.",
-    "updated_at": "2026-05-10T19:21:31Z",
+    "id": "T-086",
+    "context_pack": "agent/context-packs/T-086-add-session-worktree-lease-governance.md",
+    "title": "T-086: Add session worktree lease governance",
+    "run_id": "complete-t-086-add-session-worktree-lease-governance-20260510232554",
+    "reason": "R-191 post-review hardening complete: session leases use collision-resistant IDs and exclusive creation; verification passed.",
+    "updated_at": "2026-05-10T23:25:54Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0025",
+      "id": "REVIEW-0028",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0025.yml"
+      "path": "agent/reviews/REVIEW-0028.yml"
     }
   },
   "current_state": {
@@ -29,38 +29,38 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 190,
+      "total": 192,
       "by_status": {
-        "accepted": 190
+        "accepted": 192
       }
     },
     "dcrs": {
-      "total": 55,
+      "total": 57,
       "by_status": {
-        "accepted": 55
+        "accepted": 57
       }
     },
     "tasks": {
-      "total": 83,
+      "total": 85,
       "by_status": {
-        "complete": 83
+        "complete": 85
       },
       "by_type": {
-        "implementation": 76,
+        "implementation": 78,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 97,
+      "total": 101,
       "by_status": {
         "aborted": 4,
-        "complete": 93
+        "complete": 97
       },
       "by_mode": {
         "research": 1,
-        "supervised": 96
+        "supervised": 100
       }
     }
   },
@@ -76,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0025.yml"
+    "last_code_review": "agent/reviews/REVIEW-0028.yml"
   }
 }
