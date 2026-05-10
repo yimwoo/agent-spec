@@ -27,6 +27,7 @@ def emit_targets(root: Path, targets: str) -> list[Path]:
 def _emit_agents_md(root: Path) -> Path:
     status = build_project_status(root)
     readiness = status.get("readiness", {})
+    outcomes = status.get("outcomes", {})
     handoff = status.get("handoff") if isinstance(status.get("handoff"), dict) else None
     next_action = (
         handoff.get("next_action")
@@ -49,6 +50,7 @@ This repository uses AgentSpec-generated context.
 ## Current Status
 
 - Readiness: {readiness.get('score', 0)}/100 ({readiness.get('mode', 'discovery')})
+- Product outcomes: {_outcome_line(outcomes)}
 - Requirements: {_count_line(status.get('requirements'))}
 - DCRs: {_count_line(status.get('dcrs'))}
 - Tasks: {_count_line(status.get('tasks'))}
@@ -61,6 +63,7 @@ This repository uses AgentSpec-generated context.
 ```bash
 aspec ingest docs/source/design.md
 aspec compile
+aspec outcome
 aspec status
 aspec task create --requirement R-001
 aspec task list
@@ -94,6 +97,14 @@ def _count_line(section: Any) -> str:
         statuses = ", ".join(f"{key}={value}" for key, value in by_status.items())
         return f"{total} ({statuses})"
     return str(total)
+
+
+def _outcome_line(outcomes: Any) -> str:
+    if not isinstance(outcomes, dict):
+        return "unknown"
+    score = outcomes.get("score")
+    score_text = f"{score}/100" if isinstance(score, int) else "n/a"
+    return f"{outcomes.get('readiness', 'unknown')} ({score_text})"
 
 
 def _handoff_line(handoff: dict[str, Any] | None) -> str:

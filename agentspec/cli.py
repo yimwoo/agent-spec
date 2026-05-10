@@ -23,6 +23,7 @@ from .intake import diff_candidate, format_diff_report, import_candidate, promot
 from .metrics import build_project_metrics, format_project_metrics
 from .init import init_project
 from .io import load_data
+from .outcome import build_outcome_status, format_outcome_status
 from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
@@ -121,6 +122,9 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     metrics = subparsers.add_parser("metrics", help="Print read-only project feedback-loop metrics.")
     metrics.add_argument("--json", action="store_true")
+
+    outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
+    outcome.add_argument("--json", action="store_true")
 
     subparsers.add_parser(
         "next-action",
@@ -491,6 +495,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(metrics_payload, indent=2))
             else:
                 print(format_project_metrics(metrics_payload))
+            return 0
+
+        if args.command == "outcome":
+            outcome_payload = build_outcome_status(root)
+            if args.json:
+                print(json.dumps(outcome_payload, indent=2))
+            else:
+                print(format_outcome_status(outcome_payload))
             return 0
 
         if args.command in {"next-action", "continue"}:

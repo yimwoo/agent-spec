@@ -49,6 +49,13 @@ def init_project(root: Path, mode: str = "greenfield", targets: str = "claude,co
             "dimensions": {},
             "summary": "No source document has been compiled yet.",
         },
+        "agent/outcomes.yml": {
+            "schema": "agentspec.outcomes.v0",
+            "outcomes": [],
+            "notes": [
+                "Define P0 product workflows here so agents can distinguish task completion from production outcome readiness."
+            ],
+        },
     }
     for relative_path, payload in defaults.items():
         path = root / relative_path

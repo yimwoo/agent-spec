@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-06T18:01:14Z",
+  "updated_at": "2026-05-10T19:21:31Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-084",
-    "context_pack": "agent/context-packs/T-084-add-claude-code-plugin-package.md",
-    "title": "T-084: Add Claude Code plugin package",
-    "run_id": "complete-t-084-add-claude-code-plugin-package-20260506180114",
-    "reason": "R-189 completed: added the Claude Code plugin package with CLI-backed AgentSpec skills, local validation guidance, thin-adapter boundaries, Claude plugin validation, focused tests, and full unittest verification.",
-    "updated_at": "2026-05-06T18:01:14Z",
+    "id": "T-085",
+    "context_pack": "agent/context-packs/T-085-add-outcome-gates-and-unified-lifecycle-skills.md",
+    "title": "T-085: Add outcome gates and unified lifecycle skills",
+    "run_id": "complete-t-085-add-outcome-gates-and-unified-lifecycle-skills-20260510192131",
+    "reason": "R-190 completed in final state: product outcome gates, unified lifecycle skills, DCR/task traceability, and full pytest verification are in place.",
+    "updated_at": "2026-05-10T19:21:31Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0023",
+      "id": "REVIEW-0025",
       "verdict": "ready",
-      "reviewer": "test_eval_reviewer",
+      "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0023.yml"
+      "path": "agent/reviews/REVIEW-0025.yml"
     }
   },
   "current_state": {
@@ -29,38 +29,38 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 189,
+      "total": 190,
       "by_status": {
-        "accepted": 189
+        "accepted": 190
       }
     },
     "dcrs": {
-      "total": 54,
+      "total": 55,
       "by_status": {
-        "accepted": 54
+        "accepted": 55
       }
     },
     "tasks": {
-      "total": 82,
+      "total": 83,
       "by_status": {
-        "complete": 82
+        "complete": 83
       },
       "by_type": {
-        "implementation": 75,
+        "implementation": 76,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 95,
+      "total": 97,
       "by_status": {
         "aborted": 4,
-        "complete": 91
+        "complete": 93
       },
       "by_mode": {
         "research": 1,
-        "supervised": 94
+        "supervised": 96
       }
     }
   },
@@ -76,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0023.yml"
+    "last_code_review": "agent/reviews/REVIEW-0025.yml"
   }
 }

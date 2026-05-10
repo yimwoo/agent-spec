@@ -39,6 +39,10 @@ class QualityGCTests(unittest.TestCase):
                 any(finding["id"] == "QG-INVARIANTS-001" for finding in report["findings"]),
                 report["findings"],
             )
+            self.assertTrue(
+                any(finding["id"] == "QG-OUTCOMES-001" for finding in report["findings"]),
+                report["findings"],
+            )
             self.assertEqual(report["doctor"]["agent_context_status"], "warning")
             self.assertEqual(report["handoff"]["present"], False)
             self.assertIn("cadence", report)

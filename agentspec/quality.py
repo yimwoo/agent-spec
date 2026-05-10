@@ -163,6 +163,23 @@ def _findings(status: dict[str, Any], doctor: dict[str, Any]) -> list[dict[str, 
             }
         )
 
+    outcomes = status.get("outcomes")
+    if isinstance(outcomes, dict) and outcomes.get("readiness") != "ready":
+        blockers = outcomes.get("blockers") if isinstance(outcomes.get("blockers"), list) else []
+        findings.append(
+            {
+                "id": "QG-OUTCOMES-001",
+                "category": "product_outcomes",
+                "severity": "warning",
+                "title": "Product outcome readiness is not green.",
+                "message": outcomes.get("summary", "Product outcomes are not ready."),
+                "path": outcomes.get("path", "agent/outcomes.yml"),
+                "readiness": outcomes.get("readiness"),
+                "blocker_count": len(blockers),
+                "recovery_command": "aspec outcome",
+            }
+        )
+
     return findings
 
 
@@ -198,6 +215,7 @@ def _project_status_summary(status: dict[str, Any]) -> dict[str, Any]:
         "dcrs": _count_summary(status.get("dcrs")),
         "tasks": _count_summary(status.get("tasks")),
         "runs": _count_summary(status.get("runs")),
+        "outcomes": _outcome_summary(status.get("outcomes")),
         "next_task": status.get("tasks", {}).get("next") if isinstance(status.get("tasks"), dict) else None,
     }
 
@@ -211,6 +229,17 @@ def _doctor_summary(doctor: dict[str, Any]) -> dict[str, Any]:
         "agent_context_recovery_command": agent_context.get("recovery_command", AGENT_CONTEXT_RECOVERY_COMMAND),
         "project_invariants_status": invariants.get("status"),
         "project_invariants_path": invariants.get("path"),
+    }
+
+
+def _outcome_summary(outcomes: Any) -> dict[str, Any]:
+    if not isinstance(outcomes, dict):
+        return {}
+    counts = outcomes.get("counts") if isinstance(outcomes.get("counts"), dict) else {}
+    return {
+        "readiness": outcomes.get("readiness"),
+        "score": outcomes.get("score"),
+        "counts": counts,
     }
 
 

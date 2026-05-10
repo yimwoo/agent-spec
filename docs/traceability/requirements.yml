@@ -5267,5 +5267,62 @@
       "plugin-integrator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-190",
+    "title": "AgentSpec exposes product outcome gates and unified lifecycle skills",
+    "description": "AgentSpec adds a repo-local product outcome gate model and CLI/status/quality surfaces so agents can separate completed task throughput from production E2E readiness, while shipping unified lifecycle skills as thin adapters for Codex and Claude Code.",
+    "source_sections": [
+      "D-03.2",
+      "D-26.1",
+      "D-26.2",
+      "D-26.3"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0055",
+    "acceptance": [
+      "aspec outcome --json emits schema agentspec.outcome_status.v0.",
+      "aspec outcome summarizes outcome readiness, blockers, and next actions.",
+      "Fresh projects include an agent/outcomes.yml seed artifact.",
+      "aspec status --json includes an outcomes section.",
+      "Generated AGENTS.md includes product outcome readiness and the outcome CLI command.",
+      "Quality GC reports a warning when product outcomes are not ready or outcome gates are blocked.",
+      "Codex and Claude plugin packages include CLI-backed lifecycle skills for outcome audit, workflow planning, verification, code review, and finishing.",
+      "Tests cover outcome status/reporting, quality integration, generated context, and plugin skill package layout."
+    ],
+    "code_targets": [
+      "agentspec/outcome.py",
+      "agentspec/cli.py",
+      "agentspec/status.py",
+      "agentspec/quality.py",
+      "agentspec/init.py",
+      "agentspec/paths.py",
+      "agentspec/emit.py",
+      "agentspec-codex-plugin/skills/**/SKILL.md",
+      "agentspec-claude-plugin/skills/**/SKILL.md"
+    ],
+    "test_targets": [
+      "tests/test_outcome_cli.py",
+      "tests/test_cli_workflow.py",
+      "tests/test_quality_gc.py",
+      "tests/test_claude_code_plugin.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-085-add-outcome-gates-and-unified-lifecycle-skills.md",
+      "agent/outcomes.yml",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0055-add-outcome-gates-and-unified-lifecycle-skills.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

@@ -1,8 +1,10 @@
 import contextlib
+import io
 import json
 import os
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import main
@@ -96,6 +98,7 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertEqual(main(["init"]), 0)
                 self.assertTrue((project / ".agentspec" / "config.yml").exists())
                 self.assertTrue((project / "agent" / "context-packs" / "template.md").exists())
+                self.assertTrue((project / "agent" / "outcomes.yml").exists())
 
                 self.assertEqual(main(["ingest", str(design)]), 0)
                 sections = load_data(project / "docs" / "source" / "sections.yml")
@@ -124,6 +127,8 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertIn("aspec compile", agents_text)
                 self.assertIn("Before final commit or task completion", agents_text)
                 self.assertIn("Requirements:", agents_text)
+                self.assertIn("Product outcomes:", agents_text)
+                self.assertIn("aspec outcome", agents_text)
                 self.assertIn("Next action:", agents_text)
                 self.assertTrue((project / "CLAUDE.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
@@ -136,6 +141,13 @@ class CliWorkflowTests(unittest.TestCase):
                 scan = load_data(project / "reports" / "doctor" / "repo-scan.yml")
                 self.assertEqual(scan["agent_context"]["status"], "fresh")
                 self.assertEqual(scan["project_invariants"]["status"], "not_configured")
+
+                status_output = io.StringIO()
+                with redirect_stdout(status_output):
+                    self.assertEqual(main(["status", "--json"]), 0)
+                status_payload = json.loads(status_output.getvalue())
+                self.assertIn("outcomes", status_payload)
+                self.assertEqual(status_payload["outcomes"]["readiness"], "not_configured")
 
                 self.assertEqual(main(["drift"]), 0)
                 self.assertTrue((project / "reports" / "drift" / "latest.md").exists())

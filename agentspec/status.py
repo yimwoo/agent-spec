@@ -8,6 +8,7 @@ from typing import Any
 from .dcr import list_dcrs
 from .handoff import load_project_handoff
 from .io import load_data
+from .outcome import build_outcome_status
 from .task import list_task_context_packs, next_task_context_pack
 
 
@@ -25,6 +26,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     tasks = list_task_context_packs(root)
     runs = _load_runs(root)
     next_task = next_task_context_pack(root)
+    outcomes = build_outcome_status(root)
 
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
@@ -40,6 +42,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             "mode": readiness.get("mode"),
             "summary": readiness.get("summary"),
         },
+        "outcomes": outcomes,
         "requirements": {
             "total": len(requirements),
             "by_status": _counts(record.get("status") for record in requirements),
@@ -84,12 +87,14 @@ def format_project_status(status: dict[str, Any]) -> str:
     dcrs = status.get("dcrs", {})
     tasks = status.get("tasks", {})
     runs = status.get("runs", {})
+    outcomes = status.get("outcomes", {})
 
     lines = [
         "AgentSpec Status",
         f"Root: {status.get('root')}",
         f"Overall: {status.get('overall')}",
         f"Readiness: {_readiness_text(readiness)}",
+        f"Product Outcomes: {_outcomes_text(outcomes)}",
         f"Requirements: {_count_text(requirements)}",
         f"DCRs: {_count_text(dcrs)}",
         f"Tasks: {_count_text(tasks)}",
@@ -305,6 +310,14 @@ def _count_text(section: Any) -> str:
         return f"{total} total"
     status_text = ", ".join(f"{key}={value}" for key, value in by_status.items())
     return f"{total} total ({status_text})"
+
+
+def _outcomes_text(outcomes: Any) -> str:
+    if not isinstance(outcomes, dict):
+        return "unknown"
+    score = outcomes.get("score")
+    score_text = f"{score}/100" if isinstance(score, int) else "n/a"
+    return f"{outcomes.get('readiness', 'unknown')} ({score_text})"
 
 
 def _next_text(next_task: Any) -> str:

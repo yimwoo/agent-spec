@@ -12,9 +12,14 @@ SKILL_NAMES = [
     "continue-work",
     "create-task",
     "drift-review",
+    "finish-work",
     "init-project",
     "manual-source-intake",
+    "outcome-audit",
+    "plan-workflow",
     "project-status",
+    "review-code",
+    "verify-work",
 ]
 
 
@@ -74,9 +79,12 @@ class ClaudeCodePluginTests(unittest.TestCase):
 
         for text in [
             "aspec status --json",
+            "aspec outcome --json",
             "aspec task next",
             "aspec run loop",
             "aspec task create",
+            "aspec review code",
+            "aspec task complete",
             "aspec compile",
             "aspec drift",
             "aspec intake import",

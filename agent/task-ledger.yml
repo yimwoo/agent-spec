@@ -883,6 +883,23 @@
         "path": "agent/reviews/REVIEW-0023.yml"
       },
       "updated_at": "2026-05-06T18:01:14Z"
+    },
+    "agent/context-packs/T-085-add-outcome-gates-and-unified-lifecycle-skills.md": {
+      "status": "complete",
+      "run_id": "complete-t-085-add-outcome-gates-and-unified-lifecycle-skills-20260510192131",
+      "reason": "R-190 completed in final state: product outcome gates, unified lifecycle skills, DCR/task traceability, and full pytest verification are in place.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0025",
+        "verdict": "ready",
+        "summary": "R-190 final state ready: outcome CLI/status/quality integration, lifecycle plugin skills, DCR/task traceability, completion evidence, and full pytest verification pass.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0025.yml"
+      },
+      "updated_at": "2026-05-10T19:21:31Z"
     }
   }
 }
