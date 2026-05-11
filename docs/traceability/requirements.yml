@@ -6070,5 +6070,98 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-205",
+    "title": "AgentSpec exposes a native lifecycle operating contract",
+    "description": "AgentSpec provides a native lifecycle operating contract surface and packaged skills that cover brainstorming, design, planning, branch/session start, workflow execution, delegation planning, verification, review, branch finish, and handoff/recovery without depending on HOTL or Superpowers state.",
+    "source_sections": [
+      "agentspec-hotl-integration-without-hotl-names:D-19",
+      "agentspec-hotl-integration-without-hotl-names:D-19.1",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0070",
+    "acceptance": [
+      "aspec lifecycle --json returns a schema-versioned lifecycle operating contract with stages, status, native commands, skill names, adapter boundary, and source inspirations.",
+      "Human aspec lifecycle output lists the lifecycle stages in order and shows which stages are available, partial, or planned.",
+      "Codex and Claude plugin packages include discoverable lifecycle skills for brainstorming, design, branch start, workflow execution, delegation planning, branch finish, and handoff/recovery.",
+      "Existing lifecycle skills remain CLI-backed and no plugin skill owns durable state outside AgentSpec artifacts.",
+      "Tests cover the lifecycle CLI JSON/human output and plugin skill package expansion."
+    ],
+    "code_targets": [
+      "agentspec/lifecycle.py",
+      "agentspec/cli.py",
+      "agentspec-codex-plugin/skills/**/SKILL.md",
+      "agentspec-claude-plugin/skills/**/SKILL.md"
+    ],
+    "test_targets": [
+      "tests/test_lifecycle_cli.py",
+      "tests/test_plugin_source_intake.py",
+      "tests/test_claude_code_plugin.py"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0070-add-native-lifecycle-operating-contract-surface.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md",
+      "agent/workflows/W-101-add-native-lifecycle-operating-contract-surface.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-206",
+    "title": "AgentSpec emits lifecycle-aligned repo-local skill guidance",
+    "description": "AgentSpec generated Claude and Codex artifacts reflect the native lifecycle operating contract. Generated Claude skills use specific skill frontmatter and CLI-backed workflows, while generated Codex artifacts point to packaged lifecycle skills without creating plugin-owned or project-local durable skill state.",
+    "source_sections": [
+      "agentspec-hotl-integration-without-hotl-names:D-19",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0071",
+    "acceptance": [
+      "aspec emit --target claude writes lifecycle-aligned repo-local Claude skills with specific frontmatter descriptions and CLI-backed workflows.",
+      "Generated Claude skills include aspec lifecycle --json guidance and cover status, source/compile, task/workflow planning, execution, verification, review, finish, and handoff/recovery.",
+      "aspec emit --target codex continues to avoid project-local Codex skill state but generated Codex agent instructions point to aspec lifecycle --json and packaged aspec:* lifecycle skills.",
+      "Generated skill bodies remain concise, command-specific, and do not claim ownership of durable state outside AgentSpec artifacts.",
+      "Tests cover generated skill names, frontmatter/body specificity, lifecycle command coverage, and the Codex no-local-skill boundary."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py",
+      "tests/test_plugin_source_intake.py"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0071-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "agent/workflows/W-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "test-eval-reviewer"
+    ]
   }
 ]

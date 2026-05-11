@@ -147,10 +147,22 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertIn("aspec outcome", agents_text)
                 self.assertIn("Next action:", agents_text)
                 self.assertTrue((project / "CLAUDE.md").exists())
+                self.assertIn(
+                    "aspec lifecycle --json",
+                    (project / "CLAUDE.md").read_text(encoding="utf-8"),
+                )
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-quality-gc-reviewer.md").exists())
+                self.assertTrue((project / ".claude" / "skills" / "agentspec-lifecycle" / "SKILL.md").exists())
+                self.assertTrue((project / ".claude" / "skills" / "agentspec-execute-workflow" / "SKILL.md").exists())
                 self.assertTrue((project / ".codex" / "agents" / "spec-reviewer.toml").exists())
                 self.assertTrue((project / ".codex" / "agents" / "quality-gc-reviewer.toml").exists())
+                self.assertIn(
+                    "aspec lifecycle --json",
+                    (project / ".codex" / "agents" / "spec-reviewer.toml").read_text(
+                        encoding="utf-8"
+                    ),
+                )
 
                 self.assertEqual(main(["doctor"]), 0)
                 self.assertTrue((project / "reports" / "doctor" / "repo-scan.yml").exists())

@@ -1,52 +1,52 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T05:34:53Z",
+  "updated_at": "2026-05-11T06:02:17Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-100",
-    "context_pack": "agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md",
-    "title": "T-100: Make handoff status portable across clean checkouts",
-    "run_id": "complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453",
-    "reason": "Portable handoff freshness fix completed for R-204/DCR-0069. New handoff writes omit local-only run counts, lifecycle stale handoff detection ignores legacy run-count mismatches, and verification passed.",
-    "updated_at": "2026-05-11T05:34:53Z",
+    "id": "T-102",
+    "context_pack": "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+    "title": "T-102: Align emitted repo-local skills with lifecycle contract",
+    "run_id": "complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217",
+    "reason": "Completed R-206/DCR-0071: generated Claude repo-local skills now follow lifecycle-aligned skill-authoring guidance, generated Codex agent instructions point to aspec lifecycle and packaged aspec:* skills, and tests cover generated skill quality and no-local-Codex-skill boundaries.",
+    "updated_at": "2026-05-11T06:02:17Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0045",
+      "id": "REVIEW-0047",
       "verdict": "ready",
-      "reviewer": "codex",
+      "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0045.yml"
+      "path": "agent/reviews/REVIEW-0047.yml"
     }
   },
   "current_state": {
-    "overall": "attention_needed",
-    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
+    "overall": "idle",
+    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 204,
+      "total": 206,
       "by_status": {
-        "accepted": 204
+        "accepted": 206
       }
     },
     "dcrs": {
-      "total": 69,
+      "total": 71,
       "by_status": {
-        "accepted": 69
+        "accepted": 71
       }
     },
     "tasks": {
-      "total": 98,
+      "total": 100,
       "by_status": {
-        "complete": 98
+        "complete": 100
       },
       "by_type": {
-        "implementation": 90,
+        "implementation": 92,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -66,6 +66,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0045.yml"
+    "last_code_review": "agent/reviews/REVIEW-0047.yml"
   }
 }
