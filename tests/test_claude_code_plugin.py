@@ -37,7 +37,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["name"], "aspec")
-        self.assertEqual(manifest["version"], "0.1.5")
+        self.assertEqual(manifest["version"], "0.1.6")
         self.assertIn("Claude Code", manifest["description"])
         self.assertIn("claude-code", manifest["keywords"])
         self.assertEqual(
@@ -50,6 +50,19 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 (PLUGIN_ROOT / "skills" / skill_name / "SKILL.md").exists(),
                 skill_name,
             )
+
+    def test_claude_marketplace_points_to_plugin_package(self) -> None:
+        marketplace_path = REPO_ROOT / ".claude-plugin" / "marketplace.json"
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(marketplace["name"], "agentspec")
+        self.assertEqual(marketplace["owner"]["name"], "AgentSpec")
+        self.assertEqual(len(marketplace["plugins"]), 1)
+
+        plugin = marketplace["plugins"][0]
+        self.assertEqual(plugin["name"], "aspec")
+        self.assertEqual(plugin["source"], "./agentspec-claude-plugin")
+        self.assertIn("AgentSpec", plugin["description"])
 
     def test_claude_plugin_skills_have_discoverable_frontmatter(self) -> None:
         for skill_name in SKILL_NAMES:

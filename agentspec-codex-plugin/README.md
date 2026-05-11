@@ -1,47 +1,94 @@
-# aspec Codex Plugin
+# AgentSpec For Codex
 
-This plugin packages Codex skills for AgentSpec workflows while keeping the
-core CLI as the source of truth. Users can run the CLI directly or ask Codex to
-use the matching plugin skill.
+This plugin gives Codex the `aspec:*` skills for initializing and continuing
+AgentSpec-governed repositories. The plugin is a thin adapter: Codex follows
+the packaged skills, but the `aspec` CLI remains the source of truth.
 
 Install or load this directory as the plugin package. It contains only the
 Codex plugin manifest, this README, and the `skills/` tree; it does not include
 the AgentSpec engine repository's private `agent/`, `reports/`, `.codex/`,
 `.claude/`, `.agentspec/`, or generated design/traceability docs.
 
-## Prompt-first usage
+## Install First
 
-After the plugin is installed, the human-facing interface is a prompt. Codex
-uses the packaged `aspec:*` skills and runs the underlying `aspec --root ...`
-commands.
+From the repository root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec-engine/main/install.sh | bash
+```
+
+Restart Codex, open **Plugins > Local Plugins**, and install `aspec`. Then make
+sure the CLI is available:
+
+```bash
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+```
+
+For local development, load this plugin directory directly from your checkout
+and keep an editable CLI install active:
+
+```bash
+pip install -e .
+```
+
+## Try This In Codex
 
 For a new project:
 
 ```text
-Use AgentSpec to initialize this repository. The design source is at
+Use aspec:init-project to initialize this repository. The design source is at
 docs/source/design.md. Set up Codex and Claude agent guidance, compile the
 requirements, report readiness/open questions, and propose the first task
-context packs.
+context packs. Do not start implementation until the task scope and allowed
+paths are clear.
 ```
 
 For an existing AgentSpec project:
 
 ```text
-Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
-pick the next ready task pack, follow its allowed paths, verify, review,
-finish, and refresh roadmap/handoff state.
+Use aspec:continue-work to continue this repository. Read AGENTS.md, run
+project status, pick the next ready task pack, follow its allowed paths, run
+verification, record review evidence, finish the task, and refresh
+roadmap/handoff state.
 ```
 
 For a new design update:
 
 ```text
-Use AgentSpec to process this design update: <path-or-export>. Import it as a
-candidate or DCR, diff it against the accepted source, summarize the impact,
-and prepare the next task pack. Ask before promoting accepted source.
+Use aspec:manual-source-intake to process this design update: <path-or-export>.
+Import it as a candidate or DCR, diff it against the accepted source, summarize
+the impact, and prepare the next task pack. Ask before promoting accepted
+source.
 ```
 
-Codex should report the requirement IDs, task pack path, allowed paths,
+Codex should report requirement IDs, task pack path, allowed paths,
 verification result, review ID, and handoff/roadmap status.
+
+## What Codex Will Create
+
+The plugin does not copy project state into the user's repository. When Codex
+initializes a target repo through AgentSpec, the target repo receives the
+governance files it needs:
+
+```text
+your-project/
+|-- AGENTS.md
+|-- CLAUDE.md
+|-- .agentspec/config.yml
+|-- .codex/agents/
+|-- .claude/agents/
+|-- .claude/skills/
+|-- agent/context-packs/
+|-- agent/roles/
+|-- agent/runs/
+|-- agent/workflows/
+|-- docs/source/
+|-- docs/traceability/
+`-- reports/
+```
+
+Task ledgers, handoff records, review evidence, and `docs/ROADMAP.md` appear
+as AgentSpec plans, runs, reviews, and finishes work.
 
 ## Initialize a repository
 
@@ -53,7 +100,7 @@ repo needs an AgentSpec baseline.
 ```bash
 TARGET=/path/to/repo
 aspec --root "$TARGET" init --mode greenfield --targets claude,codex
-aspec --root "$TARGET" ingest docs/source/design.md
+aspec --root "$TARGET" ingest "$TARGET/docs/source/design.md"
 aspec --root "$TARGET" compile
 aspec --root "$TARGET" emit --target claude,codex
 aspec --root "$TARGET" status

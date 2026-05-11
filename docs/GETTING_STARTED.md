@@ -75,6 +75,43 @@ The sections below show the CLI commands behind those prompts. Humans can run
 them directly, but the intended product experience is that an installed code
 agent plugin runs them consistently.
 
+## Install Plugin First
+
+AgentSpec ships code-agent plugins plus the CLI they call. Install or load a
+plugin first, then make sure `aspec` is available on `PATH`.
+
+Codex:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec-engine/main/install.sh | bash
+```
+
+Restart Codex, open **Plugins > Local Plugins**, and install `aspec`.
+
+Claude Code:
+
+```text
+/plugin marketplace add yimwoo/agent-spec-engine
+/plugin install aspec@agentspec
+```
+
+If GitHub SSH is not configured:
+
+```text
+/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git
+/plugin install aspec@agentspec
+```
+
+Then install the CLI:
+
+```bash
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+```
+
+The plugin packages contain only manifests, READMEs, and skills. This
+repository's private dogfood state is not part of either plugin package and is
+not copied into a user's target project.
+
 ## Bootstrap A Project
 
 If you are driving the CLI directly from a development checkout, install it
@@ -90,13 +127,10 @@ For normal GitHub-based CLI install:
 pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
 ```
 
-If you use a code-agent plugin, load the plugin directory itself:
+For plugin development from a local checkout, load the plugin directory itself:
 
 - Codex: `agentspec-codex-plugin/`
 - Claude Code: `agentspec-claude-plugin/`
-
-Those plugin packages contain only plugin manifests, READMEs, and skills. This
-repository's private dogfood state is not part of either plugin package.
 
 When prompted to initialize a new project, the code agent should run the same
 kind of sequence in the target repository:

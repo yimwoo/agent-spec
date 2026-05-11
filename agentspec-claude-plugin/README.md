@@ -1,51 +1,38 @@
-# aspec Claude Code Plugin
+# AgentSpec For Claude Code
 
-This plugin packages Claude Code skills for AgentSpec workflows while keeping
-the core CLI as the source of truth. Users can run the CLI directly or load the
-plugin and invoke the matching namespaced skill, such as `/aspec:init-project`.
+This plugin gives Claude Code the `/aspec:*` skills for initializing and
+continuing AgentSpec-governed repositories. The plugin is a thin adapter:
+Claude Code follows the packaged skills, but the `aspec` CLI remains the source
+of truth.
 
 Install or load this directory as the plugin package. It contains only the
 Claude plugin manifest, this README, and the `skills/` tree; it does not
 include the AgentSpec engine repository's private `agent/`, `reports/`,
 `.codex/`, `.claude/`, `.agentspec/`, or generated design/traceability docs.
 
-## Prompt-first usage
+## Install First
 
-After the plugin is loaded, the human-facing interface is a prompt. Claude Code
-uses the packaged `/aspec:*` skills and runs the underlying `aspec --root ...`
-commands.
-
-For a new project:
+Marketplace install inside Claude Code:
 
 ```text
-Use AgentSpec to initialize this repository. The design source is at
-docs/source/design.md. Set up Codex and Claude agent guidance, compile the
-requirements, report readiness/open questions, and propose the first task
-context packs.
+/plugin marketplace add yimwoo/agent-spec-engine
+/plugin install aspec@agentspec
 ```
 
-For an existing AgentSpec project:
+If GitHub SSH is not configured, use the HTTPS repository URL:
 
 ```text
-Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
-pick the next ready task pack, follow its allowed paths, verify, review,
-finish, and refresh roadmap/handoff state.
+/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git
+/plugin install aspec@agentspec
 ```
 
-For a new design update:
+Then make sure the CLI is available:
 
-```text
-Use AgentSpec to process this design update: <path-or-export>. Import it as a
-candidate or DCR, diff it against the accepted source, summarize the impact,
-and prepare the next task pack. Ask before promoting accepted source.
+```bash
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
 ```
 
-Claude Code should report the requirement IDs, task pack path, allowed paths,
-verification result, review ID, and handoff/roadmap status.
-
-## Local development
-
-Validate the plugin:
+For local development, validate the plugin:
 
 ```bash
 claude plugin validate agentspec-claude-plugin
@@ -60,6 +47,68 @@ claude --plugin-dir ./agentspec-claude-plugin
 Claude Code exposes plugin skills with the plugin namespace, so
 `skills/init-project/SKILL.md` is invoked as `/aspec:init-project`.
 
+## Try This In Claude Code
+
+For a new project:
+
+```text
+/aspec:init-project
+
+Initialize this repository. The design source is at docs/source/design.md. Set
+up Codex and Claude agent guidance, compile the requirements, report
+readiness/open questions, and propose the first task context packs. Do not
+start implementation until the task scope and allowed paths are clear.
+```
+
+For an existing AgentSpec project:
+
+```text
+/aspec:continue-work
+
+Continue this repository. Read AGENTS.md, run project status, pick the next
+ready task pack, follow its allowed paths, run verification, record review
+evidence, finish the task, and refresh roadmap/handoff state.
+```
+
+For a new design update:
+
+```text
+/aspec:manual-source-intake
+
+Process this design update: <path-or-export>. Import it as a candidate or DCR,
+diff it against the accepted source, summarize the impact, and prepare the next
+task pack. Ask before promoting accepted source.
+```
+
+Claude Code should report requirement IDs, task pack path, allowed paths,
+verification result, review ID, and handoff/roadmap status.
+
+## What Claude Code Will Create
+
+The plugin does not copy project state into the user's repository. When Claude
+Code initializes a target repo through AgentSpec, the target repo receives the
+governance files it needs:
+
+```text
+your-project/
+|-- AGENTS.md
+|-- CLAUDE.md
+|-- .agentspec/config.yml
+|-- .codex/agents/
+|-- .claude/agents/
+|-- .claude/skills/
+|-- agent/context-packs/
+|-- agent/roles/
+|-- agent/runs/
+|-- agent/workflows/
+|-- docs/source/
+|-- docs/traceability/
+`-- reports/
+```
+
+Task ledgers, handoff records, review evidence, and `docs/ROADMAP.md` appear
+as AgentSpec plans, runs, reviews, and finishes work.
+
 ## Initialize a repository
 
 Use this when a repo does not yet have AgentSpec artifacts, or when an existing
@@ -70,7 +119,7 @@ repo needs an AgentSpec baseline.
 ```bash
 TARGET=/path/to/repo
 aspec --root "$TARGET" init --mode greenfield --targets claude,codex
-aspec --root "$TARGET" ingest docs/source/design.md
+aspec --root "$TARGET" ingest "$TARGET/docs/source/design.md"
 aspec --root "$TARGET" compile
 aspec --root "$TARGET" emit --target claude,codex
 aspec --root "$TARGET" status

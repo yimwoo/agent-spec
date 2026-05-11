@@ -1,0 +1,16 @@
+{
+  "name": "agentspec",
+  "owner": {
+    "name": "AgentSpec"
+  },
+  "metadata": {
+    "description": "Repo-local product memory and task governance for Codex and Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "aspec",
+      "source": "./agentspec-claude-plugin",
+      "description": "Run AgentSpec workflows from Claude Code without bypassing repository governance."
+    }
+  ]
+}
