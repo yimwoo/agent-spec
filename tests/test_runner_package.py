@@ -201,7 +201,7 @@ class RunnerPackageTests(unittest.TestCase):
             executor_event = next(event for event in events if event["kind"] == "executor_output")
             self.assertEqual(executor_event["reported_touched_paths"], ["agentspec/runner.py"])
             self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
-            self.assertIn("docs/source/", executor_event["touched_paths"])
+            self.assertIn("docs/source/sections.yml", executor_event["touched_paths"])
 
     def test_submit_runner_result_ignores_unchanged_dirty_paths_from_run_start(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -276,6 +276,45 @@ class RunnerPackageTests(unittest.TestCase):
             events = _events(root, "pkg-research-dirty-changed")
             executor_event = next(event for event in events if event["kind"] == "executor_output")
             self.assertIn("README.md", executor_event["touched_paths"])
+
+    def test_submit_runner_result_flags_new_file_inside_dirty_untracked_dir_after_run_start(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            _git(root, "init")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
+            (root / "scratch").mkdir()
+            (root / "scratch" / "before.txt").write_text("dirty before run\n", encoding="utf-8")
+            start_research_run(root, run_id="pkg-research-dirty-dir")
+            (root / "scratch" / "during.txt").write_text("changed during run\n", encoding="utf-8")
+            (root / "docs" / "change-requests").mkdir(parents=True, exist_ok=True)
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            package = submit_runner_result(
+                root,
+                "pkg-research-dirty-dir",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "stop")
+            self.assertEqual(package["step"]["state"]["status"], "halted")
+            review = package["step"]["review"]
+            self.assertEqual(review["decision"], "halt")
+            self.assertIn("forbidden_path", review["policy_flags"])
+            events = _events(root, "pkg-research-dirty-dir")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertIn("scratch/during.txt", executor_event["touched_paths"])
+            self.assertNotIn("scratch/before.txt", executor_event["touched_paths"])
 
     def test_invalid_runner_result_is_rejected_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:

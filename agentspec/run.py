@@ -1152,7 +1152,7 @@ def controller_observed_touched_paths(
 def _git_changed_path_signatures(root: Path) -> tuple[bool, dict[str, str]]:
     try:
         completed = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=all"],
             cwd=root,
             text=True,
             capture_output=True,

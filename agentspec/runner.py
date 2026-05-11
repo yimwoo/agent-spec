@@ -584,7 +584,7 @@ def _git_changed_paths(root: Path) -> list[str]:
 def _git_changed_paths_with_status(root: Path) -> tuple[bool, list[str]]:
     try:
         completed = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=all"],
             cwd=root,
             text=True,
             capture_output=True,
