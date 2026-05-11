@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.quality_gc_report.v0",
-  "generated_at": "2026-05-11T05:26:53Z",
+  "generated_at": "2026-05-11T06:02:36Z",
   "grade": "B",
   "summary": "0 error(s), 8 warning(s), 1 info finding(s).",
   "findings": [
@@ -87,31 +87,31 @@
     }
   ],
   "project_status": {
-    "overall": "attention_needed",
+    "overall": "idle",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 203,
+      "total": 206,
       "by_status": {
-        "accepted": 203
+        "accepted": 206
       }
     },
     "dcrs": {
-      "total": 68,
+      "total": 71,
       "by_status": {
-        "accepted": 68
+        "accepted": 71
       }
     },
     "tasks": {
-      "total": 97,
+      "total": 100,
       "by_status": {
-        "complete": 97
+        "complete": 100
       },
       "by_type": {
-        "implementation": 89,
+        "implementation": 92,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -119,13 +119,14 @@
       }
     },
     "runs": {
-      "total": 3,
+      "total": 116,
       "by_status": {
-        "complete": 3
+        "aborted": 6,
+        "complete": 110
       },
       "by_mode": {
         "research": 1,
-        "supervised": 2
+        "supervised": 115
       }
     },
     "outcomes": {
@@ -152,18 +153,18 @@
   "handoff": {
     "present": true,
     "path": "agent/handoff.yml",
-    "updated_at": "2026-05-11T05:26:52Z",
-    "last_completed_task": "T-099",
+    "updated_at": "2026-05-11T06:02:17Z",
+    "last_completed_task": "T-102",
     "next_action": "idle",
     "next_command": "aspec status --json"
   },
   "cadence": {
     "task_interval": 3,
-    "completed_tasks": 97,
-    "completed_tasks_at_last_quality": 94,
-    "completed_tasks_since_last_quality": 3,
-    "was_due": true,
-    "next_recommended_completed_tasks": 100
+    "completed_tasks": 100,
+    "completed_tasks_at_last_quality": 100,
+    "completed_tasks_since_last_quality": 0,
+    "was_due": false,
+    "next_recommended_completed_tasks": 103
   },
   "reports": {
     "structured": "reports/quality/latest.yml",

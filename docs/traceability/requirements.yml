@@ -6119,5 +6119,49 @@
       "architect-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-206",
+    "title": "AgentSpec emits lifecycle-aligned repo-local skill guidance",
+    "description": "AgentSpec generated Claude and Codex artifacts reflect the native lifecycle operating contract. Generated Claude skills use specific skill frontmatter and CLI-backed workflows, while generated Codex artifacts point to packaged lifecycle skills without creating plugin-owned or project-local durable skill state.",
+    "source_sections": [
+      "agentspec-hotl-integration-without-hotl-names:D-19",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0071",
+    "acceptance": [
+      "aspec emit --target claude writes lifecycle-aligned repo-local Claude skills with specific frontmatter descriptions and CLI-backed workflows.",
+      "Generated Claude skills include aspec lifecycle --json guidance and cover status, source/compile, task/workflow planning, execution, verification, review, finish, and handoff/recovery.",
+      "aspec emit --target codex continues to avoid project-local Codex skill state but generated Codex agent instructions point to aspec lifecycle --json and packaged aspec:* lifecycle skills.",
+      "Generated skill bodies remain concise, command-specific, and do not claim ownership of durable state outside AgentSpec artifacts.",
+      "Tests cover generated skill names, frontmatter/body specificity, lifecycle command coverage, and the Codex no-local-skill boundary."
+    ],
+    "code_targets": [
+      "agentspec/emit.py"
+    ],
+    "test_targets": [
+      "tests/test_cli_workflow.py",
+      "tests/test_plugin_source_intake.py"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0071-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "agent/workflows/W-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "spec-compiler",
+      "test-eval-reviewer"
+    ]
   }
 ]

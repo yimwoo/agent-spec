@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T05:54:04Z
-- Last completed task: `T-101` agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md
-- Last run: `complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404`
+- Updated: 2026-05-11T06:02:17Z
+- Last completed task: `T-102` agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md
+- Last run: `complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -114,18 +114,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md` | complete | `complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652` | passed | REVIEW-0044 | 2026-05-11T05:26:52Z |
 | `agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md` | complete | `complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453` | passed | REVIEW-0045 | 2026-05-11T05:34:53Z |
 | `agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md` | complete | `complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404` | passed | REVIEW-0046 | 2026-05-11T05:54:04Z |
+| `agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md` | complete | `complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217` | passed | REVIEW-0047 | 2026-05-11T06:02:17Z |
 
 ## Requirement Traceability
 
-- Requirements: 205
-- By status: accepted=205
-- By priority: P0=62, P1=61, P2=80, P3=2
+- Requirements: 206
+- By status: accepted=206
+- By priority: P0=63, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
 | `R-197` | P0 | accepted | AgentSpec centralizes completion write-back helpers |
 | `R-198` | P0 | accepted | AgentSpec exposes a finish orchestrator over completion write-back |
 | `R-199` | P0 | accepted | AgentSpec preserves manual roadmap content in generated-block mode |
@@ -135,3 +135,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-203` | P0 | accepted | AgentSpec supports its own end-to-end lifecycle dogfood workflow |
 | `R-204` | P0 | accepted | AgentSpec handoff freshness is portable across clean checkouts |
 | `R-205` | P0 | accepted | AgentSpec exposes a native lifecycle operating contract |
+| `R-206` | P0 | accepted | AgentSpec emits lifecycle-aligned repo-local skill guidance |

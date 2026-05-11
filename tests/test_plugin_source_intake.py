@@ -4,7 +4,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from agentspec.emit import emit_targets
+from agentspec.emit import EMITTED_CLAUDE_SKILLS, emit_targets
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -116,10 +116,58 @@ class PluginSourceIntakeTests(unittest.TestCase):
 
                 self.assertIn("\ndeveloper_instructions =", role_text)
                 self.assertIn("developer_instructions", role_config)
+                self.assertIn("aspec lifecycle --json", role_config["developer_instructions"])
+                self.assertIn("aspec:execute-workflow", role_config["developer_instructions"])
+                self.assertIn("Do not create project-local Codex skill state", role_config["developer_instructions"])
                 self.assertNotIn("instructions", role_config)
             self.assertFalse(
                 list((root / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
             )
+            self.assertFalse(list((root / ".codex" / "skills").glob("*/SKILL.md")))
+
+    def test_emit_claude_generates_lifecycle_aligned_project_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            written = emit_targets(root, "claude")
+            skill_names = [skill["name"] for skill in EMITTED_CLAUDE_SKILLS]
+
+            self.assertIn("agentspec-lifecycle", skill_names)
+            self.assertIn("agentspec-execute-workflow", skill_names)
+            self.assertIn("agentspec-handoff-recovery", skill_names)
+            for skill_name in skill_names:
+                skill_path = root / ".claude" / "skills" / skill_name / "SKILL.md"
+                self.assertIn(skill_path, written)
+                text = skill_path.read_text(encoding="utf-8")
+                frontmatter = _frontmatter(text)
+
+                self.assertEqual(frontmatter.get("name"), skill_name)
+                self.assertIn("description", frontmatter)
+                self.assertNotEqual(frontmatter["description"], "AgentSpec helper skill generated for this repository.")
+                self.assertLessEqual(len(frontmatter["description"]), 1536)
+                self.assertIn("## Commands", text)
+                self.assertIn("Boundary:", text)
+                self.assertNotIn("Run the matching AgentSpec CLI command", text)
+
+            combined = "\n".join(
+                (root / ".claude" / "skills" / skill_name / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+                for skill_name in skill_names
+            )
+            for command in [
+                "aspec lifecycle --json",
+                "aspec status --json",
+                "aspec compile",
+                "aspec intake import",
+                "aspec plan",
+                "aspec run loop",
+                "aspec outcome --json",
+                "aspec review code",
+                "aspec finish",
+                "aspec next-action",
+                "aspec drift",
+            ]:
+                self.assertIn(command, combined)
 
     def test_repo_does_not_ship_project_local_agentspec_skills(self) -> None:
         local_skills = list((REPO_ROOT / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
@@ -164,6 +212,21 @@ class PluginSourceIntakeTests(unittest.TestCase):
         self.assertIn("aspec:finish-work", combined)
         self.assertIn("aspec:handoff-recovery", combined)
         self.assertNotIn("agentspec-codex-plugin:", combined)
+
+
+def _frontmatter(text: str) -> dict[str, str]:
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return {}
+    out: dict[str, str] = {}
+    for line in lines[1:]:
+        if line == "---":
+            return out
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        out[key.strip()] = value.strip()
+    return out
 
 
 if __name__ == "__main__":

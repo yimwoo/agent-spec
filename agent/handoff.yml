@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T05:54:04Z",
+  "updated_at": "2026-05-11T06:02:17Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-101",
-    "context_pack": "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md",
-    "title": "T-101: Add native lifecycle operating contract surface",
-    "run_id": "complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404",
-    "reason": "Completed R-205/DCR-0070: added native lifecycle operating contract CLI, lifecycle schema/formatter tests, and Codex/Claude lifecycle adapter skills inspired by broader agent lifecycle practices without plugin-owned durable state.",
-    "updated_at": "2026-05-11T05:54:04Z",
+    "id": "T-102",
+    "context_pack": "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
+    "title": "T-102: Align emitted repo-local skills with lifecycle contract",
+    "run_id": "complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217",
+    "reason": "Completed R-206/DCR-0071: generated Claude repo-local skills now follow lifecycle-aligned skill-authoring guidance, generated Codex agent instructions point to aspec lifecycle and packaged aspec:* skills, and tests cover generated skill quality and no-local-Codex-skill boundaries.",
+    "updated_at": "2026-05-11T06:02:17Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0046",
+      "id": "REVIEW-0047",
       "verdict": "ready",
       "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0046.yml"
+      "path": "agent/reviews/REVIEW-0047.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 205,
+      "total": 206,
       "by_status": {
-        "accepted": 205
+        "accepted": 206
       }
     },
     "dcrs": {
-      "total": 70,
+      "total": 71,
       "by_status": {
-        "accepted": 70
+        "accepted": 71
       }
     },
     "tasks": {
-      "total": 99,
+      "total": 100,
       "by_status": {
-        "complete": 99
+        "complete": 100
       },
       "by_type": {
-        "implementation": 91,
+        "implementation": 92,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -66,6 +66,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0046.yml"
+    "last_code_review": "agent/reviews/REVIEW-0047.yml"
   }
 }
