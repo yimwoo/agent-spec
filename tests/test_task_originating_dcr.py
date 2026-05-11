@@ -98,6 +98,35 @@ def _seed_workspace(root: Path) -> None:
 
 
 class TaskOriginatingDCRTests(unittest.TestCase):
+    def test_pack_infers_requirement_originating_dcr_and_cites_it(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            _write_dcr(
+                root / "docs" / "change-requests" / "DCR-0099-test.md", "implement-now"
+            )
+
+            path = create_task_context_pack(root, requirement_id="R-121")
+
+            self.assertTrue(path.exists())
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("Originating DCR: `DCR-0099`", text)
+
+    def test_inferred_requirement_originating_dcr_must_be_eligible(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            _write_dcr(
+                root / "docs" / "change-requests" / "DCR-0099-test.md", "defer"
+            )
+
+            with self.assertRaises(ValueError) as ctx:
+                create_task_context_pack(root, requirement_id="R-121")
+
+            self.assertIn("DCR-0099", str(ctx.exception))
+            self.assertIn("not implementation-eligible", str(ctx.exception))
+            self.assertEqual(list((root / "agent" / "context-packs").glob("T-*.md")), [])
+
     def test_pack_with_implement_now_dcr_succeeds_and_cites_dcr(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

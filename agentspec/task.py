@@ -38,10 +38,11 @@ def create_task_context_pack(
     assumptions = [assumption for assumption in load_data(root / "docs" / "discovery" / "assumptions.yml", []) if assumption.get("status") == "accepted"]
     readiness = load_data(root / "docs" / "discovery" / "readiness.yml", {"score": 0})
 
-    if originating_dcr is not None:
-        _enforce_dcr_eligibility(root, originating_dcr)
-
     selected_requirements = _select_requirements(requirements, requirement_id, None) if requirement_id else []
+    pack_originating_dcr = _resolve_pack_originating_dcr(selected_requirements, originating_dcr)
+    if pack_originating_dcr is not None:
+        _enforce_dcr_eligibility(root, pack_originating_dcr)
+
     if task_type == "implementation" and selected_requirements and int(readiness.get("score", 0)) < 60:
         raise ValueError("Readiness is below 60; create discovery, spike, or scaffold tasks until the gate passes.")
 
@@ -57,7 +58,7 @@ def create_task_context_pack(
     else:
         task_title = "Discovery Task"
     path = root / "agent" / "context-packs" / f"{task_id}-{slugify(task_title)}.md"
-    text = _pack_text(root, task_id, task_title, task_type, selected_requirements, sections, sources, assumptions, originating_dcr)
+    text = _pack_text(root, task_id, task_title, task_type, selected_requirements, sections, sources, assumptions, pack_originating_dcr)
     write_text(path, text)
     return path
 
@@ -75,13 +76,17 @@ def create_task_context_pack_from_workflow(
     requirements = load_data(root / "docs" / "traceability" / "requirements.yml", [])
     readiness = load_data(root / "docs" / "discovery" / "readiness.yml", {"score": 0})
     selected_requirements = _select_requirements(requirements, requirement_id, None) if requirement_id else []
+    pack_originating_dcr = _resolve_pack_originating_dcr(selected_requirements, None)
+    if pack_originating_dcr is not None:
+        _enforce_dcr_eligibility(root, pack_originating_dcr)
+
     if task_type == "implementation" and selected_requirements and int(readiness.get("score", 0)) < 60:
         raise ValueError("Readiness is below 60; create discovery, spike, or scaffold tasks until the gate passes.")
 
     task_id = _next_task_id(root)
     task_title = title or str(workflow.get("title") or "Workflow Backfill Task")
     path = root / "agent" / "context-packs" / f"{task_id}-{slugify(task_title)}.md"
-    text = _workflow_pack_text(root, task_id, task_title, task_type, selected_requirements, workflow)
+    text = _workflow_pack_text(root, task_id, task_title, task_type, selected_requirements, workflow, pack_originating_dcr)
     write_text(path, text)
     return path
 
@@ -181,6 +186,34 @@ def _enforce_dcr_eligibility(root: Path, dcr_id: str) -> None:
             f"DCR-0002 / R-123 require classification=implement-now, "
             f"or needs-adr with status=accepted."
         )
+
+
+def _resolve_pack_originating_dcr(
+    requirements: list[dict[str, Any]],
+    explicit_originating_dcr: str | None,
+) -> str | None:
+    requirement_dcrs = sorted(
+        {
+            str(requirement.get("originating_dcr"))
+            for requirement in requirements
+            if isinstance(requirement.get("originating_dcr"), str)
+            and requirement.get("originating_dcr")
+        }
+    )
+    if explicit_originating_dcr and requirement_dcrs and explicit_originating_dcr not in requirement_dcrs:
+        joined = ", ".join(requirement_dcrs)
+        raise ValueError(
+            "Cannot create context pack: explicit originating DCR "
+            f"{explicit_originating_dcr} does not match selected requirement "
+            f"originating_dcr value(s): {joined}."
+        )
+    if len(requirement_dcrs) > 1 and explicit_originating_dcr is None:
+        joined = ", ".join(requirement_dcrs)
+        raise ValueError(
+            "Cannot create context pack from requirements with multiple "
+            f"originating DCRs without an explicit selection: {joined}."
+        )
+    return explicit_originating_dcr or (requirement_dcrs[0] if requirement_dcrs else None)
 
 
 def _select_requirements(requirements: list[dict[str, Any]], requirement_id: str | None, title: str | None) -> list[dict[str, Any]]:
@@ -469,6 +502,7 @@ def _workflow_pack_text(
     task_type: str,
     requirements: list[dict[str, Any]],
     workflow: dict[str, Any],
+    originating_dcr: str | None = None,
 ) -> str:
     workflow_path = str(workflow.get("workflow_path") or workflow.get("path") or "")
     allowed_paths = _dedupe_paths(
@@ -491,6 +525,10 @@ def _workflow_pack_text(
         "Slice: `unassigned`",
         "Branch: `unassigned`",
         f"Workflow: `{workflow_path}`",
+    ]
+    if originating_dcr:
+        out.append(f"Originating DCR: `{originating_dcr}`")
+    out.extend([
         "",
         "## Goal",
         "",
@@ -498,7 +536,7 @@ def _workflow_pack_text(
         "",
         "## Requirements",
         "",
-    ]
+    ])
     if requirements:
         for requirement in requirements:
             out.append(f"- `{requirement['id']}` {requirement['title']} ({requirement['priority']}, {requirement['confidence']})")
