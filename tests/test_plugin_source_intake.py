@@ -72,9 +72,31 @@ class PluginSourceIntakeTests(unittest.TestCase):
             "aspec:init-project",
             "aspec status",
             "aspec:continue-work",
+            "Codex CLI",
+            "/plugins",
+            "Codex app",
+            "Plugins > Local Plugins",
         ]:
             self.assertIn(text, readme)
         self.assertNotIn("agentspec-codex-plugin:", readme)
+
+    def test_codex_installer_documents_cli_and_app_next_steps(self) -> None:
+        script_path = REPO_ROOT / "install.sh"
+        result = subprocess.run(
+            ["bash", "-n", str(script_path)],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Codex CLI", script)
+        self.assertIn("/plugins", script)
+        self.assertIn("Codex app", script)
+        self.assertIn("Plugins > Local Plugins", script)
 
     def test_init_and_continue_skills_are_cli_backed(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"
