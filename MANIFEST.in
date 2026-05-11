@@ -1,0 +1,21 @@
+include README.md
+include pyproject.toml
+recursive-include agentspec *.py
+recursive-exclude * __pycache__ *.py[cod] .DS_Store
+prune .agents
+prune .agentspec
+prune .claude
+prune .codex
+prune agent
+prune build
+prune dist
+prune docs/adr
+prune docs/change-requests
+prune docs/designs
+prune docs/discovery
+prune docs/plans
+prune docs/source
+prune docs/spec
+prune docs/traceability
+prune reports
+prune tests

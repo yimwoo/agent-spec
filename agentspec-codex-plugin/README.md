@@ -4,6 +4,11 @@ This plugin packages Codex skills for AgentSpec workflows while keeping the
 core CLI as the source of truth. Users can run the CLI directly or ask Codex to
 use the matching plugin skill.
 
+Install or load this directory as the plugin package. It contains only the
+Codex plugin manifest, this README, and the `skills/` tree; it does not include
+the AgentSpec engine repository's private `agent/`, `reports/`, `.codex/`,
+`.claude/`, `.agentspec/`, or generated design/traceability docs.
+
 ## Prompt-first usage
 
 After the plugin is installed, the human-facing interface is a prompt. Codex

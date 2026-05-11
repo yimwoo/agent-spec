@@ -19,30 +19,54 @@ Code agents work best when the operating contract is explicit:
 - what verification and review evidence is required
 - what should be handed to the next human or agent
 
-AgentSpec keeps that contract in committed artifacts: `docs/source/`,
-`docs/traceability/requirements.yml`, `agent/context-packs/`,
-`agent/task-ledger.yml`, `agent/handoff.yml`, and `docs/ROADMAP.md`.
+In a target project, AgentSpec keeps that contract in repo-local artifacts such
+as `docs/source/`, `docs/traceability/requirements.yml`,
+`agent/context-packs/`, `agent/task-ledger.yml`, `agent/handoff.yml`, and
+`docs/ROADMAP.md`.
+
+This distribution repository intentionally does not publish its own dogfood
+AgentSpec state. Public clones contain the CLI, tests, human-facing docs, and
+the Codex/Claude plugin packages; generated `agent/`, `reports/`, `.codex/`,
+`.claude/`, `.agentspec/`, design, plan, traceability, and source snapshot
+artifacts stay local.
 
 This README is the front door. The deeper human guide is
 [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ## Install
 
+Install the CLI from a checkout while developing:
+
 ```bash
 pip install -e .
 ```
 
-This exposes `aspec` and `agentspec` on `PATH`. They are the same CLI. If you
-do not want to install the package, use:
+Or install from GitHub:
+
+```bash
+pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+```
+
+Both expose `aspec` and `agentspec` on `PATH`. They are the same CLI. If you do
+not want to install the package, use:
 
 ```bash
 python -m agentspec.cli --help
 ```
 
-The Codex and Claude plugin packages are in `agentspec-codex-plugin/` and
-`agentspec-claude-plugin/`. After installing or loading a plugin, the normal
-human interface is a prompt to the code agent. The agent runs `aspec`, reads the
-repo-local artifacts, and reports evidence back.
+## Code Agent Plugins
+
+The Codex and Claude Code plugin packages are in `agentspec-codex-plugin/` and
+`agentspec-claude-plugin/`.
+
+Load or install the plugin directory itself, not the repository root. Each
+plugin package contains only its manifest, README, and `skills/` files. It does
+not ship this repository's private `agent/`, `docs/source/`, `reports/`,
+`.codex/`, `.claude/`, or `.agentspec/` state.
+
+After installing or loading a plugin, the normal human interface is a prompt to
+the code agent. The agent runs `aspec`, reads the target repository's
+AgentSpec artifacts, and reports evidence back.
 
 ## Prompt-First Quickstart
 
@@ -138,9 +162,9 @@ Core commands:
 | Finish | `aspec finish`, `aspec task complete` |
 | Recovery | `aspec next-action`, `aspec continue` |
 
-The lifecycle surface is covered by `R-205`. The end-to-end dogfood workflow is
-covered by `R-203`. The prompt-first code-agent workflow is covered by `R-208`.
-This README and the human guide are covered by `R-207`.
+The lifecycle surface is part of the CLI contract. Plugins and emitted local
+agent guidance should call these commands rather than maintaining a parallel
+state store.
 
 ## Project Model
 
@@ -157,28 +181,26 @@ AgentSpec separates incoming design material from accepted repo-local truth:
 - **Review + finish evidence**: records under `agent/reviews/`,
   `agent/task-ledger.yml`, `agent/handoff.yml`, and `docs/ROADMAP.md`.
 
-Agents should start from `AGENTS.md`, `aspec status --json`, and the active task
-pack. Humans should start from this README and
-[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+In a target project, agents should start from `AGENTS.md`,
+`aspec status --json`, and the active task pack. Humans should start from this
+README and [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ## Repository Layout
 
 ```text
 agentspec/                  CLI implementation
 tests/                      regression tests
-docs/source/                accepted source snapshots
-docs/spec/                  generated spec shards
-docs/traceability/          requirements and traceability maps
-docs/change-requests/       DCRs for design changes
-docs/designs/               hand-authored design docs and index
-docs/discovery/             assumptions, risks, questions, spikes
-agent/context-packs/        bounded task packs for implementation
-agent/workflows/            native AgentSpec workflow plans
-agent/reviews/              review evidence
-agent/handoff.yml           latest project handoff state
+docs/GETTING_STARTED.md     human guide for using AgentSpec
 agentspec-codex-plugin/     Codex adapter package
 agentspec-claude-plugin/    Claude adapter package
 ```
+
+Generated AgentSpec artifacts such as `agent/`, `reports/`, `.codex/`,
+`.claude/`, `.agentspec/`, `docs/source/`, `docs/spec/`,
+`docs/traceability/`, `docs/change-requests/`, `docs/designs/`,
+`docs/discovery/`, and `docs/plans/` are intentionally ignored in this
+distribution repository. They are created and committed in the target
+repositories that choose to use AgentSpec governance.
 
 ## Human Guide
 
@@ -191,20 +213,11 @@ Read [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for:
 - finishing work and refreshing handoff/roadmap state
 - deciding what to commit
 
-Read [docs/designs/README.md](docs/designs/README.md) for the documentation
-registry and source-of-truth map.
-
 ## Verification
 
 ```bash
 python -m unittest discover -s tests -v
-aspec status --json
-aspec roadmap --check --json
-```
-
-For documentation-only changes, also run:
-
-```bash
-python -m json.tool docs/traceability/requirements.yml >/dev/null
+python -m pip wheel . --no-deps --wheel-dir /tmp/agentspec-wheel-check
+python -m build --sdist --outdir /tmp/agentspec-sdist-check
 git diff --check
 ```

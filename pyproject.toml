@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentspec"
-version = "0.1.4"
+version = "0.1.5"
 description = "Design-to-agent workspace compiler and control plane for code agents."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -14,5 +14,6 @@ dependencies = []
 aspec = "agentspec.cli:main"
 agentspec = "agentspec.cli:main"
 
-[tool.setuptools]
-packages = ["agentspec"]
+[tool.setuptools.packages.find]
+include = ["agentspec*"]
+exclude = ["tests*"]

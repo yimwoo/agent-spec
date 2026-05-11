@@ -1,4 +1,5 @@
 import json
+import subprocess
 import tempfile
 import tomllib
 import unittest
@@ -173,6 +174,86 @@ class PluginSourceIntakeTests(unittest.TestCase):
         local_skills = list((REPO_ROOT / ".agents" / "skills").glob("agentspec-*/SKILL.md"))
 
         self.assertEqual([], local_skills)
+
+    def test_plugin_packages_exclude_project_local_artifacts(self) -> None:
+        forbidden_prefixes = (
+            ".agents/",
+            ".agentspec/",
+            ".claude/",
+            ".codex/",
+            "agent/",
+            "docs/",
+            "reports/",
+        )
+        plugin_roots = {
+            "agentspec-codex-plugin": {".codex-plugin", "README.md", "skills"},
+            "agentspec-claude-plugin": {".claude-plugin", "README.md", "skills"},
+        }
+
+        for plugin_name, allowed_roots in plugin_roots.items():
+            plugin_root = REPO_ROOT / plugin_name
+            rel_files = [
+                path.relative_to(plugin_root).as_posix()
+                for path in plugin_root.rglob("*")
+                if path.is_file() and path.name != ".DS_Store"
+            ]
+            offenders = [
+                rel for rel in rel_files if rel.startswith(forbidden_prefixes)
+            ]
+            unexpected_roots = sorted(
+                {
+                    rel.split("/", 1)[0]
+                    for rel in rel_files
+                    if rel.split("/", 1)[0] not in allowed_roots
+                }
+            )
+
+            self.assertEqual([], offenders, plugin_name)
+            self.assertEqual([], unexpected_roots, plugin_name)
+
+    def test_public_git_index_excludes_private_agentspec_state(self) -> None:
+        if not (REPO_ROOT / ".git").exists():
+            self.skipTest("Git metadata is not available.")
+
+        result = subprocess.run(
+            ["git", "ls-files"],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        forbidden_prefixes = (
+            ".agents/",
+            ".agentspec/",
+            ".claude/",
+            ".codex/",
+            "agent/",
+            "reports/",
+            "docs/adr/",
+            "docs/change-requests/",
+            "docs/designs/",
+            "docs/discovery/",
+            "docs/plans/",
+            "docs/source/",
+            "docs/spec/",
+            "docs/traceability/",
+        )
+        forbidden_exact = {
+            "AGENTS.md",
+            "CLAUDE.md",
+            "docs/ROADMAP.md",
+            ".github/workflows/agentspec-drift.yml",
+        }
+        offenders = [
+            path
+            for path in result.stdout.splitlines()
+            if path in forbidden_exact or path.startswith(forbidden_prefixes)
+        ]
+
+        self.assertEqual([], offenders)
 
     def test_manual_source_intake_explains_ingest_baseline_source_key(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"

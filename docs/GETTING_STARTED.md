@@ -29,10 +29,6 @@ Key terms:
 | Workflow | The native AgentSpec execution plan linked to a task pack. |
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
 
-This guide covers `R-207`. The lifecycle operating contract is covered by
-`R-205`; the dogfood end-to-end workflow is covered by `R-203`; prompt-first
-code-agent usage is covered by `R-208`.
-
 ## Prompt-First Operating Model
 
 AgentSpec is designed so humans can prompt a code agent instead of manually
@@ -81,11 +77,26 @@ agent plugin runs them consistently.
 
 ## Bootstrap A Project
 
-If you are driving the CLI directly, install it first:
+If you are driving the CLI directly from a development checkout, install it
+first:
 
 ```bash
 pip install -e .
 ```
+
+For normal GitHub-based CLI install:
+
+```bash
+pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+```
+
+If you use a code-agent plugin, load the plugin directory itself:
+
+- Codex: `agentspec-codex-plugin/`
+- Claude Code: `agentspec-claude-plugin/`
+
+Those plugin packages contain only plugin manifests, READMEs, and skills. This
+repository's private dogfood state is not part of either plugin package.
 
 When prompted to initialize a new project, the code agent should run the same
 kind of sequence in the target repository:
@@ -164,14 +175,15 @@ to AgentSpec.
 
 ## Verify, Review, Finish
 
-Run the verification commands appropriate to the task. For this repository, the
-full default is:
+Run the verification commands appropriate to the task. For the AgentSpec engine
+repository, the full default is:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-For docs-only work, this lighter set is usually enough:
+For docs-only work in an AgentSpec-managed target repository, this lighter set
+is usually enough:
 
 ```bash
 python -m json.tool docs/traceability/requirements.yml >/dev/null
@@ -235,7 +247,8 @@ aspec --root "$TARGET" intake promote SRC-0002 --decision accepted --compile --j
 
 ## What To Commit
 
-Commit durable project state:
+In target repositories that use AgentSpec governance, commit durable project
+state:
 
 - `AGENTS.md` and `CLAUDE.md`
 - `.agentspec/config.yml`
@@ -255,6 +268,14 @@ uses it as evidence:
 - `agent/runs/*`
 - temporary reports
 - local tool configuration
+
+For this AgentSpec engine distribution repository, the repo's own generated
+AgentSpec state is private dogfood context and is intentionally ignored:
+`AGENTS.md`, `CLAUDE.md`, `.agentspec/`, `.codex/`, `.claude/`, `agent/`,
+`reports/`, `docs/source/`, `docs/spec/`, `docs/traceability/`,
+`docs/change-requests/`, `docs/designs/`, `docs/discovery/`, `docs/plans/`,
+and `docs/adr/`. Public installs and plugin packages should contain only the
+CLI, tests, human-facing docs, and plugin package directories.
 
 ## Daily Commands
 
@@ -277,5 +298,5 @@ aspec status --json
 aspec next-action
 ```
 
-Read `agent/handoff.yml` for the last completed task, review ID, verification
-status, and recommended next action.
+In a target repository, read `agent/handoff.yml` for the last completed task,
+review ID, verification status, and recommended next action.
