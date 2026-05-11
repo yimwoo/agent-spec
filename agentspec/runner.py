@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from .review import research_acceptance_evidence_template, validate_research_acceptance_evidence
-from .run import load_run_state, step_run
+from .policy import redact_sensitive_text
+from .run import load_run_state, step_run, validate_run_id
 
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
@@ -37,6 +38,7 @@ def package_run(
     run_id: str | None = None,
     executor_output: str | None = None,
     touched_paths: list[str] | None = None,
+    reported_touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
@@ -55,6 +57,7 @@ def package_run(
         run_id=run_id,
         executor_output=executor_output,
         touched_paths=touched_paths or [],
+        reported_touched_paths=reported_touched_paths,
         test_status=test_status,
         reviewer_mode=reviewer_mode,
         acceptance_evidence=acceptance_evidence,
@@ -76,20 +79,23 @@ def submit_runner_result(
     reviewer_mode: str | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    root = root.resolve()
+    validate_run_id(run_id)
     parsed = parse_runner_result(result)
-    try:
-        state = load_run_state(root, run_id, run_dir=run_dir)
-    except FileNotFoundError:
-        state = {}
+    state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("mode") == "research" and parsed["test_status"] == "passed" and parsed.get("acceptance_evidence") is None:
         raise ValueError("Research-mode passed runner results require acceptance_evidence.")
     mode = reviewer_mode or parsed.get("reviewer_mode")
+    runner_reported_paths = list(parsed["touched_paths"])
+    observed_available, observed_paths = _git_changed_paths_with_status(root)
+    touched_paths = observed_paths if observed_available else runner_reported_paths
     return package_run(
         root,
         runner=runner,
         run_id=run_id,
         executor_output=str(parsed["executor_output"]),
-        touched_paths=list(parsed["touched_paths"]),
+        touched_paths=touched_paths,
+        reported_touched_paths=runner_reported_paths if observed_available else None,
         test_status=str(parsed["test_status"]),
         reviewer_mode=mode if isinstance(mode, str) else None,
         acceptance_evidence=parsed.get("acceptance_evidence"),
@@ -136,7 +142,7 @@ def run_demo(
         }
         if reviewer_mode is not None:
             result["reviewer_mode"] = reviewer_mode
-        transcript.append({"kind": "runner_result", "result": result})
+        transcript.append({"kind": "runner_result", "result": _redact_runner_result(result)})
         final_package = submit_runner_result(
             root,
             actual_run_id,
@@ -201,7 +207,7 @@ def execute_runner(
             command=command,
             timeout_seconds=timeout_seconds,
         )
-        transcript.append({"kind": "subprocess", "execution": execution})
+        transcript.append({"kind": "subprocess", "execution": _redact_execution(execution)})
         result = {
             "schema": RUNNER_RESULT_SCHEMA,
             "executor_output": _executor_output_from_subprocess(execution),
@@ -210,7 +216,7 @@ def execute_runner(
         }
         if reviewer_mode is not None:
             result["reviewer_mode"] = reviewer_mode
-        transcript.append({"kind": "runner_result", "result": result})
+        transcript.append({"kind": "runner_result", "result": _redact_runner_result(result)})
         final_package = submit_runner_result(
             root,
             actual_run_id,
@@ -563,6 +569,11 @@ def _executor_output_from_subprocess(execution: dict[str, Any]) -> str:
 
 
 def _git_changed_paths(root: Path) -> list[str]:
+    available, paths = _git_changed_paths_with_status(root)
+    return paths if available else []
+
+
+def _git_changed_paths_with_status(root: Path) -> tuple[bool, list[str]]:
     try:
         completed = subprocess.run(
             ["git", "status", "--porcelain"],
@@ -572,9 +583,9 @@ def _git_changed_paths(root: Path) -> list[str]:
             check=False,
         )
     except OSError:
-        return []
+        return False, []
     if completed.returncode != 0:
-        return []
+        return False, []
 
     paths: list[str] = []
     for line in completed.stdout.splitlines():
@@ -586,4 +597,27 @@ def _git_changed_paths(root: Path) -> list[str]:
         path = path.strip().strip('"')
         if path:
             paths.append(path)
-    return sorted(set(paths))
+    return True, sorted(set(paths))
+
+
+def _redact_execution(execution: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(execution)
+    argv = redacted.get("argv")
+    if isinstance(argv, list):
+        redacted["argv"] = [
+            redact_sensitive_text(item) if isinstance(item, str) else item
+            for item in argv
+        ]
+    for key in ("stdout", "stderr", "error"):
+        value = redacted.get(key)
+        if isinstance(value, str):
+            redacted[key] = redact_sensitive_text(value)
+    return redacted
+
+
+def _redact_runner_result(result: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(result)
+    value = redacted.get("executor_output")
+    if isinstance(value, str):
+        redacted["executor_output"] = redact_sensitive_text(value)
+    return redacted

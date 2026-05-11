@@ -11,7 +11,7 @@ from .archetype import validate_path_provenance
 from .config import load_project_config, merged_runtime_config, resolve_agent_profile
 from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
-from .policy import evaluate_policy
+from .policy import evaluate_policy, redact_sensitive_text
 from .review import quality_reviewer_signoff, review_executor_output, validate_research_acceptance_evidence
 
 
@@ -21,6 +21,7 @@ SUMMARY_SCHEMA = "agentspec.supervised_run.summary.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
 SUMMARY_MODES = {"autonomous", "research"}
+_RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 # R-142 / ADR-0005: research-mode fallback constants. Allowed paths are
 # the three durable findings sinks; nothing else is writable. The
@@ -162,6 +163,7 @@ def resume_run(
     *,
     executor_output: str,
     touched_paths: list[str] | None = None,
+    reported_touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
@@ -215,12 +217,13 @@ def resume_run(
         acceptance_evidence=acceptance_evidence,
     )
 
+    redacted_executor_output = redact_sensitive_text(executor_output)
     executor_event = {
         "kind": "executor_output",
         "iteration": iteration,
         "executor_profile": state.get("profiles", {}).get("executor"),
         "active_context_pack": state.get("context_pack"),
-        "output_excerpt": executor_output[:1000],
+        "output_excerpt": redacted_executor_output[:1000],
         "touched_paths": touched_paths,
         "test_summary": {"status": test_status},
         "reviewer_mode": reviewer_mode,
@@ -229,6 +232,9 @@ def resume_run(
         executor_event["acceptance_evidence"] = acceptance_evidence
     if evidence is not None:
         executor_event["evidence"] = evidence
+    if reported_touched_paths is not None:
+        executor_event["reported_touched_paths"] = reported_touched_paths
+        executor_event["touched_paths_source"] = "controller_observed"
     reviewer_event = {
         "kind": "reviewer_verdict",
         "iteration": iteration,
@@ -435,6 +441,7 @@ def loop_run(
     run_id: str | None = None,
     executor_output: str | None = None,
     touched_paths: list[str] | None = None,
+    reported_touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
@@ -516,6 +523,7 @@ def loop_run(
             str(run_id),
             executor_output=executor_output,
             touched_paths=touched_paths or [],
+            reported_touched_paths=reported_touched_paths,
             test_status=test_status,
             reviewer_mode=reviewer_mode,
             acceptance_evidence=acceptance_evidence,
@@ -538,6 +546,7 @@ def step_run(
     run_id: str | None = None,
     executor_output: str | None = None,
     touched_paths: list[str] | None = None,
+    reported_touched_paths: list[str] | None = None,
     test_status: str = "not_run",
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
@@ -554,6 +563,7 @@ def step_run(
         run_id=run_id,
         executor_output=executor_output,
         touched_paths=touched_paths or [],
+        reported_touched_paths=reported_touched_paths,
         test_status=test_status,
         reviewer_mode=reviewer_mode,
         acceptance_evidence=acceptance_evidence,
@@ -1083,7 +1093,19 @@ def _run_root(root: Path, run_dir: Path | None = None) -> Path:
 
 
 def _run_dir(root: Path, run_id: str, *, run_dir: Path | None = None) -> Path:
-    return _run_root(root, run_dir) / run_id
+    safe_run_id = validate_run_id(run_id)
+    return _run_root(root, run_dir) / safe_run_id
+
+
+def validate_run_id(run_id: str) -> str:
+    if not isinstance(run_id, str) or not run_id:
+        raise ValueError("Invalid run_id: expected a non-empty identifier.")
+    if ".." in run_id or not _RUN_ID_RE.fullmatch(run_id):
+        raise ValueError(
+            "Invalid run_id: use a single identifier segment containing only "
+            "letters, digits, '.', '_', and '-', starting with a letter or digit."
+        )
+    return run_id
 
 
 def _state_exists(root: Path, run_id: str, *, run_dir: Path | None = None) -> bool:

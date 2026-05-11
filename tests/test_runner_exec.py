@@ -113,6 +113,25 @@ class RunnerExecTests(unittest.TestCase):
             self.assertEqual(review["decision"], "halt")
             self.assertIn("forbidden_path", review["policy_flags"])
 
+    def test_execute_runner_redacts_credential_shaped_output_in_transcript(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            secret = "sk-proj-AbCdEf123456789012345678"
+            script = f"print('leaked {secret}')"
+
+            result = execute_runner(
+                root,
+                run_id="exec-secret",
+                runner="generic",
+                command=[sys.executable, "-c", script],
+                test_status="failed",
+            )
+
+            payload = json.dumps(result)
+            self.assertNotIn(secret, payload)
+            self.assertIn("[REDACTED_CREDENTIAL]", payload)
+
     def test_generic_runner_requires_explicit_command_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

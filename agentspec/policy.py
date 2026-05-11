@@ -42,6 +42,7 @@ _CREDENTIAL_PATTERNS = (
     re.compile(r"-----BEGIN\s+(?:RSA|OPENSSH|PRIVATE)\s+KEY"),
     re.compile(r"eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}"),  # JWT
 )
+_CREDENTIAL_REDACTION = "[REDACTED_CREDENTIAL]"
 _AUTO_ACCEPTANCE_RE = re.compile(
     r"\baspec\s+(?:dcr\s+accept|requirement\s+accept)\b",
     re.IGNORECASE,
@@ -108,7 +109,7 @@ def _evaluate_autonomous_content(executor_output: str) -> PolicyVerdict | None:
             reason="Remote push detected in executor output (autonomous mode requires explicit opt-in).",
             flags=["remote_push"],
         )
-    if any(pattern.search(executor_output) for pattern in _CREDENTIAL_PATTERNS):
+    if has_credential_pattern(executor_output):
         return PolicyVerdict(
             decision="halt",
             reason="Credential-shaped string detected in executor output; autonomous mode refuses to persist run state that may exfiltrate secrets.",
@@ -121,6 +122,17 @@ def _evaluate_autonomous_content(executor_output: str) -> PolicyVerdict | None:
             flags=["auto_acceptance"],
         )
     return None
+
+
+def has_credential_pattern(text: str) -> bool:
+    return any(pattern.search(text) for pattern in _CREDENTIAL_PATTERNS)
+
+
+def redact_sensitive_text(text: str) -> str:
+    redacted = text
+    for pattern in _CREDENTIAL_PATTERNS:
+        redacted = pattern.sub(_CREDENTIAL_REDACTION, redacted)
+    return redacted
 
 
 def _is_allowed(path: str, allowed_paths: list[str]) -> bool:

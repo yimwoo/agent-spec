@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -165,6 +166,41 @@ class RunnerPackageTests(unittest.TestCase):
             executor_event = next(event for event in events if event["kind"] == "executor_output")
             self.assertEqual(executor_event["evidence"], evidence)
 
+    def test_submit_runner_result_uses_controller_observed_paths_when_git_is_available(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            _git(root, "init")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
+            package_run(root, run_id="pkg-001", runner="generic")
+            (root / "docs" / "source").mkdir(parents=True)
+            (root / "docs" / "source" / "sections.yml").write_text("changed", encoding="utf-8")
+
+            package = submit_runner_result(
+                root,
+                "pkg-001",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are met.",
+                    "touched_paths": ["agentspec/runner.py"],
+                    "test_status": "passed",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "stop")
+            self.assertEqual(package["step"]["state"]["status"], "halted")
+            review = package["step"]["review"]
+            self.assertEqual(review["decision"], "halt")
+            self.assertIn("forbidden_path", review["policy_flags"])
+            events = _events(root, "pkg-001")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertEqual(executor_event["reported_touched_paths"], ["agentspec/runner.py"])
+            self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
+            self.assertIn("docs/source/", executor_event["touched_paths"])
+
     def test_invalid_runner_result_is_rejected_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -179,6 +215,26 @@ class RunnerPackageTests(unittest.TestCase):
                 )
 
             self.assertFalse((root / "agent" / "runs" / "pkg-001" / "state.yml").exists())
+
+    def test_submit_runner_result_requires_existing_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            with self.assertRaisesRegex(FileNotFoundError, "Run not found"):
+                submit_runner_result(
+                    root,
+                    "missing-run",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done. Acceptance criteria are met.",
+                        "touched_paths": ["agentspec/runner.py"],
+                        "test_status": "passed",
+                    },
+                    runner="generic",
+                )
+
+            self.assertFalse((root / "agent" / "runs" / "missing-run" / "state.yml").exists())
 
     def test_invalid_evidence_is_rejected_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -432,6 +488,10 @@ def _events(root: Path, run_id: str) -> list[dict]:
         for line in events_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=root, check=True, text=True, capture_output=True)
 
 
 if __name__ == "__main__":

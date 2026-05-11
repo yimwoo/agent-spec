@@ -130,6 +130,32 @@ class AutonomousPauseTransformTests(unittest.TestCase):
             self.assertEqual(summary["blocked_findings"][0]["id"], state["autonomous_finding"])
             self.assertEqual(summary["blocked_findings"][0]["kind"], "open-question")
 
+    def test_autonomous_credential_output_is_redacted_in_events(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pack = _seed_workspace(root)
+            start_run(root, pack, run_id="r-secret-auto", mode="autonomous")
+            secret = "sk-proj-AbCdEf123456789012345678"
+
+            result = resume_run(
+                root,
+                "r-secret-auto",
+                executor_output=f"export OPENAI_API_KEY={secret}",
+                touched_paths=[],
+                test_status="not_run",
+            )
+
+            self.assertIn("credential_pattern", result["review"]["policy_flags"])
+            events_path = root / "agent" / "runs" / "r-secret-auto" / "events.jsonl"
+            events_text = events_path.read_text(encoding="utf-8")
+            self.assertNotIn(secret, events_text)
+            executor_event = next(
+                json.loads(line)
+                for line in events_text.splitlines()
+                if json.loads(line)["kind"] == "executor_output"
+            )
+            self.assertIn("[REDACTED_CREDENTIAL]", executor_event["output_excerpt"])
+
     def test_supervised_pause_for_human_unchanged(self) -> None:
         """Regression guard: supervised mode produces the existing pause status,
         no finding written, no halt override."""

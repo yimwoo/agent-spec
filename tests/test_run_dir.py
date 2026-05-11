@@ -42,6 +42,32 @@ class RunDirTests(unittest.TestCase):
             self.assertTrue((root / "agent" / "runs" / "run-default" / "state.yml").exists())
             self.assertTrue((root / "agent" / "runs" / "run-default" / "events.jsonl").exists())
 
+    def test_invalid_run_id_is_rejected_before_state_access(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "target"
+            run_dir = Path(td) / "run-state"
+            _seed_pack(root)
+
+            with self.assertRaisesRegex(ValueError, "Invalid run_id"):
+                start_run(root, Path("agent/context-packs/T-057-test.md"), run_id="../escape")
+            with self.assertRaisesRegex(ValueError, "Invalid run_id"):
+                inspect_run(root, "../escape", run_dir=run_dir)
+            with self.assertRaisesRegex(ValueError, "Invalid run_id"):
+                submit_runner_result(
+                    root,
+                    "../escape",
+                    {
+                        "schema": "agentspec.runner_result.v0",
+                        "executor_output": PROMPT,
+                        "touched_paths": [],
+                        "test_status": "not_run",
+                    },
+                    run_dir=run_dir,
+                )
+
+            self.assertFalse((Path(td) / "escape").exists())
+            self.assertFalse((run_dir / ".." / "escape").exists())
+
     def test_start_with_run_dir_writes_redirected_state_only(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "target"
