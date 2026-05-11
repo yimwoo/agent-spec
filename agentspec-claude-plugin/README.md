@@ -15,14 +15,14 @@ generated design/traceability docs.
 Marketplace install inside Claude Code:
 
 ```text
-/plugin marketplace add yimwoo/agent-spec-engine
+/plugin marketplace add yimwoo/agent-spec
 /plugin install aspec@agentspec
 ```
 
 Then make sure the CLI is available:
 
 ```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
 ```
 
 Claude Code exposes plugin skills with the plugin namespace, so

@@ -2,7 +2,7 @@
 
 **Repo-local product memory and task governance for Codex and Claude Code.**
 
-[![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec-engine?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec-engine/releases)
+[![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-2563EB?style=flat-square)](pyproject.toml)
 
 AgentSpec turns design intent into durable, repo-local operating context for
@@ -23,7 +23,7 @@ how to use AgentSpec safely; the `aspec` CLI remains the source of truth.
 **Codex**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec-engine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
 Then install or enable `aspec` in the Codex surface you use:
@@ -45,7 +45,7 @@ After installation, open the target repository you want AgentSpec to manage.
 Inside Claude Code:
 
 ```text
-/plugin marketplace add yimwoo/agent-spec-engine
+/plugin marketplace add yimwoo/agent-spec
 /plugin install aspec@agentspec
 ```
 
@@ -54,7 +54,7 @@ Inside Claude Code:
 The plugins call the CLI, so make `aspec` available on `PATH`:
 
 ```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
 ```
 
 For development from this checkout:

@@ -7,7 +7,7 @@ set -euo pipefail
 #   bash install.sh --codex-plugin     # same as above
 #   bash install.sh --local            # use this checkout as the plugin source
 
-REPO_URL="https://github.com/yimwoo/agent-spec-engine"
+REPO_URL="https://github.com/yimwoo/agent-spec"
 SOURCE_DIR="$HOME/.codex/plugins/agentspec-source"
 PLUGIN_SUBDIR="agentspec-codex-plugin"
 MARKETPLACE_FILE="$HOME/.agents/plugins/marketplace.json"
@@ -228,7 +228,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Install the AgentSpec CLI if needed:"
 echo ""
-echo "     python3 -m pip install \"git+https://github.com/yimwoo/agent-spec-engine.git\""
+echo "     python3 -m pip install \"git+https://github.com/yimwoo/agent-spec.git\""
 echo ""
 echo "  2. Codex CLI: run 'codex', then '/plugins', choose the local marketplace,"
 echo "     open aspec, and select Install plugin or toggle it on."

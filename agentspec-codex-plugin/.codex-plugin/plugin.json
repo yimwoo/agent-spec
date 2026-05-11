@@ -5,10 +5,10 @@
   "author": {
     "name": "AgentSpec",
     "email": "maintainers@example.com",
-    "url": "https://github.com/yimwoo/agent-spec-engine"
+    "url": "https://github.com/yimwoo/agent-spec"
   },
-  "homepage": "https://github.com/yimwoo/agent-spec-engine",
-  "repository": "https://github.com/yimwoo/agent-spec-engine",
+  "homepage": "https://github.com/yimwoo/agent-spec",
+  "repository": "https://github.com/yimwoo/agent-spec",
   "license": "MIT",
   "keywords": [
     "aspec",
@@ -29,9 +29,9 @@
       "CLI",
       "Governance"
     ],
-    "websiteURL": "https://github.com/yimwoo/agent-spec-engine",
-    "privacyPolicyURL": "https://github.com/yimwoo/agent-spec-engine",
-    "termsOfServiceURL": "https://github.com/yimwoo/agent-spec-engine",
+    "websiteURL": "https://github.com/yimwoo/agent-spec",
+    "privacyPolicyURL": "https://github.com/yimwoo/agent-spec",
+    "termsOfServiceURL": "https://github.com/yimwoo/agent-spec",
     "defaultPrompt": [
       "Initialize AgentSpec in this repo.",
       "Continue AgentSpec work",

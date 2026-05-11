@@ -141,7 +141,7 @@ first, then make sure `aspec` is available on `PATH`.
 Codex:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec-engine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
 Then install or enable `aspec` in the Codex surface you use:
@@ -159,14 +159,14 @@ select `Install plugin` or toggle it on. In the Codex app, restart Codex, open
 Claude Code:
 
 ```text
-/plugin marketplace add yimwoo/agent-spec-engine
+/plugin marketplace add yimwoo/agent-spec
 /plugin install aspec@agentspec
 ```
 
 Then install the CLI:
 
 ```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
 ```
 
 The plugin packages contain only manifests, READMEs, and skills. This
@@ -185,7 +185,7 @@ pip install -e .
 For normal GitHub-based CLI install:
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+pip install "git+https://github.com/yimwoo/agent-spec.git"
 ```
 
 When prompted to initialize a new project, the code agent should run the same

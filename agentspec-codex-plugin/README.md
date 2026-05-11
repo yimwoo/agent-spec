@@ -14,7 +14,7 @@ the AgentSpec engine repository's private `agent/`, `reports/`, `.codex/`,
 From the repository root:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec-engine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
 Then install or enable `aspec` in the Codex surface you use:
@@ -32,7 +32,7 @@ select `Install plugin` or toggle it on. In the Codex app, restart Codex, open
 Then make sure the AgentSpec CLI is available:
 
 ```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
+python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
 ```
 
 For local development, load this plugin directory directly from your checkout

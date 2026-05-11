@@ -6,8 +6,8 @@
     "name": "AgentSpec",
     "email": "maintainers@example.com"
   },
-  "homepage": "https://github.com/yimwoo/agent-spec-engine",
-  "repository": "https://github.com/yimwoo/agent-spec-engine",
+  "homepage": "https://github.com/yimwoo/agent-spec",
+  "repository": "https://github.com/yimwoo/agent-spec",
   "license": "MIT",
   "keywords": [
     "aspec",
