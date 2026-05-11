@@ -1155,6 +1155,23 @@
         "path": "agent/reviews/REVIEW-0045.yml"
       },
       "updated_at": "2026-05-11T05:34:53Z"
+    },
+    "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md": {
+      "status": "complete",
+      "run_id": "complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404",
+      "reason": "Completed R-205/DCR-0070: added native lifecycle operating contract CLI, lifecycle schema/formatter tests, and Codex/Claude lifecycle adapter skills inspired by broader agent lifecycle practices without plugin-owned durable state.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0046",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified lifecycle contract CLI, Codex and Claude lifecycle skill adapters, and plugin discovery tests for R-205/DCR-0070.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0046.yml"
+      },
+      "updated_at": "2026-05-11T05:54:04Z"
     }
   }
 }

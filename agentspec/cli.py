@@ -20,6 +20,7 @@ from .drift import run_drift
 from .emit import emit_targets
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
+from .lifecycle import build_lifecycle_contract, format_lifecycle_contract
 from .metrics import build_project_metrics, format_project_metrics
 from .init import init_project
 from .io import load_data
@@ -139,6 +140,12 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     status = subparsers.add_parser("status", help="Print project progress status.")
     status.add_argument("--json", action="store_true")
     status.add_argument("--recent-runs", type=int, default=5)
+
+    lifecycle = subparsers.add_parser(
+        "lifecycle",
+        help="Print the native AgentSpec lifecycle operating contract.",
+    )
+    lifecycle.add_argument("--json", action="store_true")
 
     quality = subparsers.add_parser("quality", help="Run recurring quality garbage-collection diagnostics.")
     quality.add_argument("--json", action="store_true")
@@ -589,6 +596,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(status_payload, indent=2))
             else:
                 print(format_project_status(status_payload))
+            return 0
+
+        if args.command == "lifecycle":
+            lifecycle_payload = build_lifecycle_contract(root)
+            if args.json:
+                print(json.dumps(lifecycle_payload, indent=2))
+            else:
+                print(format_lifecycle_contract(lifecycle_payload))
             return 0
 
         if args.command == "quality":

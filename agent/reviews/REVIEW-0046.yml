@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0046",
+  "task": {
+    "selector": "T-101",
+    "context_pack": "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. Verified lifecycle contract CLI, Codex and Claude lifecycle skill adapters, and plugin discovery tests for R-205/DCR-0070.",
+  "reviewer": "human",
+  "range": "worktree",
+  "created_at": "2026-05-11T05:53:32Z"
+}

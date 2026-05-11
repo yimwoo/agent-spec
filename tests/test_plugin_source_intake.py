@@ -24,17 +24,24 @@ class PluginSourceIntakeTests(unittest.TestCase):
         self.assertEqual(manifest["name"], "aspec")
         self.assertEqual(manifest["interface"]["displayName"], "aspec")
         for skill_name in [
+            "brainstorm",
             "compile-spec",
             "continue-work",
             "create-task",
+            "delegate-work",
+            "design-work",
             "drift-review",
+            "execute-workflow",
+            "finish-branch",
             "finish-work",
+            "handoff-recovery",
             "init-project",
             "manual-source-intake",
             "outcome-audit",
             "plan-workflow",
             "project-status",
             "review-code",
+            "start-branch",
             "verify-work",
         ]:
             self.assertTrue((plugin_root / "skills" / skill_name / "SKILL.md").exists())
@@ -144,11 +151,18 @@ class PluginSourceIntakeTests(unittest.TestCase):
 
         self.assertIn("aspec:init-project", combined)
         self.assertIn("aspec:continue-work", combined)
+        self.assertIn("aspec:brainstorm", combined)
+        self.assertIn("aspec:design-work", combined)
+        self.assertIn("aspec:start-branch", combined)
+        self.assertIn("aspec:execute-workflow", combined)
+        self.assertIn("aspec:delegate-work", combined)
         self.assertIn("aspec:outcome-audit", combined)
         self.assertIn("aspec:plan-workflow", combined)
         self.assertIn("aspec:verify-work", combined)
         self.assertIn("aspec:review-code", combined)
+        self.assertIn("aspec:finish-branch", combined)
         self.assertIn("aspec:finish-work", combined)
+        self.assertIn("aspec:handoff-recovery", combined)
         self.assertNotIn("agentspec-codex-plugin:", combined)
 
 

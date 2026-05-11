@@ -1,52 +1,52 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T05:34:53Z",
+  "updated_at": "2026-05-11T05:54:04Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-100",
-    "context_pack": "agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md",
-    "title": "T-100: Make handoff status portable across clean checkouts",
-    "run_id": "complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453",
-    "reason": "Portable handoff freshness fix completed for R-204/DCR-0069. New handoff writes omit local-only run counts, lifecycle stale handoff detection ignores legacy run-count mismatches, and verification passed.",
-    "updated_at": "2026-05-11T05:34:53Z",
+    "id": "T-101",
+    "context_pack": "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md",
+    "title": "T-101: Add native lifecycle operating contract surface",
+    "run_id": "complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404",
+    "reason": "Completed R-205/DCR-0070: added native lifecycle operating contract CLI, lifecycle schema/formatter tests, and Codex/Claude lifecycle adapter skills inspired by broader agent lifecycle practices without plugin-owned durable state.",
+    "updated_at": "2026-05-11T05:54:04Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0045",
+      "id": "REVIEW-0046",
       "verdict": "ready",
-      "reviewer": "codex",
+      "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0045.yml"
+      "path": "agent/reviews/REVIEW-0046.yml"
     }
   },
   "current_state": {
-    "overall": "attention_needed",
-    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
+    "overall": "idle",
+    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 204,
+      "total": 205,
       "by_status": {
-        "accepted": 204
+        "accepted": 205
       }
     },
     "dcrs": {
-      "total": 69,
+      "total": 70,
       "by_status": {
-        "accepted": 69
+        "accepted": 70
       }
     },
     "tasks": {
-      "total": 98,
+      "total": 99,
       "by_status": {
-        "complete": 98
+        "complete": 99
       },
       "by_type": {
-        "implementation": 90,
+        "implementation": 91,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -66,6 +66,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0045.yml"
+    "last_code_review": "agent/reviews/REVIEW-0046.yml"
   }
 }

@@ -8,11 +8,17 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN_ROOT = REPO_ROOT / "agentspec-claude-plugin"
 SKILL_NAMES = [
+    "brainstorm",
     "compile-spec",
     "continue-work",
     "create-task",
+    "delegate-work",
+    "design-work",
     "drift-review",
+    "execute-workflow",
+    "finish-branch",
     "finish-work",
+    "handoff-recovery",
     "init-project",
     "manual-source-intake",
     "outcome-audit",
@@ -20,6 +26,7 @@ SKILL_NAMES = [
     "project-status",
     "review-code",
     "roadmap",
+    "start-branch",
     "verify-work",
 ]
 
@@ -80,12 +87,18 @@ class ClaudeCodePluginTests(unittest.TestCase):
 
         for text in [
             "aspec status --json",
+            "aspec lifecycle --json",
             "aspec outcome --json",
             "aspec task next",
             "aspec run loop",
+            "aspec run package",
+            "aspec run result",
             "aspec task create",
             "aspec review code",
             "aspec roadmap",
+            "aspec finish",
+            "aspec session start",
+            "aspec session finish",
             "aspec task complete",
             "aspec compile",
             "aspec drift",
