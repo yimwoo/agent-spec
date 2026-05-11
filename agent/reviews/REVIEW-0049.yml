@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0049",
+  "task": {
+    "selector": "T-104",
+    "context_pack": "agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md"
+  },
+  "verdict": "ready",
+  "summary": "Docs-only review for R-208 found no blocking issues. README now leads with prompt-first code-agent usage for new projects, existing projects, and design changes; docs/GETTING_STARTED.md includes copyable prompts and expected evidence; Codex and Claude plugin READMEs describe installed-plugin prompt usage. Verification passed with JSON checks, git diff --check, AgentSpec status, roadmap regeneration, and roadmap freshness.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T06:26:25Z"
+}

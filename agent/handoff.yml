@@ -1,52 +1,52 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T06:14:08Z",
+  "updated_at": "2026-05-11T06:26:29Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-103",
-    "context_pack": "agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md",
-    "title": "T-103: Refresh human-facing README and guide docs",
-    "run_id": "complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408",
-    "reason": "Completed R-207 documentation refresh: README front door, human getting-started guide, documentation/design registry, DCR/requirement/task/workflow evidence, and roadmap freshness.",
-    "updated_at": "2026-05-11T06:14:08Z",
+    "id": "T-104",
+    "context_pack": "agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md",
+    "title": "T-104: Document prompt-first code-agent AgentSpec workflow",
+    "run_id": "complete-t-104-document-prompt-first-code-agent-agentspec-workflow-20260511062629",
+    "reason": "Completed R-208 prompt-first code-agent workflow docs: README, human guide, and Codex/Claude plugin READMEs now show prompt-driven new-project, existing-project, design-change, and lifecycle usage with AgentSpec evidence expectations.",
+    "updated_at": "2026-05-11T06:26:29Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0048",
+      "id": "REVIEW-0049",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0048.yml"
+      "path": "agent/reviews/REVIEW-0049.yml"
     }
   },
   "current_state": {
-    "overall": "idle",
-    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
+    "overall": "attention_needed",
+    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 207,
+      "total": 208,
       "by_status": {
-        "accepted": 207
+        "accepted": 208
       }
     },
     "dcrs": {
-      "total": 72,
+      "total": 73,
       "by_status": {
-        "accepted": 72
+        "accepted": 73
       }
     },
     "tasks": {
-      "total": 101,
+      "total": 102,
       "by_status": {
-        "complete": 101
+        "complete": 102
       },
       "by_type": {
-        "implementation": 93,
+        "implementation": 94,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -66,6 +66,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0048.yml"
+    "last_code_review": "agent/reviews/REVIEW-0049.yml"
   }
 }

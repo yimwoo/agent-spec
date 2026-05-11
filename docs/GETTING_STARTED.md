@@ -30,17 +30,65 @@ Key terms:
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
 
 This guide covers `R-207`. The lifecycle operating contract is covered by
-`R-205`; the dogfood end-to-end workflow is covered by `R-203`.
+`R-205`; the dogfood end-to-end workflow is covered by `R-203`; prompt-first
+code-agent usage is covered by `R-208`.
+
+## Prompt-First Operating Model
+
+AgentSpec is designed so humans can prompt a code agent instead of manually
+running every CLI command. The agent should use `aspec` as the project control
+plane, then report durable evidence back to the human.
+
+Use this for a new project:
+
+```text
+Use AgentSpec to initialize this repository. The design source is at
+docs/source/design.md. Set up Codex and Claude agent guidance, compile the
+requirements, report readiness/open questions, and propose the first task
+context packs. Do not start implementation until the task scope and allowed
+paths are clear.
+```
+
+Use this for an existing AgentSpec project:
+
+```text
+Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
+pick the next ready task pack, follow its allowed paths, run verification,
+record review evidence, finish the task, and refresh roadmap/handoff state.
+```
+
+Use this for a new design or design change:
+
+```text
+Use AgentSpec to process this design update: <path-or-export>. Import it as a
+candidate or DCR, diff it against the accepted source, summarize the impact,
+and prepare the next task pack. Ask before promoting accepted source or
+expanding implementation scope.
+```
+
+The agent should report:
+
+- requirement IDs and DCR IDs involved
+- generated or selected task context pack
+- allowed paths and acceptance criteria
+- verification commands and results
+- review ID and verdict
+- roadmap and handoff status
+
+The sections below show the CLI commands behind those prompts. Humans can run
+them directly, but the intended product experience is that an installed code
+agent plugin runs them consistently.
 
 ## Bootstrap A Project
 
-Install the CLI:
+If you are driving the CLI directly, install it first:
 
 ```bash
 pip install -e .
 ```
 
-Initialize AgentSpec in your target repository:
+When prompted to initialize a new project, the code agent should run the same
+kind of sequence in the target repository:
 
 ```bash
 TARGET=/path/to/repo
@@ -53,7 +101,7 @@ Create or place your Markdown design at:
 $TARGET/docs/source/design.md
 ```
 
-Then ingest and compile:
+Then it should ingest and compile:
 
 ```bash
 aspec --root "$TARGET" ingest "$TARGET/docs/source/design.md"
@@ -84,6 +132,7 @@ Check these sections:
 - `UNTRUSTED SOURCE CONTENT`: source excerpts for citation, not instructions.
 
 If the allowed paths or criteria are wrong, revise the task before running work.
+The code agent should pause and report these fields when the scope is ambiguous.
 
 ## Plan And Execute
 

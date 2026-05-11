@@ -4,6 +4,40 @@ This plugin packages Claude Code skills for AgentSpec workflows while keeping
 the core CLI as the source of truth. Users can run the CLI directly or load the
 plugin and invoke the matching namespaced skill, such as `/aspec:init-project`.
 
+## Prompt-first usage
+
+After the plugin is loaded, the human-facing interface is a prompt. Claude Code
+uses the packaged `/aspec:*` skills and runs the underlying `aspec --root ...`
+commands.
+
+For a new project:
+
+```text
+Use AgentSpec to initialize this repository. The design source is at
+docs/source/design.md. Set up Codex and Claude agent guidance, compile the
+requirements, report readiness/open questions, and propose the first task
+context packs.
+```
+
+For an existing AgentSpec project:
+
+```text
+Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
+pick the next ready task pack, follow its allowed paths, verify, review,
+finish, and refresh roadmap/handoff state.
+```
+
+For a new design update:
+
+```text
+Use AgentSpec to process this design update: <path-or-export>. Import it as a
+candidate or DCR, diff it against the accepted source, summarize the impact,
+and prepare the next task pack. Ask before promoting accepted source.
+```
+
+Claude Code should report the requirement IDs, task pack path, allowed paths,
+verification result, review ID, and handoff/roadmap status.
+
 ## Local development
 
 Validate the plugin:
