@@ -49,20 +49,6 @@ Inside Claude Code:
 /plugin install aspec@agentspec
 ```
 
-If GitHub SSH is not configured, use the HTTPS repository URL:
-
-```text
-/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git
-/plugin install aspec@agentspec
-```
-
-For local development from a checkout:
-
-```bash
-git clone https://github.com/yimwoo/agent-spec-engine.git
-claude --plugin-dir /path/to/agent-spec-engine/agentspec-claude-plugin
-```
-
 ### 2. Install The CLI
 
 The plugins call the CLI, so make `aspec` available on `PATH`:
@@ -165,32 +151,64 @@ Code agents work best when the operating contract is explicit:
 AgentSpec keeps that contract in the target repo. Plugins and local skills are
 adapters over those files, not separate sources of truth.
 
-## Agent-Operated CLI Flow
+## Architecture
 
-Most humans should not need to drive every command manually. These are the
-commands a code agent or automation typically runs behind the prompts above:
+AgentSpec is the lifecycle control plane around a code agent. Codex, Claude
+Code, or another runner still edits code and runs tests; AgentSpec owns the
+durable project state, task boundaries, policy checks, and write-back evidence.
 
-```bash
-TARGET=/path/to/repo
-aspec --root "$TARGET" init --mode greenfield --targets claude,codex
-aspec --root "$TARGET" ingest "$TARGET/docs/source/design.md"
-aspec --root "$TARGET" compile
-aspec --root "$TARGET" status
-aspec --root "$TARGET" task create --requirement R-001
-aspec --root "$TARGET" plan --current
-aspec --root "$TARGET" run loop
+```mermaid
+flowchart TB
+  Human["Human / Tech Lead"] --> Agent["Code Agent\nCodex or Claude Code"]
+  Agent --> Adapter["Adapter Layer\nplugin skills + emitted guidance"]
+  Adapter --> CLI["Control Plane\naspec CLI + lifecycle commands"]
+
+  subgraph SourceSpec["Source And Spec Layer"]
+    Intake["Source Intake\naspec ingest / intake"]
+    Compile["Spec Compiler\nsections, specs, requirements"]
+    Trace["Traceability\nquestions, assumptions, readiness"]
+  end
+
+  subgraph Planning["Planning Layer"]
+    Status["Status + Next Action"]
+    Packs["Task Context Packs"]
+    Workflows["Workflows / Execution Plans"]
+  end
+
+  subgraph Execution["Execution Layer"]
+    Package["Runner Package\ncodex / claude / generic"]
+    Work["Bounded Code Work\nallowed paths + tests"]
+    Result["Structured Runner Result"]
+  end
+
+  subgraph Governance["Governance And Write-back"]
+    Policy["Policy Gates\npaths, iterations, secrets, tests"]
+    Review["Review Evidence"]
+    Finish["Ledger + Handoff + Roadmap"]
+  end
+
+  CLI --> Intake --> Compile --> Trace
+  CLI --> Status --> Packs --> Workflows
+  Workflows --> Package --> Agent
+  Agent --> Work --> Result --> CLI
+  CLI --> Policy --> Review --> Finish
+  Trace --> Packs
+  Packs --> Package
+  Policy --> Package
 ```
 
-After implementation work, record review and finish write-back:
+This split is intentional:
 
-```bash
-aspec --root "$TARGET" review code --task T-001 --verdict ready --summary "No blocking findings."
-aspec --root "$TARGET" finish T-001 --test-status passed --review REVIEW-0001
-aspec --root "$TARGET" roadmap --check
-```
-
-For this repository, use `PYTHONPATH=$PWD aspec ...` if the editable install is
-not active in your shell.
+- **Adapters** know the host surface, such as Codex skills or Claude Code
+  plugin commands.
+- **The CLI control plane** owns lifecycle transitions and repo-local state.
+- **The source/spec layer** turns accepted design material into traceable
+  requirements.
+- **The planning layer** creates bounded context packs and execution plans.
+- **The execution layer** packages work for the code agent and accepts
+  structured results back.
+- **Governance and write-back** enforce boundaries, record review evidence, and
+  update the task ledger, handoff, and roadmap.
 
 ## Lifecycle
 
@@ -207,21 +225,10 @@ flowchart LR
   I --> J["Roadmap + Handoff"]
 ```
 
-| Stage | Command |
-|---|---|
-| Status | `aspec status --json` |
-| Lifecycle map | `aspec lifecycle` |
-| Source intake | `aspec ingest`, `aspec intake import`, `aspec compile` |
-| Task planning | `aspec task create`, `aspec plan` |
-| Execution | `aspec run loop`, `aspec run step`, `aspec run package`, `aspec run result` |
-| Verification | `aspec outcome`, `aspec maturity status`, `aspec roadmap --check` |
-| Review | `aspec review code` |
-| Finish | `aspec finish`, `aspec task complete` |
-| Recovery | `aspec next-action`, `aspec continue` |
-
-The lifecycle surface is the CLI contract. Plugins and emitted local agent
-guidance should call these commands rather than maintaining a parallel state
-store.
+With an installed plugin, humans prompt the code agent and the agent drives the
+matching `aspec` commands behind the scenes. For exact CLI sequences, runner
+integration, and recovery commands, read
+[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ## Project Model
 
@@ -263,17 +270,10 @@ local here and are ignored by Git.
 Read [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for:
 
 - bootstrapping a new project
+- exact CLI command sequences
+- code-agent lifecycle workflow
 - importing changing external sources
 - creating and executing task packs
 - recording verification and review evidence
 - finishing work and refreshing handoff/roadmap state
 - deciding what to commit
-
-## Verification
-
-```bash
-python -m unittest discover -s tests -v
-python -m pip wheel . --no-deps --wheel-dir /tmp/agentspec-wheel-check
-python -m build --sdist --outdir /tmp/agentspec-sdist-check
-git diff --check
-```

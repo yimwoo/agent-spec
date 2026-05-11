@@ -79,8 +79,8 @@ class ClaudeCodePluginTests(unittest.TestCase):
         readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
 
         for text in [
-            "claude plugin validate agentspec-claude-plugin",
-            "claude --plugin-dir ./agentspec-claude-plugin",
+            "/plugin marketplace add yimwoo/agent-spec-engine",
+            "/plugin install aspec@agentspec",
             "/aspec:init-project",
             "/aspec:continue-work",
             "CLI path",
@@ -89,6 +89,8 @@ class ClaudeCodePluginTests(unittest.TestCase):
             "aspec status",
         ]:
             self.assertIn(text, readme)
+        self.assertNotIn("/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git", readme)
+        self.assertNotIn("claude --plugin-dir", readme)
 
     def test_claude_plugin_skills_are_cli_backed_thin_adapters(self) -> None:
         combined = "\n".join(
