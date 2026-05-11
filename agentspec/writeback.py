@@ -3,12 +3,138 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .io import load_data
+from .io import load_data, utc_now_iso
 from .roadmap import ROADMAP_PATH, check_roadmap
 
 
 LIFECYCLE_STATUS_SCHEMA = "agentspec.lifecycle_status.v0"
+COMPLETION_PROJECTION_SCHEMA = "agentspec.completion_projection.v0"
+WRITEBACK_VERIFICATION_SCHEMA = "agentspec.writeback_verification.v0"
 PASSING_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
+
+
+def build_completion_projection(root: Path, task_selector: str | Path) -> dict[str, Any]:
+    """Project one task's completion write-back readiness from durable state."""
+
+    root = root.resolve()
+    task_path = _resolve_context_pack_selector(root, task_selector)
+    context_pack = _relative_or_absolute(root, task_path)
+    ledger_entry = _ledger_entry(root, context_pack)
+    handoff = load_data(root / "agent" / "handoff.yml", {})
+    roadmap = check_roadmap(root)
+    findings: list[dict[str, Any]] = []
+
+    if not isinstance(ledger_entry, dict) or ledger_entry.get("status") != "complete":
+        findings.append(
+            {
+                "type": "missing_ledger",
+                "severity": "warning",
+                "context_pack": context_pack,
+                "message": "Task has no complete task-ledger entry.",
+                "repair": f"aspec task complete {context_pack} --test-status passed",
+            }
+        )
+    else:
+        verification = ledger_entry.get("verification") if isinstance(ledger_entry.get("verification"), dict) else {}
+        if verification.get("status") != "passed":
+            findings.append(
+                {
+                    "type": "missing_verification",
+                    "severity": "warning",
+                    "context_pack": context_pack,
+                    "message": "Task ledger does not record passed verification.",
+                    "repair": f"aspec task complete {context_pack} --test-status passed",
+                }
+            )
+        review = ledger_entry.get("code_review") if isinstance(ledger_entry.get("code_review"), dict) else {}
+        review_warning = _review_link_warning(root, context_pack, review)
+        if review_warning is not None:
+            findings.append({**review_warning, "repair": f"aspec review code --task {context_pack}"})
+
+    handoff_finding = _selected_handoff_warning(context_pack, ledger_entry, handoff)
+    if handoff_finding is not None:
+        findings.append(handoff_finding)
+
+    if not roadmap.get("current"):
+        findings.append(
+            {
+                "type": "stale_roadmap",
+                "severity": "warning",
+                "path": str(ROADMAP_PATH),
+                "message": str(roadmap.get("summary") or "Roadmap is missing or stale."),
+                "repair": "aspec roadmap",
+            }
+        )
+
+    return {
+        "schema": COMPLETION_PROJECTION_SCHEMA,
+        "context_pack": context_pack,
+        "task_id": _task_id_from_context_pack(context_pack),
+        "status": "ready" if not findings else "needs_attention",
+        "ledger": ledger_entry,
+        "handoff": _handoff_summary_for_task(handoff, context_pack),
+        "roadmap": roadmap,
+        "findings": findings,
+    }
+
+
+def update_task_ledger(root: Path, completion: dict[str, Any]) -> dict[str, Any]:
+    """Write completion status through the canonical task-ledger helper."""
+
+    from .task import record_task_ledger_status
+
+    context_pack = _required_string(completion, "context_pack")
+    verification = completion.get("verification") if isinstance(completion.get("verification"), dict) else {}
+    code_review = completion.get("code_review") if isinstance(completion.get("code_review"), dict) else None
+    return record_task_ledger_status(
+        root.resolve(),
+        context_pack=context_pack,
+        status=str(completion.get("status") or "complete"),
+        run_id=_optional_string(completion.get("run_id")),
+        reason=_optional_string(completion.get("completion_reason") or completion.get("reason")),
+        test_status=_optional_string(verification.get("status") or completion.get("test_status") or "not_run"),
+        updated_at=_optional_string(completion.get("updated_at")) or utc_now_iso(),
+        code_review=code_review,
+    )
+
+
+def update_handoff(
+    root: Path,
+    completion: dict[str, Any],
+    project_status: dict[str, Any],
+) -> dict[str, Any]:
+    """Write project handoff through the canonical handoff helper."""
+
+    from .handoff import write_project_handoff
+
+    return write_project_handoff(
+        root.resolve(),
+        completed_state=completion,
+        project_status=project_status,
+    )
+
+
+def update_roadmap(root: Path) -> Path:
+    """Regenerate the canonical roadmap projection."""
+
+    from .roadmap import write_roadmap
+
+    return write_roadmap(root.resolve())
+
+
+def verify_writeback(root: Path, completion: dict[str, Any] | str | Path) -> dict[str, Any]:
+    """Return readiness diagnostics for a selected task completion."""
+
+    selector = completion if isinstance(completion, (str, Path)) else _required_string(completion, "context_pack")
+    projection = build_completion_projection(root.resolve(), selector)
+    findings = projection.get("findings") if isinstance(projection.get("findings"), list) else []
+    return {
+        "schema": WRITEBACK_VERIFICATION_SCHEMA,
+        "context_pack": projection["context_pack"],
+        "ready": not findings,
+        "findings": findings,
+        "projection": projection,
+    }
 
 
 def build_lifecycle_projection(
@@ -229,6 +355,105 @@ def _roadmap_warnings(root: Path) -> list[dict[str, Any]]:
             "recommendation": "aspec roadmap",
         }
     ]
+
+
+def _ledger_entry(root: Path, context_pack: str) -> dict[str, Any] | None:
+    ledger = load_data(root / "agent" / "task-ledger.yml", {}) or {}
+    tasks = ledger.get("tasks") if isinstance(ledger, dict) else {}
+    if not isinstance(tasks, dict):
+        return None
+    entry = tasks.get(context_pack)
+    return entry if isinstance(entry, dict) else None
+
+
+def _selected_handoff_warning(
+    context_pack: str,
+    ledger_entry: dict[str, Any] | None,
+    handoff: Any,
+) -> dict[str, Any] | None:
+    if not isinstance(ledger_entry, dict) or ledger_entry.get("status") != "complete":
+        return None
+    if not isinstance(handoff, dict) or not handoff:
+        return {
+            "type": "missing_handoff",
+            "severity": "warning",
+            "context_pack": context_pack,
+            "path": "agent/handoff.yml",
+            "message": "Task is complete, but project handoff is missing.",
+            "repair": "aspec task complete <task> --test-status passed",
+        }
+    last = handoff.get("last_completed_task") if isinstance(handoff.get("last_completed_task"), dict) else {}
+    if last.get("context_pack") != context_pack:
+        return {
+            "type": "stale_handoff",
+            "severity": "warning",
+            "context_pack": context_pack,
+            "path": "agent/handoff.yml",
+            "message": "Project handoff does not point at the selected completed task.",
+            "repair": "aspec task complete <task> --test-status passed",
+        }
+    if ledger_entry.get("run_id") and last.get("run_id") != ledger_entry.get("run_id"):
+        return {
+            "type": "stale_handoff",
+            "severity": "warning",
+            "context_pack": context_pack,
+            "path": "agent/handoff.yml",
+            "message": "Project handoff run id does not match the task-ledger completion.",
+            "repair": "aspec task complete <task> --test-status passed",
+        }
+    return None
+
+
+def _handoff_summary_for_task(handoff: Any, context_pack: str) -> dict[str, Any]:
+    if not isinstance(handoff, dict) or not handoff:
+        return {"present": False, "matches_task": False}
+    last = handoff.get("last_completed_task") if isinstance(handoff.get("last_completed_task"), dict) else {}
+    return {
+        "present": True,
+        "matches_task": last.get("context_pack") == context_pack,
+        "last_completed_task": last,
+    }
+
+
+def _resolve_context_pack_selector(root: Path, selector: str | Path) -> Path:
+    raw = str(selector).strip()
+    if not raw:
+        raise ValueError("Task selector is required.")
+    candidate = Path(raw)
+    if candidate.suffix == ".md" or "/" in raw:
+        return _resolve_context_pack(root, candidate)
+    if raw.startswith("T-"):
+        matches = sorted((root / "agent" / "context-packs").glob(f"{raw}-*.md"))
+        if not matches:
+            raise FileNotFoundError(f"Context pack not found for task id: {raw}")
+        if len(matches) > 1:
+            rels = ", ".join(str(path.relative_to(root)) for path in matches)
+            raise ValueError(f"Task id {raw} is ambiguous: {rels}")
+        return matches[0].resolve()
+    return _resolve_context_pack(root, candidate)
+
+
+def _resolve_context_pack(root: Path, context_pack: Path) -> Path:
+    path = context_pack if context_pack.is_absolute() else root / context_pack
+    if not path.exists():
+        raise FileNotFoundError(f"Context pack not found: {context_pack}")
+    return path.resolve()
+
+
+def _task_id_from_context_pack(context_pack: str) -> str | None:
+    name = Path(context_pack).name
+    return name.split("-", 1)[0] if name.startswith("T-") else None
+
+
+def _required_string(payload: dict[str, Any], key: str) -> str:
+    value = payload.get(key)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"completion must include {key!r}.")
+    return value
+
+
+def _optional_string(value: Any) -> str | None:
+    return value if isinstance(value, str) and value else None
 
 
 def _summary(readiness: str, warnings: list[dict[str, Any]]) -> str:

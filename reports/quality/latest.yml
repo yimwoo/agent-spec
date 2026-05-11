@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.quality_gc_report.v0",
-  "generated_at": "2026-05-11T02:28:12Z",
+  "generated_at": "2026-05-11T04:01:56Z",
   "grade": "B",
   "summary": "0 error(s), 8 warning(s), 1 info finding(s).",
   "findings": [
@@ -94,38 +94,39 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 194,
+      "total": 197,
       "by_status": {
-        "accepted": 194
+        "accepted": 197
       }
     },
     "dcrs": {
-      "total": 59,
+      "total": 62,
       "by_status": {
-        "accepted": 59
+        "accepted": 62
       }
     },
     "tasks": {
-      "total": 87,
+      "total": 91,
       "by_status": {
-        "complete": 87
+        "complete": 91
       },
       "by_type": {
-        "implementation": 80,
+        "implementation": 83,
+        "migration": 1,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 104,
+      "total": 109,
       "by_status": {
-        "aborted": 4,
-        "complete": 100
+        "aborted": 5,
+        "complete": 104
       },
       "by_mode": {
         "research": 1,
-        "supervised": 103
+        "supervised": 108
       }
     },
     "outcomes": {
@@ -152,18 +153,18 @@
   "handoff": {
     "present": true,
     "path": "agent/handoff.yml",
-    "updated_at": "2026-05-11T02:28:12Z",
-    "last_completed_task": "T-089",
+    "updated_at": "2026-05-11T04:01:55Z",
+    "last_completed_task": "T-093",
     "next_action": "idle",
     "next_command": "aspec status --json"
   },
   "cadence": {
     "task_interval": 3,
-    "completed_tasks": 87,
-    "completed_tasks_at_last_quality": 84,
-    "completed_tasks_since_last_quality": 3,
+    "completed_tasks": 91,
+    "completed_tasks_at_last_quality": 87,
+    "completed_tasks_since_last_quality": 4,
     "was_due": true,
-    "next_recommended_completed_tasks": 90
+    "next_recommended_completed_tasks": 94
   },
   "reports": {
     "structured": "reports/quality/latest.yml",

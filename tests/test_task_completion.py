@@ -95,6 +95,9 @@ class TaskCompletionTests(unittest.TestCase):
             self.assertEqual(entry["code_review"]["verdict"], "ready")
             event = _load_events(root / "agent" / "runs" / "complete-t013" / "events.jsonl")[0]
             self.assertEqual(event["code_review"]["id"], "REVIEW-0001")
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["last_completed_task"]["code_review"]["id"], "REVIEW-0001")
+            self.assertEqual(handoff["artifacts"]["last_code_review"], "agent/reviews/REVIEW-0001.yml")
 
     def test_cli_task_complete_links_code_review(self) -> None:
         with tempfile.TemporaryDirectory() as td:

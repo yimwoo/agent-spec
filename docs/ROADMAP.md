@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T03:29:04Z
-- Last completed task: `T-092` agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md
-- Last run: `t-092-create-and-link-native-workflow-artifacts-20260511032252`
+- Updated: 2026-05-11T04:01:55Z
+- Last completed task: `T-093` agent/context-packs/T-093-add-shared-write-back-module.md
+- Last run: `complete-t-093-add-shared-write-back-module-20260511040155`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -105,18 +105,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md` | complete | `complete-t-090-backfill-historical-agentspec-mvp-workflow-20260511023050` | passed | REVIEW-0035 | 2026-05-11T02:30:50Z |
 | `agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md` | complete | `complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042` | passed | REVIEW-0036 | 2026-05-11T03:00:42Z |
 | `agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md` | complete | `t-092-create-and-link-native-workflow-artifacts-20260511032252` | passed | REVIEW-0037 | 2026-05-11T03:29:04Z |
+| `agent/context-packs/T-093-add-shared-write-back-module.md` | complete | `complete-t-093-add-shared-write-back-module-20260511040155` | passed | REVIEW-0038 | 2026-05-11T04:01:55Z |
 
 ## Requirement Traceability
 
-- Requirements: 196
-- By status: accepted=196
-- By priority: P0=53, P1=61, P2=80, P3=2
+- Requirements: 197
+- By status: accepted=197
+- By priority: P0=54, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-187` | P1 | accepted | AgentSpec exposes a read-only project metrics surface |
 | `R-188` | P2 | accepted | First implementation language question is answered |
 | `R-189` | P1 | accepted | Claude Code plugin package mirrors AgentSpec workflow skills |
 | `R-190` | P0 | accepted | AgentSpec exposes product outcome gates and unified lifecycle skills |
@@ -126,3 +126,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
 | `R-195` | P0 | accepted | AgentSpec uses native naming for legacy workflow surfaces |
 | `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
+| `R-197` | P0 | accepted | AgentSpec centralizes completion write-back helpers |

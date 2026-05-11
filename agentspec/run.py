@@ -414,17 +414,11 @@ def resume_run(
     # BEFORE finalizing the state file so a failed ledger write cannot
     # leave a `complete` state file behind without a matching ledger entry.
     if review.decision == "complete" and state.get("mode") != "research":
-        from .task import record_task_ledger_status
+        from .writeback import update_task_ledger
 
-        record_task_ledger_status(
-            root,
-            context_pack=str(state.get("context_pack")),
-            status="complete",
-            run_id=run_id,
-            reason=review.reason,
-            test_status=test_status,
-            updated_at=str(state["updated_at"]),
-        )
+        state["completion_reason"] = review.reason
+        state["verification"] = {"status": test_status}
+        update_task_ledger(root, state)
 
     state["run_state_dir"] = str(_run_root(root, run_dir))
     _write_state(root, run_id, state, run_dir=run_dir)
@@ -602,7 +596,8 @@ def complete_context_pack_run(
     context = _parse_context_pack(context_path)
     config = merged_runtime_config(load_project_config(root))
     from .review import validate_completion_review
-    from .task import load_task_ledger, record_task_ledger_status
+    from .task import load_task_ledger
+    from .writeback import update_task_ledger
 
     load_task_ledger(root)
     task_type = context.get("task_type", "implementation")
@@ -644,16 +639,7 @@ def complete_context_pack_run(
     # naturally converges (ledger writes are idempotent inserts and the
     # _state_exists guard above lets the retry re-enter cleanly).
     _ensure_run_state_writable(root, None)
-    record_task_ledger_status(
-        root,
-        context_pack=str(context_path.relative_to(root)),
-        status="complete",
-        run_id=run_id,
-        reason=reason,
-        test_status=test_status,
-        updated_at=str(state["updated_at"]),
-        code_review=code_review,
-    )
+    update_task_ledger(root, state)
     _write_state(root, run_id, state)
     event = {
         "kind": "task_marked_complete",
@@ -723,12 +709,12 @@ def _task_completion_quality_gc(root: Path, config: dict[str, Any]) -> dict[str,
 
 
 def _write_completion_handoff(root: Path, state: dict[str, Any]) -> None:
-    from .handoff import write_project_handoff
     from .status import build_project_status
+    from .writeback import update_handoff
 
-    write_project_handoff(
+    update_handoff(
         root,
-        completed_state=state,
+        state,
         project_status=build_project_status(root),
     )
 

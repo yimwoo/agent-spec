@@ -1,52 +1,52 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T03:29:04Z",
+  "updated_at": "2026-05-11T04:01:55Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-092",
-    "context_pack": "agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md",
-    "title": "T-092: Create and link native workflow artifacts",
-    "run_id": "t-092-create-and-link-native-workflow-artifacts-20260511032252",
-    "reason": null,
-    "updated_at": "2026-05-11T03:29:04Z",
+    "id": "T-093",
+    "context_pack": "agent/context-packs/T-093-add-shared-write-back-module.md",
+    "title": "T-093: Add shared write-back module",
+    "run_id": "complete-t-093-add-shared-write-back-module-20260511040155",
+    "reason": "Implemented Phase 2 shared write-back module with reusable completion projection, ledger/handoff/roadmap helpers, write-back verification diagnostics, and completion-path refactoring. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
+    "updated_at": "2026-05-11T04:01:55Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0037",
+      "id": "REVIEW-0038",
       "verdict": "ready",
-      "reviewer": "codex",
+      "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0037.yml"
+      "path": "agent/reviews/REVIEW-0038.yml"
     }
   },
   "current_state": {
-    "overall": "attention_needed",
-    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
+    "overall": "idle",
+    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 196,
+      "total": 197,
       "by_status": {
-        "accepted": 196
+        "accepted": 197
       }
     },
     "dcrs": {
-      "total": 61,
+      "total": 62,
       "by_status": {
-        "accepted": 61
+        "accepted": 62
       }
     },
     "tasks": {
-      "total": 90,
+      "total": 91,
       "by_status": {
-        "complete": 90
+        "complete": 91
       },
       "by_type": {
-        "implementation": 82,
+        "implementation": 83,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,14 +54,14 @@
       }
     },
     "runs": {
-      "total": 107,
+      "total": 109,
       "by_status": {
-        "aborted": 4,
-        "complete": 103
+        "aborted": 5,
+        "complete": 104
       },
       "by_mode": {
         "research": 1,
-        "supervised": 106
+        "supervised": 108
       }
     }
   },
@@ -77,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0037.yml"
+    "last_code_review": "agent/reviews/REVIEW-0038.yml"
   }
 }

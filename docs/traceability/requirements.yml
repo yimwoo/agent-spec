@@ -5643,5 +5643,62 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-197",
+    "title": "AgentSpec centralizes completion write-back helpers",
+    "description": "AgentSpec provides a shared write-back module that consolidates completion projection, task ledger updates, handoff updates, roadmap updates, review-link handling, and verification write-back over the existing durable schemas.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-16",
+      "lifecycle-engine-hardening-design:D-20.2",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0062",
+    "acceptance": [
+      "agentspec.writeback exposes reusable helpers for completion projection, task ledger update, handoff update, roadmap update, and write-back verification.",
+      "Existing task completion and supervised run completion behavior remain backward compatible.",
+      "Code review linkage and verification status are threaded through the shared helper path.",
+      "Write-back verification can report missing ledger, handoff, review, or stale roadmap evidence for a selected task.",
+      "Failure ordering does not mark work complete before required ledger and handoff writes succeed.",
+      "Tests cover helper behavior, completion compatibility, review and verification linkage, and write-back readiness diagnostics."
+    ],
+    "code_targets": [
+      "agentspec/writeback.py",
+      "agentspec/run.py",
+      "agentspec/task.py",
+      "agentspec/handoff.py",
+      "agentspec/roadmap.py",
+      "agentspec/status.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_writeback.py",
+      "tests/test_task_completion.py",
+      "tests/test_status_cli.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-093-add-shared-write-back-module.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/doctor/repo-scan.yml",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml",
+      "docs/change-requests/DCR-0062-add-shared-write-back-module.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]
