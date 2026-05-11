@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T03:00:42Z",
+  "updated_at": "2026-05-11T03:29:04Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-091",
-    "context_pack": "agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md",
-    "title": "T-091: Use AgentSpec-native naming for legacy workflow surfaces",
-    "run_id": "complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042",
-    "reason": "Marked complete by user.",
-    "updated_at": "2026-05-11T03:00:42Z",
+    "id": "T-092",
+    "context_pack": "agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md",
+    "title": "T-092: Create and link native workflow artifacts",
+    "run_id": "t-092-create-and-link-native-workflow-artifacts-20260511032252",
+    "reason": null,
+    "updated_at": "2026-05-11T03:29:04Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0036",
+      "id": "REVIEW-0037",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0036.yml"
+      "path": "agent/reviews/REVIEW-0037.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 195,
+      "total": 196,
       "by_status": {
-        "accepted": 195
+        "accepted": 196
       }
     },
     "dcrs": {
-      "total": 60,
+      "total": 61,
       "by_status": {
-        "accepted": 60
+        "accepted": 61
       }
     },
     "tasks": {
-      "total": 89,
+      "total": 90,
       "by_status": {
-        "complete": 89
+        "complete": 90
       },
       "by_type": {
-        "implementation": 81,
+        "implementation": 82,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,14 +54,14 @@
       }
     },
     "runs": {
-      "total": 106,
+      "total": 107,
       "by_status": {
         "aborted": 4,
-        "complete": 102
+        "complete": 103
       },
       "by_mode": {
         "research": 1,
-        "supervised": 105
+        "supervised": 106
       }
     }
   },
@@ -77,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0036.yml"
+    "last_code_review": "agent/reviews/REVIEW-0037.yml"
   }
 }

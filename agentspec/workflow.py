@@ -7,11 +7,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .paths import truncate_on_word_boundary
+from .io import utc_now_iso
+from .paths import slugify, truncate_on_word_boundary
 
 
 WORKFLOW_CONTRACT_SCHEMA = "agentspec.workflow_contract.v0"
 WORKFLOW_PARSE_SCHEMA = "agentspec.workflow_parse.v0"
+WORKFLOW_PLAN_RESULT_SCHEMA = "agentspec.workflow_plan_result.v0"
 
 
 @dataclass(frozen=True)
@@ -145,6 +147,46 @@ def workflow_warning_lines(status: dict[str, Any]) -> list[str]:
             f"{orphan.get('path')} -> {orphan.get('backfill_command')}"
         )
     return lines
+
+
+def create_or_link_native_workflow(root: Path, task_selector: str | Path) -> dict[str, Any]:
+    root = root.resolve()
+    task_path = _resolve_context_pack(root, task_selector)
+    task_rel = _relative(root, task_path)
+    task = _parse_context_pack_for_plan(root, task_path)
+
+    existing_workflow = task.get("workflow")
+    if existing_workflow:
+        workflow_path = root / str(existing_workflow)
+        if not str(existing_workflow).startswith("agent/workflows/"):
+            raise ValueError(
+                f"Task context pack already links to non-native workflow {existing_workflow}; "
+                "resolve that link before creating a native workflow."
+            )
+        if not workflow_path.exists():
+            raise ValueError(f"Task context pack references missing workflow {existing_workflow}.")
+        parsed = parse_workflow_file(root, Path(str(existing_workflow)))
+        linked_task = parsed.get("task_pack")
+        if linked_task and linked_task != task_rel:
+            raise ValueError(
+                f"Workflow {existing_workflow} links to {linked_task}, "
+                f"not {task_rel}."
+            )
+        if linked_task == task_rel:
+            return _plan_result(task, str(existing_workflow), created=False, updated_task=False)
+        _write_native_workflow(root, workflow_path, task, workflow_id=_workflow_id_from_path(workflow_path))
+        return _plan_result(task, str(existing_workflow), created=False, updated_task=False)
+
+    for artifact in list_workflow_artifacts(root):
+        if artifact.path.startswith("agent/workflows/") and artifact.task_pack == task_rel:
+            _write_task_workflow_link(task_path, artifact.path)
+            return _plan_result(task, artifact.path, created=False, updated_task=True)
+
+    workflow_id, workflow_path = _next_native_workflow_path(root, task)
+    _write_native_workflow(root, workflow_path, task, workflow_id=workflow_id)
+    workflow_rel = _relative(root, workflow_path)
+    _write_task_workflow_link(task_path, workflow_rel)
+    return _plan_result(task, workflow_rel, created=True, updated_task=True)
 
 
 def _parse_markdown_workflow(root: Path, path: Path, rel: str) -> dict[str, Any]:
@@ -452,6 +494,244 @@ def _artifact_warning_label(record: dict[str, Any]) -> str:
     if path.startswith("docs/") and "/plans/" in path:
         return "Legacy execution plan"
     return "Workflow/execution plan"
+
+
+def _resolve_context_pack(root: Path, selector: str | Path) -> Path:
+    value = str(selector).strip()
+    if not value:
+        raise ValueError("Task selector is required.")
+    if re.fullmatch(r"T-\d{3,}", value):
+        matches = sorted((root / "agent" / "context-packs").glob(f"{value}-*.md"))
+        if not matches:
+            raise ValueError(f"Task context pack not found: {value}.")
+        if len(matches) > 1:
+            raise ValueError(f"Task selector {value} is ambiguous.")
+        return matches[0]
+
+    path = Path(value)
+    candidate = path if path.is_absolute() else root / path
+    candidate = candidate.resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"Task context pack must be inside the project root: {selector}") from exc
+    if not candidate.exists():
+        raise ValueError(f"Task context pack not found: {selector}.")
+    if not candidate.is_file():
+        raise ValueError(f"Task context pack path is not a file: {selector}.")
+    return candidate
+
+
+def _parse_context_pack_for_plan(root: Path, path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    rel = _relative(root, path)
+    heading = text.splitlines()[0].strip() if text.splitlines() else f"# {path.stem}"
+    match = re.match(r"^#\s+(T-\d{3,}):?\s*(.*)$", heading)
+    task_id = match.group(1) if match else path.stem.split("-", 2)[0]
+    title = match.group(2).strip() if match and match.group(2).strip() else path.stem
+    return {
+        "id": task_id,
+        "title": truncate_on_word_boundary(title, limit=96),
+        "path": rel,
+        "type": _context_pack_metadata_value(text, "Type") or "implementation",
+        "stream": _context_pack_metadata_value(text, "Stream") or "unassigned",
+        "milestone": _context_pack_metadata_value(text, "Milestone") or "unassigned",
+        "slice": _context_pack_metadata_value(text, "Slice") or "unassigned",
+        "branch": _context_pack_metadata_value(text, "Branch") or "unassigned",
+        "workflow": _context_pack_workflow(text),
+        "goal": _context_pack_section(text, "Goal").strip() or title,
+        "allowed_paths": _allowed_paths_section(text),
+        "verification_commands": _context_pack_verification_commands(text),
+    }
+
+
+def _context_pack_metadata_value(text: str, name: str) -> str | None:
+    match = re.search(rf"^{re.escape(name)}:\s*`?([^`\n]+)`?\s*$", text, flags=re.MULTILINE)
+    if not match:
+        return None
+    value = match.group(1).strip()
+    return None if value.lower() in {"", "none", "unassigned"} else value
+
+
+def _context_pack_section(text: str, heading: str) -> str:
+    lines = text.splitlines()
+    out: list[str] = []
+    in_section = False
+    heading_re = re.compile(rf"^##\s+{re.escape(heading)}\s*$", flags=re.IGNORECASE)
+    for line in lines:
+        if heading_re.match(line.strip()):
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section:
+            out.append(line)
+    return "\n".join(out)
+
+
+def _context_pack_verification_commands(text: str) -> list[str]:
+    section = _context_pack_section(text, "Verification Commands")
+    commands = re.findall(r"`([^`]+)`", section)
+    return _dedupe(command for command in commands if _looks_like_command(command))
+
+
+def _next_native_workflow_path(root: Path, task: dict[str, Any]) -> tuple[str, Path]:
+    workflow_dir = root / "agent" / "workflows"
+    workflow_dir.mkdir(parents=True, exist_ok=True)
+    preferred = _number_from_task_id(str(task.get("id") or "")) or _next_workflow_number(workflow_dir)
+    title_slug = slugify(str(task.get("title") or "workflow"), fallback="workflow")
+    number = preferred
+    while True:
+        workflow_id = f"W-{number:03d}"
+        path = workflow_dir / f"{workflow_id}-{title_slug}.md"
+        if not path.exists():
+            return workflow_id, path
+        parsed = parse_workflow_file(root, Path(_relative(root, path)))
+        if parsed.get("task_pack") == task.get("path"):
+            return workflow_id, path
+        number += 1
+
+
+def _number_from_task_id(task_id: str) -> int | None:
+    match = re.fullmatch(r"T-(\d{3,})", task_id)
+    return int(match.group(1)) if match else None
+
+
+def _next_workflow_number(workflow_dir: Path) -> int:
+    highest = 0
+    for path in workflow_dir.glob("W-*.md"):
+        match = re.match(r"W-(\d{3,})", path.stem)
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return highest + 1
+
+
+def _workflow_id_from_path(path: Path) -> str:
+    match = re.match(r"(W-\d{3,})", path.stem)
+    return match.group(1) if match else "W-000"
+
+
+def _write_native_workflow(root: Path, path: Path, task: dict[str, Any], *, workflow_id: str) -> None:
+    timestamp = utc_now_iso()
+    allowed_paths = _dedupe(task.get("allowed_paths") or [])
+    verification_commands = _dedupe(task.get("verification_commands") or [])
+    frontmatter = [
+        "---",
+        f"workflow_id: {workflow_id}",
+        "display_name: Execution Plan",
+        f"task_pack: {task['path']}",
+        "status: planned",
+        "current_stage: planning",
+        f"stream: {task.get('stream') or 'unassigned'}",
+        f"milestone: {task.get('milestone') or 'unassigned'}",
+        f"slice: {task.get('slice') or 'unassigned'}",
+        f"branch: {task.get('branch') or 'unassigned'}",
+        f"created_at: {timestamp}",
+        f"updated_at: {timestamp}",
+        "allowed_paths:",
+    ]
+    frontmatter.extend(f"  - {item}" for item in (allowed_paths or ["docs/**"]))
+    frontmatter.append("verification_commands:")
+    if verification_commands:
+        frontmatter.extend(f"  - {command}" for command in verification_commands)
+    frontmatter.extend(
+        [
+            "required_gates:",
+            "  - context",
+            "  - path",
+            "  - verification",
+            "  - review",
+            "  - writeback",
+            "---",
+            "",
+        ]
+    )
+    text = "\n".join(
+        [
+            *frontmatter,
+            f"# Workflow {workflow_id}: {task['title']}",
+            "",
+            "## Linked Task Pack",
+            "",
+            f"`{task['path']}`",
+            "",
+            "## Objective",
+            "",
+            str(task.get("goal") or task["title"]).strip(),
+            "",
+            "## Plan",
+            "",
+            "1. Confirm the task context, requirements, and allowed paths.",
+            "2. Implement the required change inside the task scope.",
+            "3. Run verification and record the result.",
+            "4. Complete review and write-back evidence.",
+            "",
+            "## Implementation Loop",
+            "",
+            "### Iteration 1",
+            "",
+            "- Goal: Implement the first scoped change.",
+            "- Status: pending",
+            "- Notes:",
+            "",
+            "## Verification Plan",
+            "",
+            *(_fenced_commands(verification_commands) if verification_commands else ["- Add verification commands before execution if the task does not declare them."]),
+            "",
+            "## Review Checklist",
+            "",
+            "- [ ] Path scope respected",
+            "- [ ] Verification evidence recorded",
+            "- [ ] Review evidence recorded",
+            "- [ ] Handoff and roadmap write-back complete",
+            "",
+            "## Completion Checklist",
+            "",
+            "- [ ] `agent/handoff.yml` updated",
+            "- [ ] `agent/task-ledger.yml` updated",
+            "- [ ] `docs/ROADMAP.md` regenerated",
+            "- [ ] Final summary written",
+            "",
+        ]
+    )
+    path.write_text(text, encoding="utf-8")
+
+
+def _fenced_commands(commands: list[str]) -> list[str]:
+    return ["```bash", *commands, "```"]
+
+
+def _write_task_workflow_link(task_path: Path, workflow_path: str) -> None:
+    text = task_path.read_text(encoding="utf-8")
+    replacement = f"Workflow: `{workflow_path}`"
+    updated, count = re.subn(r"^Workflow:\s*`?[^`\n]+`?\s*$", replacement, text, count=1, flags=re.MULTILINE)
+    if count == 0:
+        updated, count = re.subn(r"^(Branch:\s*`?[^`\n]+`?\s*)$", rf"\1\n{replacement}", text, count=1, flags=re.MULTILINE)
+    if count == 0:
+        lines = text.splitlines()
+        lines.insert(1, replacement)
+        updated = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+    task_path.write_text(updated, encoding="utf-8")
+
+
+def _plan_result(
+    task: dict[str, Any],
+    workflow_path: str,
+    *,
+    created: bool,
+    updated_task: bool,
+) -> dict[str, Any]:
+    return {
+        "schema": WORKFLOW_PLAN_RESULT_SCHEMA,
+        "task_pack": task["path"],
+        "task_id": task["id"],
+        "workflow_path": workflow_path,
+        "workflow_id": _workflow_id_from_path(Path(workflow_path)),
+        "created": created,
+        "updated_task": updated_task,
+        "status": "planned",
+        "next_command": f"aspec run loop {task['path']}",
+    }
 
 
 def _metadata_values(metadata: dict[str, Any], keys: tuple[str, ...]) -> list[str]:

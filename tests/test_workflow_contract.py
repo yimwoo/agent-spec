@@ -214,6 +214,151 @@ Workflow: `agent/workflows/W-001-phase-five.md`
             self.assertNotIn("`R-001`", text)
             self.assertIn("No accepted requirement attached", text)
 
+    def test_plan_creates_native_workflow_and_links_task_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            task_path = root / "agent" / "context-packs" / "T-001-phase-five.md"
+            task_path.write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Stream: `billing`
+Milestone: `M2.1`
+Slice: `4`
+Branch: `feat/billing-retry`
+Workflow: `none`
+
+## Goal
+
+Implement phase five contract enforcement.
+
+## Requirements
+
+- `R-001` Phase five requirement
+
+## Allowed Paths
+
+- `agentspec/workflow.py`
+- `tests/test_workflow_contract.py`
+
+## Verification Commands
+
+- `python -m unittest tests/test_workflow_contract.py`
+""",
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "plan", "T-001", "--json"])
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["workflow_id"], "W-001")
+            self.assertEqual(payload["task_pack"], "agent/context-packs/T-001-phase-five.md")
+            workflow_path = root / payload["workflow_path"]
+            self.assertTrue(workflow_path.exists())
+
+            task_text = task_path.read_text(encoding="utf-8")
+            workflow_text = workflow_path.read_text(encoding="utf-8")
+            self.assertIn(f"Workflow: `{payload['workflow_path']}`", task_text)
+            self.assertIn("display_name: Execution Plan", workflow_text)
+            self.assertIn("task_pack: agent/context-packs/T-001-phase-five.md", workflow_text)
+            self.assertIn("- agentspec/workflow.py", workflow_text)
+            self.assertIn("- python -m unittest tests/test_workflow_contract.py", workflow_text)
+            self.assertNotIn("HOTL", workflow_text)
+
+            status = build_workflow_contract_status(root)
+            self.assertEqual(status["orphan_count"], 0)
+            self.assertEqual(status["broken_link_count"], 0)
+            self.assertEqual(status["artifacts"][0]["referenced_by"], ["agent/context-packs/T-001-phase-five.md"])
+
+            status_output = io.StringIO()
+            with redirect_stdout(status_output):
+                self.assertEqual(main(["--root", str(root), "status", "--json"]), 0)
+            status_payload = json.loads(status_output.getvalue())
+            self.assertEqual(status_payload["workflows"]["orphan_count"], 0)
+            self.assertEqual(status_payload["workflows"]["broken_link_count"], 0)
+
+    def test_plan_refuses_conflicting_existing_workflow_link(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / "agent" / "workflows").mkdir()
+            workflow = root / "agent" / "workflows" / "W-001-phase-five.md"
+            workflow.write_text(
+                """---
+workflow_id: W-001
+task_pack: agent/context-packs/T-002-other.md
+---
+
+# Workflow W-001: Other Task
+""",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-001-phase-five.md").write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `agent/workflows/W-001-phase-five.md`
+
+## Requirements
+
+- No accepted requirement attached.
+""",
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "plan", "T-001", "--json"])
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["error"]["type"], "ValueError")
+            self.assertIn("links to agent/context-packs/T-002-other.md", payload["error"]["message"])
+
+    def test_task_create_from_native_workflow_remains_compatible(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            task_path = root / "agent" / "context-packs" / "T-001-phase-five.md"
+            task_path.write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `none`
+
+## Goal
+
+Implement phase five.
+
+## Requirements
+
+- No accepted requirement attached.
+
+## Allowed Paths
+
+- `agentspec/workflow.py`
+""",
+                encoding="utf-8",
+            )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(main(["--root", str(root), "plan", "T-001", "--json"]), 0)
+            workflow_path = json.loads(output.getvalue())["workflow_path"]
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "create", "--from-workflow", workflow_path])
+
+            self.assertEqual(code, 0)
+            pack_path = root / output.getvalue().strip().removeprefix("Created task context pack: ")
+            text = pack_path.read_text(encoding="utf-8")
+            self.assertIn(f"Workflow: `{workflow_path}`", text)
+            self.assertIn("- `agentspec/workflow.py`", text)
+
     def test_roadmap_write_and_check(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -126,6 +126,17 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertIn(first_requirement, pack_text)
                 self.assertIn("UNTRUSTED SOURCE CONTENT", pack_text)
 
+                plan_output = io.StringIO()
+                with redirect_stdout(plan_output):
+                    task_id = "-".join(packs[0].name.split("-", 2)[:2])
+                    self.assertEqual(main(["plan", task_id, "--json"]), 0)
+                plan_payload = json.loads(plan_output.getvalue())
+                self.assertTrue((project / plan_payload["workflow_path"]).exists())
+                self.assertIn(
+                    f"Workflow: `{plan_payload['workflow_path']}`",
+                    packs[0].read_text(encoding="utf-8"),
+                )
+
                 self.assertEqual(main(["emit", "--target", "agents-md,claude,codex"]), 0)
                 self.assertTrue((project / "AGENTS.md").exists())
                 agents_text = (project / "AGENTS.md").read_text(encoding="utf-8")
@@ -158,6 +169,8 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertIn("sessions", status_payload)
                 self.assertEqual(status_payload["sessions"]["counts"], {"active": 0, "archived": 0})
                 self.assertIn("workflows", status_payload)
+                self.assertEqual(status_payload["workflows"]["orphan_count"], 0)
+                self.assertEqual(status_payload["workflows"]["broken_link_count"], 0)
 
                 self.assertEqual(main(["roadmap"]), 0)
                 self.assertTrue((project / "docs" / "ROADMAP.md").exists())

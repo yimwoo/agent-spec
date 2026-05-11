@@ -123,6 +123,16 @@ class TaskQueueTests(unittest.TestCase):
         self.assertIn("Backfill a context pack from a workflow or state file.", text)
         self.assertNotIn("HOTL workflow", text)
 
+    def test_plan_help_uses_native_workflow_wording(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as raised:
+            build_parser(prog="aspec").parse_args(["plan", "--help"])
+
+        self.assertEqual(raised.exception.code, 0)
+        text = output.getvalue()
+        self.assertIn("Create or link an AgentSpec workflow for a task context pack.", text)
+        self.assertNotIn("HOTL", text)
+
 
 def _seed(root: Path) -> None:
     (root / "agent" / "context-packs").mkdir(parents=True)

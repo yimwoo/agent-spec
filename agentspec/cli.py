@@ -61,7 +61,7 @@ from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import build_project_status, format_project_status
 from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
-from .workflow import build_workflow_contract_status, workflow_warning_lines
+from .workflow import build_workflow_contract_status, create_or_link_native_workflow, workflow_warning_lines
 
 
 def _default_prog() -> str:
@@ -149,6 +149,16 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     roadmap = subparsers.add_parser("roadmap", help="Generate or check docs/ROADMAP.md.")
     roadmap.add_argument("--check", action="store_true", help="Fail if docs/ROADMAP.md is missing or stale.")
     roadmap.add_argument("--json", action="store_true")
+
+    plan = subparsers.add_parser(
+        "plan",
+        help="Create or link an AgentSpec workflow for a task context pack.",
+        description="Create or link an AgentSpec workflow for a task context pack.",
+    )
+    plan.add_argument("selector", nargs="?", help="Task id (for example T-092) or context pack path.")
+    plan.add_argument("--from-task", dest="from_task", help="Task id or context pack path to plan from.")
+    plan.add_argument("--current", action="store_true", help="Use the current next ready task context pack.")
+    plan.add_argument("--json", action="store_true")
 
     outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
@@ -586,6 +596,25 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps({"path": str(path.relative_to(root))}, indent=2))
             else:
                 print(f"Wrote roadmap: {path.relative_to(root)}")
+            return 0
+
+        if args.command == "plan":
+            selectors = [value for value in [args.selector, args.from_task] if value]
+            if args.current:
+                current = next_task_context_pack(root)
+                if current is None:
+                    raise ValueError("No ready task context pack found.")
+                selectors.append(str(current["path"]))
+            if len(selectors) != 1:
+                raise ValueError("Select exactly one task with <task>, --from-task, or --current.")
+            result = create_or_link_native_workflow(root, selectors[0])
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                action = "Created" if result.get("created") else "Linked"
+                print(f"{action} workflow: {result['workflow_path']}")
+                print(f"Task pack: {result['task_pack']}")
+                print(f"Next: {result['next_command']}")
             return 0
 
         if args.command == "outcome":
