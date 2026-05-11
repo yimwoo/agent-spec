@@ -18,3 +18,9 @@ aspec roadmap --check
 ```
 
 Do not hand-edit `docs/ROADMAP.md`; regenerate it from the core CLI.
+
+## Human-Facing Output
+
+For Codex or Claude Code responses, say whether the roadmap was regenerated or
+is current. Keep raw `aspec ...` commands internal unless the user asks for
+terminal commands or logs.

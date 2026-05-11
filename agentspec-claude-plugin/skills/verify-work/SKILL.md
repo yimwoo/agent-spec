@@ -33,3 +33,15 @@ aspec roadmap --check
 
 Boundary: this skill does not mark the task complete. Completion still requires
 review evidence and the normal `aspec task complete` flow.
+
+## Human-Facing Output
+
+For Codex or Claude Code responses, translate internal AgentSpec checks into
+plain evidence labels. Say whether the task tests passed, outcome gates are
+ready or blocked, project status is ready or needs attention, and roadmap
+freshness passed or needs repair.
+
+Keep raw `aspec ...` command strings internal unless the user asks for commands,
+logs, or terminal reproduction steps. Do not list `aspec outcome --json`,
+`aspec status --json`, or `aspec roadmap --check` under "Tests / checks run" in
+a final human-facing reply.

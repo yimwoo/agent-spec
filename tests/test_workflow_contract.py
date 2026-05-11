@@ -214,6 +214,71 @@ Workflow: `agent/workflows/W-001-phase-five.md`
             self.assertNotIn("`R-001`", text)
             self.assertIn("No accepted requirement attached", text)
 
+    def test_task_create_from_legacy_state_sanitizes_extracted_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / ".hotl" / "state").mkdir(parents=True)
+            (root / "src").mkdir()
+            (root / "src" / "lifecycle.ts").write_text("export {}\n", encoding="utf-8")
+            (root / "src" / "local.ts").write_text("export {}\n", encoding="utf-8")
+            (root / "tests").mkdir()
+            (root / "tests" / "test_lifecycle.py").write_text("def test_lifecycle(): pass\n", encoding="utf-8")
+            state = root / ".hotl" / "state" / "odap-backfill.json"
+            write_data(
+                state,
+                {
+                    "title": "ODAP lifecycle backfill",
+                    "workflow_path": "docs/plans/odap-workflow.md",
+                    "events": [
+                        {
+                            "paths": [
+                                "src/lifecycle.ts",
+                                str(root / "src" / "local.ts"),
+                                "/Users/yimwu/Documents/workspace/Apps/odap/src/outside.ts",
+                                "/private/var/folders/pytest-of-yimwu/pytest-123/test_tmp0",
+                                "tests/test_lifecycle.py::test_backfill",
+                                "0.03s",
+                                "2>/dev/null",
+                                "codex/odap-lifecycle-backfill",
+                            ]
+                        },
+                        {"command": "pytest tests/test_lifecycle.py -q"},
+                        {
+                            "command": (
+                                "pytest tests/test_lifecycle.py -q\n"
+                                "FAILED tests/test_lifecycle.py::test_red - AssertionError: historical RED"
+                            )
+                        },
+                    ],
+                },
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "create", "--from-workflow", ".hotl/state/odap-backfill.json"])
+
+            self.assertEqual(code, 0)
+            pack_path = root / output.getvalue().strip().removeprefix("Created task context pack: ")
+            text = pack_path.read_text(encoding="utf-8")
+            allowed = text.split("## Allowed Paths", 1)[1].split("## Allowed Paths Provenance", 1)[0]
+            verification = text.split("## Verification Commands", 1)[1].split("## Acceptance Criteria", 1)[0]
+            self.assertIn("- `src/lifecycle.ts`", allowed)
+            self.assertIn("- `src/local.ts`", allowed)
+            self.assertIn("- `tests/test_lifecycle.py`", allowed)
+            self.assertNotIn("/Users/yimwu", allowed)
+            self.assertNotIn("/private/var", allowed)
+            self.assertNotIn("0.03s", allowed)
+            self.assertNotIn("2>/dev/null", allowed)
+            self.assertNotIn("codex/odap-lifecycle-backfill", allowed)
+            self.assertNotIn("::test_backfill", allowed)
+            self.assertIn("- `pytest tests/test_lifecycle.py -q`", verification)
+            self.assertNotIn("FAILED", verification)
+            self.assertIn("## Local Evidence Only", text)
+            self.assertIn("## Extraction Warnings", text)
+            self.assertIn("## Historical Evidence", text)
+            self.assertIn("historical RED", text)
+
     def test_plan_creates_native_workflow_and_links_task_pack(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

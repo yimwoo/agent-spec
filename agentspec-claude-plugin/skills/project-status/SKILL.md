@@ -18,3 +18,9 @@ Use the status recommendation to decide whether to continue a run, inspect a
 halted run, start the next ready context pack, or backfill an in-flight workflow
 with `aspec task create --from-workflow <file>`. Do not mutate DCR,
 requirement, task, source, or run state from this skill.
+
+## Human-Facing Output
+
+For Codex or Claude Code responses, present the status main point and next
+action in plain language. Keep raw `aspec ...` commands internal unless the
+user asks for command-level evidence or wants to run the CLI directly.

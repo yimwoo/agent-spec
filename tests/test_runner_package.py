@@ -171,6 +171,8 @@ class RunnerPackageTests(unittest.TestCase):
             root = Path(td)
             _seed(root)
             (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "change-requests" / "README.md").write_text("seed\n", encoding="utf-8")
             _git(root, "init")
             _git(root, "add", ".")
             _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
@@ -200,6 +202,80 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(executor_event["reported_touched_paths"], ["agentspec/runner.py"])
             self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
             self.assertIn("docs/source/", executor_event["touched_paths"])
+
+    def test_submit_runner_result_ignores_unchanged_dirty_paths_from_run_start(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "change-requests" / "README.md").write_text("seed\n", encoding="utf-8")
+            _git(root, "init")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
+            (root / "README.md").write_text("dirty before run\n", encoding="utf-8")
+            start_research_run(root, run_id="pkg-research-dirty")
+            (root / "docs" / "change-requests").mkdir(parents=True, exist_ok=True)
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            package = submit_runner_result(
+                root,
+                "pkg-research-dirty",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "complete")
+            self.assertEqual(package["step"]["state"]["status"], "complete")
+            events = _events(root, "pkg-research-dirty")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertEqual(executor_event["touched_paths"], ["docs/change-requests/DCR-0099-research.md"])
+            self.assertEqual(executor_event["reported_touched_paths"], ["docs/change-requests/DCR-0099-research.md"])
+            self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
+
+    def test_submit_runner_result_flags_dirty_path_changed_after_run_start(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            _git(root, "init")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
+            (root / "README.md").write_text("dirty before run\n", encoding="utf-8")
+            start_research_run(root, run_id="pkg-research-dirty-changed")
+            (root / "README.md").write_text("changed during run\n", encoding="utf-8")
+            (root / "docs" / "change-requests").mkdir(parents=True, exist_ok=True)
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            package = submit_runner_result(
+                root,
+                "pkg-research-dirty-changed",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "stop")
+            self.assertEqual(package["step"]["state"]["status"], "halted")
+            review = package["step"]["review"]
+            self.assertEqual(review["decision"], "halt")
+            self.assertIn("forbidden_path", review["policy_flags"])
+            events = _events(root, "pkg-research-dirty-changed")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertIn("README.md", executor_event["touched_paths"])
 
     def test_invalid_runner_result_is_rejected_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -488,6 +564,19 @@ def _events(root: Path, run_id: str) -> list[dict]:
         for line in events_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _valid_research_evidence() -> dict:
+    return {
+        "schema": "agentspec.research_acceptance_evidence.v0",
+        "durable_artifacts": ["docs/change-requests/DCR-0099-research.md"],
+        "allowed_path_confirmation": True,
+        "verification_commands": [{"command": "git diff --check", "status": "passed"}],
+        "covered_requirements": ["R-172"],
+        "covered_questions": [],
+        "source_checks": [],
+        "no_task_context_pack_reason": "Research mode intentionally produced proposal artifacts only.",
+    }
 
 
 def _git(root: Path, *args: str) -> None:

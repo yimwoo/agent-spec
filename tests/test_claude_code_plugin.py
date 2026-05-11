@@ -129,6 +129,28 @@ class ClaudeCodePluginTests(unittest.TestCase):
             self.assertIn(text, normalized)
         self.assertNotIn("agentspec-codex-plugin", normalized)
 
+    def test_plugin_skills_hide_internal_cli_checks_from_human_replies(self) -> None:
+        plugin_roots = [
+            REPO_ROOT / "agentspec-codex-plugin",
+            REPO_ROOT / "agentspec-claude-plugin",
+        ]
+        for plugin_root in plugin_roots:
+            with self.subTest(plugin=plugin_root.name):
+                finish_work = (
+                    plugin_root / "skills" / "finish-work" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                verify_work = (
+                    plugin_root / "skills" / "verify-work" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                combined = finish_work + "\n" + verify_work
+
+                self.assertIn("Human-Facing Output", combined)
+                self.assertIn("keep raw `aspec ...` commands internal", combined)
+                self.assertIn("Outcome gates are ready", combined)
+                self.assertIn("Roadmap freshness check passed", combined)
+                self.assertIn("Do not include a final \"Tests / checks run\" section", combined)
+                self.assertIn("Do not list `aspec outcome --json`", combined)
+
     def test_claude_cli_validates_plugin_when_available(self) -> None:
         if shutil.which("claude") is None:
             self.skipTest("Claude Code CLI is not installed.")

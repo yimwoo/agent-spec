@@ -7,7 +7,12 @@ from typing import Any
 
 from .review import research_acceptance_evidence_template, validate_research_acceptance_evidence
 from .policy import redact_sensitive_text
-from .run import load_run_state, step_run, validate_run_id
+from .run import (
+    controller_observed_touched_paths,
+    load_run_state,
+    step_run,
+    validate_run_id,
+)
 
 
 RUNNER_PACKAGE_SCHEMA = "agentspec.runner_package.v0"
@@ -87,7 +92,10 @@ def submit_runner_result(
         raise ValueError("Research-mode passed runner results require acceptance_evidence.")
     mode = reviewer_mode or parsed.get("reviewer_mode")
     runner_reported_paths = list(parsed["touched_paths"])
-    observed_available, observed_paths = _git_changed_paths_with_status(root)
+    observed_available, observed_paths = controller_observed_touched_paths(
+        root,
+        state.get("controller_path_baseline"),
+    )
     touched_paths = observed_paths if observed_available else runner_reported_paths
     return package_run(
         root,

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +21,7 @@ STATE_SCHEMA = "agentspec.supervised_run.state.v0"
 EVENT_SCHEMA = "agentspec.supervised_run.event.v0"
 SUMMARY_SCHEMA = "agentspec.supervised_run.summary.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
+CONTROLLER_PATH_BASELINE_SCHEMA = "agentspec.controller_path_baseline.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
 SUMMARY_MODES = {"autonomous", "research"}
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -91,6 +94,7 @@ def start_run(
         "context_pack_title": context.get("title"),
         "task_type": task_type,
         "allowed_paths": context.get("allowed_paths", []),
+        "controller_path_baseline": capture_controller_path_baseline(root),
         "iteration": 0,
         "max_iterations": max_iterations or configured_max or 3,
         "profiles": _profile_bindings(config),
@@ -137,6 +141,7 @@ def start_research_run(
         "context_pack_title": "Research mode (no pack)",
         "task_type": "research",
         "allowed_paths": list(RESEARCH_ALLOWED_PATHS),
+        "controller_path_baseline": capture_controller_path_baseline(root),
         "iteration": 0,
         "max_iterations": max_iterations or 3,
         "max_research_findings": max_research_findings or MAX_RESEARCH_FINDINGS_DEFAULT,
@@ -1106,6 +1111,87 @@ def validate_run_id(run_id: str) -> str:
             "letters, digits, '.', '_', and '-', starting with a letter or digit."
         )
     return run_id
+
+
+def capture_controller_path_baseline(root: Path) -> dict[str, Any]:
+    available, signatures = _git_changed_path_signatures(root)
+    return {
+        "schema": CONTROLLER_PATH_BASELINE_SCHEMA,
+        "available": available,
+        "paths": signatures,
+    }
+
+
+def controller_observed_touched_paths(
+    root: Path,
+    baseline: Any,
+) -> tuple[bool, list[str]]:
+    available, current = _git_changed_path_signatures(root)
+    if not available:
+        return False, []
+
+    if not isinstance(baseline, dict) or baseline.get("available") is not True:
+        return True, sorted(current)
+    baseline_paths = baseline.get("paths")
+    if not isinstance(baseline_paths, dict):
+        return True, sorted(current)
+
+    normalized_baseline = {
+        str(path): str(signature)
+        for path, signature in baseline_paths.items()
+        if isinstance(path, str)
+    }
+    changed = [
+        path
+        for path in set(current) | set(normalized_baseline)
+        if current.get(path) != normalized_baseline.get(path)
+    ]
+    return True, sorted(changed)
+
+
+def _git_changed_path_signatures(root: Path) -> tuple[bool, dict[str, str]]:
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return False, {}
+    if completed.returncode != 0:
+        return False, {}
+
+    signatures: dict[str, str] = {}
+    for line in completed.stdout.splitlines():
+        if not line:
+            continue
+        status = line[:2]
+        path = line[3:] if len(line) > 3 else ""
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[-1]
+        path = path.strip().strip('"')
+        if path:
+            signatures[path] = f"{status}:{_path_signature(root / path)}"
+    return True, signatures
+
+
+def _path_signature(path: Path) -> str:
+    try:
+        if path.is_symlink():
+            return f"symlink:{path.readlink()}"
+        if path.is_file():
+            digest = hashlib.sha256()
+            with path.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            return f"file:{digest.hexdigest()}"
+        if path.is_dir():
+            return "dir"
+        return "missing"
+    except OSError as exc:
+        return f"error:{exc.__class__.__name__}"
 
 
 def _state_exists(root: Path, run_id: str, *, run_dir: Path | None = None) -> bool:

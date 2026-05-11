@@ -24,3 +24,17 @@ Summarize the completed requirement IDs, tests run, review id, outcome impact,
 roadmap status, and any remaining product-readiness blockers. Do not claim
 production readiness unless `aspec outcome` says the relevant outcome gates are
 ready.
+
+## Human-Facing Output
+
+For Codex or Claude Code final replies, keep raw `aspec ...` commands internal
+unless the user asks for command-level logs or terminal evidence. Report
+verification by purpose and result, for example:
+
+- "Task verification passed."
+- "Outcome gates are ready."
+- "Roadmap freshness check passed."
+
+Do not include a final "Tests / checks run" section that lists internal
+AgentSpec CLI commands such as `aspec outcome --json` or
+`aspec roadmap --check`.

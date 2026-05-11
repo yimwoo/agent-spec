@@ -25,3 +25,10 @@ ready and backed by evidence.
 Boundary: this plugin does not invent product readiness. If `agent/outcomes.yml`
 is missing, empty, or blocked, report that and recommend defining or clearing
 the outcome gates.
+
+## Human-Facing Output
+
+For Codex or Claude Code responses, lead with outcome readiness, ready or
+blocked gate names, evidence, and the next action in plain language. Keep raw
+`aspec ...` commands internal unless the user asks for terminal commands or
+logs.

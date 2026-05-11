@@ -40,3 +40,10 @@ aspec session finish <session-id> --disposition merged --review <REVIEW-id> --te
 Boundary: current AgentSpec has `aspec finish` and session finish. A future
 dedicated branch-finish command can add clean-checkout verification and record
 merge, PR, keep, or discard disposition in one native flow.
+
+## Human-Facing Output
+
+For Codex or Claude Code final replies, summarize the branch disposition,
+completed task, review id, verification result, outcome readiness, and roadmap
+freshness by purpose and result. Keep raw `aspec ...` commands internal unless
+the user asks for terminal logs or reproduction commands.

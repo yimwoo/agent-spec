@@ -193,14 +193,21 @@ def _parse_markdown_workflow(root: Path, path: Path, rel: str) -> dict[str, Any]
     text = path.read_text(encoding="utf-8")
     frontmatter, body = _frontmatter(text)
     metadata = _parse_simple_metadata(frontmatter)
+    warnings: list[str] = []
+    historical_evidence: list[str] = []
     title = (
         _first_string(metadata.get("title"))
         or _first_string(metadata.get("intent"))
         or _first_heading(body)
         or _title_from_filename(path)
     )
-    verification_commands = _verification_commands_from_markdown(text, metadata)
-    allowed_paths = _allowed_paths_from_markdown(text, metadata, verification_commands)
+    verification_commands = _verification_commands_from_markdown(
+        text,
+        metadata,
+        historical_evidence=historical_evidence,
+        warnings=warnings,
+    )
+    allowed_paths = _allowed_paths_from_markdown(root, text, metadata, verification_commands, warnings)
     task_pack = _normalize_optional_path(root, _first_string(metadata.get("task_pack")))
     return {
         "schema": WORKFLOW_PARSE_SCHEMA,
@@ -212,6 +219,8 @@ def _parse_markdown_workflow(root: Path, path: Path, rel: str) -> dict[str, Any]
         "intent": _first_string(metadata.get("intent")) or title,
         "allowed_paths": allowed_paths,
         "verification_commands": verification_commands,
+        "extraction_warnings": _dedupe(warnings),
+        "historical_evidence": _dedupe(historical_evidence),
     }
 
 
@@ -229,17 +238,26 @@ def _parse_json_state(root: Path, path: Path, rel: str) -> dict[str, Any]:
         _first_json_string(data, ("workflow_path", "workflow_file", "plan_path", "workflow")),
     )
     task_pack = _normalize_optional_path(root, _first_json_string(data, ("task_pack", "context_pack")))
+    warnings: list[str] = []
+    historical_evidence: list[str] = []
     allowed_paths = _dedupe(
-        path
-        for path in _json_values_by_key(data, {"allowed_paths", "write_scope", "paths", "touched_paths"})
-        if _looks_like_path(path)
+        normalized
+        for value in _json_values_by_key(data, {"allowed_paths", "write_scope", "paths", "touched_paths"})
+        if (normalized := _normalize_path_candidate(root, value, warnings=warnings)) is not None
     )
     verification_commands = _dedupe(
-        command
-        for command in _json_values_by_key(data, {"verify", "verification", "verification_commands", "command"})
-        if _looks_like_command(command)
+        normalized
+        for value in _json_values_by_key(data, {"verify", "verification", "verification_commands", "command"})
+        if (
+            normalized := _normalize_verification_command(
+                value,
+                historical_evidence=historical_evidence,
+                warnings=warnings,
+            )
+        )
+        is not None
     )
-    allowed_paths = _dedupe([*allowed_paths, *_paths_from_commands(verification_commands)])
+    allowed_paths = _dedupe([*allowed_paths, *_paths_from_commands(root, verification_commands, warnings)])
     if not allowed_paths:
         allowed_paths = ["docs/**"]
     return {
@@ -252,6 +270,8 @@ def _parse_json_state(root: Path, path: Path, rel: str) -> dict[str, Any]:
         "intent": title,
         "allowed_paths": allowed_paths,
         "verification_commands": verification_commands,
+        "extraction_warnings": _dedupe(warnings),
+        "historical_evidence": _dedupe(historical_evidence),
     }
 
 
@@ -291,11 +311,18 @@ def _parse_simple_metadata(text: str) -> dict[str, Any]:
     return data
 
 
-def _verification_commands_from_markdown(text: str, metadata: dict[str, Any]) -> list[str]:
+def _verification_commands_from_markdown(
+    text: str,
+    metadata: dict[str, Any],
+    *,
+    historical_evidence: list[str],
+    warnings: list[str],
+) -> list[str]:
     commands: list[str] = []
     for value in _metadata_values(metadata, ("verify", "verification", "verification_commands")):
-        if _looks_like_command(value):
-            commands.append(value)
+        command = _normalize_verification_command(value, historical_evidence=historical_evidence, warnings=warnings)
+        if command is not None:
+            commands.append(command)
 
     lines = text.splitlines()
     index = 0
@@ -305,7 +332,13 @@ def _verification_commands_from_markdown(text: str, metadata: dict[str, Any]) ->
         if stripped.startswith("verify:"):
             value = stripped.removeprefix("verify:").strip()
             if value:
-                commands.append(_strip_quotes(value))
+                command = _normalize_verification_command(
+                    _strip_quotes(value),
+                    historical_evidence=historical_evidence,
+                    warnings=warnings,
+                )
+                if command is not None:
+                    commands.append(command)
                 index += 1
                 continue
             index += 1
@@ -315,33 +348,48 @@ def _verification_commands_from_markdown(text: str, metadata: dict[str, Any]) ->
                     break
                 command_match = re.search(r"\bcommand:\s*(.+)$", child.strip())
                 if command_match:
-                    commands.append(_strip_quotes(command_match.group(1).strip()))
+                    command = _normalize_verification_command(
+                        _strip_quotes(command_match.group(1).strip()),
+                        historical_evidence=historical_evidence,
+                        warnings=warnings,
+                    )
+                    if command is not None:
+                        commands.append(command)
                 index += 1
             continue
         command_match = re.match(r"^\s*command:\s*(.+)$", line)
         if command_match and _near_verify(lines, index):
-            commands.append(_strip_quotes(command_match.group(1).strip()))
+            command = _normalize_verification_command(
+                _strip_quotes(command_match.group(1).strip()),
+                historical_evidence=historical_evidence,
+                warnings=warnings,
+            )
+            if command is not None:
+                commands.append(command)
         index += 1
 
     return _dedupe(command for command in commands if _looks_like_command(command))
 
 
 def _allowed_paths_from_markdown(
+    root: Path,
     text: str,
     metadata: dict[str, Any],
     verification_commands: list[str],
+    warnings: list[str],
 ) -> list[str]:
     paths: list[str] = []
     for value in _metadata_values(metadata, ("allowed_paths", "write_scope", "paths", "files", "touched_paths")):
-        if _looks_like_path(value):
-            paths.append(value)
+        normalized = _normalize_path_candidate(root, value, warnings=warnings)
+        if normalized is not None:
+            paths.append(normalized)
     paths.extend(_allowed_paths_section(text))
     paths.extend(
-        value
+        normalized
         for value in re.findall(r"`([^`]+)`", text)
-        if _looks_like_path(value)
+        if (normalized := _normalize_path_candidate(root, value, warnings=None)) is not None
     )
-    paths.extend(_paths_from_commands(verification_commands))
+    paths.extend(_paths_from_commands(root, verification_commands, warnings))
     deduped = _dedupe(paths)
     return deduped or ["docs/**"]
 
@@ -359,7 +407,7 @@ def _allowed_paths_section(text: str) -> list[str]:
     ]
 
 
-def _paths_from_commands(commands: list[str]) -> list[str]:
+def _paths_from_commands(root: Path, commands: list[str], warnings: list[str]) -> list[str]:
     paths: list[str] = []
     for command in commands:
         if re.search(r"\bdiscover\s+-s\s+tests\b", command):
@@ -369,9 +417,10 @@ def _paths_from_commands(commands: list[str]) -> list[str]:
         except ValueError:
             parts = command.split()
         for part in parts:
-            if _looks_like_path(part):
-                paths.append(part)
-    return paths
+            normalized = _normalize_path_candidate(root, part, warnings=None)
+            if normalized is not None:
+                paths.append(normalized)
+    return _dedupe(paths)
 
 
 def _context_pack_texts(root: Path) -> dict[str, str]:
@@ -815,8 +864,106 @@ def _near_verify(lines: list[str], index: int) -> bool:
     return False
 
 
+def _normalize_verification_command(
+    value: str,
+    *,
+    historical_evidence: list[str],
+    warnings: list[str],
+) -> str | None:
+    value = _strip_quotes(value.strip())
+    if not value:
+        return None
+    if _looks_like_historical_output(value):
+        historical_evidence.append(value[:1000])
+        warnings.append("Ignored historical command output while extracting verification commands.")
+        first_line = value.splitlines()[0].strip()
+        if (
+            first_line != value
+            and _looks_like_command(first_line)
+            and not _looks_like_historical_output(first_line)
+        ):
+            return first_line
+        return None
+    if not _looks_like_command(value):
+        return None
+    return value
+
+
 def _looks_like_command(value: str) -> bool:
     return bool(value.strip()) and any(token in value for token in (" ", "-m", "pytest", "unittest", "npm", "pnpm"))
+
+
+def _normalize_path_candidate(root: Path, value: str, *, warnings: list[str] | None) -> str | None:
+    original = value
+    value = _strip_quotes(value.strip().strip("`").strip())
+    if "::" in value:
+        value = value.split("::", 1)[0]
+
+    path = Path(value)
+    if path.is_absolute():
+        try:
+            value = str(path.resolve().relative_to(root.resolve()))
+        except ValueError:
+            if warnings is not None:
+                warnings.append(f"Ignored absolute path outside the repository: {original!r}.")
+            return None
+
+    if _invalid_path_reason(value):
+        if warnings is not None:
+            warnings.append(f"Ignored non-path token from workflow extraction: {original!r}.")
+        return None
+    if not _looks_like_path(value):
+        return None
+
+    normalized = value.replace("\\", "/").lstrip("./")
+    if _invalid_path_reason(normalized):
+        if warnings is not None:
+            warnings.append(f"Ignored non-path token from workflow extraction: {original!r}.")
+        return None
+    if _looks_like_branch_ref(root, normalized):
+        if warnings is not None:
+            warnings.append(f"Ignored branch-like token from workflow extraction: {original!r}.")
+        return None
+    return normalized
+
+
+def _invalid_path_reason(value: str) -> str | None:
+    if not value:
+        return "empty"
+    if "\n" in value or "\r" in value:
+        return "multiline"
+    if " " in value or value.startswith(("http://", "https://", "$")):
+        return "not-path"
+    if value.startswith("<") or value.endswith(">"):
+        return "placeholder"
+    if any(token in value for token in (">", "<", "|")):
+        return "shell-token"
+    if re.fullmatch(r"\d+(?:\.\d+)?s", value):
+        return "elapsed-time"
+    lowered = value.lower()
+    if "traceback" in lowered or lowered.startswith(("failed", "error", "assertionerror")):
+        return "command-output"
+    if any(token in lowered for token in ("/pytest-", "pytest-of-")):
+        return "temp-path"
+    if lowered.startswith(("private/var/", "var/folders/", "tmp/")):
+        return "temp-path"
+    if lowered.startswith(".hotl/"):
+        return "local-evidence"
+    return None
+
+
+def _looks_like_historical_output(value: str) -> bool:
+    lowered = value.lower()
+    return "\n" in value or "traceback" in lowered or bool(
+        re.search(r"(?m)^(failed|error|assertionerror)\b", value, flags=re.IGNORECASE)
+    )
+
+
+def _looks_like_branch_ref(root: Path, value: str) -> bool:
+    if (root / value).exists():
+        return False
+    branch_re = r"(?:codex|feature|feat|fix|bugfix|chore|hotfix|release)/[A-Za-z0-9._/-]+"
+    return bool(re.fullmatch(branch_re, value))
 
 
 def _looks_like_path(value: str) -> bool:

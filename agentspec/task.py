@@ -516,6 +516,16 @@ def _workflow_pack_text(
         for command in workflow.get("verification_commands", [])
         if isinstance(command, str) and command.strip()
     ]
+    extraction_warnings = [
+        str(warning)
+        for warning in workflow.get("extraction_warnings", [])
+        if isinstance(warning, str) and warning.strip()
+    ]
+    historical_evidence = [
+        str(item)
+        for item in workflow.get("historical_evidence", [])
+        if isinstance(item, str) and item.strip()
+    ]
     out = [
         f"# {task_id}: {title}",
         "",
@@ -550,6 +560,23 @@ def _workflow_pack_text(
         f"- Source: `{workflow_path}`",
         f"- Intent: {workflow.get('intent') or title}",
         "",
+    ])
+    if str(workflow.get("path") or workflow_path).startswith(".hotl/"):
+        local_evidence_path = workflow.get("path") or workflow_path
+        out.extend([
+            "## Local Evidence Only",
+            "",
+            f"- `{local_evidence_path}` is treated as local execution evidence "
+            "and is not added to Allowed Paths.",
+            "",
+        ])
+    if extraction_warnings:
+        out.extend(["## Extraction Warnings", ""])
+        for warning in extraction_warnings:
+            out.append(f"- {warning}")
+        out.append("")
+
+    out.extend([
         "## Source Sections",
         "",
         "- None",
@@ -594,6 +621,16 @@ def _workflow_pack_text(
             out.append(f"- `{path}`")
     else:
         out.append("- Confirm from workflow verification commands.")
+
+    if historical_evidence:
+        out.extend(["", "## Historical Evidence", ""])
+        out.append("The workflow output below is retained for audit context, not as current verification commands.")
+        out.append("")
+        for item in historical_evidence[:5]:
+            out.append("```text")
+            out.append(item[:1000].rstrip())
+            out.append("```")
+            out.append("")
 
     out.extend(["", "## Verification Commands", ""])
     if verification_commands:
