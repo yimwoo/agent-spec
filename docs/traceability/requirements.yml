@@ -6213,5 +6213,56 @@
       "architect-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-208",
+    "title": "AgentSpec documents prompt-first code-agent workflows",
+    "description": "AgentSpec documentation makes clear that humans can install the plugin or CLI and ask a code agent to initialize new projects, continue existing AgentSpec projects, intake new design changes, and operate the native lifecycle while the agent runs the appropriate aspec commands and reports evidence.",
+    "source_sections": [
+      "D-05",
+      "D-10",
+      "D-18",
+      "agentspec-hotl-integration-without-hotl-names:D-19"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0073",
+    "acceptance": [
+      "README.md leads with prompt-first code-agent usage for new projects, existing projects, and new design changes.",
+      "docs/GETTING_STARTED.md includes copyable prompts and explains what AgentSpec evidence the code agent should report back.",
+      "Codex and Claude plugin READMEs explain how to ask the installed plugin skills to initialize or continue work without manual human CLI driving.",
+      "CLI commands remain documented as implementation details for code agents, automation, and advanced users.",
+      "Documentation verification confirms JSON validity, markdown diff hygiene, AgentSpec status readiness, and roadmap freshness."
+    ],
+    "code_targets": [
+      "README.md",
+      "docs/GETTING_STARTED.md",
+      "agentspec-codex-plugin/README.md",
+      "agentspec-claude-plugin/README.md"
+    ],
+    "test_targets": [
+      "README.md",
+      "docs/GETTING_STARTED.md",
+      "agentspec-codex-plugin/README.md",
+      "agentspec-claude-plugin/README.md"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0073-document-prompt-first-code-agent-agentspec-workflow.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md",
+      "agent/workflows/W-104-document-prompt-first-code-agent-agentspec-workflow.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

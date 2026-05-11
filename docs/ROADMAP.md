@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T06:14:08Z
-- Last completed task: `T-103` agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md
-- Last run: `complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408`
+- Updated: 2026-05-11T06:26:29Z
+- Last completed task: `T-104` agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md
+- Last run: `complete-t-104-document-prompt-first-code-agent-agentspec-workflow-20260511062629`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -116,18 +116,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md` | complete | `complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404` | passed | REVIEW-0046 | 2026-05-11T05:54:04Z |
 | `agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md` | complete | `complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217` | passed | REVIEW-0047 | 2026-05-11T06:02:17Z |
 | `agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md` | complete | `complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408` | passed | REVIEW-0048 | 2026-05-11T06:14:08Z |
+| `agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md` | complete | `complete-t-104-document-prompt-first-code-agent-agentspec-workflow-20260511062629` | passed | REVIEW-0049 | 2026-05-11T06:26:29Z |
 
 ## Requirement Traceability
 
-- Requirements: 207
-- By status: accepted=207
-- By priority: P0=63, P1=62, P2=80, P3=2
+- Requirements: 208
+- By status: accepted=208
+- By priority: P0=63, P1=63, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-198` | P0 | accepted | AgentSpec exposes a finish orchestrator over completion write-back |
 | `R-199` | P0 | accepted | AgentSpec preserves manual roadmap content in generated-block mode |
 | `R-200` | P0 | accepted | AgentSpec supports opt-in strict lifecycle enforcement |
 | `R-201` | P0 | accepted | AgentSpec provides idempotent legacy execution migration tooling |
@@ -137,3 +137,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-205` | P0 | accepted | AgentSpec exposes a native lifecycle operating contract |
 | `R-206` | P0 | accepted | AgentSpec emits lifecycle-aligned repo-local skill guidance |
 | `R-207` | P1 | accepted | AgentSpec has a clear human-facing README and guide index |
+| `R-208` | P1 | accepted | AgentSpec documents prompt-first code-agent workflows |

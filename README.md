@@ -39,9 +39,51 @@ do not want to install the package, use:
 python -m agentspec.cli --help
 ```
 
-## Five-Minute Quickstart
+The Codex and Claude plugin packages are in `agentspec-codex-plugin/` and
+`agentspec-claude-plugin/`. After installing or loading a plugin, the normal
+human interface is a prompt to the code agent. The agent runs `aspec`, reads the
+repo-local artifacts, and reports evidence back.
 
-Run this inside a repository that has, or will have, a Markdown design source:
+## Prompt-First Quickstart
+
+Most humans should not need to manually drive every lifecycle command. Install
+the plugin or make the CLI available, then ask your code agent to use AgentSpec.
+
+For a new project:
+
+```text
+Use AgentSpec to initialize this repository. The design source is at
+docs/source/design.md. Set up Codex and Claude agent guidance, compile the
+requirements, report readiness/open questions, and propose the first task
+context packs. Do not start implementation until the task scope and allowed
+paths are clear.
+```
+
+For an existing AgentSpec project:
+
+```text
+Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
+pick the next ready task pack, follow its allowed paths, run verification,
+record review evidence, finish the task, and refresh roadmap/handoff state.
+```
+
+For a new design or design change:
+
+```text
+Use AgentSpec to process this design update: <path-or-export>. Import it as a
+candidate or DCR, diff it against the accepted source, summarize the impact,
+and prepare the next task pack. Ask before promoting accepted source or
+expanding implementation scope.
+```
+
+The agent should report back with the requirement IDs, task pack path, allowed
+paths, verification commands/results, review ID, and updated handoff/roadmap
+status.
+
+## Agent-Operated CLI Flow
+
+These are the commands a code agent or automation typically runs after the
+prompt above. They remain useful for advanced manual operation.
 
 ```bash
 aspec init --mode greenfield --targets claude,codex
@@ -97,7 +139,8 @@ Core commands:
 | Recovery | `aspec next-action`, `aspec continue` |
 
 The lifecycle surface is covered by `R-205`. The end-to-end dogfood workflow is
-covered by `R-203`. This README and the human guide are covered by `R-207`.
+covered by `R-203`. The prompt-first code-agent workflow is covered by `R-208`.
+This README and the human guide are covered by `R-207`.
 
 ## Project Model
 
