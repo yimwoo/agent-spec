@@ -82,6 +82,12 @@ def default_roadmap_config() -> dict[str, Any]:
     }
 
 
+def default_lifecycle_config() -> dict[str, Any]:
+    return {
+        "enforcement": "warn",
+    }
+
+
 def default_runtime_config() -> dict[str, Any]:
     return {
         "agent_profiles": default_agent_profiles(),
@@ -89,6 +95,7 @@ def default_runtime_config() -> dict[str, Any]:
         "autonomous_mode": default_autonomous_mode_config(),
         "quality_gc": default_quality_gc_config(),
         "roadmap": default_roadmap_config(),
+        "lifecycle": default_lifecycle_config(),
     }
 
 
@@ -123,6 +130,12 @@ def merged_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
             roadmap.setdefault(key, value)
     else:
         merged["roadmap"] = deepcopy(defaults["roadmap"])
+    lifecycle = merged.setdefault("lifecycle", {})
+    if isinstance(lifecycle, dict):
+        for key, value in defaults["lifecycle"].items():
+            lifecycle.setdefault(key, value)
+    else:
+        merged["lifecycle"] = deepcopy(defaults["lifecycle"])
     return merged
 
 

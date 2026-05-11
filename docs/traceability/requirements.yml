@@ -5808,5 +5808,62 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-200",
+    "title": "AgentSpec supports opt-in strict lifecycle enforcement",
+    "description": "AgentSpec keeps warn mode as the default and adds opt-in strict lifecycle enforcement that reports blocking findings for strict-eligible lifecycle drift and blocks finish before state mutation.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-17",
+      "lifecycle-engine-hardening-design:D-18",
+      "lifecycle-engine-hardening-design:D-20.6"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0065",
+    "acceptance": [
+      "Warn mode remains the default for legacy and newly initialized repos.",
+      "lifecycle.enforcement strict mode reports blocking lifecycle findings for strict-eligible drift.",
+      "Strict-eligible findings include repair guidance.",
+      "aspec finish reads lifecycle.enforcement strict mode and blocks strict findings before state mutation.",
+      "Existing finish.enforcement strict behavior remains compatible.",
+      "Tests cover warn-mode compatibility, lifecycle strict blockers, finish strict blockers, and config defaults.",
+      "The phase has a design doc, an executable plan doc, and a dedicated git worktree/branch before implementation completion."
+    ],
+    "code_targets": [
+      "agentspec/config.py",
+      "agentspec/writeback.py",
+      "agentspec/status.py"
+    ],
+    "test_targets": [
+      "tests/test_lifecycle_enforcement.py",
+      "tests/test_finish_cli.py",
+      "tests/test_config_profiles.py",
+      "tests/test_status_cli.py",
+      "tests/test_writeback.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-096-add-strict-lifecycle-enforcement.md",
+      "agent/handoff.yml",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "docs/ROADMAP.md",
+      "docs/change-requests/DCR-0065-add-strict-lifecycle-enforcement.md",
+      "docs/designs/2026-05-11-phase-6-strict-lifecycle-enforcement-design.md",
+      "docs/plans/2026-05-11-phase-6-strict-lifecycle-enforcement-workflow.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml",
+      "reports/doctor/repo-scan.yml",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

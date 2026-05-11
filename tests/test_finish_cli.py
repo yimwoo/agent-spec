@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
-from agentspec.roadmap import check_roadmap
+from agentspec.roadmap import check_roadmap, write_roadmap
 
 
 class FinishCLITests(unittest.TestCase):
@@ -77,6 +77,7 @@ class FinishCLITests(unittest.TestCase):
             root = Path(td)
             _seed(root)
             write_data(root / ".agentspec" / "config.yml", {"finish": {"enforcement": "strict"}})
+            write_roadmap(root)
 
             output = io.StringIO()
             with redirect_stdout(output):
@@ -100,6 +101,45 @@ class FinishCLITests(unittest.TestCase):
             projection = payload["error"]["details"]["projection"]
             blocker_types = {finding["type"] for finding in projection["strict_blockers"]}
             self.assertEqual(blocker_types, {"missing_review"})
+            self.assertFalse((root / "agent" / "task-ledger.yml").exists())
+            self.assertFalse((root / "agent" / "runs" / "finish-t013" / "state.yml").exists())
+
+    def test_finish_reads_lifecycle_strict_mode_and_blocks_stale_roadmap(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0001", "agent/context-packs/T-013-task.md", "ready")
+            write_data(root / ".agentspec" / "config.yml", {"lifecycle": {"enforcement": "strict"}})
+            (root / "docs" / "ROADMAP.md").write_text("# stale\n", encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "finish",
+                        "T-013",
+                        "--run-id",
+                        "finish-t013",
+                        "--test-status",
+                        "passed",
+                        "--review",
+                        "REVIEW-0001",
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["error"]["type"], "FinishBlockedError")
+            projection = payload["error"]["details"]["projection"]
+            blocker_types = {finding["type"] for finding in projection["strict_blockers"]}
+            self.assertIn("stale_roadmap", blocker_types)
+            roadmap_blocker = next(
+                finding for finding in projection["strict_blockers"] if finding["type"] == "stale_roadmap"
+            )
+            self.assertEqual(roadmap_blocker["repair"], "aspec roadmap")
             self.assertFalse((root / "agent" / "task-ledger.yml").exists())
             self.assertFalse((root / "agent" / "runs" / "finish-t013" / "state.yml").exists())
 

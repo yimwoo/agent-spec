@@ -1,15 +1,15 @@
 # Quality GC Report
 
 - Grade: B
-- Generated: 2026-05-11T04:01:56Z
+- Generated: 2026-05-11T04:37:25Z
 - Summary: 0 error(s), 8 warning(s), 1 info finding(s).
 
 ## Cadence
 
-- Completed tasks: 91
+- Completed tasks: 94
 - Task interval: 3
 - Was due: True
-- Next recommended completed-task count: 94
+- Next recommended completed-task count: 97
 
 ## Findings
 
@@ -26,6 +26,6 @@
 ## Handoff
 
 - Present: True
-- Last completed task: T-093
+- Last completed task: T-096
 - Next action: idle
 - Next command: `aspec status --json`

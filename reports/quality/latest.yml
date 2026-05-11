@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.quality_gc_report.v0",
-  "generated_at": "2026-05-11T04:01:56Z",
+  "generated_at": "2026-05-11T04:37:25Z",
   "grade": "B",
   "summary": "0 error(s), 8 warning(s), 1 info finding(s).",
   "findings": [
@@ -94,24 +94,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 197,
+      "total": 200,
       "by_status": {
-        "accepted": 197
+        "accepted": 200
       }
     },
     "dcrs": {
-      "total": 62,
+      "total": 65,
       "by_status": {
-        "accepted": 62
+        "accepted": 65
       }
     },
     "tasks": {
-      "total": 91,
+      "total": 94,
       "by_status": {
-        "complete": 91
+        "complete": 94
       },
       "by_type": {
-        "implementation": 83,
+        "implementation": 86,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -119,14 +119,14 @@
       }
     },
     "runs": {
-      "total": 109,
+      "total": 3,
       "by_status": {
-        "aborted": 5,
-        "complete": 104
+        "aborted": 1,
+        "complete": 2
       },
       "by_mode": {
         "research": 1,
-        "supervised": 108
+        "supervised": 2
       }
     },
     "outcomes": {
@@ -153,18 +153,18 @@
   "handoff": {
     "present": true,
     "path": "agent/handoff.yml",
-    "updated_at": "2026-05-11T04:01:55Z",
-    "last_completed_task": "T-093",
+    "updated_at": "2026-05-11T04:37:25Z",
+    "last_completed_task": "T-096",
     "next_action": "idle",
     "next_command": "aspec status --json"
   },
   "cadence": {
     "task_interval": 3,
-    "completed_tasks": 91,
-    "completed_tasks_at_last_quality": 87,
-    "completed_tasks_since_last_quality": 4,
+    "completed_tasks": 94,
+    "completed_tasks_at_last_quality": 91,
+    "completed_tasks_since_last_quality": 3,
     "was_due": true,
-    "next_recommended_completed_tasks": 94
+    "next_recommended_completed_tasks": 97
   },
   "reports": {
     "structured": "reports/quality/latest.yml",

@@ -14,6 +14,16 @@ FINISH_PROJECTION_SCHEMA = "agentspec.finish_projection.v0"
 FINISH_RESULT_SCHEMA = "agentspec.finish_result.v0"
 PASSING_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
 FINISH_ENFORCEMENTS = frozenset({"warn", "strict"})
+STRICT_LIFECYCLE_BLOCKERS = frozenset(
+    {
+        "orphan_workflow",
+        "broken_workflow_link",
+        "missing_review",
+        "missing_verification",
+        "stale_roadmap",
+    }
+)
+STRICT_FINISH_WRITEBACK_BLOCKERS = frozenset({"stale_roadmap"})
 
 
 class FinishBlockedError(ValueError):
@@ -212,6 +222,7 @@ def build_finish_projection(
     writeback_findings = _finish_writeback_findings(
         current_writeback.get("findings"),
         context_pack=context_pack,
+        enforcement=enforcement,
     )
     findings.extend(writeback_findings)
     strict_blockers = [finding for finding in findings if finding.get("blocks_strict") is True]
@@ -333,16 +344,21 @@ def build_lifecycle_projection(
     warnings.extend(_completion_warnings(root))
     warnings.extend(_handoff_warnings(handoff, project_counts))
     warnings.extend(_roadmap_warnings(root))
-    readiness = "needs_attention" if warnings else "ready"
+    enforcement = _lifecycle_enforcement(root)
+    findings = _apply_lifecycle_enforcement(warnings, enforcement=enforcement)
+    blocking = [finding for finding in findings if finding.get("severity") == "blocking"]
+    readiness = "blocked" if blocking else "needs_attention" if findings else "ready"
     return {
         "schema": LIFECYCLE_STATUS_SCHEMA,
+        "enforcement": enforcement,
         "readiness": readiness,
-        "summary": _summary(readiness, warnings),
+        "summary": _summary(readiness, findings),
         "counts": {
-            "warnings": len(warnings),
-            "blocking": 0,
+            "warnings": len(findings),
+            "blocking": len(blocking),
         },
-        "warnings": warnings,
+        "warnings": findings,
+        "blocking": blocking,
     }
 
 
@@ -373,13 +389,15 @@ def _workflow_warnings(workflows: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
     for broken in _list(workflows.get("broken_links")):
+        context_pack = broken.get("context_pack") or broken.get("task_pack")
         warnings.append(
             {
                 "type": "broken_workflow_link",
                 "severity": "warning",
                 "workflow": broken.get("workflow"),
-                "context_pack": broken.get("context_pack") or broken.get("task_pack"),
+                "context_pack": context_pack,
                 "message": broken.get("message") or "Workflow/task link is broken.",
+                "repair": f"aspec plan {context_pack}" if context_pack else None,
             }
         )
     return warnings
@@ -406,6 +424,7 @@ def _completion_warnings(root: Path) -> list[dict[str, Any]]:
                     "severity": "warning",
                     "context_pack": context_pack,
                     "message": "Completed task lacks passed verification evidence.",
+                    "repair": f"aspec finish {context_pack} --test-status passed --review REVIEW-####",
                 }
             )
         review = entry.get("code_review") if isinstance(entry.get("code_review"), dict) else {}
@@ -428,6 +447,7 @@ def _review_link_warning(
             "severity": "warning",
             "context_pack": context_pack,
             "message": "Completed task lacks linked code review evidence.",
+            "repair": f"aspec review code --task {context_pack}",
         }
 
     path = _review_artifact_path(root, review)
@@ -439,6 +459,7 @@ def _review_link_warning(
             "context_pack": context_pack,
             "path": _relative_or_absolute(root, path),
             "message": f"Completed task links code review {review_id}, but review evidence is missing.",
+            "repair": f"aspec review code --task {context_pack}",
         }
     verdict = record.get("verdict")
     if verdict not in PASSING_REVIEW_VERDICTS:
@@ -448,6 +469,7 @@ def _review_link_warning(
             "context_pack": context_pack,
             "path": _relative_or_absolute(root, path),
             "message": f"Completed task links code review {review_id}, but verdict is {verdict!r}.",
+            "repair": f"aspec review code --task {context_pack}",
         }
     task = record.get("task") if isinstance(record.get("task"), dict) else {}
     if task.get("context_pack") != context_pack:
@@ -457,6 +479,7 @@ def _review_link_warning(
             "context_pack": context_pack,
             "path": _relative_or_absolute(root, path),
             "message": f"Completed task links code review {review_id}, but the review targets another task.",
+            "repair": f"aspec review code --task {context_pack}",
         }
     return None
 
@@ -530,6 +553,7 @@ def _roadmap_warnings(root: Path) -> list[dict[str, Any]]:
             "path": str(ROADMAP_PATH),
             "message": str(result.get("summary") or "Roadmap is stale."),
             "recommendation": "aspec roadmap",
+            "repair": "aspec roadmap",
         }
     ]
 
@@ -585,13 +609,16 @@ def _finish_writeback_findings(
     findings: Any,
     *,
     context_pack: str,
+    enforcement: str = "warn",
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for finding in _list(findings):
         copied = dict(finding)
         copied.setdefault("context_pack", context_pack)
         copied["source"] = "writeback"
-        copied["blocks_strict"] = False
+        copied["blocks_strict"] = (
+            enforcement == "strict" and copied.get("type") in STRICT_FINISH_WRITEBACK_BLOCKERS
+        )
         if copied.get("type") == "missing_ledger":
             copied["repair"] = f"aspec finish {context_pack} --test-status passed --review REVIEW-####"
         elif copied.get("type") in {"missing_handoff", "stale_handoff"}:
@@ -602,19 +629,67 @@ def _finish_writeback_findings(
     return results
 
 
+def _apply_lifecycle_enforcement(
+    findings: list[dict[str, Any]],
+    *,
+    enforcement: str,
+) -> list[dict[str, Any]]:
+    if enforcement != "strict":
+        return findings
+    enforced: list[dict[str, Any]] = []
+    for finding in findings:
+        copied = dict(finding)
+        if copied.get("type") in STRICT_LIFECYCLE_BLOCKERS:
+            copied["severity"] = "blocking"
+            copied["blocks_strict"] = True
+            _ensure_repair_guidance(copied)
+        enforced.append(copied)
+    return enforced
+
+
+def _ensure_repair_guidance(finding: dict[str, Any]) -> None:
+    if finding.get("repair") or finding.get("recommendation"):
+        return
+    context_pack = finding.get("context_pack")
+    finding_type = finding.get("type")
+    if finding_type == "missing_review" and context_pack:
+        finding["repair"] = f"aspec review code --task {context_pack}"
+    elif finding_type == "missing_verification" and context_pack:
+        finding["repair"] = f"aspec finish {context_pack} --test-status passed --review REVIEW-####"
+    elif finding_type == "stale_roadmap":
+        finding["repair"] = "aspec roadmap"
+    elif finding_type == "broken_workflow_link" and context_pack:
+        finding["repair"] = f"aspec plan {context_pack}"
+
+
 def _finish_enforcement(root: Path) -> str:
     config = load_data(root / ".agentspec" / "config.yml", {}) or {}
     if not isinstance(config, dict):
         return "warn"
     finish = config.get("finish") if isinstance(config.get("finish"), dict) else {}
     lifecycle = config.get("lifecycle") if isinstance(config.get("lifecycle"), dict) else {}
-    raw = finish.get("enforcement") or lifecycle.get("finish_enforcement") or "warn"
+    raw = finish.get("enforcement") or lifecycle.get("finish_enforcement") or lifecycle.get("enforcement") or "warn"
     enforcement = str(raw)
     if enforcement == "block":
         enforcement = "strict"
     if enforcement not in FINISH_ENFORCEMENTS:
         allowed = ", ".join(sorted(FINISH_ENFORCEMENTS))
         raise ValueError(f"finish.enforcement must be one of: {allowed}.")
+    return enforcement
+
+
+def _lifecycle_enforcement(root: Path) -> str:
+    config = load_data(root / ".agentspec" / "config.yml", {}) or {}
+    if not isinstance(config, dict):
+        return "warn"
+    lifecycle = config.get("lifecycle") if isinstance(config.get("lifecycle"), dict) else {}
+    raw = lifecycle.get("enforcement") or lifecycle.get("finish_enforcement") or "warn"
+    enforcement = str(raw)
+    if enforcement == "block":
+        enforcement = "strict"
+    if enforcement not in FINISH_ENFORCEMENTS:
+        allowed = ", ".join(sorted(FINISH_ENFORCEMENTS))
+        raise ValueError(f"lifecycle.enforcement must be one of: {allowed}.")
     return enforcement
 
 
@@ -714,6 +789,9 @@ def _optional_string(value: Any) -> str | None:
 def _summary(readiness: str, warnings: list[dict[str, Any]]) -> str:
     if readiness == "ready":
         return "Lifecycle projection has no warnings."
+    blocking = [warning for warning in warnings if warning.get("severity") == "blocking"]
+    if blocking:
+        return f"Lifecycle projection has {len(blocking)} blocking finding(s)."
     return f"Lifecycle projection has {len(warnings)} warning(s)."
 
 
