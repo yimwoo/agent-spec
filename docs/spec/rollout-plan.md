@@ -18,6 +18,23 @@ Confidence: medium
 - `D-28.10` 28. Rollout Plan > Phase 9: Automation
 - `D-28.11` 28. Rollout Plan > Phase 10: Enterprise Connectors
 - `D-29` 29. Recommended Initial Implementation Tasks
+- `lifecycle-engine-hardening-design:D-20` Phased Implementation Plan
+- `lifecycle-engine-hardening-design:D-20.1` Phased Implementation Plan > Phase 1: Lifecycle Projection Hardening
+- `lifecycle-engine-hardening-design:D-20.2` Phased Implementation Plan > Phase 2: Write-Back Module
+- `lifecycle-engine-hardening-design:D-20.3` Phased Implementation Plan > Phase 3: Finish Orchestrator
+- `lifecycle-engine-hardening-design:D-20.4` Phased Implementation Plan > Phase 4: Native Workflow Creation
+- `lifecycle-engine-hardening-design:D-20.5` Phased Implementation Plan > Phase 5: Roadmap Preservation Mode
+- `lifecycle-engine-hardening-design:D-20.6` Phased Implementation Plan > Phase 6: Strict Lifecycle Enforcement
+- `lifecycle-engine-hardening-design:D-20.7` Phased Implementation Plan > Phase 7: Migration Tools
+- `lifecycle-engine-hardening-design:D-20.8` Phased Implementation Plan > Phase 8: Skill Gates
+- `agentspec-hotl-integration-without-hotl-names:D-44` Implementation Phases
+- `agentspec-hotl-integration-without-hotl-names:D-45` Phase 1: Terminology and File Model
+- `agentspec-hotl-integration-without-hotl-names:D-46` Phase 2: Native Planning Command
+- `agentspec-hotl-integration-without-hotl-names:D-47` Phase 3: Session Runtime
+- `agentspec-hotl-integration-without-hotl-names:D-48` Phase 4: Execute Command
+- `agentspec-hotl-integration-without-hotl-names:D-49` Phase 5: Review and Finish
+- `agentspec-hotl-integration-without-hotl-names:D-50` Phase 6: Drift and Next Action
+- `agentspec-hotl-integration-without-hotl-names:D-51` Phase 7: Legacy Migration
 
 ## Source-Backed Notes
 

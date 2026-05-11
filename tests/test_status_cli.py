@@ -213,15 +213,171 @@ class StatusCLITests(unittest.TestCase):
             )
 
             status = build_project_status(root)
+            self.assertEqual(status["overall"], "attention_needed")
             self.assertEqual(status["workflows"]["orphan_count"], 1)
+            self.assertEqual(status["lifecycle"]["readiness"], "needs_attention")
+            self.assertTrue(
+                any(warning["type"] == "orphan_workflow" for warning in status["lifecycle"]["warnings"])
+            )
             self.assertIn(
                 "aspec task create --from-workflow docs/plans/phase-five-workflow.md",
                 status["recommendation"],
             )
 
             text = format_project_status(status)
+            self.assertIn("Lifecycle: needs_attention", text)
+            self.assertIn("Lifecycle Warnings:", text)
             self.assertIn("Workflow Warnings:", text)
+            self.assertIn("Legacy execution plan without task pack", text)
             self.assertIn("docs/plans/phase-five-workflow.md", text)
+            self.assertNotIn("HOTL workflow", text)
+
+    def test_status_lifecycle_reports_writeback_readiness_warnings(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs").mkdir()
+            (root / "docs" / "discovery").mkdir()
+            (root / "docs" / "traceability").mkdir()
+            (root / "agent" / "context-packs" / "T-001-complete.md").write_text(
+                """# T-001: Complete Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-001` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [{"id": "R-001", "status": "accepted"}])
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "updated_at": "2026-05-10T00:00:00Z",
+                        }
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-09T00:00:00Z",
+                    "current_state": {
+                        "requirements": {"total": 0},
+                        "tasks": {"total": 0},
+                        "runs": {"total": 0},
+                    },
+                    "next_action": {"kind": "idle", "command": "aspec status --json"},
+                },
+            )
+            (root / "docs" / "ROADMAP.md").write_text("# stale\n", encoding="utf-8")
+
+            status = build_project_status(root)
+            warning_types = {warning["type"] for warning in status["lifecycle"]["warnings"]}
+
+            self.assertEqual(status["lifecycle"]["readiness"], "needs_attention")
+            self.assertIn("missing_verification", warning_types)
+            self.assertIn("missing_review", warning_types)
+            self.assertIn("stale_handoff", warning_types)
+            self.assertIn("stale_roadmap", warning_types)
+
+            text = format_project_status(status)
+            self.assertIn("Lifecycle: needs_attention", text)
+            self.assertIn("missing_verification", text)
+            self.assertIn("stale_roadmap", text)
+
+    def test_status_lifecycle_suppresses_legacy_missing_review_before_review_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir()
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            (root / "agent" / "context-packs" / "T-001-legacy.md").write_text(
+                "# T-001: Legacy\n\nType: `implementation`\n",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-002-current.md").write_text(
+                "# T-002: Current\n\nType: `implementation`\n",
+                encoding="utf-8",
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-legacy.md": {
+                            "status": "complete",
+                            "verification": {"status": "passed"},
+                            "updated_at": "2026-05-01T00:00:00Z",
+                        },
+                        "agent/context-packs/T-002-current.md": {
+                            "status": "complete",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                            "updated_at": "2026-05-03T00:00:00Z",
+                        },
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {"context_pack": "agent/context-packs/T-002-current.md"},
+                    "verdict": "ready",
+                },
+            )
+
+            status = build_project_status(root)
+            review_warnings = [
+                warning for warning in status["lifecycle"]["warnings"] if warning["type"] == "missing_review"
+            ]
+
+            self.assertEqual(review_warnings, [])
+
+    def test_status_lifecycle_reports_missing_review_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            (root / "agent" / "context-packs" / "T-001-current.md").write_text(
+                "# T-001: Current\n\nType: `implementation`\n",
+                encoding="utf-8",
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-current.md": {
+                            "status": "complete",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-9999", "path": "agent/reviews/REVIEW-9999.yml"},
+                            "updated_at": "2026-05-03T00:00:00Z",
+                        },
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+            review_warnings = [
+                warning for warning in status["lifecycle"]["warnings"] if warning["type"] == "missing_review"
+            ]
+
+            self.assertEqual(len(review_warnings), 1)
+            self.assertIn("review evidence is missing", review_warnings[0]["message"])
 
 
 def _seed(root: Path) -> None:

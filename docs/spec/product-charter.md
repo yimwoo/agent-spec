@@ -20,6 +20,12 @@ Confidence: medium
 - `D-05.2` 5. Target Users and Personas > 5.2 Tech Lead / Architect
 - `D-05.3` 5. Target Users and Personas > 5.3 Platform / Developer Experience Team
 - `D-05.4` 5. Target Users and Personas > 5.4 Enterprise Engineering Organization
+- `lifecycle-engine-hardening-design:D-07` Goals
+- `lifecycle-engine-hardening-design:D-07.1` Goals > Product Goals
+- `lifecycle-engine-hardening-design:D-07.2` Goals > Engineering Goals
+- `lifecycle-engine-hardening-design:D-08` Non-Goals
+- `agentspec-hotl-integration-without-hotl-names:D-04` Goals
+- `agentspec-hotl-integration-without-hotl-names:D-05` Non-Goals
 
 ## Source-Backed Notes
 

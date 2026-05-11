@@ -20,6 +20,7 @@ class WorkflowArtifact:
     path: str
     title: str
     reference_paths: tuple[str, ...] = field(default_factory=tuple)
+    task_pack: str | None = None
 
 
 def build_workflow_contract_status(root: Path) -> dict[str, Any]:
@@ -29,13 +30,14 @@ def build_workflow_contract_status(root: Path) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
     for artifact in artifacts:
         referenced_by = _referenced_by(context_pack_texts, artifact)
-        orphan = not referenced_by
+        orphan = not referenced_by and artifact.task_pack is None
         records.append(
             {
                 "kind": artifact.kind,
                 "path": artifact.path,
                 "title": artifact.title,
                 "reference_paths": list(artifact.reference_paths),
+                "task_pack": artifact.task_pack,
                 "referenced_by": referenced_by,
                 "status": "orphan" if orphan else "referenced",
                 "backfill_command": f"aspec task create --from-workflow {artifact.path}",
@@ -43,12 +45,15 @@ def build_workflow_contract_status(root: Path) -> dict[str, Any]:
         )
 
     orphans = [record for record in records if record["status"] == "orphan"]
+    broken_links = _broken_links(root, context_pack_texts, artifacts)
     return {
         "schema": WORKFLOW_CONTRACT_SCHEMA,
         "total": len(records),
         "orphan_count": len(orphans),
+        "broken_link_count": len(broken_links),
         "artifacts": records,
         "orphans": orphans,
+        "broken_links": broken_links,
         "summary": _summary(records, orphans),
     }
 
@@ -70,6 +75,25 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
                 path=rel,
                 title=str(parsed.get("title") or Path(rel).stem),
                 reference_paths=(rel,),
+                task_pack=_first_string(parsed.get("task_pack")),
+            )
+        )
+
+    for path in sorted((root / "agent" / "workflows").glob("W-*.md")):
+        if not path.is_file():
+            continue
+        rel = _relative(root, path)
+        if rel in seen:
+            continue
+        seen.add(rel)
+        parsed = parse_workflow_file(root, Path(rel))
+        artifacts.append(
+            WorkflowArtifact(
+                kind="workflow",
+                path=rel,
+                title=str(parsed.get("title") or Path(rel).stem),
+                reference_paths=(rel,),
+                task_pack=_first_string(parsed.get("task_pack")),
             )
         )
 
@@ -93,6 +117,7 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
                     path=rel,
                     title=str(parsed.get("title") or Path(rel).stem),
                     reference_paths=tuple(refs),
+                    task_pack=_first_string(parsed.get("task_pack")),
                 )
             )
 
@@ -114,8 +139,9 @@ def workflow_warning_lines(status: dict[str, Any]) -> list[str]:
     for orphan in orphans:
         if not isinstance(orphan, dict):
             continue
+        label = _artifact_warning_label(orphan)
         lines.append(
-            "Workflow without task pack: "
+            f"{label} without task pack: "
             f"{orphan.get('path')} -> {orphan.get('backfill_command')}"
         )
     return lines
@@ -133,11 +159,13 @@ def _parse_markdown_workflow(root: Path, path: Path, rel: str) -> dict[str, Any]
     )
     verification_commands = _verification_commands_from_markdown(text, metadata)
     allowed_paths = _allowed_paths_from_markdown(text, metadata, verification_commands)
+    task_pack = _normalize_optional_path(root, _first_string(metadata.get("task_pack")))
     return {
         "schema": WORKFLOW_PARSE_SCHEMA,
         "kind": "workflow",
         "path": rel,
         "workflow_path": rel,
+        "task_pack": task_pack,
         "title": truncate_on_word_boundary(title, limit=96),
         "intent": _first_string(metadata.get("intent")) or title,
         "allowed_paths": allowed_paths,
@@ -158,6 +186,7 @@ def _parse_json_state(root: Path, path: Path, rel: str) -> dict[str, Any]:
         root,
         _first_json_string(data, ("workflow_path", "workflow_file", "plan_path", "workflow")),
     )
+    task_pack = _normalize_optional_path(root, _first_json_string(data, ("task_pack", "context_pack")))
     allowed_paths = _dedupe(
         path
         for path in _json_values_by_key(data, {"allowed_paths", "write_scope", "paths", "touched_paths"})
@@ -176,6 +205,7 @@ def _parse_json_state(root: Path, path: Path, rel: str) -> dict[str, Any]:
         "kind": "state",
         "path": rel,
         "workflow_path": workflow_path or rel,
+        "task_pack": task_pack,
         "title": truncate_on_word_boundary(title, limit=96),
         "intent": title,
         "allowed_paths": allowed_paths,
@@ -321,12 +351,107 @@ def _referenced_by(context_pack_texts: dict[str, str], artifact: WorkflowArtifac
     return referenced
 
 
+def _broken_links(
+    root: Path,
+    context_pack_texts: dict[str, str],
+    artifacts: list[WorkflowArtifact],
+) -> list[dict[str, Any]]:
+    broken: list[dict[str, Any]] = []
+    artifacts_by_path = {artifact.path: artifact for artifact in artifacts}
+    artifact_paths = set(artifacts_by_path)
+    context_workflows = {
+        context_pack: workflow
+        for context_pack, text in context_pack_texts.items()
+        if (workflow := _context_pack_workflow(text))
+    }
+
+    for context_pack, workflow in context_workflows.items():
+        if workflow not in artifact_paths and not (root / workflow).exists():
+            broken.append(
+                {
+                    "type": "missing_workflow",
+                    "context_pack": context_pack,
+                    "workflow": workflow,
+                    "message": f"Task context pack references missing workflow {workflow}.",
+                }
+            )
+            continue
+        artifact = artifacts_by_path.get(workflow)
+        if artifact is None:
+            continue
+        if artifact.path.startswith("agent/workflows/") and artifact.task_pack is None:
+            broken.append(
+                {
+                    "type": "missing_workflow_task_pack_reference",
+                    "context_pack": context_pack,
+                    "workflow": workflow,
+                    "message": f"Task context pack references {workflow}, but the workflow does not link back.",
+                }
+            )
+            continue
+        if artifact.task_pack and artifact.task_pack != context_pack:
+            broken.append(
+                {
+                    "type": "workflow_task_mismatch",
+                    "context_pack": context_pack,
+                    "workflow": workflow,
+                    "task_pack": artifact.task_pack,
+                    "message": f"Task context pack references {workflow}, but the workflow links to {artifact.task_pack}.",
+                }
+            )
+
+    for artifact in artifacts:
+        if not artifact.task_pack:
+            continue
+        task_path = root / artifact.task_pack
+        if not task_path.exists():
+            broken.append(
+                {
+                    "type": "missing_task_pack",
+                    "workflow": artifact.path,
+                    "task_pack": artifact.task_pack,
+                    "message": f"Workflow references missing task context pack {artifact.task_pack}.",
+                }
+            )
+            continue
+        if context_workflows.get(artifact.task_pack) != artifact.path:
+            broken.append(
+                {
+                    "type": "missing_task_workflow_reference",
+                    "workflow": artifact.path,
+                    "task_pack": artifact.task_pack,
+                    "message": f"Workflow references {artifact.task_pack}, but the task does not link back.",
+                }
+            )
+    return broken
+
+
+def _context_pack_workflow(text: str) -> str | None:
+    match = re.search(r"^Workflow:\s*`?([^`\n]+)`?\s*$", text, flags=re.MULTILINE)
+    if not match:
+        return None
+    value = match.group(1).strip().replace("\\", "/").lstrip("./")
+    if value.lower() in {"", "none", "unassigned"}:
+        return None
+    return value
+
+
 def _summary(records: list[dict[str, Any]], orphans: list[dict[str, Any]]) -> str:
     if not records:
-        return "No HOTL workflow artifacts found."
+        return "No workflow artifacts found."
     if not orphans:
-        return f"{len(records)} HOTL workflow artifact(s) referenced by task packs."
-    return f"{len(orphans)}/{len(records)} HOTL workflow artifact(s) lack a referencing task context pack."
+        return f"{len(records)} workflow artifact(s) referenced by task packs."
+    return f"{len(orphans)}/{len(records)} workflow artifact(s) lack a referencing task context pack."
+
+
+def _artifact_warning_label(record: dict[str, Any]) -> str:
+    path = str(record.get("path") or "")
+    kind = str(record.get("kind") or "")
+    if kind == "state" or path.startswith(".hotl/"):
+        return "Legacy execution state"
+    if path.startswith("docs/") and "/plans/" in path:
+        return "Legacy execution plan"
+    return "Workflow/execution plan"
 
 
 def _metadata_values(metadata: dict[str, Any], keys: tuple[str, ...]) -> list[str]:

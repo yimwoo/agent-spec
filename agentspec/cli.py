@@ -227,7 +227,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     task_subparsers = task.add_subparsers(dest="task_command")
     task_create = task_subparsers.add_parser("create", help="Create a task context pack.")
     task_create.add_argument("--requirement")
-    task_create.add_argument("--from-workflow", dest="from_workflow", help="Backfill a context pack from a HOTL workflow or state file.")
+    task_create.add_argument("--from-workflow", dest="from_workflow", help="Backfill a context pack from a workflow or state file.")
     task_create.add_argument("--type", default="implementation", choices=["discovery", "spec", "spike", "scaffold", "implementation", "review", "migration", "automation"])
     task_create.add_argument("--title")
     task_list = task_subparsers.add_parser("list", help="List task context packs.")

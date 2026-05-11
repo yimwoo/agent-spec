@@ -2537,5 +2537,5297 @@
     "content_hash": "sha256:80fb54dd48918f1ff4d65406ec6ceaf2d034dbff0eea0aaf4d1dc09cc29582bb",
     "parent": null,
     "children": []
+  },
+  {
+    "id": "SRC-0002:D-01",
+    "local_id": "D-01",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-01",
+    "stable_key": "lifecycle-engine-hardening-design/status",
+    "title": "Status",
+    "heading_path": [
+      "Status"
+    ],
+    "start_line": 3,
+    "end_line": 6,
+    "content_hash": "sha256:c3600a1ced3ca860bb85c12141988b1d17be102490e13cff024f647f4397a8b9",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-01",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-02",
+    "local_id": "D-02",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-02",
+    "stable_key": "lifecycle-engine-hardening-design/owner",
+    "title": "Owner",
+    "heading_path": [
+      "Owner"
+    ],
+    "start_line": 7,
+    "end_line": 10,
+    "content_hash": "sha256:b7bd90d640e8d708e2e2e674c8c909446474e70366b18ab178092398bb9ca5a8",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-02",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-03",
+    "local_id": "D-03",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-03",
+    "stable_key": "lifecycle-engine-hardening-design/review-status",
+    "title": "Review Status",
+    "heading_path": [
+      "Review Status"
+    ],
+    "start_line": 11,
+    "end_line": 19,
+    "content_hash": "sha256:c240b554e84cdb75615fc80ebd9c76cd5f077f1780016a5b9b1d51168e721377",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-03",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-04",
+    "local_id": "D-04",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-04",
+    "stable_key": "lifecycle-engine-hardening-design/summary",
+    "title": "Summary",
+    "heading_path": [
+      "Summary"
+    ],
+    "start_line": 20,
+    "end_line": 47,
+    "content_hash": "sha256:021bb112d62f19758bb049c7402fede0e38c8d343259bb41758839fbec5820fb",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-04",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-05",
+    "local_id": "D-05",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-05",
+    "stable_key": "lifecycle-engine-hardening-design/current-architecture-anchors",
+    "title": "Current Architecture Anchors",
+    "heading_path": [
+      "Current Architecture Anchors"
+    ],
+    "start_line": 48,
+    "end_line": 81,
+    "content_hash": "sha256:7e7d60c5119271bd7fc2697394e9b1b9ee8460580ca9d7e8f5e09b34587f20fc",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-05",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-06",
+    "local_id": "D-06",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-06",
+    "stable_key": "lifecycle-engine-hardening-design/problem-statement",
+    "title": "Problem Statement",
+    "heading_path": [
+      "Problem Statement"
+    ],
+    "start_line": 82,
+    "end_line": 107,
+    "content_hash": "sha256:85874d8ef4200b5e5a53e6bf3c838ccde394d17cc4e2d9e5a7a5dbdc9dff7805",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-06",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-07",
+    "local_id": "D-07",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-07",
+    "stable_key": "lifecycle-engine-hardening-design/goals",
+    "title": "Goals",
+    "heading_path": [
+      "Goals"
+    ],
+    "start_line": 108,
+    "end_line": 132,
+    "content_hash": "sha256:0126e9ac7d96f647cdcf7191b4f2393209e73f59250f075aa09dd0c99eda450c",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-07.1",
+      "SRC-0002:D-07.2"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-07",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-07.1",
+    "local_id": "D-07.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-07.1",
+    "stable_key": "lifecycle-engine-hardening-design/goals/product-goals",
+    "title": "Product Goals",
+    "heading_path": [
+      "Goals",
+      "Product Goals"
+    ],
+    "start_line": 110,
+    "end_line": 122,
+    "content_hash": "sha256:4d0a6d86a21ab0893fdfcccdf60a356cff7e33ebca5c365a59ee5783d6500f76",
+    "parent": "SRC-0002:D-07",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-07.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-07.2",
+    "local_id": "D-07.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-07.2",
+    "stable_key": "lifecycle-engine-hardening-design/goals/engineering-goals",
+    "title": "Engineering Goals",
+    "heading_path": [
+      "Goals",
+      "Engineering Goals"
+    ],
+    "start_line": 123,
+    "end_line": 132,
+    "content_hash": "sha256:cf108be19755d8c88051022f4197ab5e80eb9e30d88f7c6f96b94075b1d9baf7",
+    "parent": "SRC-0002:D-07",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-07.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-08",
+    "local_id": "D-08",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-08",
+    "stable_key": "lifecycle-engine-hardening-design/non-goals",
+    "title": "Non-Goals",
+    "heading_path": [
+      "Non-Goals"
+    ],
+    "start_line": 133,
+    "end_line": 155,
+    "content_hash": "sha256:e77fa9a201646d939ade3d78dac1d58b175d705d11cea34ac1d46aba86f161a2",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-08",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09",
+    "local_id": "D-09",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles",
+    "title": "Design Principles",
+    "heading_path": [
+      "Design Principles"
+    ],
+    "start_line": 156,
+    "end_line": 213,
+    "content_hash": "sha256:b20a281a5c8f854fcaf47b904ed4f6bc456866507616fd837c23efbb20bd93bd",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-09.1",
+      "SRC-0002:D-09.2",
+      "SRC-0002:D-09.3",
+      "SRC-0002:D-09.4",
+      "SRC-0002:D-09.5",
+      "SRC-0002:D-09.6"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.1",
+    "local_id": "D-09.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.1",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/1-extend-existing-state-do-not-duplicate-it",
+    "title": "1. Extend Existing State, Do Not Duplicate It",
+    "heading_path": [
+      "Design Principles",
+      "1. Extend Existing State, Do Not Duplicate It"
+    ],
+    "start_line": 158,
+    "end_line": 163,
+    "content_hash": "sha256:fa75bfb819ee2b7e59a534c9f84543cae94941f982721aac45c53d684ab9a3fb",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.2",
+    "local_id": "D-09.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.2",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/2-task-context-pack-remains-the-work-unit",
+    "title": "2. Task Context Pack Remains The Work Unit",
+    "heading_path": [
+      "Design Principles",
+      "2. Task Context Pack Remains The Work Unit"
+    ],
+    "start_line": 164,
+    "end_line": 168,
+    "content_hash": "sha256:ea5e8fa98ba857fe0006b4fd39a3c60479d4a7bc01195ff4623f9117a8600c01",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.3",
+    "local_id": "D-09.3",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.3",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/3-workflows-are-additive",
+    "title": "3. Workflows Are Additive",
+    "heading_path": [
+      "Design Principles",
+      "3. Workflows Are Additive"
+    ],
+    "start_line": 169,
+    "end_line": 181,
+    "content_hash": "sha256:c592c2deb5366c2aafc75b0b5311054a070aefec0193a334fb58fef7ed24137c",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.3",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.4",
+    "local_id": "D-09.4",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.4",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/4-review-evidence-stays-in-agent-reviews",
+    "title": "4. Review Evidence Stays In `agent/reviews/`",
+    "heading_path": [
+      "Design Principles",
+      "4. Review Evidence Stays In `agent/reviews/`"
+    ],
+    "start_line": 182,
+    "end_line": 192,
+    "content_hash": "sha256:f382ab4d2b4cbac20d440c125afe435800860123496e4651b157deabc2f27eff",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.4",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.5",
+    "local_id": "D-09.5",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.5",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/5-finish-means-write-back",
+    "title": "5. Finish Means Write-Back",
+    "heading_path": [
+      "Design Principles",
+      "5. Finish Means Write-Back"
+    ],
+    "start_line": 193,
+    "end_line": 203,
+    "content_hash": "sha256:ed9761271082ca2dfc9faf136ac31091c262ddb970e6e04440a57dc6d0986707",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.5",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-09.6",
+    "local_id": "D-09.6",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-09.6",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/6-enforcement-is-progressive",
+    "title": "6. Enforcement Is Progressive",
+    "heading_path": [
+      "Design Principles",
+      "6. Enforcement Is Progressive"
+    ],
+    "start_line": 204,
+    "end_line": 213,
+    "content_hash": "sha256:a6b0154fa92ef96e6c41a32e958e24baed4927deaa0d56a3563ed72b79ea0081",
+    "parent": "SRC-0002:D-09",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-09.6",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-10",
+    "local_id": "D-10",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-10",
+    "stable_key": "lifecycle-engine-hardening-design/terminology",
+    "title": "Terminology",
+    "heading_path": [
+      "Terminology"
+    ],
+    "start_line": 214,
+    "end_line": 229,
+    "content_hash": "sha256:d618a67d214a1fcdaae916b35d8306473525df7f4952ea9c562ab3ec993d252c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-10",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-11",
+    "local_id": "D-11",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-11",
+    "stable_key": "lifecycle-engine-hardening-design/high-level-architecture",
+    "title": "High-Level Architecture",
+    "heading_path": [
+      "High-Level Architecture"
+    ],
+    "start_line": 230,
+    "end_line": 261,
+    "content_hash": "sha256:7c78a960e015023a48ec25e1ce52a943275037a55ee363a8033edc8a3aae10ea",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-11",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-12",
+    "local_id": "D-12",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-12",
+    "stable_key": "lifecycle-engine-hardening-design/repository-layout",
+    "title": "Repository Layout",
+    "heading_path": [
+      "Repository Layout"
+    ],
+    "start_line": 262,
+    "end_line": 299,
+    "content_hash": "sha256:a9dd5e5b2aa1773f686d17c44433c6d4997aea158e5af082effd94aa55d93302",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-12",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-13",
+    "local_id": "D-13",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-13",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection",
+    "title": "Lifecycle Projection",
+    "heading_path": [
+      "Lifecycle Projection"
+    ],
+    "start_line": 300,
+    "end_line": 333,
+    "content_hash": "sha256:5a0793ece4b5fb4d968ee4884bc8c348bba3a797b7a5ebe6bdfcdaeb8c24453a",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-13.1",
+      "SRC-0002:D-13.2"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-13",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-13.1",
+    "local_id": "D-13.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-13.1",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/normalized-states",
+    "title": "Normalized States",
+    "heading_path": [
+      "Lifecycle Projection",
+      "Normalized States"
+    ],
+    "start_line": 305,
+    "end_line": 317,
+    "content_hash": "sha256:45eb4240686745b2e01092e390cbaae337be50ef0dc8542aca745b900ec98768",
+    "parent": "SRC-0002:D-13",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-13.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-13.2",
+    "local_id": "D-13.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-13.2",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/state-sources",
+    "title": "State Sources",
+    "heading_path": [
+      "Lifecycle Projection",
+      "State Sources"
+    ],
+    "start_line": 318,
+    "end_line": 333,
+    "content_hash": "sha256:015db60ebcded47ee1ea41781ba5f9da18822f8ae74e98eb2125a1f550b67a12",
+    "parent": "SRC-0002:D-13",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-13.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14",
+    "local_id": "D-14",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts",
+    "title": "Core Artifacts",
+    "heading_path": [
+      "Core Artifacts"
+    ],
+    "start_line": 334,
+    "end_line": 547,
+    "content_hash": "sha256:9f8d3eaf41cc0cd7414f7a8102737117d4a5af366ccfd52f9001c686be88cdbb",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-14.1",
+      "SRC-0002:D-14.2",
+      "SRC-0002:D-14.3",
+      "SRC-0002:D-14.4",
+      "SRC-0002:D-14.5",
+      "SRC-0002:D-14.6",
+      "SRC-0002:D-14.7"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.1",
+    "local_id": "D-14.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.1",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/1-task-context-pack",
+    "title": "1. Task Context Pack",
+    "heading_path": [
+      "Core Artifacts",
+      "1. Task Context Pack"
+    ],
+    "start_line": 336,
+    "end_line": 382,
+    "content_hash": "sha256:78fab66724f6cc7df2718d72e374351b42dcd1b8eba446df09ada134010cfd22",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.2",
+    "local_id": "D-14.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.2",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/2-workflow-artifact",
+    "title": "2. Workflow Artifact",
+    "heading_path": [
+      "Core Artifacts",
+      "2. Workflow Artifact"
+    ],
+    "start_line": 383,
+    "end_line": 431,
+    "content_hash": "sha256:3fd13b5dbf4797134adcf16e506ee9ae9b94b13e17d8cc1d4dd6c3dea2393b89",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.3",
+    "local_id": "D-14.3",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.3",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/3-run-state",
+    "title": "3. Run State",
+    "heading_path": [
+      "Core Artifacts",
+      "3. Run State"
+    ],
+    "start_line": 432,
+    "end_line": 448,
+    "content_hash": "sha256:7c874860b7237d9172c77acbf7d49c5a560d4664bb7978c9773ecdf58d3156e8",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.3",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.4",
+    "local_id": "D-14.4",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.4",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/4-review-evidence",
+    "title": "4. Review Evidence",
+    "heading_path": [
+      "Core Artifacts",
+      "4. Review Evidence"
+    ],
+    "start_line": 449,
+    "end_line": 470,
+    "content_hash": "sha256:f022e1ced9f4f93ac6a9e55443ae0bb31a9f24a9c83942e848e2d28c152496d4",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.4",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.5",
+    "local_id": "D-14.5",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.5",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/5-task-ledger",
+    "title": "5. Task Ledger",
+    "heading_path": [
+      "Core Artifacts",
+      "5. Task Ledger"
+    ],
+    "start_line": 471,
+    "end_line": 501,
+    "content_hash": "sha256:ed75341ea87912b0439cc9e0c7be5a359598d0b2d034e251eb44090e321b0253",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.5",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.6",
+    "local_id": "D-14.6",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.6",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/6-handoff",
+    "title": "6. Handoff",
+    "heading_path": [
+      "Core Artifacts",
+      "6. Handoff"
+    ],
+    "start_line": 502,
+    "end_line": 521,
+    "content_hash": "sha256:a1347572131c4122e0382e9b5987c55c6d147022deb93b516981c15586bafdee",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.6",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-14.7",
+    "local_id": "D-14.7",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-14.7",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/7-roadmap",
+    "title": "7. Roadmap",
+    "heading_path": [
+      "Core Artifacts",
+      "7. Roadmap"
+    ],
+    "start_line": 522,
+    "end_line": 547,
+    "content_hash": "sha256:5f116b8e2807850837d46ced780e5975a4e795a219a56f492eac461387fe66ba",
+    "parent": "SRC-0002:D-14",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-14.7",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15",
+    "local_id": "D-15",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design",
+    "title": "CLI Design",
+    "heading_path": [
+      "CLI Design"
+    ],
+    "start_line": 548,
+    "end_line": 674,
+    "content_hash": "sha256:8df6bfbde88713bdc2959d5a1a12b1903f1bfa4ac732440020b9b940cf16371b",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-15.1",
+      "SRC-0002:D-15.2",
+      "SRC-0002:D-15.3",
+      "SRC-0002:D-15.4",
+      "SRC-0002:D-15.5",
+      "SRC-0002:D-15.6"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.1",
+    "local_id": "D-15.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.1",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/existing-commands-to-preserve",
+    "title": "Existing Commands To Preserve",
+    "heading_path": [
+      "CLI Design",
+      "Existing Commands To Preserve"
+    ],
+    "start_line": 550,
+    "end_line": 572,
+    "content_hash": "sha256:501ccb8fd8aacaed8b8e6b784530b075a2e0335263dda4da1e852b3e9a9a8414",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.2",
+    "local_id": "D-15.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.2",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-status",
+    "title": "`aspec status`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec status`"
+    ],
+    "start_line": 573,
+    "end_line": 595,
+    "content_hash": "sha256:58348af04e8a20ec2e08e7de123f7b47dcf30978670d024822a0eb0ac3540b1b",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.3",
+    "local_id": "D-15.3",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.3",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-continue-aspec-next-action",
+    "title": "`aspec continue` / `aspec next-action`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec continue` / `aspec next-action`"
+    ],
+    "start_line": 596,
+    "end_line": 610,
+    "content_hash": "sha256:e99d2613f428966f390d9950ae1bc47dd08a822bb500cf8836d22f1313db0001",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.3",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.4",
+    "local_id": "D-15.4",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.4",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-workflow-create",
+    "title": "`aspec workflow create`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec workflow create`"
+    ],
+    "start_line": 611,
+    "end_line": 629,
+    "content_hash": "sha256:ada24ae608f6db83ff15f6e41f37e25fe0b955aad18ecaecd0fc3f4046d7f439",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.4",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.5",
+    "local_id": "D-15.5",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.5",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-finish",
+    "title": "`aspec finish`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec finish`"
+    ],
+    "start_line": 630,
+    "end_line": 662,
+    "content_hash": "sha256:628be07e2c399746f5c49f6e6514e568055875dce1eee39ce08d11432acd983b",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.5",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-15.6",
+    "local_id": "D-15.6",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-15.6",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-verify-work",
+    "title": "`aspec verify-work`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec verify-work`"
+    ],
+    "start_line": 663,
+    "end_line": 674,
+    "content_hash": "sha256:13d20a7bf0b8bb47b94c47523386c732ce9a2d5dd46273e8c616236af94d6854",
+    "parent": "SRC-0002:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-15.6",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-16",
+    "local_id": "D-16",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-16",
+    "stable_key": "lifecycle-engine-hardening-design/shared-write-back-module",
+    "title": "Shared Write-Back Module",
+    "heading_path": [
+      "Shared Write-Back Module"
+    ],
+    "start_line": 675,
+    "end_line": 700,
+    "content_hash": "sha256:35688dbfab7359bcc2d20ecb52ab0dc4716e0093b5929473e04e1f8e8b9fdf03",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-16",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-17",
+    "local_id": "D-17",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-17",
+    "stable_key": "lifecycle-engine-hardening-design/drift-detection",
+    "title": "Drift Detection",
+    "heading_path": [
+      "Drift Detection"
+    ],
+    "start_line": 701,
+    "end_line": 720,
+    "content_hash": "sha256:3b974e7ca3f9dae94536209182beedc52a807766ee999b2d30e5e52f62b7eac1",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-17",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-18",
+    "local_id": "D-18",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-18",
+    "stable_key": "lifecycle-engine-hardening-design/strict-mode",
+    "title": "Strict Mode",
+    "heading_path": [
+      "Strict Mode"
+    ],
+    "start_line": 721,
+    "end_line": 740,
+    "content_hash": "sha256:054476c337766cf7bace66b7aa2976bfb617ed9ce2dfecdd08a808153baf4fd4",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-18",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-19",
+    "local_id": "D-19",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-19",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy",
+    "title": "Migration Strategy",
+    "heading_path": [
+      "Migration Strategy"
+    ],
+    "start_line": 741,
+    "end_line": 775,
+    "content_hash": "sha256:98651156c601fcdfeb6bb154125ef4dde5be431f62df4b29920d57d7d2379d01",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-19.1",
+      "SRC-0002:D-19.2",
+      "SRC-0002:D-19.3"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-19",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-19.1",
+    "local_id": "D-19.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-19.1",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/existing-agentspec-repos",
+    "title": "Existing AgentSpec Repos",
+    "heading_path": [
+      "Migration Strategy",
+      "Existing AgentSpec Repos"
+    ],
+    "start_line": 745,
+    "end_line": 755,
+    "content_hash": "sha256:5dee7a5bda3697b682b49d372de325d1492de87d85970bc0bf20963f28ddea88",
+    "parent": "SRC-0002:D-19",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-19.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-19.2",
+    "local_id": "D-19.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-19.2",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/hotl-style-workflows",
+    "title": "HOTL-Style Workflows",
+    "heading_path": [
+      "Migration Strategy",
+      "HOTL-Style Workflows"
+    ],
+    "start_line": 756,
+    "end_line": 765,
+    "content_hash": "sha256:db74406dd3f8d07390301790f9d4ee3f35603c88d8598619ab6f3a778b10db40",
+    "parent": "SRC-0002:D-19",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-19.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-19.3",
+    "local_id": "D-19.3",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-19.3",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/deferred-migration",
+    "title": "Deferred Migration",
+    "heading_path": [
+      "Migration Strategy",
+      "Deferred Migration"
+    ],
+    "start_line": 766,
+    "end_line": 775,
+    "content_hash": "sha256:688042e3b8088437ab2302efb3971e1fcc5c8981e07f916729bfdc39059f9013",
+    "parent": "SRC-0002:D-19",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-19.3",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20",
+    "local_id": "D-20",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan",
+    "title": "Phased Implementation Plan",
+    "heading_path": [
+      "Phased Implementation Plan"
+    ],
+    "start_line": 776,
+    "end_line": 886,
+    "content_hash": "sha256:181347f490c91a19c2079b7948930a644abe8118e15c23499b91dab2479c7075",
+    "parent": null,
+    "children": [
+      "SRC-0002:D-20.1",
+      "SRC-0002:D-20.2",
+      "SRC-0002:D-20.3",
+      "SRC-0002:D-20.4",
+      "SRC-0002:D-20.5",
+      "SRC-0002:D-20.6",
+      "SRC-0002:D-20.7",
+      "SRC-0002:D-20.8"
+    ],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.1",
+    "local_id": "D-20.1",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.1",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-1-lifecycle-projection-hardening",
+    "title": "Phase 1: Lifecycle Projection Hardening",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 1: Lifecycle Projection Hardening"
+    ],
+    "start_line": 778,
+    "end_line": 792,
+    "content_hash": "sha256:84c33a1799243319403e8aa96da357ab3986edafe795e9f6cb9d6022f52f1deb",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.1",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.2",
+    "local_id": "D-20.2",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.2",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-2-write-back-module",
+    "title": "Phase 2: Write-Back Module",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 2: Write-Back Module"
+    ],
+    "start_line": 793,
+    "end_line": 808,
+    "content_hash": "sha256:99a33769c881a42b01963e172902dad7cd8215807b336b891feac657801331c8",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.2",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.3",
+    "local_id": "D-20.3",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.3",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-3-finish-orchestrator",
+    "title": "Phase 3: Finish Orchestrator",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 3: Finish Orchestrator"
+    ],
+    "start_line": 809,
+    "end_line": 823,
+    "content_hash": "sha256:456464296d39e28d59061c4cef9cac3aeb98194aa42e0928a643a0f880e2aacd",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.3",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.4",
+    "local_id": "D-20.4",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.4",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-4-native-workflow-creation",
+    "title": "Phase 4: Native Workflow Creation",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 4: Native Workflow Creation"
+    ],
+    "start_line": 824,
+    "end_line": 838,
+    "content_hash": "sha256:bcbac66696ab088cf721a65044d3f3cc7abd2e999e6b212bd2b8a8b6700483ac",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.4",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.5",
+    "local_id": "D-20.5",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.5",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-5-roadmap-preservation-mode",
+    "title": "Phase 5: Roadmap Preservation Mode",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 5: Roadmap Preservation Mode"
+    ],
+    "start_line": 839,
+    "end_line": 852,
+    "content_hash": "sha256:6dc2fdc5fde9408e3b77f0d2e7c30d8c6878253fed140f692cd02114888eb63f",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.5",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.6",
+    "local_id": "D-20.6",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.6",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-6-strict-lifecycle-enforcement",
+    "title": "Phase 6: Strict Lifecycle Enforcement",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 6: Strict Lifecycle Enforcement"
+    ],
+    "start_line": 853,
+    "end_line": 866,
+    "content_hash": "sha256:a0376d3dc377ed06de919a52a895b8f6b070192dfe01c7b76e8392e9b1240e06",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.6",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.7",
+    "local_id": "D-20.7",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.7",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-7-migration-tools",
+    "title": "Phase 7: Migration Tools",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 7: Migration Tools"
+    ],
+    "start_line": 867,
+    "end_line": 879,
+    "content_hash": "sha256:edba208c44094e15202ab8c6f1fe55a4bf61674276e42998cc77aa2b6f131b2c",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.7",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-20.8",
+    "local_id": "D-20.8",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-20.8",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-8-skill-gates",
+    "title": "Phase 8: Skill Gates",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 8: Skill Gates"
+    ],
+    "start_line": 880,
+    "end_line": 886,
+    "content_hash": "sha256:1ded197be74b911ab2bcd24a81d447ee6358178a22d48b3160c320b2a37fb9be",
+    "parent": "SRC-0002:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-20.8",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-21",
+    "local_id": "D-21",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-21",
+    "stable_key": "lifecycle-engine-hardening-design/mvp-acceptance-criteria",
+    "title": "MVP Acceptance Criteria",
+    "heading_path": [
+      "MVP Acceptance Criteria"
+    ],
+    "start_line": 887,
+    "end_line": 911,
+    "content_hash": "sha256:ac868659abb3a18c83d23914bfe1621a8313f02d21a5f7fe765e7ba2f1a4d2f6",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-21",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-22",
+    "local_id": "D-22",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-22",
+    "stable_key": "lifecycle-engine-hardening-design/open-questions",
+    "title": "Open Questions",
+    "heading_path": [
+      "Open Questions"
+    ],
+    "start_line": 912,
+    "end_line": 928,
+    "content_hash": "sha256:57ad472c3cb44d403e653393b7cfd9c30f74255f6cd168fa2df626a9d87aab0b",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-22",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-23",
+    "local_id": "D-23",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-23",
+    "stable_key": "lifecycle-engine-hardening-design/risks-and-mitigations",
+    "title": "Risks And Mitigations",
+    "heading_path": [
+      "Risks And Mitigations"
+    ],
+    "start_line": 929,
+    "end_line": 941,
+    "content_hash": "sha256:a1f1b856733b74c02c39363974f0b8180c8f56304ef6e2618e41f575d9e07dd6",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-23",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-24",
+    "local_id": "D-24",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-24",
+    "stable_key": "lifecycle-engine-hardening-design/recommended-decisions",
+    "title": "Recommended Decisions",
+    "heading_path": [
+      "Recommended Decisions"
+    ],
+    "start_line": 942,
+    "end_line": 954,
+    "content_hash": "sha256:2921ac38f67d554303d34a2dad7dd034c7e6568d48abef05ab1b173fe3a9879f",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-24",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "SRC-0002:D-25",
+    "local_id": "D-25",
+    "source_id": "SRC-0002",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0002",
+    "snapshot_section_id": "SRC-0002:D-25",
+    "stable_key": "lifecycle-engine-hardening-design/final-recommendation",
+    "title": "Final Recommendation",
+    "heading_path": [
+      "Final Recommendation"
+    ],
+    "start_line": 955,
+    "end_line": 973,
+    "content_hash": "sha256:68e64a9ba36964cf6904f1f9b26b575e126abb2a678509be4f4898bdf46eaf22",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "lifecycle-engine-hardening-design:D-25",
+    "superseded_by_snapshot": "SRC-0003"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-01",
+    "local_id": "D-01",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-01",
+    "stable_key": "lifecycle-engine-hardening-design/status",
+    "title": "Status",
+    "heading_path": [
+      "Status"
+    ],
+    "start_line": 3,
+    "end_line": 6,
+    "content_hash": "sha256:c3600a1ced3ca860bb85c12141988b1d17be102490e13cff024f647f4397a8b9",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-02",
+    "local_id": "D-02",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-02",
+    "stable_key": "lifecycle-engine-hardening-design/owner",
+    "title": "Owner",
+    "heading_path": [
+      "Owner"
+    ],
+    "start_line": 7,
+    "end_line": 10,
+    "content_hash": "sha256:b7bd90d640e8d708e2e2e674c8c909446474e70366b18ab178092398bb9ca5a8",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-03",
+    "local_id": "D-03",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-03",
+    "stable_key": "lifecycle-engine-hardening-design/review-status",
+    "title": "Review Status",
+    "heading_path": [
+      "Review Status"
+    ],
+    "start_line": 11,
+    "end_line": 19,
+    "content_hash": "sha256:c240b554e84cdb75615fc80ebd9c76cd5f077f1780016a5b9b1d51168e721377",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-04",
+    "local_id": "D-04",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-04",
+    "stable_key": "lifecycle-engine-hardening-design/summary",
+    "title": "Summary",
+    "heading_path": [
+      "Summary"
+    ],
+    "start_line": 20,
+    "end_line": 47,
+    "content_hash": "sha256:021bb112d62f19758bb049c7402fede0e38c8d343259bb41758839fbec5820fb",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-05",
+    "local_id": "D-05",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-05",
+    "stable_key": "lifecycle-engine-hardening-design/current-architecture-anchors",
+    "title": "Current Architecture Anchors",
+    "heading_path": [
+      "Current Architecture Anchors"
+    ],
+    "start_line": 48,
+    "end_line": 81,
+    "content_hash": "sha256:7e7d60c5119271bd7fc2697394e9b1b9ee8460580ca9d7e8f5e09b34587f20fc",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-06",
+    "local_id": "D-06",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-06",
+    "stable_key": "lifecycle-engine-hardening-design/problem-statement",
+    "title": "Problem Statement",
+    "heading_path": [
+      "Problem Statement"
+    ],
+    "start_line": 82,
+    "end_line": 107,
+    "content_hash": "sha256:85874d8ef4200b5e5a53e6bf3c838ccde394d17cc4e2d9e5a7a5dbdc9dff7805",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-07",
+    "local_id": "D-07",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-07",
+    "stable_key": "lifecycle-engine-hardening-design/goals",
+    "title": "Goals",
+    "heading_path": [
+      "Goals"
+    ],
+    "start_line": 108,
+    "end_line": 132,
+    "content_hash": "sha256:0126e9ac7d96f647cdcf7191b4f2393209e73f59250f075aa09dd0c99eda450c",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-07.1",
+      "lifecycle-engine-hardening-design:D-07.2"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-07.1",
+    "local_id": "D-07.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-07.1",
+    "stable_key": "lifecycle-engine-hardening-design/goals/product-goals",
+    "title": "Product Goals",
+    "heading_path": [
+      "Goals",
+      "Product Goals"
+    ],
+    "start_line": 110,
+    "end_line": 122,
+    "content_hash": "sha256:4d0a6d86a21ab0893fdfcccdf60a356cff7e33ebca5c365a59ee5783d6500f76",
+    "parent": "lifecycle-engine-hardening-design:D-07",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-07.2",
+    "local_id": "D-07.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-07.2",
+    "stable_key": "lifecycle-engine-hardening-design/goals/engineering-goals",
+    "title": "Engineering Goals",
+    "heading_path": [
+      "Goals",
+      "Engineering Goals"
+    ],
+    "start_line": 123,
+    "end_line": 132,
+    "content_hash": "sha256:cf108be19755d8c88051022f4197ab5e80eb9e30d88f7c6f96b94075b1d9baf7",
+    "parent": "lifecycle-engine-hardening-design:D-07",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-08",
+    "local_id": "D-08",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-08",
+    "stable_key": "lifecycle-engine-hardening-design/non-goals",
+    "title": "Non-Goals",
+    "heading_path": [
+      "Non-Goals"
+    ],
+    "start_line": 133,
+    "end_line": 155,
+    "content_hash": "sha256:e77fa9a201646d939ade3d78dac1d58b175d705d11cea34ac1d46aba86f161a2",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09",
+    "local_id": "D-09",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles",
+    "title": "Design Principles",
+    "heading_path": [
+      "Design Principles"
+    ],
+    "start_line": 156,
+    "end_line": 213,
+    "content_hash": "sha256:b20a281a5c8f854fcaf47b904ed4f6bc456866507616fd837c23efbb20bd93bd",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-09.1",
+      "lifecycle-engine-hardening-design:D-09.2",
+      "lifecycle-engine-hardening-design:D-09.3",
+      "lifecycle-engine-hardening-design:D-09.4",
+      "lifecycle-engine-hardening-design:D-09.5",
+      "lifecycle-engine-hardening-design:D-09.6"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.1",
+    "local_id": "D-09.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.1",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/1-extend-existing-state-do-not-duplicate-it",
+    "title": "1. Extend Existing State, Do Not Duplicate It",
+    "heading_path": [
+      "Design Principles",
+      "1. Extend Existing State, Do Not Duplicate It"
+    ],
+    "start_line": 158,
+    "end_line": 163,
+    "content_hash": "sha256:fa75bfb819ee2b7e59a534c9f84543cae94941f982721aac45c53d684ab9a3fb",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.2",
+    "local_id": "D-09.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.2",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/2-task-context-pack-remains-the-work-unit",
+    "title": "2. Task Context Pack Remains The Work Unit",
+    "heading_path": [
+      "Design Principles",
+      "2. Task Context Pack Remains The Work Unit"
+    ],
+    "start_line": 164,
+    "end_line": 168,
+    "content_hash": "sha256:ea5e8fa98ba857fe0006b4fd39a3c60479d4a7bc01195ff4623f9117a8600c01",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.3",
+    "local_id": "D-09.3",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.3",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/3-workflows-are-additive",
+    "title": "3. Workflows Are Additive",
+    "heading_path": [
+      "Design Principles",
+      "3. Workflows Are Additive"
+    ],
+    "start_line": 169,
+    "end_line": 181,
+    "content_hash": "sha256:c592c2deb5366c2aafc75b0b5311054a070aefec0193a334fb58fef7ed24137c",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.4",
+    "local_id": "D-09.4",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.4",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/4-review-evidence-stays-in-agent-reviews",
+    "title": "4. Review Evidence Stays In `agent/reviews/`",
+    "heading_path": [
+      "Design Principles",
+      "4. Review Evidence Stays In `agent/reviews/`"
+    ],
+    "start_line": 182,
+    "end_line": 192,
+    "content_hash": "sha256:f382ab4d2b4cbac20d440c125afe435800860123496e4651b157deabc2f27eff",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.5",
+    "local_id": "D-09.5",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.5",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/5-finish-means-write-back",
+    "title": "5. Finish Means Write-Back",
+    "heading_path": [
+      "Design Principles",
+      "5. Finish Means Write-Back"
+    ],
+    "start_line": 193,
+    "end_line": 203,
+    "content_hash": "sha256:ed9761271082ca2dfc9faf136ac31091c262ddb970e6e04440a57dc6d0986707",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-09.6",
+    "local_id": "D-09.6",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-09.6",
+    "stable_key": "lifecycle-engine-hardening-design/design-principles/6-enforcement-is-progressive",
+    "title": "6. Enforcement Is Progressive",
+    "heading_path": [
+      "Design Principles",
+      "6. Enforcement Is Progressive"
+    ],
+    "start_line": 204,
+    "end_line": 213,
+    "content_hash": "sha256:a6b0154fa92ef96e6c41a32e958e24baed4927deaa0d56a3563ed72b79ea0081",
+    "parent": "lifecycle-engine-hardening-design:D-09",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-10",
+    "local_id": "D-10",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-10",
+    "stable_key": "lifecycle-engine-hardening-design/terminology",
+    "title": "Terminology",
+    "heading_path": [
+      "Terminology"
+    ],
+    "start_line": 214,
+    "end_line": 229,
+    "content_hash": "sha256:d618a67d214a1fcdaae916b35d8306473525df7f4952ea9c562ab3ec993d252c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-11",
+    "local_id": "D-11",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-11",
+    "stable_key": "lifecycle-engine-hardening-design/high-level-architecture",
+    "title": "High-Level Architecture",
+    "heading_path": [
+      "High-Level Architecture"
+    ],
+    "start_line": 230,
+    "end_line": 261,
+    "content_hash": "sha256:7c78a960e015023a48ec25e1ce52a943275037a55ee363a8033edc8a3aae10ea",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-12",
+    "local_id": "D-12",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-12",
+    "stable_key": "lifecycle-engine-hardening-design/repository-layout",
+    "title": "Repository Layout",
+    "heading_path": [
+      "Repository Layout"
+    ],
+    "start_line": 262,
+    "end_line": 299,
+    "content_hash": "sha256:a9dd5e5b2aa1773f686d17c44433c6d4997aea158e5af082effd94aa55d93302",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-13",
+    "local_id": "D-13",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-13",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection",
+    "title": "Lifecycle Projection",
+    "heading_path": [
+      "Lifecycle Projection"
+    ],
+    "start_line": 300,
+    "end_line": 333,
+    "content_hash": "sha256:5a0793ece4b5fb4d968ee4884bc8c348bba3a797b7a5ebe6bdfcdaeb8c24453a",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-13.1",
+      "lifecycle-engine-hardening-design:D-13.2"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-13.1",
+    "local_id": "D-13.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-13.1",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/normalized-states",
+    "title": "Normalized States",
+    "heading_path": [
+      "Lifecycle Projection",
+      "Normalized States"
+    ],
+    "start_line": 305,
+    "end_line": 317,
+    "content_hash": "sha256:45eb4240686745b2e01092e390cbaae337be50ef0dc8542aca745b900ec98768",
+    "parent": "lifecycle-engine-hardening-design:D-13",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-13.2",
+    "local_id": "D-13.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-13.2",
+    "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/state-sources",
+    "title": "State Sources",
+    "heading_path": [
+      "Lifecycle Projection",
+      "State Sources"
+    ],
+    "start_line": 318,
+    "end_line": 333,
+    "content_hash": "sha256:015db60ebcded47ee1ea41781ba5f9da18822f8ae74e98eb2125a1f550b67a12",
+    "parent": "lifecycle-engine-hardening-design:D-13",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14",
+    "local_id": "D-14",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts",
+    "title": "Core Artifacts",
+    "heading_path": [
+      "Core Artifacts"
+    ],
+    "start_line": 334,
+    "end_line": 547,
+    "content_hash": "sha256:9f8d3eaf41cc0cd7414f7a8102737117d4a5af366ccfd52f9001c686be88cdbb",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-14.1",
+      "lifecycle-engine-hardening-design:D-14.2",
+      "lifecycle-engine-hardening-design:D-14.3",
+      "lifecycle-engine-hardening-design:D-14.4",
+      "lifecycle-engine-hardening-design:D-14.5",
+      "lifecycle-engine-hardening-design:D-14.6",
+      "lifecycle-engine-hardening-design:D-14.7"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.1",
+    "local_id": "D-14.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.1",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/1-task-context-pack",
+    "title": "1. Task Context Pack",
+    "heading_path": [
+      "Core Artifacts",
+      "1. Task Context Pack"
+    ],
+    "start_line": 336,
+    "end_line": 382,
+    "content_hash": "sha256:78fab66724f6cc7df2718d72e374351b42dcd1b8eba446df09ada134010cfd22",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.2",
+    "local_id": "D-14.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.2",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/2-workflow-artifact",
+    "title": "2. Workflow Artifact",
+    "heading_path": [
+      "Core Artifacts",
+      "2. Workflow Artifact"
+    ],
+    "start_line": 383,
+    "end_line": 431,
+    "content_hash": "sha256:3fd13b5dbf4797134adcf16e506ee9ae9b94b13e17d8cc1d4dd6c3dea2393b89",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.3",
+    "local_id": "D-14.3",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.3",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/3-run-state",
+    "title": "3. Run State",
+    "heading_path": [
+      "Core Artifacts",
+      "3. Run State"
+    ],
+    "start_line": 432,
+    "end_line": 448,
+    "content_hash": "sha256:7c874860b7237d9172c77acbf7d49c5a560d4664bb7978c9773ecdf58d3156e8",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.4",
+    "local_id": "D-14.4",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.4",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/4-review-evidence",
+    "title": "4. Review Evidence",
+    "heading_path": [
+      "Core Artifacts",
+      "4. Review Evidence"
+    ],
+    "start_line": 449,
+    "end_line": 470,
+    "content_hash": "sha256:f022e1ced9f4f93ac6a9e55443ae0bb31a9f24a9c83942e848e2d28c152496d4",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.5",
+    "local_id": "D-14.5",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.5",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/5-task-ledger",
+    "title": "5. Task Ledger",
+    "heading_path": [
+      "Core Artifacts",
+      "5. Task Ledger"
+    ],
+    "start_line": 471,
+    "end_line": 501,
+    "content_hash": "sha256:ed75341ea87912b0439cc9e0c7be5a359598d0b2d034e251eb44090e321b0253",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.6",
+    "local_id": "D-14.6",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.6",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/6-handoff",
+    "title": "6. Handoff",
+    "heading_path": [
+      "Core Artifacts",
+      "6. Handoff"
+    ],
+    "start_line": 502,
+    "end_line": 521,
+    "content_hash": "sha256:a1347572131c4122e0382e9b5987c55c6d147022deb93b516981c15586bafdee",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-14.7",
+    "local_id": "D-14.7",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-14.7",
+    "stable_key": "lifecycle-engine-hardening-design/core-artifacts/7-roadmap",
+    "title": "7. Roadmap",
+    "heading_path": [
+      "Core Artifacts",
+      "7. Roadmap"
+    ],
+    "start_line": 522,
+    "end_line": 547,
+    "content_hash": "sha256:5f116b8e2807850837d46ced780e5975a4e795a219a56f492eac461387fe66ba",
+    "parent": "lifecycle-engine-hardening-design:D-14",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15",
+    "local_id": "D-15",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design",
+    "title": "CLI Design",
+    "heading_path": [
+      "CLI Design"
+    ],
+    "start_line": 548,
+    "end_line": 674,
+    "content_hash": "sha256:8df6bfbde88713bdc2959d5a1a12b1903f1bfa4ac732440020b9b940cf16371b",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-15.1",
+      "lifecycle-engine-hardening-design:D-15.2",
+      "lifecycle-engine-hardening-design:D-15.3",
+      "lifecycle-engine-hardening-design:D-15.4",
+      "lifecycle-engine-hardening-design:D-15.5",
+      "lifecycle-engine-hardening-design:D-15.6"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.1",
+    "local_id": "D-15.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.1",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/existing-commands-to-preserve",
+    "title": "Existing Commands To Preserve",
+    "heading_path": [
+      "CLI Design",
+      "Existing Commands To Preserve"
+    ],
+    "start_line": 550,
+    "end_line": 572,
+    "content_hash": "sha256:501ccb8fd8aacaed8b8e6b784530b075a2e0335263dda4da1e852b3e9a9a8414",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.2",
+    "local_id": "D-15.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.2",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-status",
+    "title": "`aspec status`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec status`"
+    ],
+    "start_line": 573,
+    "end_line": 595,
+    "content_hash": "sha256:58348af04e8a20ec2e08e7de123f7b47dcf30978670d024822a0eb0ac3540b1b",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.3",
+    "local_id": "D-15.3",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.3",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-continue-aspec-next-action",
+    "title": "`aspec continue` / `aspec next-action`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec continue` / `aspec next-action`"
+    ],
+    "start_line": 596,
+    "end_line": 610,
+    "content_hash": "sha256:e99d2613f428966f390d9950ae1bc47dd08a822bb500cf8836d22f1313db0001",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.4",
+    "local_id": "D-15.4",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.4",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-workflow-create",
+    "title": "`aspec workflow create`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec workflow create`"
+    ],
+    "start_line": 611,
+    "end_line": 629,
+    "content_hash": "sha256:ada24ae608f6db83ff15f6e41f37e25fe0b955aad18ecaecd0fc3f4046d7f439",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.5",
+    "local_id": "D-15.5",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.5",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-finish",
+    "title": "`aspec finish`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec finish`"
+    ],
+    "start_line": 630,
+    "end_line": 662,
+    "content_hash": "sha256:628be07e2c399746f5c49f6e6514e568055875dce1eee39ce08d11432acd983b",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-15.6",
+    "local_id": "D-15.6",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-15.6",
+    "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-verify-work",
+    "title": "`aspec verify-work`",
+    "heading_path": [
+      "CLI Design",
+      "`aspec verify-work`"
+    ],
+    "start_line": 663,
+    "end_line": 674,
+    "content_hash": "sha256:13d20a7bf0b8bb47b94c47523386c732ce9a2d5dd46273e8c616236af94d6854",
+    "parent": "lifecycle-engine-hardening-design:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-16",
+    "local_id": "D-16",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-16",
+    "stable_key": "lifecycle-engine-hardening-design/shared-write-back-module",
+    "title": "Shared Write-Back Module",
+    "heading_path": [
+      "Shared Write-Back Module"
+    ],
+    "start_line": 675,
+    "end_line": 700,
+    "content_hash": "sha256:35688dbfab7359bcc2d20ecb52ab0dc4716e0093b5929473e04e1f8e8b9fdf03",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-17",
+    "local_id": "D-17",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-17",
+    "stable_key": "lifecycle-engine-hardening-design/drift-detection",
+    "title": "Drift Detection",
+    "heading_path": [
+      "Drift Detection"
+    ],
+    "start_line": 701,
+    "end_line": 720,
+    "content_hash": "sha256:3b974e7ca3f9dae94536209182beedc52a807766ee999b2d30e5e52f62b7eac1",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-18",
+    "local_id": "D-18",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-18",
+    "stable_key": "lifecycle-engine-hardening-design/strict-mode",
+    "title": "Strict Mode",
+    "heading_path": [
+      "Strict Mode"
+    ],
+    "start_line": 721,
+    "end_line": 740,
+    "content_hash": "sha256:054476c337766cf7bace66b7aa2976bfb617ed9ce2dfecdd08a808153baf4fd4",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-19",
+    "local_id": "D-19",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-19",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy",
+    "title": "Migration Strategy",
+    "heading_path": [
+      "Migration Strategy"
+    ],
+    "start_line": 741,
+    "end_line": 775,
+    "content_hash": "sha256:98651156c601fcdfeb6bb154125ef4dde5be431f62df4b29920d57d7d2379d01",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-19.1",
+      "lifecycle-engine-hardening-design:D-19.2",
+      "lifecycle-engine-hardening-design:D-19.3"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-19.1",
+    "local_id": "D-19.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-19.1",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/existing-agentspec-repos",
+    "title": "Existing AgentSpec Repos",
+    "heading_path": [
+      "Migration Strategy",
+      "Existing AgentSpec Repos"
+    ],
+    "start_line": 745,
+    "end_line": 755,
+    "content_hash": "sha256:5dee7a5bda3697b682b49d372de325d1492de87d85970bc0bf20963f28ddea88",
+    "parent": "lifecycle-engine-hardening-design:D-19",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-19.2",
+    "local_id": "D-19.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-19.2",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/hotl-style-workflows",
+    "title": "HOTL-Style Workflows",
+    "heading_path": [
+      "Migration Strategy",
+      "HOTL-Style Workflows"
+    ],
+    "start_line": 756,
+    "end_line": 765,
+    "content_hash": "sha256:db74406dd3f8d07390301790f9d4ee3f35603c88d8598619ab6f3a778b10db40",
+    "parent": "lifecycle-engine-hardening-design:D-19",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-19.3",
+    "local_id": "D-19.3",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-19.3",
+    "stable_key": "lifecycle-engine-hardening-design/migration-strategy/deferred-migration",
+    "title": "Deferred Migration",
+    "heading_path": [
+      "Migration Strategy",
+      "Deferred Migration"
+    ],
+    "start_line": 766,
+    "end_line": 775,
+    "content_hash": "sha256:688042e3b8088437ab2302efb3971e1fcc5c8981e07f916729bfdc39059f9013",
+    "parent": "lifecycle-engine-hardening-design:D-19",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20",
+    "local_id": "D-20",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan",
+    "title": "Phased Implementation Plan",
+    "heading_path": [
+      "Phased Implementation Plan"
+    ],
+    "start_line": 776,
+    "end_line": 886,
+    "content_hash": "sha256:181347f490c91a19c2079b7948930a644abe8118e15c23499b91dab2479c7075",
+    "parent": null,
+    "children": [
+      "lifecycle-engine-hardening-design:D-20.1",
+      "lifecycle-engine-hardening-design:D-20.2",
+      "lifecycle-engine-hardening-design:D-20.3",
+      "lifecycle-engine-hardening-design:D-20.4",
+      "lifecycle-engine-hardening-design:D-20.5",
+      "lifecycle-engine-hardening-design:D-20.6",
+      "lifecycle-engine-hardening-design:D-20.7",
+      "lifecycle-engine-hardening-design:D-20.8"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.1",
+    "local_id": "D-20.1",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.1",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-1-lifecycle-projection-hardening",
+    "title": "Phase 1: Lifecycle Projection Hardening",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 1: Lifecycle Projection Hardening"
+    ],
+    "start_line": 778,
+    "end_line": 792,
+    "content_hash": "sha256:84c33a1799243319403e8aa96da357ab3986edafe795e9f6cb9d6022f52f1deb",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.2",
+    "local_id": "D-20.2",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.2",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-2-write-back-module",
+    "title": "Phase 2: Write-Back Module",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 2: Write-Back Module"
+    ],
+    "start_line": 793,
+    "end_line": 808,
+    "content_hash": "sha256:99a33769c881a42b01963e172902dad7cd8215807b336b891feac657801331c8",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.3",
+    "local_id": "D-20.3",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.3",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-3-finish-orchestrator",
+    "title": "Phase 3: Finish Orchestrator",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 3: Finish Orchestrator"
+    ],
+    "start_line": 809,
+    "end_line": 823,
+    "content_hash": "sha256:456464296d39e28d59061c4cef9cac3aeb98194aa42e0928a643a0f880e2aacd",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.4",
+    "local_id": "D-20.4",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.4",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-4-native-workflow-creation",
+    "title": "Phase 4: Native Workflow Creation",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 4: Native Workflow Creation"
+    ],
+    "start_line": 824,
+    "end_line": 838,
+    "content_hash": "sha256:bcbac66696ab088cf721a65044d3f3cc7abd2e999e6b212bd2b8a8b6700483ac",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.5",
+    "local_id": "D-20.5",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.5",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-5-roadmap-preservation-mode",
+    "title": "Phase 5: Roadmap Preservation Mode",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 5: Roadmap Preservation Mode"
+    ],
+    "start_line": 839,
+    "end_line": 852,
+    "content_hash": "sha256:6dc2fdc5fde9408e3b77f0d2e7c30d8c6878253fed140f692cd02114888eb63f",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.6",
+    "local_id": "D-20.6",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.6",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-6-strict-lifecycle-enforcement",
+    "title": "Phase 6: Strict Lifecycle Enforcement",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 6: Strict Lifecycle Enforcement"
+    ],
+    "start_line": 853,
+    "end_line": 866,
+    "content_hash": "sha256:a0376d3dc377ed06de919a52a895b8f6b070192dfe01c7b76e8392e9b1240e06",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.7",
+    "local_id": "D-20.7",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.7",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-7-migration-tools",
+    "title": "Phase 7: Migration Tools",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 7: Migration Tools"
+    ],
+    "start_line": 867,
+    "end_line": 879,
+    "content_hash": "sha256:edba208c44094e15202ab8c6f1fe55a4bf61674276e42998cc77aa2b6f131b2c",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-20.8",
+    "local_id": "D-20.8",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-20.8",
+    "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-8-skill-gates",
+    "title": "Phase 8: Skill Gates",
+    "heading_path": [
+      "Phased Implementation Plan",
+      "Phase 8: Skill Gates"
+    ],
+    "start_line": 880,
+    "end_line": 886,
+    "content_hash": "sha256:1ded197be74b911ab2bcd24a81d447ee6358178a22d48b3160c320b2a37fb9be",
+    "parent": "lifecycle-engine-hardening-design:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-21",
+    "local_id": "D-21",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-21",
+    "stable_key": "lifecycle-engine-hardening-design/mvp-acceptance-criteria",
+    "title": "MVP Acceptance Criteria",
+    "heading_path": [
+      "MVP Acceptance Criteria"
+    ],
+    "start_line": 887,
+    "end_line": 911,
+    "content_hash": "sha256:ac868659abb3a18c83d23914bfe1621a8313f02d21a5f7fe765e7ba2f1a4d2f6",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-22",
+    "local_id": "D-22",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-22",
+    "stable_key": "lifecycle-engine-hardening-design/unresolved-design-decisions",
+    "title": "Unresolved Design Decisions",
+    "heading_path": [
+      "Unresolved Design Decisions"
+    ],
+    "start_line": 912,
+    "end_line": 928,
+    "content_hash": "sha256:b47e06114c07e286d8957ea7f4a4e9090852af742c42462c185d343f94d682bd",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-23",
+    "local_id": "D-23",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-23",
+    "stable_key": "lifecycle-engine-hardening-design/risks-and-mitigations",
+    "title": "Risks And Mitigations",
+    "heading_path": [
+      "Risks And Mitigations"
+    ],
+    "start_line": 929,
+    "end_line": 941,
+    "content_hash": "sha256:a1f1b856733b74c02c39363974f0b8180c8f56304ef6e2618e41f575d9e07dd6",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-24",
+    "local_id": "D-24",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-24",
+    "stable_key": "lifecycle-engine-hardening-design/recommended-decisions",
+    "title": "Recommended Decisions",
+    "heading_path": [
+      "Recommended Decisions"
+    ],
+    "start_line": 942,
+    "end_line": 954,
+    "content_hash": "sha256:2921ac38f67d554303d34a2dad7dd034c7e6568d48abef05ab1b173fe3a9879f",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "lifecycle-engine-hardening-design:D-25",
+    "local_id": "D-25",
+    "source_id": "SRC-0003",
+    "source_key": "lifecycle-engine-hardening-design",
+    "snapshot_id": "SRC-0003",
+    "snapshot_section_id": "SRC-0003:D-25",
+    "stable_key": "lifecycle-engine-hardening-design/final-recommendation",
+    "title": "Final Recommendation",
+    "heading_path": [
+      "Final Recommendation"
+    ],
+    "start_line": 955,
+    "end_line": 973,
+    "content_hash": "sha256:68e64a9ba36964cf6904f1f9b26b575e126abb2a678509be4f4898bdf46eaf22",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "SRC-0004:D-01",
+    "local_id": "D-01",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-01",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/status",
+    "title": "Status",
+    "heading_path": [
+      "Status"
+    ],
+    "start_line": 3,
+    "end_line": 6,
+    "content_hash": "sha256:c3600a1ced3ca860bb85c12141988b1d17be102490e13cff024f647f4397a8b9",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-01",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-02",
+    "local_id": "D-02",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-02",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/owner",
+    "title": "Owner",
+    "heading_path": [
+      "Owner"
+    ],
+    "start_line": 7,
+    "end_line": 10,
+    "content_hash": "sha256:b7bd90d640e8d708e2e2e674c8c909446474e70366b18ab178092398bb9ca5a8",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-02",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-03",
+    "local_id": "D-03",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-03",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/summary",
+    "title": "Summary",
+    "heading_path": [
+      "Summary"
+    ],
+    "start_line": 11,
+    "end_line": 60,
+    "content_hash": "sha256:001596daa2856b5e75a67d52ee0f6dffce0d84dca1bb07e1dcf08202adfd57ce",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-03",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-04",
+    "local_id": "D-04",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-04",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/goals",
+    "title": "Goals",
+    "heading_path": [
+      "Goals"
+    ],
+    "start_line": 61,
+    "end_line": 82,
+    "content_hash": "sha256:0cf910798044afc8af2dcf653e84972be666352e6e405f6540484894310b2775",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-04",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-05",
+    "local_id": "D-05",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-05",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/non-goals",
+    "title": "Non-Goals",
+    "heading_path": [
+      "Non-Goals"
+    ],
+    "start_line": 83,
+    "end_line": 99,
+    "content_hash": "sha256:a1f85a61b03ad1eb81256d4a1995e099fbedb4f86bd4bbc721a6eae6c0529283",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-05",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-06",
+    "local_id": "D-06",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-06",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/product-positioning",
+    "title": "Product Positioning",
+    "heading_path": [
+      "Product Positioning"
+    ],
+    "start_line": 100,
+    "end_line": 122,
+    "content_hash": "sha256:a235c7da76fba6950efeeb714e160bffb319e009e9fb7bf473c024d781db043e",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-06",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-07",
+    "local_id": "D-07",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-07",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/concept-mapping",
+    "title": "Concept Mapping",
+    "heading_path": [
+      "Concept Mapping"
+    ],
+    "start_line": 123,
+    "end_line": 141,
+    "content_hash": "sha256:a9a71abf3c5c004074da022d60fcd1c3290f6a24a0323d9fa07b7e61369150ab",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-07",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-08",
+    "local_id": "D-08",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-08",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/terminology-decision",
+    "title": "Terminology Decision",
+    "heading_path": [
+      "Terminology Decision"
+    ],
+    "start_line": 142,
+    "end_line": 172,
+    "content_hash": "sha256:dec41b6a436389e964c53dd73a8870190d60f7753655cae59371210994c86022",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-08",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-09",
+    "local_id": "D-09",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-09",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/target-repository-layout-for-user-projects",
+    "title": "Target Repository Layout for User Projects",
+    "heading_path": [
+      "Target Repository Layout for User Projects"
+    ],
+    "start_line": 173,
+    "end_line": 222,
+    "content_hash": "sha256:b9d1a809b2838777723cabe277ebef958a4026a5a289bd48c4e5e35097bdf3a1",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-09",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-10",
+    "local_id": "D-10",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-10",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/agentspec-engine-internal-architecture",
+    "title": "AgentSpec Engine Internal Architecture",
+    "heading_path": [
+      "AgentSpec Engine Internal Architecture"
+    ],
+    "start_line": 223,
+    "end_line": 281,
+    "content_hash": "sha256:49bc5f8d68375ef0ddf3029bda866385e0f4c010d0ae439fd4cab96711c2cfbb",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-10",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-11",
+    "local_id": "D-11",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-11",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/public-cli-design",
+    "title": "Public CLI Design",
+    "heading_path": [
+      "Public CLI Design"
+    ],
+    "start_line": 282,
+    "end_line": 328,
+    "content_hash": "sha256:2cb33aae8c4449b0e1b839e5f6e795c5ff74f241b09efe052230fd3b277b5bd6",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-11.1"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-11",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-11.1",
+    "local_id": "D-11.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-11.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/public-cli-design/command-mapping-from-hotl-capabilities",
+    "title": "Command Mapping from HOTL Capabilities",
+    "heading_path": [
+      "Public CLI Design",
+      "Command Mapping from HOTL Capabilities"
+    ],
+    "start_line": 311,
+    "end_line": 328,
+    "content_hash": "sha256:dc83a0a3beda3c8c4cb42e753387cc0fcb32066c3e9562f47b703288507b13e0",
+    "parent": "SRC-0004:D-11",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-11.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-12",
+    "local_id": "D-12",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-12",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-model",
+    "title": "Lifecycle Model",
+    "heading_path": [
+      "Lifecycle Model"
+    ],
+    "start_line": 329,
+    "end_line": 353,
+    "content_hash": "sha256:dc6f03a91449616f1d5ca69f1de4ba1317fba837a06045814200fc0306c4d009",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-12",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-13",
+    "local_id": "D-13",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-13",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/workflow-execution-plan-artifact",
+    "title": "Workflow / Execution Plan Artifact",
+    "heading_path": [
+      "Workflow / Execution Plan Artifact"
+    ],
+    "start_line": 354,
+    "end_line": 461,
+    "content_hash": "sha256:2663db950017096b3ead2d2d2a3be3de4c563f7372e7135ad95975edcb540eb4",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-13",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-14",
+    "local_id": "D-14",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-14",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/task-pack-changes",
+    "title": "Task Pack Changes",
+    "heading_path": [
+      "Task Pack Changes"
+    ],
+    "start_line": 462,
+    "end_line": 495,
+    "content_hash": "sha256:255f1826c8d5419f5da3e8a6faf25244205863ebef599dd8c41ec5cfbd2b18ec",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-14",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-15",
+    "local_id": "D-15",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-15",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model",
+    "title": "Session State Model",
+    "heading_path": [
+      "Session State Model"
+    ],
+    "start_line": 496,
+    "end_line": 541,
+    "content_hash": "sha256:df2d366f6398e621ac19359dbe18b5ae143ebcc977a0e789691ec2d099e213fa",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-15.1",
+      "SRC-0004:D-15.2"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-15",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-15.1",
+    "local_id": "D-15.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-15.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model/machine-readable-session-lease",
+    "title": "Machine-Readable Session Lease",
+    "heading_path": [
+      "Session State Model",
+      "Machine-Readable Session Lease"
+    ],
+    "start_line": 501,
+    "end_line": 528,
+    "content_hash": "sha256:29f054cf099126a51fd49dc23fc0bd3c0bcb84973f016e29df41517408bab8f4",
+    "parent": "SRC-0004:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-15.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-15.2",
+    "local_id": "D-15.2",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-15.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model/human-readable-summary",
+    "title": "Human-Readable Summary",
+    "heading_path": [
+      "Session State Model",
+      "Human-Readable Summary"
+    ],
+    "start_line": 529,
+    "end_line": 541,
+    "content_hash": "sha256:b108b4f5c9c18efc852d4abf5b8a830fba7cd21e95389daa1001da2b4f8b3f96",
+    "parent": "SRC-0004:D-15",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-15.2",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-16",
+    "local_id": "D-16",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-16",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-runtime",
+    "title": "Lifecycle Runtime",
+    "heading_path": [
+      "Lifecycle Runtime"
+    ],
+    "start_line": 542,
+    "end_line": 578,
+    "content_hash": "sha256:2562790c7ef544c879b44f9c5776edaae9d6570b585b16957db59613559c882d",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-16",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-17",
+    "local_id": "D-17",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-17",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-loop",
+    "title": "Implementation Loop",
+    "heading_path": [
+      "Implementation Loop"
+    ],
+    "start_line": 579,
+    "end_line": 625,
+    "content_hash": "sha256:9415ddbed79eb6167ed99cc9e62a4e374bd8892ce31d07a57af01abd656250a1",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-17.1"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-17",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-17.1",
+    "local_id": "D-17.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-17.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-loop/example-output",
+    "title": "Example Output",
+    "heading_path": [
+      "Implementation Loop",
+      "Example Output"
+    ],
+    "start_line": 600,
+    "end_line": 625,
+    "content_hash": "sha256:ec025ff3fc6e49663e04c5841b3748bae3d4849820978ddfa2bedb732e4da04d",
+    "parent": "SRC-0004:D-17",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-17.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-18",
+    "local_id": "D-18",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-18",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration",
+    "title": "Review and Finish Integration",
+    "heading_path": [
+      "Review and Finish Integration"
+    ],
+    "start_line": 626,
+    "end_line": 683,
+    "content_hash": "sha256:3b230e235a2542373dd2bf3453c96365369deb934da135b90a223e7016df70f1",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-18.1",
+      "SRC-0004:D-18.2"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-18",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-18.1",
+    "local_id": "D-18.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-18.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration/review",
+    "title": "Review",
+    "heading_path": [
+      "Review and Finish Integration",
+      "Review"
+    ],
+    "start_line": 630,
+    "end_line": 652,
+    "content_hash": "sha256:dfc79fcbc32b1a9473f7ee25bafed45e66992fedfb7cf8012737a698ffb980e5",
+    "parent": "SRC-0004:D-18",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-18.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-18.2",
+    "local_id": "D-18.2",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-18.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration/finish",
+    "title": "Finish",
+    "heading_path": [
+      "Review and Finish Integration",
+      "Finish"
+    ],
+    "start_line": 653,
+    "end_line": 683,
+    "content_hash": "sha256:5a24ff21d1cf02346465137c5822bb434d7302745c4c9c72b84560405c057099",
+    "parent": "SRC-0004:D-18",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-18.2",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-19",
+    "local_id": "D-19",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-19",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-hooks",
+    "title": "Lifecycle Hooks",
+    "heading_path": [
+      "Lifecycle Hooks"
+    ],
+    "start_line": 684,
+    "end_line": 767,
+    "content_hash": "sha256:4658a9486d298abcc1ad37842662f43e7af6c1d1d837b996b425748a54521fd4",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-19.1"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-19",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-19.1",
+    "local_id": "D-19.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-19.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-hooks/session-start-hook",
+    "title": "Session Start Hook",
+    "heading_path": [
+      "Lifecycle Hooks",
+      "Session Start Hook"
+    ],
+    "start_line": 732,
+    "end_line": 767,
+    "content_hash": "sha256:ba39a2afc62e94046d21463843f549bb26ee23d7d3693e3b7829c128840055e7",
+    "parent": "SRC-0004:D-19",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-19.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-20",
+    "local_id": "D-20",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-20",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/drift-detection-without-hotl-naming",
+    "title": "Drift Detection Without HOTL Naming",
+    "heading_path": [
+      "Drift Detection Without HOTL Naming"
+    ],
+    "start_line": 768,
+    "end_line": 820,
+    "content_hash": "sha256:5c1744d9becf6b3ec1e33774581a21e889e68d03be9aa41ebd7b4143cabf16b8",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-20.1"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-20",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-20.1",
+    "local_id": "D-20.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-20.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/drift-detection-without-hotl-naming/legacy-hotl-import-detection",
+    "title": "Legacy HOTL Import Detection",
+    "heading_path": [
+      "Drift Detection Without HOTL Naming",
+      "Legacy HOTL Import Detection"
+    ],
+    "start_line": 784,
+    "end_line": 820,
+    "content_hash": "sha256:1f5e787938c393d808b72041d6c95af59dc8220994373f0c697c3c99f4c04f7c",
+    "parent": "SRC-0004:D-20",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-20.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-21",
+    "local_id": "D-21",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-21",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-design",
+    "title": "Migration Design",
+    "heading_path": [
+      "Migration Design"
+    ],
+    "start_line": 821,
+    "end_line": 822,
+    "content_hash": "sha256:3841af45416f42d178c70c09f59cd20a8330391688d2d9b868dda164371670fa",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-21",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-22",
+    "local_id": "D-22",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-22",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/command",
+    "title": "Command",
+    "heading_path": [
+      "Command"
+    ],
+    "start_line": 823,
+    "end_line": 832,
+    "content_hash": "sha256:0316110bcdf93b0f861ab8bd77ba0c96558317bd3fd1923f286d1ca2549e516a",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-22",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-23",
+    "local_id": "D-23",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-23",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-inputs",
+    "title": "Migration Inputs",
+    "heading_path": [
+      "Migration Inputs"
+    ],
+    "start_line": 833,
+    "end_line": 841,
+    "content_hash": "sha256:be169ab5d24ea105122f59e28306b57b5134e37bba3299447943f7d47d6c8104",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-23",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-24",
+    "local_id": "D-24",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-24",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-outputs",
+    "title": "Migration Outputs",
+    "heading_path": [
+      "Migration Outputs"
+    ],
+    "start_line": 842,
+    "end_line": 849,
+    "content_hash": "sha256:845794280ce74c092bddb640d3ee5e6ca28b7b10187ca8567b493f4effdcd12a",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-24",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-25",
+    "local_id": "D-25",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-25",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-behavior",
+    "title": "Migration Behavior",
+    "heading_path": [
+      "Migration Behavior"
+    ],
+    "start_line": 850,
+    "end_line": 877,
+    "content_hash": "sha256:e82a98bb91e7b955d53135cc3f46ce6e8a722c05c3e561ecf18128a13edda919",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-25",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-26",
+    "local_id": "D-26",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-26",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/generated-agents-md-rules",
+    "title": "Generated AGENTS.md Rules",
+    "heading_path": [
+      "Generated AGENTS.md Rules"
+    ],
+    "start_line": 878,
+    "end_line": 903,
+    "content_hash": "sha256:0a55f9efedf6d34be691a0e3c30821acd6660f97fe8e178abee0fc195af7a6ed",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-26",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-27",
+    "local_id": "D-27",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-27",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/config-design",
+    "title": "Config Design",
+    "heading_path": [
+      "Config Design"
+    ],
+    "start_line": 904,
+    "end_line": 970,
+    "content_hash": "sha256:a03cd565a09d48790625e3760f789cf0e4d0f014ecf54f1ba74ee850df8f5781",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-27",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-28",
+    "local_id": "D-28",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-28",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy",
+    "title": "Code Refactoring Strategy",
+    "heading_path": [
+      "Code Refactoring Strategy"
+    ],
+    "start_line": 971,
+    "end_line": 1021,
+    "content_hash": "sha256:b6415b7fffb79e7917a21510e4b341d499b1b2a8a16568de85dd3fe05948bed5",
+    "parent": null,
+    "children": [
+      "SRC-0004:D-28.1",
+      "SRC-0004:D-28.2",
+      "SRC-0004:D-28.3",
+      "SRC-0004:D-28.4"
+    ],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-28.1",
+    "local_id": "D-28.1",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-28.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-1-identify-reusable-behaviors",
+    "title": "Step 1: Identify Reusable Behaviors",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 1: Identify Reusable Behaviors"
+    ],
+    "start_line": 975,
+    "end_line": 987,
+    "content_hash": "sha256:52d5f8a2e1034aaba28f0539fc2800b1a8267217eda424aa474cd9589ae03faa",
+    "parent": "SRC-0004:D-28",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-28.1",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-28.2",
+    "local_id": "D-28.2",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-28.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-2-rename-during-import",
+    "title": "Step 2: Rename During Import",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 2: Rename During Import"
+    ],
+    "start_line": 988,
+    "end_line": 999,
+    "content_hash": "sha256:bba9b8afca26fada0cc72509bf9237715eade66c72369643be1df694b03c0637",
+    "parent": "SRC-0004:D-28",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-28.2",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-28.3",
+    "local_id": "D-28.3",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-28.3",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-3-replace-hotl-file-paths",
+    "title": "Step 3: Replace HOTL File Paths",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 3: Replace HOTL File Paths"
+    ],
+    "start_line": 1000,
+    "end_line": 1008,
+    "content_hash": "sha256:9c6b82b9fcc96a73c929e74715ef9b5de968e749789297034d9a38cd1338ac57",
+    "parent": "SRC-0004:D-28",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-28.3",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-28.4",
+    "local_id": "D-28.4",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-28.4",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-4-replace-hotl-terms-in-user-facing-text",
+    "title": "Step 4: Replace HOTL Terms in User-Facing Text",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 4: Replace HOTL Terms in User-Facing Text"
+    ],
+    "start_line": 1009,
+    "end_line": 1021,
+    "content_hash": "sha256:7c887aa0dc95b2c6aa9a08c1ed08ab69b570aa4b2b614bf130bff9465ab7c9ef",
+    "parent": "SRC-0004:D-28",
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-28.4",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-29",
+    "local_id": "D-29",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-29",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/backward-compatibility",
+    "title": "Backward Compatibility",
+    "heading_path": [
+      "Backward Compatibility"
+    ],
+    "start_line": 1022,
+    "end_line": 1043,
+    "content_hash": "sha256:19e29463551dff056de8b2a4363ab280275393104e69528170c86f0fda51209a",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-29",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-30",
+    "local_id": "D-30",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-30",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/strict-mode-behavior",
+    "title": "Strict Mode Behavior",
+    "heading_path": [
+      "Strict Mode Behavior"
+    ],
+    "start_line": 1044,
+    "end_line": 1074,
+    "content_hash": "sha256:d685598ecf5f4a627c8d955cec185344eaecac0564dccb968f968ebd06251db1",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-30",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-31",
+    "local_id": "D-31",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-31",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/detailed-command-behavior",
+    "title": "Detailed Command Behavior",
+    "heading_path": [
+      "Detailed Command Behavior"
+    ],
+    "start_line": 1075,
+    "end_line": 1076,
+    "content_hash": "sha256:1faffe8c48c16f742b363e4c1a1a6e75a65bcca2f18bf798b2ef5b051b461096",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-31",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-32",
+    "local_id": "D-32",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-32",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/future-aspec-plan",
+    "title": "Future `aspec plan`",
+    "heading_path": [
+      "Future `aspec plan`"
+    ],
+    "start_line": 1077,
+    "end_line": 1097,
+    "content_hash": "sha256:c3219c94f685bbe3aa3b8d988fbef13bb7c59f8011ae418d95fbb04d22b876eb",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-32",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-33",
+    "local_id": "D-33",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-33",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/future-aspec-execute",
+    "title": "Future `aspec execute`",
+    "heading_path": [
+      "Future `aspec execute`"
+    ],
+    "start_line": 1098,
+    "end_line": 1119,
+    "content_hash": "sha256:2221ea5caa3bd24daaf6b85ae980a1a67c80ba74114c9720911da3332b17382b",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-33",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-34",
+    "local_id": "D-34",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-34",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-session-start",
+    "title": "`aspec session start`",
+    "heading_path": [
+      "`aspec session start`"
+    ],
+    "start_line": 1120,
+    "end_line": 1138,
+    "content_hash": "sha256:818d36791d8cc2d85f67ae55d686d047e6a00c5f9c58b5153833ba71221caa4a",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-34",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-35",
+    "local_id": "D-35",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-35",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-session-finish",
+    "title": "`aspec session finish`",
+    "heading_path": [
+      "`aspec session finish`"
+    ],
+    "start_line": 1139,
+    "end_line": 1155,
+    "content_hash": "sha256:0cac6b53d3ce33be5386461c11672e7b6c375d657bc3ca965cb0b4c811dfae7e",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-35",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-36",
+    "local_id": "D-36",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-36",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-finish",
+    "title": "`aspec finish`",
+    "heading_path": [
+      "`aspec finish`"
+    ],
+    "start_line": 1156,
+    "end_line": 1169,
+    "content_hash": "sha256:c019416fa1dd81a87afc2fbc245880b9b4db4e572787a09a6e46f13427b5fc7c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-36",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-37",
+    "local_id": "D-37",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-37",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-examples",
+    "title": "Migration Examples",
+    "heading_path": [
+      "Migration Examples"
+    ],
+    "start_line": 1170,
+    "end_line": 1171,
+    "content_hash": "sha256:0dfc70842574977cc31aead1e14972d84b1665c3bc739e3ec59b62b2e685d8c2",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-37",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-38",
+    "local_id": "D-38",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-38",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/legacy-plan-exists-without-task-pack",
+    "title": "Legacy Plan Exists Without Task Pack",
+    "heading_path": [
+      "Legacy Plan Exists Without Task Pack"
+    ],
+    "start_line": 1172,
+    "end_line": 1206,
+    "content_hash": "sha256:14d94b7f3a4810b456bdbf672b54c7cd4dde75b8de28484ecb24f47dc9ac426c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-38",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-39",
+    "local_id": "D-39",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-39",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/existing-task-pack-and-legacy-plan",
+    "title": "Existing Task Pack and Legacy Plan",
+    "heading_path": [
+      "Existing Task Pack and Legacy Plan"
+    ],
+    "start_line": 1207,
+    "end_line": 1221,
+    "content_hash": "sha256:f3dbaf6ea9687bfacef6acfe858d17bcb3aef55a425e3520759d5c56bc886286",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-39",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-40",
+    "local_id": "D-40",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-40",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/testing-strategy",
+    "title": "Testing Strategy",
+    "heading_path": [
+      "Testing Strategy"
+    ],
+    "start_line": 1222,
+    "end_line": 1223,
+    "content_hash": "sha256:a9c2912fd3c90a35e2c8d7023f9038de4e0749fb6dc42e0d2e05984d086f9fde",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-40",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-41",
+    "local_id": "D-41",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-41",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/unit-tests",
+    "title": "Unit Tests",
+    "heading_path": [
+      "Unit Tests"
+    ],
+    "start_line": 1224,
+    "end_line": 1235,
+    "content_hash": "sha256:1f6ef66e66c735c8e0631ada8e8d087d7e776b530bfa102fbb46804463b08733",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-41",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-42",
+    "local_id": "D-42",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-42",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/integration-tests",
+    "title": "Integration Tests",
+    "heading_path": [
+      "Integration Tests"
+    ],
+    "start_line": 1236,
+    "end_line": 1262,
+    "content_hash": "sha256:8ade38c526159cdb5585ac4b665d1c1da1e1e48ce88012afda606988bae00b9c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-42",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-43",
+    "local_id": "D-43",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-43",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/golden-file-tests",
+    "title": "Golden File Tests",
+    "heading_path": [
+      "Golden File Tests"
+    ],
+    "start_line": 1263,
+    "end_line": 1274,
+    "content_hash": "sha256:141a84fce06c737dce9590efc678fcb8907872cdc4375274e6ef5930c88e9d3e",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-43",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-44",
+    "local_id": "D-44",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-44",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-phases",
+    "title": "Implementation Phases",
+    "heading_path": [
+      "Implementation Phases"
+    ],
+    "start_line": 1275,
+    "end_line": 1276,
+    "content_hash": "sha256:afa2f52e0f6a4399ebc8799840f4dbf3484364372d8b337b7e17d27f632fab6c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-44",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-45",
+    "local_id": "D-45",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-45",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-1-terminology-and-file-model",
+    "title": "Phase 1: Terminology and File Model",
+    "heading_path": [
+      "Phase 1: Terminology and File Model"
+    ],
+    "start_line": 1277,
+    "end_line": 1292,
+    "content_hash": "sha256:1d191d4e34a07a162c7577a329c1b8541091f7688065f125b3efd21821d359e3",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-45",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-46",
+    "local_id": "D-46",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-46",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-2-native-planning-command",
+    "title": "Phase 2: Native Planning Command",
+    "heading_path": [
+      "Phase 2: Native Planning Command"
+    ],
+    "start_line": 1293,
+    "end_line": 1306,
+    "content_hash": "sha256:01ba7c9ac6bb6f3a22bdc9fea68a61d03379740f6821316f4489c9dada00f8b0",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-46",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-47",
+    "local_id": "D-47",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-47",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-3-session-runtime",
+    "title": "Phase 3: Session Runtime",
+    "heading_path": [
+      "Phase 3: Session Runtime"
+    ],
+    "start_line": 1307,
+    "end_line": 1322,
+    "content_hash": "sha256:9190ec70c7c99d2e9a6690151c6dbd9898e93039be9128b476fa5b04d88e9df8",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-47",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-48",
+    "local_id": "D-48",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-48",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-4-execute-command",
+    "title": "Phase 4: Execute Command",
+    "heading_path": [
+      "Phase 4: Execute Command"
+    ],
+    "start_line": 1323,
+    "end_line": 1337,
+    "content_hash": "sha256:463656a480e30be3a97c32056fd95a1cea14aefd9387f9dbf0d94d3e8b404f40",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-48",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-49",
+    "local_id": "D-49",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-49",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-5-review-and-finish",
+    "title": "Phase 5: Review and Finish",
+    "heading_path": [
+      "Phase 5: Review and Finish"
+    ],
+    "start_line": 1338,
+    "end_line": 1351,
+    "content_hash": "sha256:0a6237bd38c31c65b89f9fe657de288cd3fc4345aa5bb3e695095d6ab2f9381f",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-49",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-50",
+    "local_id": "D-50",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-50",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-6-drift-and-next-action",
+    "title": "Phase 6: Drift and Next Action",
+    "heading_path": [
+      "Phase 6: Drift and Next Action"
+    ],
+    "start_line": 1352,
+    "end_line": 1365,
+    "content_hash": "sha256:a27e071a67e919f4132e2474ef01202492b27c490ac9c5b892ac58ab4f2cd517",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-50",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-51",
+    "local_id": "D-51",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-51",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-7-legacy-migration",
+    "title": "Phase 7: Legacy Migration",
+    "heading_path": [
+      "Phase 7: Legacy Migration"
+    ],
+    "start_line": 1366,
+    "end_line": 1382,
+    "content_hash": "sha256:2804cf7f4749771d4eab8d18de4ecf0fd467e282fb70e70da680b1aa3ded667c",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-51",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-52",
+    "local_id": "D-52",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-52",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/acceptance-criteria",
+    "title": "Acceptance Criteria",
+    "heading_path": [
+      "Acceptance Criteria"
+    ],
+    "start_line": 1383,
+    "end_line": 1399,
+    "content_hash": "sha256:9deb02e2ab504c143a965e9ecd334b1f9a3e3a7de2136a8024cd0789a03fcfd4",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-52",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-53",
+    "local_id": "D-53",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-53",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/open-questions",
+    "title": "Open Questions",
+    "heading_path": [
+      "Open Questions"
+    ],
+    "start_line": 1400,
+    "end_line": 1414,
+    "content_hash": "sha256:1b4a58b9747c390d70a7744d1431ede994fe3099a5f17022217fbadcd605c4da",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-53",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-54",
+    "local_id": "D-54",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-54",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/recommended-decisions",
+    "title": "Recommended Decisions",
+    "heading_path": [
+      "Recommended Decisions"
+    ],
+    "start_line": 1415,
+    "end_line": 1429,
+    "content_hash": "sha256:753b63036a7a5858d2500980fc6e6ca854dd47c2c227b909091677678c088e2b",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-54",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-55",
+    "local_id": "D-55",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-55",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/end-to-end-example",
+    "title": "End-to-End Example",
+    "heading_path": [
+      "End-to-End Example"
+    ],
+    "start_line": 1430,
+    "end_line": 1459,
+    "content_hash": "sha256:ba69800c12d10c9a0b44bb699e03138ca79e3d8e8a9068fdb1361af73a055f18",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-55",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "SRC-0004:D-56",
+    "local_id": "D-56",
+    "source_id": "SRC-0004",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0004",
+    "snapshot_section_id": "SRC-0004:D-56",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/final-recommendation",
+    "title": "Final Recommendation",
+    "heading_path": [
+      "Final Recommendation"
+    ],
+    "start_line": 1460,
+    "end_line": 1495,
+    "content_hash": "sha256:73acb6286846d165eadba402bcad38c5e723a799a05026b7e8d098a2cd65bf57",
+    "parent": null,
+    "children": [],
+    "state": "superseded",
+    "superseded_by": "agentspec-hotl-integration-without-hotl-names:D-56",
+    "superseded_by_snapshot": "SRC-0005"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-01",
+    "local_id": "D-01",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-01",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/status",
+    "title": "Status",
+    "heading_path": [
+      "Status"
+    ],
+    "start_line": 3,
+    "end_line": 6,
+    "content_hash": "sha256:c3600a1ced3ca860bb85c12141988b1d17be102490e13cff024f647f4397a8b9",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-02",
+    "local_id": "D-02",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-02",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/owner",
+    "title": "Owner",
+    "heading_path": [
+      "Owner"
+    ],
+    "start_line": 7,
+    "end_line": 10,
+    "content_hash": "sha256:b7bd90d640e8d708e2e2e674c8c909446474e70366b18ab178092398bb9ca5a8",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-03",
+    "local_id": "D-03",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-03",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/summary",
+    "title": "Summary",
+    "heading_path": [
+      "Summary"
+    ],
+    "start_line": 11,
+    "end_line": 60,
+    "content_hash": "sha256:001596daa2856b5e75a67d52ee0f6dffce0d84dca1bb07e1dcf08202adfd57ce",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-04",
+    "local_id": "D-04",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-04",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/goals",
+    "title": "Goals",
+    "heading_path": [
+      "Goals"
+    ],
+    "start_line": 61,
+    "end_line": 82,
+    "content_hash": "sha256:0cf910798044afc8af2dcf653e84972be666352e6e405f6540484894310b2775",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-05",
+    "local_id": "D-05",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-05",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/non-goals",
+    "title": "Non-Goals",
+    "heading_path": [
+      "Non-Goals"
+    ],
+    "start_line": 83,
+    "end_line": 99,
+    "content_hash": "sha256:a1f85a61b03ad1eb81256d4a1995e099fbedb4f86bd4bbc721a6eae6c0529283",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-06",
+    "local_id": "D-06",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-06",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/product-positioning",
+    "title": "Product Positioning",
+    "heading_path": [
+      "Product Positioning"
+    ],
+    "start_line": 100,
+    "end_line": 122,
+    "content_hash": "sha256:a235c7da76fba6950efeeb714e160bffb319e009e9fb7bf473c024d781db043e",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-07",
+    "local_id": "D-07",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-07",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/concept-mapping",
+    "title": "Concept Mapping",
+    "heading_path": [
+      "Concept Mapping"
+    ],
+    "start_line": 123,
+    "end_line": 141,
+    "content_hash": "sha256:a9a71abf3c5c004074da022d60fcd1c3290f6a24a0323d9fa07b7e61369150ab",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-08",
+    "local_id": "D-08",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-08",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/terminology-decision",
+    "title": "Terminology Decision",
+    "heading_path": [
+      "Terminology Decision"
+    ],
+    "start_line": 142,
+    "end_line": 172,
+    "content_hash": "sha256:dec41b6a436389e964c53dd73a8870190d60f7753655cae59371210994c86022",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-09",
+    "local_id": "D-09",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-09",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/target-repository-layout-for-user-projects",
+    "title": "Target Repository Layout for User Projects",
+    "heading_path": [
+      "Target Repository Layout for User Projects"
+    ],
+    "start_line": 173,
+    "end_line": 222,
+    "content_hash": "sha256:b9d1a809b2838777723cabe277ebef958a4026a5a289bd48c4e5e35097bdf3a1",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-10",
+    "local_id": "D-10",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-10",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/agentspec-engine-internal-architecture",
+    "title": "AgentSpec Engine Internal Architecture",
+    "heading_path": [
+      "AgentSpec Engine Internal Architecture"
+    ],
+    "start_line": 223,
+    "end_line": 281,
+    "content_hash": "sha256:49bc5f8d68375ef0ddf3029bda866385e0f4c010d0ae439fd4cab96711c2cfbb",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-11",
+    "local_id": "D-11",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-11",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/public-cli-design",
+    "title": "Public CLI Design",
+    "heading_path": [
+      "Public CLI Design"
+    ],
+    "start_line": 282,
+    "end_line": 328,
+    "content_hash": "sha256:2cb33aae8c4449b0e1b839e5f6e795c5ff74f241b09efe052230fd3b277b5bd6",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-11.1"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-11.1",
+    "local_id": "D-11.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-11.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/public-cli-design/command-mapping-from-hotl-capabilities",
+    "title": "Command Mapping from HOTL Capabilities",
+    "heading_path": [
+      "Public CLI Design",
+      "Command Mapping from HOTL Capabilities"
+    ],
+    "start_line": 311,
+    "end_line": 328,
+    "content_hash": "sha256:dc83a0a3beda3c8c4cb42e753387cc0fcb32066c3e9562f47b703288507b13e0",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-11",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-12",
+    "local_id": "D-12",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-12",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-model",
+    "title": "Lifecycle Model",
+    "heading_path": [
+      "Lifecycle Model"
+    ],
+    "start_line": 329,
+    "end_line": 353,
+    "content_hash": "sha256:dc6f03a91449616f1d5ca69f1de4ba1317fba837a06045814200fc0306c4d009",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-13",
+    "local_id": "D-13",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-13",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/workflow-execution-plan-artifact",
+    "title": "Workflow / Execution Plan Artifact",
+    "heading_path": [
+      "Workflow / Execution Plan Artifact"
+    ],
+    "start_line": 354,
+    "end_line": 461,
+    "content_hash": "sha256:2663db950017096b3ead2d2d2a3be3de4c563f7372e7135ad95975edcb540eb4",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-14",
+    "local_id": "D-14",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-14",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/task-pack-changes",
+    "title": "Task Pack Changes",
+    "heading_path": [
+      "Task Pack Changes"
+    ],
+    "start_line": 462,
+    "end_line": 495,
+    "content_hash": "sha256:255f1826c8d5419f5da3e8a6faf25244205863ebef599dd8c41ec5cfbd2b18ec",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-15",
+    "local_id": "D-15",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-15",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model",
+    "title": "Session State Model",
+    "heading_path": [
+      "Session State Model"
+    ],
+    "start_line": 496,
+    "end_line": 541,
+    "content_hash": "sha256:df2d366f6398e621ac19359dbe18b5ae143ebcc977a0e789691ec2d099e213fa",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-15.1",
+      "agentspec-hotl-integration-without-hotl-names:D-15.2"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-15.1",
+    "local_id": "D-15.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-15.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model/machine-readable-session-lease",
+    "title": "Machine-Readable Session Lease",
+    "heading_path": [
+      "Session State Model",
+      "Machine-Readable Session Lease"
+    ],
+    "start_line": 501,
+    "end_line": 528,
+    "content_hash": "sha256:29f054cf099126a51fd49dc23fc0bd3c0bcb84973f016e29df41517408bab8f4",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-15.2",
+    "local_id": "D-15.2",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-15.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/session-state-model/human-readable-summary",
+    "title": "Human-Readable Summary",
+    "heading_path": [
+      "Session State Model",
+      "Human-Readable Summary"
+    ],
+    "start_line": 529,
+    "end_line": 541,
+    "content_hash": "sha256:b108b4f5c9c18efc852d4abf5b8a830fba7cd21e95389daa1001da2b4f8b3f96",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-15",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-16",
+    "local_id": "D-16",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-16",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-runtime",
+    "title": "Lifecycle Runtime",
+    "heading_path": [
+      "Lifecycle Runtime"
+    ],
+    "start_line": 542,
+    "end_line": 578,
+    "content_hash": "sha256:2562790c7ef544c879b44f9c5776edaae9d6570b585b16957db59613559c882d",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-17",
+    "local_id": "D-17",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-17",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-loop",
+    "title": "Implementation Loop",
+    "heading_path": [
+      "Implementation Loop"
+    ],
+    "start_line": 579,
+    "end_line": 625,
+    "content_hash": "sha256:9415ddbed79eb6167ed99cc9e62a4e374bd8892ce31d07a57af01abd656250a1",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-17.1"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-17.1",
+    "local_id": "D-17.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-17.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-loop/example-output",
+    "title": "Example Output",
+    "heading_path": [
+      "Implementation Loop",
+      "Example Output"
+    ],
+    "start_line": 600,
+    "end_line": 625,
+    "content_hash": "sha256:ec025ff3fc6e49663e04c5841b3748bae3d4849820978ddfa2bedb732e4da04d",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-17",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-18",
+    "local_id": "D-18",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-18",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration",
+    "title": "Review and Finish Integration",
+    "heading_path": [
+      "Review and Finish Integration"
+    ],
+    "start_line": 626,
+    "end_line": 683,
+    "content_hash": "sha256:3b230e235a2542373dd2bf3453c96365369deb934da135b90a223e7016df70f1",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-18.1",
+      "agentspec-hotl-integration-without-hotl-names:D-18.2"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-18.1",
+    "local_id": "D-18.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-18.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration/review",
+    "title": "Review",
+    "heading_path": [
+      "Review and Finish Integration",
+      "Review"
+    ],
+    "start_line": 630,
+    "end_line": 652,
+    "content_hash": "sha256:dfc79fcbc32b1a9473f7ee25bafed45e66992fedfb7cf8012737a698ffb980e5",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-18",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-18.2",
+    "local_id": "D-18.2",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-18.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/review-and-finish-integration/finish",
+    "title": "Finish",
+    "heading_path": [
+      "Review and Finish Integration",
+      "Finish"
+    ],
+    "start_line": 653,
+    "end_line": 683,
+    "content_hash": "sha256:5a24ff21d1cf02346465137c5822bb434d7302745c4c9c72b84560405c057099",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-18",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-19",
+    "local_id": "D-19",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-19",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-hooks",
+    "title": "Lifecycle Hooks",
+    "heading_path": [
+      "Lifecycle Hooks"
+    ],
+    "start_line": 684,
+    "end_line": 767,
+    "content_hash": "sha256:4658a9486d298abcc1ad37842662f43e7af6c1d1d837b996b425748a54521fd4",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-19.1"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-19.1",
+    "local_id": "D-19.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-19.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/lifecycle-hooks/session-start-hook",
+    "title": "Session Start Hook",
+    "heading_path": [
+      "Lifecycle Hooks",
+      "Session Start Hook"
+    ],
+    "start_line": 732,
+    "end_line": 767,
+    "content_hash": "sha256:ba39a2afc62e94046d21463843f549bb26ee23d7d3693e3b7829c128840055e7",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-19",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-20",
+    "local_id": "D-20",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-20",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/drift-detection-without-hotl-naming",
+    "title": "Drift Detection Without HOTL Naming",
+    "heading_path": [
+      "Drift Detection Without HOTL Naming"
+    ],
+    "start_line": 768,
+    "end_line": 820,
+    "content_hash": "sha256:5c1744d9becf6b3ec1e33774581a21e889e68d03be9aa41ebd7b4143cabf16b8",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-20.1"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-20.1",
+    "local_id": "D-20.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-20.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/drift-detection-without-hotl-naming/legacy-hotl-import-detection",
+    "title": "Legacy HOTL Import Detection",
+    "heading_path": [
+      "Drift Detection Without HOTL Naming",
+      "Legacy HOTL Import Detection"
+    ],
+    "start_line": 784,
+    "end_line": 820,
+    "content_hash": "sha256:1f5e787938c393d808b72041d6c95af59dc8220994373f0c697c3c99f4c04f7c",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-20",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-21",
+    "local_id": "D-21",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-21",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-design",
+    "title": "Migration Design",
+    "heading_path": [
+      "Migration Design"
+    ],
+    "start_line": 821,
+    "end_line": 822,
+    "content_hash": "sha256:3841af45416f42d178c70c09f59cd20a8330391688d2d9b868dda164371670fa",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-22",
+    "local_id": "D-22",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-22",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/command",
+    "title": "Command",
+    "heading_path": [
+      "Command"
+    ],
+    "start_line": 823,
+    "end_line": 832,
+    "content_hash": "sha256:0316110bcdf93b0f861ab8bd77ba0c96558317bd3fd1923f286d1ca2549e516a",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-23",
+    "local_id": "D-23",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-23",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-inputs",
+    "title": "Migration Inputs",
+    "heading_path": [
+      "Migration Inputs"
+    ],
+    "start_line": 833,
+    "end_line": 841,
+    "content_hash": "sha256:be169ab5d24ea105122f59e28306b57b5134e37bba3299447943f7d47d6c8104",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-24",
+    "local_id": "D-24",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-24",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-outputs",
+    "title": "Migration Outputs",
+    "heading_path": [
+      "Migration Outputs"
+    ],
+    "start_line": 842,
+    "end_line": 849,
+    "content_hash": "sha256:845794280ce74c092bddb640d3ee5e6ca28b7b10187ca8567b493f4effdcd12a",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-25",
+    "local_id": "D-25",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-25",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-behavior",
+    "title": "Migration Behavior",
+    "heading_path": [
+      "Migration Behavior"
+    ],
+    "start_line": 850,
+    "end_line": 877,
+    "content_hash": "sha256:e82a98bb91e7b955d53135cc3f46ce6e8a722c05c3e561ecf18128a13edda919",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-26",
+    "local_id": "D-26",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-26",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/generated-agents-md-rules",
+    "title": "Generated AGENTS.md Rules",
+    "heading_path": [
+      "Generated AGENTS.md Rules"
+    ],
+    "start_line": 878,
+    "end_line": 903,
+    "content_hash": "sha256:0a55f9efedf6d34be691a0e3c30821acd6660f97fe8e178abee0fc195af7a6ed",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-27",
+    "local_id": "D-27",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-27",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/config-design",
+    "title": "Config Design",
+    "heading_path": [
+      "Config Design"
+    ],
+    "start_line": 904,
+    "end_line": 970,
+    "content_hash": "sha256:a03cd565a09d48790625e3760f789cf0e4d0f014ecf54f1ba74ee850df8f5781",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "local_id": "D-28",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-28",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy",
+    "title": "Code Refactoring Strategy",
+    "heading_path": [
+      "Code Refactoring Strategy"
+    ],
+    "start_line": 971,
+    "end_line": 1021,
+    "content_hash": "sha256:b6415b7fffb79e7917a21510e4b341d499b1b2a8a16568de85dd3fe05948bed5",
+    "parent": null,
+    "children": [
+      "agentspec-hotl-integration-without-hotl-names:D-28.1",
+      "agentspec-hotl-integration-without-hotl-names:D-28.2",
+      "agentspec-hotl-integration-without-hotl-names:D-28.3",
+      "agentspec-hotl-integration-without-hotl-names:D-28.4"
+    ],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-28.1",
+    "local_id": "D-28.1",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-28.1",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-1-identify-reusable-behaviors",
+    "title": "Step 1: Identify Reusable Behaviors",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 1: Identify Reusable Behaviors"
+    ],
+    "start_line": 975,
+    "end_line": 987,
+    "content_hash": "sha256:52d5f8a2e1034aaba28f0539fc2800b1a8267217eda424aa474cd9589ae03faa",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-28.2",
+    "local_id": "D-28.2",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-28.2",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-2-rename-during-import",
+    "title": "Step 2: Rename During Import",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 2: Rename During Import"
+    ],
+    "start_line": 988,
+    "end_line": 999,
+    "content_hash": "sha256:bba9b8afca26fada0cc72509bf9237715eade66c72369643be1df694b03c0637",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-28.3",
+    "local_id": "D-28.3",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-28.3",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-3-replace-hotl-file-paths",
+    "title": "Step 3: Replace HOTL File Paths",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 3: Replace HOTL File Paths"
+    ],
+    "start_line": 1000,
+    "end_line": 1008,
+    "content_hash": "sha256:9c6b82b9fcc96a73c929e74715ef9b5de968e749789297034d9a38cd1338ac57",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-28.4",
+    "local_id": "D-28.4",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-28.4",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/code-refactoring-strategy/step-4-replace-hotl-terms-in-user-facing-text",
+    "title": "Step 4: Replace HOTL Terms in User-Facing Text",
+    "heading_path": [
+      "Code Refactoring Strategy",
+      "Step 4: Replace HOTL Terms in User-Facing Text"
+    ],
+    "start_line": 1009,
+    "end_line": 1021,
+    "content_hash": "sha256:7c887aa0dc95b2c6aa9a08c1ed08ab69b570aa4b2b614bf130bff9465ab7c9ef",
+    "parent": "agentspec-hotl-integration-without-hotl-names:D-28",
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-29",
+    "local_id": "D-29",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-29",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/backward-compatibility",
+    "title": "Backward Compatibility",
+    "heading_path": [
+      "Backward Compatibility"
+    ],
+    "start_line": 1022,
+    "end_line": 1043,
+    "content_hash": "sha256:19e29463551dff056de8b2a4363ab280275393104e69528170c86f0fda51209a",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-30",
+    "local_id": "D-30",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-30",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/strict-mode-behavior",
+    "title": "Strict Mode Behavior",
+    "heading_path": [
+      "Strict Mode Behavior"
+    ],
+    "start_line": 1044,
+    "end_line": 1074,
+    "content_hash": "sha256:d685598ecf5f4a627c8d955cec185344eaecac0564dccb968f968ebd06251db1",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-31",
+    "local_id": "D-31",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-31",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/detailed-command-behavior",
+    "title": "Detailed Command Behavior",
+    "heading_path": [
+      "Detailed Command Behavior"
+    ],
+    "start_line": 1075,
+    "end_line": 1076,
+    "content_hash": "sha256:1faffe8c48c16f742b363e4c1a1a6e75a65bcca2f18bf798b2ef5b051b461096",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-32",
+    "local_id": "D-32",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-32",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/future-aspec-plan",
+    "title": "Future `aspec plan`",
+    "heading_path": [
+      "Future `aspec plan`"
+    ],
+    "start_line": 1077,
+    "end_line": 1097,
+    "content_hash": "sha256:c3219c94f685bbe3aa3b8d988fbef13bb7c59f8011ae418d95fbb04d22b876eb",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-33",
+    "local_id": "D-33",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-33",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/future-aspec-execute",
+    "title": "Future `aspec execute`",
+    "heading_path": [
+      "Future `aspec execute`"
+    ],
+    "start_line": 1098,
+    "end_line": 1119,
+    "content_hash": "sha256:2221ea5caa3bd24daaf6b85ae980a1a67c80ba74114c9720911da3332b17382b",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-34",
+    "local_id": "D-34",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-34",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-session-start",
+    "title": "`aspec session start`",
+    "heading_path": [
+      "`aspec session start`"
+    ],
+    "start_line": 1120,
+    "end_line": 1138,
+    "content_hash": "sha256:818d36791d8cc2d85f67ae55d686d047e6a00c5f9c58b5153833ba71221caa4a",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-35",
+    "local_id": "D-35",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-35",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-session-finish",
+    "title": "`aspec session finish`",
+    "heading_path": [
+      "`aspec session finish`"
+    ],
+    "start_line": 1139,
+    "end_line": 1155,
+    "content_hash": "sha256:0cac6b53d3ce33be5386461c11672e7b6c375d657bc3ca965cb0b4c811dfae7e",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-36",
+    "local_id": "D-36",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-36",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/aspec-finish",
+    "title": "`aspec finish`",
+    "heading_path": [
+      "`aspec finish`"
+    ],
+    "start_line": 1156,
+    "end_line": 1169,
+    "content_hash": "sha256:c019416fa1dd81a87afc2fbc245880b9b4db4e572787a09a6e46f13427b5fc7c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-37",
+    "local_id": "D-37",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-37",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/migration-examples",
+    "title": "Migration Examples",
+    "heading_path": [
+      "Migration Examples"
+    ],
+    "start_line": 1170,
+    "end_line": 1171,
+    "content_hash": "sha256:0dfc70842574977cc31aead1e14972d84b1665c3bc739e3ec59b62b2e685d8c2",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-38",
+    "local_id": "D-38",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-38",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/legacy-plan-exists-without-task-pack",
+    "title": "Legacy Plan Exists Without Task Pack",
+    "heading_path": [
+      "Legacy Plan Exists Without Task Pack"
+    ],
+    "start_line": 1172,
+    "end_line": 1206,
+    "content_hash": "sha256:14d94b7f3a4810b456bdbf672b54c7cd4dde75b8de28484ecb24f47dc9ac426c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-39",
+    "local_id": "D-39",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-39",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/existing-task-pack-and-legacy-plan",
+    "title": "Existing Task Pack and Legacy Plan",
+    "heading_path": [
+      "Existing Task Pack and Legacy Plan"
+    ],
+    "start_line": 1207,
+    "end_line": 1221,
+    "content_hash": "sha256:f3dbaf6ea9687bfacef6acfe858d17bcb3aef55a425e3520759d5c56bc886286",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-40",
+    "local_id": "D-40",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-40",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/testing-strategy",
+    "title": "Testing Strategy",
+    "heading_path": [
+      "Testing Strategy"
+    ],
+    "start_line": 1222,
+    "end_line": 1223,
+    "content_hash": "sha256:a9c2912fd3c90a35e2c8d7023f9038de4e0749fb6dc42e0d2e05984d086f9fde",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-41",
+    "local_id": "D-41",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-41",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/unit-tests",
+    "title": "Unit Tests",
+    "heading_path": [
+      "Unit Tests"
+    ],
+    "start_line": 1224,
+    "end_line": 1235,
+    "content_hash": "sha256:1f6ef66e66c735c8e0631ada8e8d087d7e776b530bfa102fbb46804463b08733",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-42",
+    "local_id": "D-42",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-42",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/integration-tests",
+    "title": "Integration Tests",
+    "heading_path": [
+      "Integration Tests"
+    ],
+    "start_line": 1236,
+    "end_line": 1262,
+    "content_hash": "sha256:8ade38c526159cdb5585ac4b665d1c1da1e1e48ce88012afda606988bae00b9c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-43",
+    "local_id": "D-43",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-43",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/golden-file-tests",
+    "title": "Golden File Tests",
+    "heading_path": [
+      "Golden File Tests"
+    ],
+    "start_line": 1263,
+    "end_line": 1274,
+    "content_hash": "sha256:141a84fce06c737dce9590efc678fcb8907872cdc4375274e6ef5930c88e9d3e",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-44",
+    "local_id": "D-44",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-44",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/implementation-phases",
+    "title": "Implementation Phases",
+    "heading_path": [
+      "Implementation Phases"
+    ],
+    "start_line": 1275,
+    "end_line": 1276,
+    "content_hash": "sha256:afa2f52e0f6a4399ebc8799840f4dbf3484364372d8b337b7e17d27f632fab6c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-45",
+    "local_id": "D-45",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-45",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-1-terminology-and-file-model",
+    "title": "Phase 1: Terminology and File Model",
+    "heading_path": [
+      "Phase 1: Terminology and File Model"
+    ],
+    "start_line": 1277,
+    "end_line": 1292,
+    "content_hash": "sha256:1d191d4e34a07a162c7577a329c1b8541091f7688065f125b3efd21821d359e3",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-46",
+    "local_id": "D-46",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-46",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-2-native-planning-command",
+    "title": "Phase 2: Native Planning Command",
+    "heading_path": [
+      "Phase 2: Native Planning Command"
+    ],
+    "start_line": 1293,
+    "end_line": 1306,
+    "content_hash": "sha256:01ba7c9ac6bb6f3a22bdc9fea68a61d03379740f6821316f4489c9dada00f8b0",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-47",
+    "local_id": "D-47",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-47",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-3-session-runtime",
+    "title": "Phase 3: Session Runtime",
+    "heading_path": [
+      "Phase 3: Session Runtime"
+    ],
+    "start_line": 1307,
+    "end_line": 1322,
+    "content_hash": "sha256:9190ec70c7c99d2e9a6690151c6dbd9898e93039be9128b476fa5b04d88e9df8",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-48",
+    "local_id": "D-48",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-48",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-4-execute-command",
+    "title": "Phase 4: Execute Command",
+    "heading_path": [
+      "Phase 4: Execute Command"
+    ],
+    "start_line": 1323,
+    "end_line": 1337,
+    "content_hash": "sha256:463656a480e30be3a97c32056fd95a1cea14aefd9387f9dbf0d94d3e8b404f40",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-49",
+    "local_id": "D-49",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-49",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-5-review-and-finish",
+    "title": "Phase 5: Review and Finish",
+    "heading_path": [
+      "Phase 5: Review and Finish"
+    ],
+    "start_line": 1338,
+    "end_line": 1351,
+    "content_hash": "sha256:0a6237bd38c31c65b89f9fe657de288cd3fc4345aa5bb3e695095d6ab2f9381f",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-50",
+    "local_id": "D-50",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-50",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-6-drift-and-next-action",
+    "title": "Phase 6: Drift and Next Action",
+    "heading_path": [
+      "Phase 6: Drift and Next Action"
+    ],
+    "start_line": 1352,
+    "end_line": 1365,
+    "content_hash": "sha256:a27e071a67e919f4132e2474ef01202492b27c490ac9c5b892ac58ab4f2cd517",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-51",
+    "local_id": "D-51",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-51",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/phase-7-legacy-migration",
+    "title": "Phase 7: Legacy Migration",
+    "heading_path": [
+      "Phase 7: Legacy Migration"
+    ],
+    "start_line": 1366,
+    "end_line": 1382,
+    "content_hash": "sha256:2804cf7f4749771d4eab8d18de4ecf0fd467e282fb70e70da680b1aa3ded667c",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-52",
+    "local_id": "D-52",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-52",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/acceptance-criteria",
+    "title": "Acceptance Criteria",
+    "heading_path": [
+      "Acceptance Criteria"
+    ],
+    "start_line": 1383,
+    "end_line": 1399,
+    "content_hash": "sha256:9deb02e2ab504c143a965e9ecd334b1f9a3e3a7de2136a8024cd0789a03fcfd4",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-53",
+    "local_id": "D-53",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-53",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/unresolved-design-decisions",
+    "title": "Unresolved Design Decisions",
+    "heading_path": [
+      "Unresolved Design Decisions"
+    ],
+    "start_line": 1400,
+    "end_line": 1414,
+    "content_hash": "sha256:7c121d596c02880f8a9ca935b17d284cb034258c6ee085f530a11c00c4fcddd4",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-54",
+    "local_id": "D-54",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-54",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/recommended-decisions",
+    "title": "Recommended Decisions",
+    "heading_path": [
+      "Recommended Decisions"
+    ],
+    "start_line": 1415,
+    "end_line": 1429,
+    "content_hash": "sha256:753b63036a7a5858d2500980fc6e6ca854dd47c2c227b909091677678c088e2b",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-55",
+    "local_id": "D-55",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-55",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/end-to-end-example",
+    "title": "End-to-End Example",
+    "heading_path": [
+      "End-to-End Example"
+    ],
+    "start_line": 1430,
+    "end_line": 1459,
+    "content_hash": "sha256:ba69800c12d10c9a0b44bb699e03138ca79e3d8e8a9068fdb1361af73a055f18",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
+  },
+  {
+    "id": "agentspec-hotl-integration-without-hotl-names:D-56",
+    "local_id": "D-56",
+    "source_id": "SRC-0005",
+    "source_key": "agentspec-hotl-integration-without-hotl-names",
+    "snapshot_id": "SRC-0005",
+    "snapshot_section_id": "SRC-0005:D-56",
+    "stable_key": "agentspec-hotl-integration-without-hotl-names/final-recommendation",
+    "title": "Final Recommendation",
+    "heading_path": [
+      "Final Recommendation"
+    ],
+    "start_line": 1460,
+    "end_line": 1495,
+    "content_hash": "sha256:73acb6286846d165eadba402bcad38c5e723a799a05026b7e8d098a2cd65bf57",
+    "parent": null,
+    "children": [],
+    "state": "accepted"
   }
 ]

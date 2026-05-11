@@ -1,66 +1,67 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T01:31:31Z",
+  "updated_at": "2026-05-11T03:00:42Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-088",
-    "context_pack": "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md",
-    "title": "T-088: Enforce workflow-pack contract and roadmap generation",
-    "run_id": "complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131",
-    "reason": "Post-review fixes complete: workflow backfill no longer attaches implicit requirements, finish-work roadmap order is corrected, regression and full test suite passed.",
-    "updated_at": "2026-05-11T01:31:31Z",
+    "id": "T-091",
+    "context_pack": "agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md",
+    "title": "T-091: Use AgentSpec-native naming for legacy workflow surfaces",
+    "run_id": "complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042",
+    "reason": "Marked complete by user.",
+    "updated_at": "2026-05-11T03:00:42Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0032",
+      "id": "REVIEW-0036",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0032.yml"
+      "path": "agent/reviews/REVIEW-0036.yml"
     }
   },
   "current_state": {
-    "overall": "idle",
-    "recommendation": "Backfill in-flight workflow with `aspec task create --from-workflow docs/plans/2026-04-28-agentspec-mvp-workflow.md`.",
+    "overall": "attention_needed",
+    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 193,
+      "total": 195,
       "by_status": {
-        "accepted": 193
+        "accepted": 195
       }
     },
     "dcrs": {
-      "total": 58,
+      "total": 60,
       "by_status": {
-        "accepted": 58
+        "accepted": 60
       }
     },
     "tasks": {
-      "total": 86,
+      "total": 89,
       "by_status": {
-        "complete": 86
+        "complete": 89
       },
       "by_type": {
-        "implementation": 79,
+        "implementation": 81,
+        "migration": 1,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 103,
+      "total": 106,
       "by_status": {
         "aborted": 4,
-        "complete": 99
+        "complete": 102
       },
       "by_mode": {
         "research": 1,
-        "supervised": 102
+        "supervised": 105
       }
     }
   },
@@ -76,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0032.yml"
+    "last_code_review": "agent/reviews/REVIEW-0036.yml"
   }
 }

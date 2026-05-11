@@ -1,0 +1,584 @@
+{
+  "schema": "agentspec.spec_document.v0",
+  "source_key": "lifecycle-engine-hardening-design",
+  "snapshot_id": "SRC-0002",
+  "kind": "markdown",
+  "title": "AgentSpec Lifecycle Engine Hardening Design",
+  "remote_uri": "/Users/yimwu/Documents/workspace/Apps/agent-spec-engine/docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+  "remote_version": null,
+  "content_hash": "sha256:cd4922924ebce56678c6b63a880e3e154fda16593c751005fc5093f6f7bea468",
+  "normalized_hash": "sha256:cd4922924ebce56678c6b63a880e3e154fda16593c751005fc5093f6f7bea468",
+  "fetched_at": "2026-05-11T02:14:20Z",
+  "classification": "internal",
+  "storage_mode": "committed",
+  "sections": [
+    {
+      "local_id": "D-01",
+      "stable_key": "lifecycle-engine-hardening-design/status",
+      "heading_path": [
+        "Status"
+      ],
+      "content_hash": "sha256:c3600a1ced3ca860bb85c12141988b1d17be102490e13cff024f647f4397a8b9",
+      "body_ref": "source.md#L3-L6"
+    },
+    {
+      "local_id": "D-02",
+      "stable_key": "lifecycle-engine-hardening-design/owner",
+      "heading_path": [
+        "Owner"
+      ],
+      "content_hash": "sha256:b7bd90d640e8d708e2e2e674c8c909446474e70366b18ab178092398bb9ca5a8",
+      "body_ref": "source.md#L7-L10"
+    },
+    {
+      "local_id": "D-03",
+      "stable_key": "lifecycle-engine-hardening-design/review-status",
+      "heading_path": [
+        "Review Status"
+      ],
+      "content_hash": "sha256:c240b554e84cdb75615fc80ebd9c76cd5f077f1780016a5b9b1d51168e721377",
+      "body_ref": "source.md#L11-L19"
+    },
+    {
+      "local_id": "D-04",
+      "stable_key": "lifecycle-engine-hardening-design/summary",
+      "heading_path": [
+        "Summary"
+      ],
+      "content_hash": "sha256:021bb112d62f19758bb049c7402fede0e38c8d343259bb41758839fbec5820fb",
+      "body_ref": "source.md#L20-L47"
+    },
+    {
+      "local_id": "D-05",
+      "stable_key": "lifecycle-engine-hardening-design/current-architecture-anchors",
+      "heading_path": [
+        "Current Architecture Anchors"
+      ],
+      "content_hash": "sha256:7e7d60c5119271bd7fc2697394e9b1b9ee8460580ca9d7e8f5e09b34587f20fc",
+      "body_ref": "source.md#L48-L81"
+    },
+    {
+      "local_id": "D-06",
+      "stable_key": "lifecycle-engine-hardening-design/problem-statement",
+      "heading_path": [
+        "Problem Statement"
+      ],
+      "content_hash": "sha256:85874d8ef4200b5e5a53e6bf3c838ccde394d17cc4e2d9e5a7a5dbdc9dff7805",
+      "body_ref": "source.md#L82-L107"
+    },
+    {
+      "local_id": "D-07",
+      "stable_key": "lifecycle-engine-hardening-design/goals",
+      "heading_path": [
+        "Goals"
+      ],
+      "content_hash": "sha256:0126e9ac7d96f647cdcf7191b4f2393209e73f59250f075aa09dd0c99eda450c",
+      "body_ref": "source.md#L108-L132"
+    },
+    {
+      "local_id": "D-07.1",
+      "stable_key": "lifecycle-engine-hardening-design/goals/product-goals",
+      "heading_path": [
+        "Goals",
+        "Product Goals"
+      ],
+      "content_hash": "sha256:4d0a6d86a21ab0893fdfcccdf60a356cff7e33ebca5c365a59ee5783d6500f76",
+      "body_ref": "source.md#L110-L122"
+    },
+    {
+      "local_id": "D-07.2",
+      "stable_key": "lifecycle-engine-hardening-design/goals/engineering-goals",
+      "heading_path": [
+        "Goals",
+        "Engineering Goals"
+      ],
+      "content_hash": "sha256:cf108be19755d8c88051022f4197ab5e80eb9e30d88f7c6f96b94075b1d9baf7",
+      "body_ref": "source.md#L123-L132"
+    },
+    {
+      "local_id": "D-08",
+      "stable_key": "lifecycle-engine-hardening-design/non-goals",
+      "heading_path": [
+        "Non-Goals"
+      ],
+      "content_hash": "sha256:e77fa9a201646d939ade3d78dac1d58b175d705d11cea34ac1d46aba86f161a2",
+      "body_ref": "source.md#L133-L155"
+    },
+    {
+      "local_id": "D-09",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles",
+      "heading_path": [
+        "Design Principles"
+      ],
+      "content_hash": "sha256:b20a281a5c8f854fcaf47b904ed4f6bc456866507616fd837c23efbb20bd93bd",
+      "body_ref": "source.md#L156-L213"
+    },
+    {
+      "local_id": "D-09.1",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/1-extend-existing-state-do-not-duplicate-it",
+      "heading_path": [
+        "Design Principles",
+        "1. Extend Existing State, Do Not Duplicate It"
+      ],
+      "content_hash": "sha256:fa75bfb819ee2b7e59a534c9f84543cae94941f982721aac45c53d684ab9a3fb",
+      "body_ref": "source.md#L158-L163"
+    },
+    {
+      "local_id": "D-09.2",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/2-task-context-pack-remains-the-work-unit",
+      "heading_path": [
+        "Design Principles",
+        "2. Task Context Pack Remains The Work Unit"
+      ],
+      "content_hash": "sha256:ea5e8fa98ba857fe0006b4fd39a3c60479d4a7bc01195ff4623f9117a8600c01",
+      "body_ref": "source.md#L164-L168"
+    },
+    {
+      "local_id": "D-09.3",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/3-workflows-are-additive",
+      "heading_path": [
+        "Design Principles",
+        "3. Workflows Are Additive"
+      ],
+      "content_hash": "sha256:c592c2deb5366c2aafc75b0b5311054a070aefec0193a334fb58fef7ed24137c",
+      "body_ref": "source.md#L169-L181"
+    },
+    {
+      "local_id": "D-09.4",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/4-review-evidence-stays-in-agent-reviews",
+      "heading_path": [
+        "Design Principles",
+        "4. Review Evidence Stays In `agent/reviews/`"
+      ],
+      "content_hash": "sha256:f382ab4d2b4cbac20d440c125afe435800860123496e4651b157deabc2f27eff",
+      "body_ref": "source.md#L182-L192"
+    },
+    {
+      "local_id": "D-09.5",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/5-finish-means-write-back",
+      "heading_path": [
+        "Design Principles",
+        "5. Finish Means Write-Back"
+      ],
+      "content_hash": "sha256:ed9761271082ca2dfc9faf136ac31091c262ddb970e6e04440a57dc6d0986707",
+      "body_ref": "source.md#L193-L203"
+    },
+    {
+      "local_id": "D-09.6",
+      "stable_key": "lifecycle-engine-hardening-design/design-principles/6-enforcement-is-progressive",
+      "heading_path": [
+        "Design Principles",
+        "6. Enforcement Is Progressive"
+      ],
+      "content_hash": "sha256:a6b0154fa92ef96e6c41a32e958e24baed4927deaa0d56a3563ed72b79ea0081",
+      "body_ref": "source.md#L204-L213"
+    },
+    {
+      "local_id": "D-10",
+      "stable_key": "lifecycle-engine-hardening-design/terminology",
+      "heading_path": [
+        "Terminology"
+      ],
+      "content_hash": "sha256:d618a67d214a1fcdaae916b35d8306473525df7f4952ea9c562ab3ec993d252c",
+      "body_ref": "source.md#L214-L229"
+    },
+    {
+      "local_id": "D-11",
+      "stable_key": "lifecycle-engine-hardening-design/high-level-architecture",
+      "heading_path": [
+        "High-Level Architecture"
+      ],
+      "content_hash": "sha256:7c78a960e015023a48ec25e1ce52a943275037a55ee363a8033edc8a3aae10ea",
+      "body_ref": "source.md#L230-L261"
+    },
+    {
+      "local_id": "D-12",
+      "stable_key": "lifecycle-engine-hardening-design/repository-layout",
+      "heading_path": [
+        "Repository Layout"
+      ],
+      "content_hash": "sha256:a9dd5e5b2aa1773f686d17c44433c6d4997aea158e5af082effd94aa55d93302",
+      "body_ref": "source.md#L262-L299"
+    },
+    {
+      "local_id": "D-13",
+      "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection",
+      "heading_path": [
+        "Lifecycle Projection"
+      ],
+      "content_hash": "sha256:5a0793ece4b5fb4d968ee4884bc8c348bba3a797b7a5ebe6bdfcdaeb8c24453a",
+      "body_ref": "source.md#L300-L333"
+    },
+    {
+      "local_id": "D-13.1",
+      "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/normalized-states",
+      "heading_path": [
+        "Lifecycle Projection",
+        "Normalized States"
+      ],
+      "content_hash": "sha256:45eb4240686745b2e01092e390cbaae337be50ef0dc8542aca745b900ec98768",
+      "body_ref": "source.md#L305-L317"
+    },
+    {
+      "local_id": "D-13.2",
+      "stable_key": "lifecycle-engine-hardening-design/lifecycle-projection/state-sources",
+      "heading_path": [
+        "Lifecycle Projection",
+        "State Sources"
+      ],
+      "content_hash": "sha256:015db60ebcded47ee1ea41781ba5f9da18822f8ae74e98eb2125a1f550b67a12",
+      "body_ref": "source.md#L318-L333"
+    },
+    {
+      "local_id": "D-14",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts",
+      "heading_path": [
+        "Core Artifacts"
+      ],
+      "content_hash": "sha256:9f8d3eaf41cc0cd7414f7a8102737117d4a5af366ccfd52f9001c686be88cdbb",
+      "body_ref": "source.md#L334-L547"
+    },
+    {
+      "local_id": "D-14.1",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/1-task-context-pack",
+      "heading_path": [
+        "Core Artifacts",
+        "1. Task Context Pack"
+      ],
+      "content_hash": "sha256:78fab66724f6cc7df2718d72e374351b42dcd1b8eba446df09ada134010cfd22",
+      "body_ref": "source.md#L336-L382"
+    },
+    {
+      "local_id": "D-14.2",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/2-workflow-artifact",
+      "heading_path": [
+        "Core Artifacts",
+        "2. Workflow Artifact"
+      ],
+      "content_hash": "sha256:3fd13b5dbf4797134adcf16e506ee9ae9b94b13e17d8cc1d4dd6c3dea2393b89",
+      "body_ref": "source.md#L383-L431"
+    },
+    {
+      "local_id": "D-14.3",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/3-run-state",
+      "heading_path": [
+        "Core Artifacts",
+        "3. Run State"
+      ],
+      "content_hash": "sha256:7c874860b7237d9172c77acbf7d49c5a560d4664bb7978c9773ecdf58d3156e8",
+      "body_ref": "source.md#L432-L448"
+    },
+    {
+      "local_id": "D-14.4",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/4-review-evidence",
+      "heading_path": [
+        "Core Artifacts",
+        "4. Review Evidence"
+      ],
+      "content_hash": "sha256:f022e1ced9f4f93ac6a9e55443ae0bb31a9f24a9c83942e848e2d28c152496d4",
+      "body_ref": "source.md#L449-L470"
+    },
+    {
+      "local_id": "D-14.5",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/5-task-ledger",
+      "heading_path": [
+        "Core Artifacts",
+        "5. Task Ledger"
+      ],
+      "content_hash": "sha256:ed75341ea87912b0439cc9e0c7be5a359598d0b2d034e251eb44090e321b0253",
+      "body_ref": "source.md#L471-L501"
+    },
+    {
+      "local_id": "D-14.6",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/6-handoff",
+      "heading_path": [
+        "Core Artifacts",
+        "6. Handoff"
+      ],
+      "content_hash": "sha256:a1347572131c4122e0382e9b5987c55c6d147022deb93b516981c15586bafdee",
+      "body_ref": "source.md#L502-L521"
+    },
+    {
+      "local_id": "D-14.7",
+      "stable_key": "lifecycle-engine-hardening-design/core-artifacts/7-roadmap",
+      "heading_path": [
+        "Core Artifacts",
+        "7. Roadmap"
+      ],
+      "content_hash": "sha256:5f116b8e2807850837d46ced780e5975a4e795a219a56f492eac461387fe66ba",
+      "body_ref": "source.md#L522-L547"
+    },
+    {
+      "local_id": "D-15",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design",
+      "heading_path": [
+        "CLI Design"
+      ],
+      "content_hash": "sha256:8df6bfbde88713bdc2959d5a1a12b1903f1bfa4ac732440020b9b940cf16371b",
+      "body_ref": "source.md#L548-L674"
+    },
+    {
+      "local_id": "D-15.1",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/existing-commands-to-preserve",
+      "heading_path": [
+        "CLI Design",
+        "Existing Commands To Preserve"
+      ],
+      "content_hash": "sha256:501ccb8fd8aacaed8b8e6b784530b075a2e0335263dda4da1e852b3e9a9a8414",
+      "body_ref": "source.md#L550-L572"
+    },
+    {
+      "local_id": "D-15.2",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-status",
+      "heading_path": [
+        "CLI Design",
+        "`aspec status`"
+      ],
+      "content_hash": "sha256:58348af04e8a20ec2e08e7de123f7b47dcf30978670d024822a0eb0ac3540b1b",
+      "body_ref": "source.md#L573-L595"
+    },
+    {
+      "local_id": "D-15.3",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-continue-aspec-next-action",
+      "heading_path": [
+        "CLI Design",
+        "`aspec continue` / `aspec next-action`"
+      ],
+      "content_hash": "sha256:e99d2613f428966f390d9950ae1bc47dd08a822bb500cf8836d22f1313db0001",
+      "body_ref": "source.md#L596-L610"
+    },
+    {
+      "local_id": "D-15.4",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-workflow-create",
+      "heading_path": [
+        "CLI Design",
+        "`aspec workflow create`"
+      ],
+      "content_hash": "sha256:ada24ae608f6db83ff15f6e41f37e25fe0b955aad18ecaecd0fc3f4046d7f439",
+      "body_ref": "source.md#L611-L629"
+    },
+    {
+      "local_id": "D-15.5",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-finish",
+      "heading_path": [
+        "CLI Design",
+        "`aspec finish`"
+      ],
+      "content_hash": "sha256:628be07e2c399746f5c49f6e6514e568055875dce1eee39ce08d11432acd983b",
+      "body_ref": "source.md#L630-L662"
+    },
+    {
+      "local_id": "D-15.6",
+      "stable_key": "lifecycle-engine-hardening-design/cli-design/aspec-verify-work",
+      "heading_path": [
+        "CLI Design",
+        "`aspec verify-work`"
+      ],
+      "content_hash": "sha256:13d20a7bf0b8bb47b94c47523386c732ce9a2d5dd46273e8c616236af94d6854",
+      "body_ref": "source.md#L663-L674"
+    },
+    {
+      "local_id": "D-16",
+      "stable_key": "lifecycle-engine-hardening-design/shared-write-back-module",
+      "heading_path": [
+        "Shared Write-Back Module"
+      ],
+      "content_hash": "sha256:35688dbfab7359bcc2d20ecb52ab0dc4716e0093b5929473e04e1f8e8b9fdf03",
+      "body_ref": "source.md#L675-L700"
+    },
+    {
+      "local_id": "D-17",
+      "stable_key": "lifecycle-engine-hardening-design/drift-detection",
+      "heading_path": [
+        "Drift Detection"
+      ],
+      "content_hash": "sha256:3b974e7ca3f9dae94536209182beedc52a807766ee999b2d30e5e52f62b7eac1",
+      "body_ref": "source.md#L701-L720"
+    },
+    {
+      "local_id": "D-18",
+      "stable_key": "lifecycle-engine-hardening-design/strict-mode",
+      "heading_path": [
+        "Strict Mode"
+      ],
+      "content_hash": "sha256:054476c337766cf7bace66b7aa2976bfb617ed9ce2dfecdd08a808153baf4fd4",
+      "body_ref": "source.md#L721-L740"
+    },
+    {
+      "local_id": "D-19",
+      "stable_key": "lifecycle-engine-hardening-design/migration-strategy",
+      "heading_path": [
+        "Migration Strategy"
+      ],
+      "content_hash": "sha256:98651156c601fcdfeb6bb154125ef4dde5be431f62df4b29920d57d7d2379d01",
+      "body_ref": "source.md#L741-L775"
+    },
+    {
+      "local_id": "D-19.1",
+      "stable_key": "lifecycle-engine-hardening-design/migration-strategy/existing-agentspec-repos",
+      "heading_path": [
+        "Migration Strategy",
+        "Existing AgentSpec Repos"
+      ],
+      "content_hash": "sha256:5dee7a5bda3697b682b49d372de325d1492de87d85970bc0bf20963f28ddea88",
+      "body_ref": "source.md#L745-L755"
+    },
+    {
+      "local_id": "D-19.2",
+      "stable_key": "lifecycle-engine-hardening-design/migration-strategy/hotl-style-workflows",
+      "heading_path": [
+        "Migration Strategy",
+        "HOTL-Style Workflows"
+      ],
+      "content_hash": "sha256:db74406dd3f8d07390301790f9d4ee3f35603c88d8598619ab6f3a778b10db40",
+      "body_ref": "source.md#L756-L765"
+    },
+    {
+      "local_id": "D-19.3",
+      "stable_key": "lifecycle-engine-hardening-design/migration-strategy/deferred-migration",
+      "heading_path": [
+        "Migration Strategy",
+        "Deferred Migration"
+      ],
+      "content_hash": "sha256:688042e3b8088437ab2302efb3971e1fcc5c8981e07f916729bfdc39059f9013",
+      "body_ref": "source.md#L766-L775"
+    },
+    {
+      "local_id": "D-20",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan",
+      "heading_path": [
+        "Phased Implementation Plan"
+      ],
+      "content_hash": "sha256:181347f490c91a19c2079b7948930a644abe8118e15c23499b91dab2479c7075",
+      "body_ref": "source.md#L776-L886"
+    },
+    {
+      "local_id": "D-20.1",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-1-lifecycle-projection-hardening",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 1: Lifecycle Projection Hardening"
+      ],
+      "content_hash": "sha256:84c33a1799243319403e8aa96da357ab3986edafe795e9f6cb9d6022f52f1deb",
+      "body_ref": "source.md#L778-L792"
+    },
+    {
+      "local_id": "D-20.2",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-2-write-back-module",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 2: Write-Back Module"
+      ],
+      "content_hash": "sha256:99a33769c881a42b01963e172902dad7cd8215807b336b891feac657801331c8",
+      "body_ref": "source.md#L793-L808"
+    },
+    {
+      "local_id": "D-20.3",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-3-finish-orchestrator",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 3: Finish Orchestrator"
+      ],
+      "content_hash": "sha256:456464296d39e28d59061c4cef9cac3aeb98194aa42e0928a643a0f880e2aacd",
+      "body_ref": "source.md#L809-L823"
+    },
+    {
+      "local_id": "D-20.4",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-4-native-workflow-creation",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 4: Native Workflow Creation"
+      ],
+      "content_hash": "sha256:bcbac66696ab088cf721a65044d3f3cc7abd2e999e6b212bd2b8a8b6700483ac",
+      "body_ref": "source.md#L824-L838"
+    },
+    {
+      "local_id": "D-20.5",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-5-roadmap-preservation-mode",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 5: Roadmap Preservation Mode"
+      ],
+      "content_hash": "sha256:6dc2fdc5fde9408e3b77f0d2e7c30d8c6878253fed140f692cd02114888eb63f",
+      "body_ref": "source.md#L839-L852"
+    },
+    {
+      "local_id": "D-20.6",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-6-strict-lifecycle-enforcement",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 6: Strict Lifecycle Enforcement"
+      ],
+      "content_hash": "sha256:a0376d3dc377ed06de919a52a895b8f6b070192dfe01c7b76e8392e9b1240e06",
+      "body_ref": "source.md#L853-L866"
+    },
+    {
+      "local_id": "D-20.7",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-7-migration-tools",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 7: Migration Tools"
+      ],
+      "content_hash": "sha256:edba208c44094e15202ab8c6f1fe55a4bf61674276e42998cc77aa2b6f131b2c",
+      "body_ref": "source.md#L867-L879"
+    },
+    {
+      "local_id": "D-20.8",
+      "stable_key": "lifecycle-engine-hardening-design/phased-implementation-plan/phase-8-skill-gates",
+      "heading_path": [
+        "Phased Implementation Plan",
+        "Phase 8: Skill Gates"
+      ],
+      "content_hash": "sha256:1ded197be74b911ab2bcd24a81d447ee6358178a22d48b3160c320b2a37fb9be",
+      "body_ref": "source.md#L880-L886"
+    },
+    {
+      "local_id": "D-21",
+      "stable_key": "lifecycle-engine-hardening-design/mvp-acceptance-criteria",
+      "heading_path": [
+        "MVP Acceptance Criteria"
+      ],
+      "content_hash": "sha256:ac868659abb3a18c83d23914bfe1621a8313f02d21a5f7fe765e7ba2f1a4d2f6",
+      "body_ref": "source.md#L887-L911"
+    },
+    {
+      "local_id": "D-22",
+      "stable_key": "lifecycle-engine-hardening-design/open-questions",
+      "heading_path": [
+        "Open Questions"
+      ],
+      "content_hash": "sha256:57ad472c3cb44d403e653393b7cfd9c30f74255f6cd168fa2df626a9d87aab0b",
+      "body_ref": "source.md#L912-L928"
+    },
+    {
+      "local_id": "D-23",
+      "stable_key": "lifecycle-engine-hardening-design/risks-and-mitigations",
+      "heading_path": [
+        "Risks And Mitigations"
+      ],
+      "content_hash": "sha256:a1f1b856733b74c02c39363974f0b8180c8f56304ef6e2618e41f575d9e07dd6",
+      "body_ref": "source.md#L929-L941"
+    },
+    {
+      "local_id": "D-24",
+      "stable_key": "lifecycle-engine-hardening-design/recommended-decisions",
+      "heading_path": [
+        "Recommended Decisions"
+      ],
+      "content_hash": "sha256:2921ac38f67d554303d34a2dad7dd034c7e6568d48abef05ab1b173fe3a9879f",
+      "body_ref": "source.md#L942-L954"
+    },
+    {
+      "local_id": "D-25",
+      "stable_key": "lifecycle-engine-hardening-design/final-recommendation",
+      "heading_path": [
+        "Final Recommendation"
+      ],
+      "content_hash": "sha256:68e64a9ba36964cf6904f1f9b26b575e126abb2a678509be4f4898bdf46eaf22",
+      "body_ref": "source.md#L955-L973"
+    }
+  ],
+  "requirements": [],
+  "api_contracts": [],
+  "open_questions": []
+}

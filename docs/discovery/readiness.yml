@@ -37,6 +37,7 @@
     "architecture_boundaries": {
       "score": 10,
       "signals": [
+        "architecture",
         "core runtime",
         "system overview"
       ]
@@ -68,6 +69,7 @@
     "test_strategy": {
       "score": 10,
       "signals": [
+        "test",
         "evaluation",
         "quality",
         "golden fixtures",

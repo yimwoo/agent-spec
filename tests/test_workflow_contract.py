@@ -7,11 +7,11 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import write_data
-from agentspec.workflow import build_workflow_contract_status
+from agentspec.workflow import build_workflow_contract_status, workflow_warning_lines
 
 
 class WorkflowContractTests(unittest.TestCase):
-    def test_drift_reports_orphan_hotl_workflow(self) -> None:
+    def test_drift_reports_orphan_workflow_with_native_terminology(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed_minimal(root)
@@ -21,9 +21,33 @@ class WorkflowContractTests(unittest.TestCase):
 
             report = (root / "reports" / "drift" / "latest.md").read_text(encoding="utf-8")
             self.assertIn("## Workflow Coverage", report)
+            self.assertIn("- Workflow/state artifacts loaded: 1", report)
             self.assertIn(str(workflow), report)
             self.assertIn("orphan", report)
             self.assertIn(f"aspec task create --from-workflow {workflow}", report)
+            self.assertNotIn("HOTL workflow", report)
+
+    def test_workflow_summary_and_warnings_use_native_terminology(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+
+            empty_status = build_workflow_contract_status(root)
+            self.assertEqual(empty_status["summary"], "No workflow artifacts found.")
+
+            workflow = _write_workflow(root)
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["summary"], "1/1 workflow artifact(s) lack a referencing task context pack.")
+            self.assertNotIn("HOTL", status["summary"])
+            warnings = workflow_warning_lines(status)
+            self.assertEqual(
+                warnings,
+                [
+                    "Legacy execution plan without task pack: "
+                    f"{workflow} -> aspec task create --from-workflow {workflow}"
+                ],
+            )
 
     def test_workflow_is_referenced_when_context_pack_mentions_it(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -51,6 +75,97 @@ Workflow: `{workflow}`
 
             self.assertEqual(status["orphan_count"], 0)
             self.assertEqual(status["artifacts"][0]["referenced_by"], ["agent/context-packs/T-001-phase-five.md"])
+
+    def test_task_with_missing_workflow_reports_broken_link(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / "agent" / "context-packs" / "T-001-phase-five.md").write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `agent/workflows/W-001-phase-five.md`
+
+## Requirements
+
+- No accepted requirement attached.
+
+## Allowed Paths
+
+- `agentspec/workflow.py`
+""",
+                encoding="utf-8",
+            )
+
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["orphan_count"], 0)
+            self.assertEqual(status["broken_link_count"], 1)
+            broken = status["broken_links"][0]
+            self.assertEqual(broken["type"], "missing_workflow")
+            self.assertEqual(broken["context_pack"], "agent/context-packs/T-001-phase-five.md")
+            self.assertEqual(broken["workflow"], "agent/workflows/W-001-phase-five.md")
+
+    def test_workflow_with_missing_task_backlink_is_broken_not_orphan(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / "agent" / "workflows").mkdir()
+            (root / "agent" / "workflows" / "W-001-phase-five.md").write_text(
+                """---
+task_pack: agent/context-packs/T-001-phase-five.md
+---
+
+# Phase Five Workflow
+""",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-001-phase-five.md").write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `none`
+
+## Requirements
+
+- No accepted requirement attached.
+""",
+                encoding="utf-8",
+            )
+
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["orphan_count"], 0)
+            self.assertEqual(status["broken_link_count"], 1)
+            self.assertEqual(status["broken_links"][0]["type"], "missing_task_workflow_reference")
+
+    def test_native_workflow_without_task_pack_backlink_is_broken_when_task_references_it(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / "agent" / "workflows").mkdir()
+            (root / "agent" / "workflows" / "W-001-phase-five.md").write_text(
+                "# Phase Five Workflow\n",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-001-phase-five.md").write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `agent/workflows/W-001-phase-five.md`
+
+## Requirements
+
+- No accepted requirement attached.
+""",
+                encoding="utf-8",
+            )
+
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["orphan_count"], 0)
+            self.assertEqual(status["broken_link_count"], 1)
+            self.assertEqual(status["broken_links"][0]["type"], "missing_workflow_task_pack_reference")
 
     def test_task_create_from_workflow_scaffolds_context_pack(self) -> None:
         with tempfile.TemporaryDirectory() as td:

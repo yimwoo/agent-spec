@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0035",
+  "task": {
+    "selector": "T-090",
+    "context_pack": "agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. This is a historical workflow backfill only; the old workflow is now represented by a migration context pack, and the declared verification commands passed.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T02:30:46Z"
+}

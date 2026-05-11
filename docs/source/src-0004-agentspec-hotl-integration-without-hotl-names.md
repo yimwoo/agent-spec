@@ -1397,7 +1397,7 @@ The integration is successful when:
 
 ---
 
-## Unresolved Design Decisions
+## Open Questions
 
 1. Where should user-facing copy say `execution plan` while durable artifacts keep `workflow`?
 2. Should new native workflow files use only `agent/workflows/`, or should external workflow paths remain authorable?

@@ -25,6 +25,9 @@ Confidence: medium
 - `D-12.15` 12. Core Runtime Components > 12.15 MCP Server
 - `D-12.16` 12. Core Runtime Components > 12.16 Automation Emitter
 - `D-12.17` 12. Core Runtime Components > 12.17 Policy Engine
+- `lifecycle-engine-hardening-design:D-05` Current Architecture Anchors
+- `lifecycle-engine-hardening-design:D-11` High-Level Architecture
+- `agentspec-hotl-integration-without-hotl-names:D-10` AgentSpec Engine Internal Architecture
 
 ## Source-Backed Notes
 

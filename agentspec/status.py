@@ -13,6 +13,7 @@ from .outcome import build_outcome_status
 from .session import build_session_status
 from .task import list_task_context_packs, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_warning_lines
+from .writeback import build_lifecycle_projection, lifecycle_warning_lines
 
 
 PROJECT_STATUS_SCHEMA = "agentspec.project_status.v0"
@@ -37,12 +38,60 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
+    requirements_counts = {
+        "total": len(requirements),
+        "by_status": _counts(record.get("status") for record in requirements),
+        "by_priority": _counts(record.get("priority") for record in requirements),
+    }
+    dcr_counts = {
+        "total": len(dcrs),
+        "by_status": _counts(record.get("status") for record in dcrs),
+        "by_classification": _counts(record.get("classification") for record in dcrs),
+    }
+    task_counts = {
+        "total": len(tasks),
+        "by_status": _counts(record.get("status") for record in tasks),
+        "by_type": _counts(record.get("type") for record in tasks),
+        "ready": [record for record in tasks if record.get("status") == "ready"],
+        "next": next_task,
+    }
+    run_counts = {
+        "total": len(runs),
+        "by_status": _counts(run.get("status") for run in runs),
+        "by_mode": _counts(run.get("mode") for run in runs),
+        "active": active_runs,
+        "attention": attention_runs,
+        "recent": recent_runs,
+    }
+    handoff = load_project_handoff(root)
+    lifecycle = build_lifecycle_projection(
+        root,
+        project_counts={
+            "requirements": requirements_counts,
+            "dcrs": dcr_counts,
+            "tasks": task_counts,
+            "runs": run_counts,
+        },
+        workflows=workflows,
+        handoff=handoff,
+    )
 
     payload = {
         "schema": PROJECT_STATUS_SCHEMA,
         "root": str(root),
-        "overall": _overall_status(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs),
-        "recommendation": _recommendation(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs, workflows=workflows),
+        "overall": _overall_status(
+            next_task=next_task,
+            active_runs=active_runs,
+            attention_runs=attention_runs,
+            lifecycle=lifecycle,
+        ),
+        "recommendation": _recommendation(
+            next_task=next_task,
+            active_runs=active_runs,
+            attention_runs=attention_runs,
+            workflows=workflows,
+            lifecycle=lifecycle,
+        ),
         "readiness": {
             "score": readiness.get("score"),
             "mode": readiness.get("mode"),
@@ -50,35 +99,14 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         },
         "outcomes": outcomes,
         "maturity": maturity,
-        "requirements": {
-            "total": len(requirements),
-            "by_status": _counts(record.get("status") for record in requirements),
-            "by_priority": _counts(record.get("priority") for record in requirements),
-        },
-        "dcrs": {
-            "total": len(dcrs),
-            "by_status": _counts(record.get("status") for record in dcrs),
-            "by_classification": _counts(record.get("classification") for record in dcrs),
-        },
-        "tasks": {
-            "total": len(tasks),
-            "by_status": _counts(record.get("status") for record in tasks),
-            "by_type": _counts(record.get("type") for record in tasks),
-            "ready": [record for record in tasks if record.get("status") == "ready"],
-            "next": next_task,
-        },
-        "runs": {
-            "total": len(runs),
-            "by_status": _counts(run.get("status") for run in runs),
-            "by_mode": _counts(run.get("mode") for run in runs),
-            "active": active_runs,
-            "attention": attention_runs,
-            "recent": recent_runs,
-        },
+        "requirements": requirements_counts,
+        "dcrs": dcr_counts,
+        "tasks": task_counts,
+        "runs": run_counts,
         "sessions": sessions,
         "workflows": workflows,
+        "lifecycle": lifecycle,
     }
-    handoff = load_project_handoff(root)
     if handoff is not None:
         payload["handoff"] = handoff
     return payload
@@ -100,6 +128,7 @@ def format_project_status(status: dict[str, Any]) -> str:
     workflows = status.get("workflows", {})
     maturity = status.get("maturity", {})
     outcomes = status.get("outcomes", {})
+    lifecycle = status.get("lifecycle", {})
 
     lines = [
         "AgentSpec Status",
@@ -114,6 +143,7 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Runs: {_count_text(runs)}",
         f"Sessions: {_count_text(sessions)}",
         f"Workflow Pack Warnings: {_workflow_text(workflows)}",
+        f"Lifecycle: {_lifecycle_text(lifecycle)}",
         f"Next: {_next_text(tasks.get('next'))}",
         f"Recommendation: {status.get('recommendation')}",
     ]
@@ -140,6 +170,11 @@ def format_project_status(status: dict[str, Any]) -> str:
     if active_sessions:
         lines.extend(["", "Active Sessions:"])
         lines.extend(f"- {_session_text(session)}" for session in active_sessions)
+
+    lifecycle_warnings = lifecycle_warning_lines(lifecycle) if isinstance(lifecycle, dict) else []
+    if lifecycle_warnings:
+        lines.extend(["", "Lifecycle Warnings:"])
+        lines.extend(f"- {warning}" for warning in lifecycle_warnings)
 
     workflow_warnings = workflow_warning_lines(workflows) if isinstance(workflows, dict) else []
     if workflow_warnings:
@@ -292,6 +327,7 @@ def _overall_status(
     next_task: dict[str, Any] | None,
     active_runs: list[dict[str, Any]],
     attention_runs: list[dict[str, Any]],
+    lifecycle: dict[str, Any] | None = None,
 ) -> str:
     if attention_runs:
         return "attention_needed"
@@ -299,6 +335,8 @@ def _overall_status(
         return "running"
     if next_task:
         return "ready"
+    if isinstance(lifecycle, dict) and lifecycle.get("readiness") == "needs_attention":
+        return "attention_needed"
     return "idle"
 
 
@@ -308,6 +346,7 @@ def _recommendation(
     active_runs: list[dict[str, Any]],
     attention_runs: list[dict[str, Any]],
     workflows: dict[str, Any] | None = None,
+    lifecycle: dict[str, Any] | None = None,
 ) -> str:
     if attention_runs:
         run_id = attention_runs[0].get("run_id")
@@ -317,12 +356,31 @@ def _recommendation(
         return f"Continue active run with `aspec run prompt {run_id}` or `aspec run loop --run-id {run_id}`."
     if next_task:
         return f"Start next ready task with `aspec run loop {next_task.get('path')}`."
+    lifecycle_recommendation = _lifecycle_recommendation(lifecycle)
+    if lifecycle_recommendation:
+        return lifecycle_recommendation
     warnings = workflow_warning_lines(workflows or {})
     if warnings:
         first = workflows.get("orphans", [{}])[0] if isinstance(workflows, dict) and isinstance(workflows.get("orphans"), list) else {}
         command = first.get("backfill_command") if isinstance(first, dict) else None
         return f"Backfill in-flight workflow with `{command}`." if command else warnings[0]
     return "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode."
+
+
+def _lifecycle_recommendation(lifecycle: dict[str, Any] | None) -> str | None:
+    if not isinstance(lifecycle, dict):
+        return None
+    warnings = lifecycle.get("warnings") if isinstance(lifecycle.get("warnings"), list) else []
+    for warning in warnings:
+        if not isinstance(warning, dict):
+            continue
+        recommendation = warning.get("recommendation")
+        if recommendation:
+            return f"Resolve lifecycle warning with `{recommendation}`."
+    if warnings:
+        first = warnings[0]
+        return f"Resolve lifecycle warning: {first.get('message') or first.get('type')}."
+    return None
 
 
 def _readiness_text(readiness: Any) -> str:
@@ -367,6 +425,13 @@ def _workflow_text(workflows: Any) -> str:
     if not isinstance(workflows, dict):
         return "unknown"
     return f"{workflows.get('orphan_count', 0)} orphan(s) / {workflows.get('total', 0)} artifact(s)"
+
+
+def _lifecycle_text(lifecycle: Any) -> str:
+    if not isinstance(lifecycle, dict):
+        return "unknown"
+    counts = lifecycle.get("counts") if isinstance(lifecycle.get("counts"), dict) else {}
+    return f"{lifecycle.get('readiness', 'unknown')} ({counts.get('warnings', 0)} warning(s))"
 
 
 def _next_text(next_task: Any) -> str:

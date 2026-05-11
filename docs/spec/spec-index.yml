@@ -18,11 +18,17 @@
       "D-05.1",
       "D-05.2",
       "D-05.3",
-      "D-05.4"
+      "D-05.4",
+      "lifecycle-engine-hardening-design:D-07",
+      "lifecycle-engine-hardening-design:D-07.1",
+      "lifecycle-engine-hardening-design:D-07.2",
+      "lifecycle-engine-hardening-design:D-08",
+      "agentspec-hotl-integration-without-hotl-names:D-04",
+      "agentspec-hotl-integration-without-hotl-names:D-05"
     ],
     "status": "draft",
     "confidence": "medium",
-    "content_hash": "sha256:d367846161a982493c16a125987001aa1c49e957c4b8f36b13acc53989d9d0ce"
+    "content_hash": "sha256:27fa2cdf4c76e10f25fd2c8d2e40c9a276becfcb98358900ef223a2e3db33057"
   },
   {
     "id": "SPEC-RUNTIME_ARCHITECTURE",
@@ -48,11 +54,14 @@
       "D-12.14",
       "D-12.15",
       "D-12.16",
-      "D-12.17"
+      "D-12.17",
+      "lifecycle-engine-hardening-design:D-05",
+      "lifecycle-engine-hardening-design:D-11",
+      "agentspec-hotl-integration-without-hotl-names:D-10"
     ],
     "status": "draft",
     "confidence": "medium",
-    "content_hash": "sha256:b3ca980c642ada72f4b5a6edd1b5bd1160a7b598995d3d0fbb16d8fa96d87b56"
+    "content_hash": "sha256:326b59a1d46ed6bcd02be9e962351ecffcae900e284f9676e92f61b292880f20"
   },
   {
     "id": "SPEC-MODULE_CONTRACTS",
@@ -211,10 +220,27 @@
       "D-28.9",
       "D-28.10",
       "D-28.11",
-      "D-29"
+      "D-29",
+      "lifecycle-engine-hardening-design:D-20",
+      "lifecycle-engine-hardening-design:D-20.1",
+      "lifecycle-engine-hardening-design:D-20.2",
+      "lifecycle-engine-hardening-design:D-20.3",
+      "lifecycle-engine-hardening-design:D-20.4",
+      "lifecycle-engine-hardening-design:D-20.5",
+      "lifecycle-engine-hardening-design:D-20.6",
+      "lifecycle-engine-hardening-design:D-20.7",
+      "lifecycle-engine-hardening-design:D-20.8",
+      "agentspec-hotl-integration-without-hotl-names:D-44",
+      "agentspec-hotl-integration-without-hotl-names:D-45",
+      "agentspec-hotl-integration-without-hotl-names:D-46",
+      "agentspec-hotl-integration-without-hotl-names:D-47",
+      "agentspec-hotl-integration-without-hotl-names:D-48",
+      "agentspec-hotl-integration-without-hotl-names:D-49",
+      "agentspec-hotl-integration-without-hotl-names:D-50",
+      "agentspec-hotl-integration-without-hotl-names:D-51"
     ],
     "status": "draft",
     "confidence": "medium",
-    "content_hash": "sha256:95af29aef0a370ace3b3361e6b954dc4baafa15568ff7b2eeaf130f3cb5c7b4f"
+    "content_hash": "sha256:aa0b86a895d1f010e76235e1bdd9321bd15fee67da81dfce7425b22cd9ce4f04"
   }
 ]

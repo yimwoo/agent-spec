@@ -5,7 +5,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from agentspec.cli import main
+from agentspec.cli import build_parser, main
 from agentspec.io import write_data
 from agentspec.task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
@@ -110,7 +110,18 @@ class TaskQueueTests(unittest.TestCase):
 
             self.assertEqual(code, 1)
             self.assertIn("No ready task context pack found", output.getvalue())
+            self.assertIn("Warning: Legacy execution plan without task pack", output.getvalue())
             self.assertIn("aspec task create --from-workflow docs/plans/phase-five-workflow.md", output.getvalue())
+
+    def test_task_create_help_uses_native_workflow_wording(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as raised:
+            build_parser(prog="aspec").parse_args(["task", "create", "--help"])
+
+        self.assertEqual(raised.exception.code, 0)
+        text = output.getvalue()
+        self.assertIn("Backfill a context pack from a workflow or state file.", text)
+        self.assertNotIn("HOTL workflow", text)
 
 
 def _seed(root: Path) -> None:

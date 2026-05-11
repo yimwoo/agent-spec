@@ -2,7 +2,7 @@
 
 ## Canonical Sources
 
-- 172 source sections compiled.
+- 299 source sections compiled.
 
 ## Problem
 

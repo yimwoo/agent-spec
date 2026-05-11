@@ -5486,5 +5486,110 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-194",
+    "title": "AgentSpec exposes lifecycle projection and write-back readiness",
+    "description": "AgentSpec exposes a normalized lifecycle projection and write-back readiness checks over existing task context packs, workflows, runs, sessions, review records, task ledger, handoff, and roadmap state without introducing a second lifecycle state machine.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-13",
+      "lifecycle-engine-hardening-design:D-16",
+      "lifecycle-engine-hardening-design:D-17",
+      "lifecycle-engine-hardening-design:D-20.1",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0059",
+    "acceptance": [
+      "aspec status --json exposes a lifecycle projection section with task or workflow drift, verification readiness, review linkage, handoff readiness, and roadmap readiness when evidence is available.",
+      "Human aspec status summarizes lifecycle warnings without hiding the existing status fields.",
+      "aspec continue or aspec next-action does not report clean idle when lifecycle drift requires repair.",
+      "Broken workflow/task links are reported distinctly from orphan workflows.",
+      "Completed tasks missing required review linkage or verification status are reported as lifecycle warnings.",
+      "Stale roadmap or handoff state is reported as lifecycle warning evidence.",
+      "Existing workflow-pack warning behavior and roadmap generation remain backward compatible.",
+      "Tests cover lifecycle projection JSON, human status output, continuation guidance, and compatibility with existing workflow-pack warnings."
+    ],
+    "code_targets": [
+      "agentspec/status.py",
+      "agentspec/workflow.py",
+      "agentspec/drift.py",
+      "agentspec/roadmap.py",
+      "agentspec/task.py",
+      "agentspec/handoff.py",
+      "agentspec/writeback.py"
+    ],
+    "test_targets": [
+      "tests/test_status_cli.py",
+      "tests/test_task_queue.py",
+      "tests/test_workflow_contract.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "docs/change-requests/DCR-0059-lifecycle-projection-and-write-back-verification.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
+  },
+  {
+    "id": "R-195",
+    "title": "AgentSpec uses native naming for legacy workflow surfaces",
+    "description": "AgentSpec removes HOTL-specific public wording from existing workflow, drift, status, task guidance, and CLI help surfaces while preserving legacy workflow and state detection for migration and backfill.",
+    "source_sections": [
+      "agentspec-hotl-integration-without-hotl-names:D-20",
+      "agentspec-hotl-integration-without-hotl-names:D-20.1",
+      "agentspec-hotl-integration-without-hotl-names:D-29",
+      "agentspec-hotl-integration-without-hotl-names:D-54",
+      "agentspec-hotl-integration-without-hotl-names:D-56"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0060",
+    "acceptance": [
+      "Human aspec status and workflow summary output avoid HOTL-specific public wording for workflow artifacts.",
+      "aspec drift describes loaded workflow/state artifacts without HOTL-specific public wording.",
+      "aspec task create --help describes --from-workflow without HOTL-specific public wording.",
+      "aspec task create --from-workflow <file> remains the supported repair command.",
+      "Existing legacy .hotl/state/**/*.json detection remains supported.",
+      "Tests cover the revised user-facing wording and compatibility behavior."
+    ],
+    "code_targets": [
+      "agentspec/workflow.py",
+      "agentspec/drift.py",
+      "agentspec/cli.py"
+    ],
+    "test_targets": [
+      "tests/test_workflow_contract.py",
+      "tests/test_status_cli.py",
+      "tests/test_task_queue.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/change-requests/DCR-0060-use-agentspec-native-naming-for-legacy-workflow-surfaces.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

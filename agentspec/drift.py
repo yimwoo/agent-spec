@@ -321,7 +321,7 @@ def _report(
         f"- Requirements loaded: {len(requirements)}",
         f"- Context packs loaded: {len(context_packs)}",
         f"- ADRs loaded: {len(adrs)}",
-        f"- HOTL workflow artifacts loaded: {workflows.get('total', 0)}",
+        f"- Workflow/state artifacts loaded: {workflows.get('total', 0)}",
         "",
         "## Changed Files",
         "",

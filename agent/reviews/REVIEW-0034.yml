@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0034",
+  "task": {
+    "selector": "T-089",
+    "context_pack": "agent/context-packs/T-089-expose-lifecycle-projection-and-write-back-readiness.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. Lifecycle projection is read-only over existing artifacts, workflow broken links are distinct from orphan workflows, legacy review noise is suppressed after the review-contract cutover, and verification passed.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T02:28:05Z"
+}

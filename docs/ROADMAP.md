@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T01:31:31Z
-- Last completed task: `T-088` agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md
-- Last run: `complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131`
+- Updated: 2026-05-11T02:30:50Z
+- Last completed task: `T-090` agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md
+- Last run: `complete-t-090-backfill-historical-agentspec-mvp-workflow-20260511023050`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -101,18 +101,19 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-086-add-session-worktree-lease-governance.md` | complete | `complete-t-086-add-session-worktree-lease-governance-20260510232554` | passed | REVIEW-0028 | 2026-05-10T23:25:54Z |
 | `agent/context-packs/T-087-add-progressive-maturity-profiles.md` | complete | `complete-t-087-add-progressive-maturity-profiles-20260510232554` | passed | REVIEW-0029 | 2026-05-10T23:25:54Z |
 | `agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md` | complete | `complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131` | passed | REVIEW-0032 | 2026-05-11T01:31:31Z |
+| `agent/context-packs/T-089-expose-lifecycle-projection-and-write-back-readiness.md` | complete | `complete-t-089-expose-lifecycle-projection-and-write-back-readiness-20260511022812` | passed | REVIEW-0034 | 2026-05-11T02:28:12Z |
+| `agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md` | complete | `complete-t-090-backfill-historical-agentspec-mvp-workflow-20260511023050` | passed | REVIEW-0035 | 2026-05-11T02:30:50Z |
 
 ## Requirement Traceability
 
-- Requirements: 193
-- By status: accepted=193
-- By priority: P0=50, P1=61, P2=80, P3=2
+- Requirements: 194
+- By status: accepted=194
+- By priority: P0=51, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-184` | P1 | accepted | Task completion can run Quality GC when configured cadence is due |
 | `R-185` | P2 | accepted | Next stale answered open questions cite accepted decision evidence |
 | `R-186` | P1 | accepted | Generated agent context stays current and project invariants are configured |
 | `R-187` | P1 | accepted | AgentSpec exposes a read-only project metrics surface |
@@ -122,3 +123,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-191` | P0 | accepted | AgentSpec records multi-session worktree leases |
 | `R-192` | P0 | accepted | AgentSpec supports progressive maturity profiles |
 | `R-193` | P0 | accepted | AgentSpec enforces workflow-pack coverage and generated roadmap status |
+| `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
