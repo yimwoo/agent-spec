@@ -35,7 +35,15 @@ from .maturity import (
 from .outcome import build_outcome_status, format_outcome_status
 from .quality import run_quality_gc
 from .requirement import accept_requirement
-from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
+from .review import (
+    ALLOWED_CODE_REVIEW_VERDICTS,
+    ALLOWED_DOC_REVIEW_MODES,
+    ALLOWED_DOC_REVIEW_REVIEWERS,
+    ALLOWED_DOC_REVIEW_VERDICTS,
+    check_doc_review,
+    record_code_review,
+    record_doc_review,
+)
 from .roadmap import check_roadmap, write_roadmap
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
@@ -266,6 +274,14 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     review_code.add_argument("--reviewer", default="human")
     review_code.add_argument("--range", dest="range_ref", default="worktree")
     review_code.add_argument("--json", action="store_true")
+    review_doc = review_subparsers.add_parser("doc", help="Record or check document review evidence.")
+    review_doc.add_argument("artifact", nargs="?", help="Document artifact path to review.")
+    review_doc.add_argument("--mode", choices=sorted(ALLOWED_DOC_REVIEW_MODES))
+    review_doc.add_argument("--verdict", choices=sorted(ALLOWED_DOC_REVIEW_VERDICTS))
+    review_doc.add_argument("--reviewer", choices=sorted(ALLOWED_DOC_REVIEW_REVIEWERS))
+    review_doc.add_argument("--summary")
+    review_doc.add_argument("--check", dest="check_artifact", help="Check review freshness for a document without writing evidence.")
+    review_doc.add_argument("--json", action="store_true")
 
     task = subparsers.add_parser("task", help="Task utilities.")
     task_subparsers = task.add_subparsers(dest="task_command")
@@ -807,6 +823,34 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     print(json.dumps(record, indent=2))
                 else:
                     print(f"Recorded code review {record['id']} ({record['verdict']}).")
+                return 0
+            if args.review_command == "doc":
+                selected_doc_review_actions = sum(
+                    value is not None for value in (args.check_artifact, args.mode, args.verdict)
+                )
+                if selected_doc_review_actions != 1:
+                    raise ValueError("Document review requires exactly one of --mode, --verdict, or --check.")
+                if args.check_artifact and args.artifact:
+                    raise ValueError("Use --check <path> without a positional document artifact.")
+                if args.check_artifact:
+                    record = check_doc_review(root, artifact_selector=args.check_artifact)
+                    if args.json:
+                        print(json.dumps(record, indent=2))
+                    else:
+                        print(f"Document review {record['readiness']}: {record['artifact_path']}.")
+                    return 0
+                record = record_doc_review(
+                    root,
+                    artifact_selector=args.artifact,
+                    mode=args.mode,
+                    verdict=args.verdict,
+                    reviewer=args.reviewer,
+                    summary=args.summary,
+                )
+                if args.json:
+                    print(json.dumps(record, indent=2))
+                else:
+                    print(f"Recorded document review {record['id']} ({record['verdict']}).")
                 return 0
             parser.print_help()
             return 0

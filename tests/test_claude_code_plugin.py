@@ -1,6 +1,7 @@
 import json
 import shutil
 import subprocess
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -35,9 +36,10 @@ class ClaudeCodePluginTests(unittest.TestCase):
     def test_claude_plugin_manifest_and_skill_layout(self) -> None:
         manifest_path = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["name"], "aspec")
-        self.assertEqual(manifest["version"], "0.1.10")
+        self.assertEqual(manifest["version"], pyproject["project"]["version"])
         self.assertIn("Claude Code", manifest["description"])
         self.assertIn("claude-code", manifest["keywords"])
         self.assertEqual(

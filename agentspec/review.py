@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -433,6 +434,289 @@ def _string_list(value: Any) -> list[str]:
 
 def _is_research_evidence_path(path: str) -> bool:
     return path in _RESEARCH_EVIDENCE_EXACT_PATHS or path.startswith(_RESEARCH_EVIDENCE_PATH_PREFIXES)
+
+
+DOC_REVIEW_SCHEMA = "agentspec.doc_review.v0"
+DOC_REVIEW_CHECK_SCHEMA = "agentspec.doc_review_check.v0"
+ALLOWED_DOC_REVIEW_MODES = frozenset({"deterministic", "model"})
+ALLOWED_DOC_REVIEW_VERDICTS = frozenset(
+    {"ready", "revise", "human_override_required"}
+)
+ALLOWED_DOC_REVIEW_REVIEWERS = frozenset(
+    {"human", "deterministic", "model", "agent"}
+)
+
+
+def record_doc_review(
+    root: Path,
+    *,
+    artifact_selector: str,
+    mode: str | None = None,
+    verdict: str | None = None,
+    reviewer: str | None = None,
+    summary: str | None = None,
+) -> dict[str, Any]:
+    root = root.resolve()
+    if sum(value is not None for value in (mode, verdict)) != 1:
+        raise ValueError("Document review requires exactly one of --mode, --verdict, or --check.")
+
+    artifact_path = _resolve_doc_review_artifact(root, artifact_selector)
+    artifact_text = artifact_path.read_text(encoding="utf-8")
+    artifact_kind = _doc_artifact_kind(root, artifact_path)
+    digests = _artifact_digests(artifact_path)
+    requirement_refs = sorted(set(re.findall(r"\bR-\d{3,}\b", artifact_text)))
+    dcr_refs = sorted(set(re.findall(r"\bDCR-\d{4,}\b", artifact_text)))
+
+    if mode is not None:
+        if mode not in ALLOWED_DOC_REVIEW_MODES:
+            allowed = ", ".join(sorted(ALLOWED_DOC_REVIEW_MODES))
+            raise ValueError(f"Invalid document review mode {mode!r}; expected one of: {allowed}.")
+        if mode == "model":
+            raise ValueError("Model-backed document review is not implemented yet; use --mode deterministic or record a manual verdict.")
+        review_result = _deterministic_doc_review(artifact_kind, artifact_text)
+        verdict_value = review_result["verdict"]
+        reviewer_value = "deterministic"
+        summary_value = review_result["summary"]
+        findings = review_result["findings"]
+        rubric = {
+            "deterministic_checks": review_result["checks"],
+            "ai_checks": [],
+        }
+    else:
+        if verdict not in ALLOWED_DOC_REVIEW_VERDICTS:
+            allowed = ", ".join(sorted(ALLOWED_DOC_REVIEW_VERDICTS))
+            raise ValueError(f"Invalid document review verdict {verdict!r}; expected one of: {allowed}.")
+        if reviewer not in ALLOWED_DOC_REVIEW_REVIEWERS:
+            allowed = ", ".join(sorted(ALLOWED_DOC_REVIEW_REVIEWERS))
+            raise ValueError(f"Document review reviewer is required and must be one of: {allowed}.")
+        if not summary or not summary.strip():
+            raise ValueError("Document review summary is required for manual verdicts.")
+        verdict_value = verdict
+        reviewer_value = reviewer
+        summary_value = summary.strip()
+        findings = []
+        rubric = {"deterministic_checks": [], "ai_checks": []}
+
+    timestamp = utc_now_iso()
+    review_id = _next_doc_review_id(root)
+    record = {
+        "schema": DOC_REVIEW_SCHEMA,
+        "id": review_id,
+        "artifact_path": _relative_or_absolute(root, artifact_path),
+        "artifact_kind": artifact_kind,
+        "verdict": verdict_value,
+        "reviewer": reviewer_value,
+        "summary": summary_value,
+        "findings": findings,
+        "rubric": rubric,
+        "requirement_refs": requirement_refs,
+        "dcr_refs": dcr_refs,
+        "artifact_digest": digests["artifact_digest"],
+        "normalized_artifact_digest": digests["normalized_artifact_digest"],
+        "artifact_revision": None,
+        "author_type": "unknown",
+        "generated_by": None,
+        "reviewed_at": timestamp,
+        "created_at": timestamp,
+    }
+    write_data(_doc_review_path(root, review_id), record)
+    return record
+
+
+def check_doc_review(root: Path, *, artifact_selector: str) -> dict[str, Any]:
+    root = root.resolve()
+    artifact_path = _resolve_doc_review_artifact(root, artifact_selector)
+    artifact_kind = _doc_artifact_kind(root, artifact_path)
+    digests = _artifact_digests(artifact_path)
+    artifact_rel = _relative_or_absolute(root, artifact_path)
+    latest_ready = _latest_ready_doc_review(root, artifact_rel)
+
+    if latest_ready is None:
+        readiness = "missing"
+        current = False
+    elif (
+        latest_ready.get("artifact_digest") == digests["artifact_digest"]
+        or latest_ready.get("normalized_artifact_digest") == digests["normalized_artifact_digest"]
+    ):
+        readiness = "current"
+        current = True
+    else:
+        readiness = "stale"
+        current = False
+
+    latest_summary = None
+    if latest_ready is not None:
+        latest_summary = {
+            "id": latest_ready.get("id"),
+            "path": _relative_or_absolute(root, _doc_review_path(root, str(latest_ready.get("id")))),
+            "verdict": latest_ready.get("verdict"),
+            "reviewer": latest_ready.get("reviewer"),
+            "reviewed_at": latest_ready.get("reviewed_at"),
+        }
+
+    return {
+        "schema": DOC_REVIEW_CHECK_SCHEMA,
+        "artifact_path": artifact_rel,
+        "artifact_kind": artifact_kind,
+        "readiness": readiness,
+        "current": current,
+        "latest_review": latest_summary,
+        "artifact_digest": digests["artifact_digest"],
+        "normalized_artifact_digest": digests["normalized_artifact_digest"],
+    }
+
+
+def _resolve_doc_review_artifact(root: Path, selector: str) -> Path:
+    if not selector or not selector.strip():
+        raise ValueError("Document review artifact path is required.")
+    candidate = Path(selector)
+    path = candidate if candidate.is_absolute() else root / candidate
+    path = path.resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"Document review artifact must be inside the project root: {selector}") from exc
+    if not path.exists():
+        raise FileNotFoundError(f"Document review artifact not found: {selector}")
+    if not path.is_file():
+        raise ValueError(f"Document review artifact path is not a file: {selector}")
+    return path
+
+
+def _doc_artifact_kind(root: Path, path: Path) -> str:
+    rel = _relative_or_absolute(root, path).replace("\\", "/")
+    name = path.name
+    if rel.startswith("docs/change-requests/") and name.startswith("DCR-"):
+        return "dcr"
+    if rel.startswith("docs/discovery/spikes/") and name.endswith(".md"):
+        return "spike"
+    if rel.startswith("agent/workflows/") or ("/plans/" in rel and "workflow" in name):
+        return "workflow"
+    if rel.startswith("docs/designs/") and name.endswith(".md"):
+        return "design"
+    if "source" in rel and "candidate" in rel:
+        return "source_candidate"
+    if rel == "docs/ROADMAP.md":
+        return "roadmap"
+    return "other"
+
+
+def _artifact_digests(path: Path) -> dict[str, str]:
+    raw = path.read_bytes()
+    normalized = _normalized_artifact_text(path).encode("utf-8")
+    return {
+        "artifact_digest": "sha256:" + hashlib.sha256(raw).hexdigest(),
+        "normalized_artifact_digest": "sha256:" + hashlib.sha256(normalized).hexdigest(),
+    }
+
+
+def _normalized_artifact_text(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    return "\n".join(line.rstrip() for line in text.split("\n"))
+
+
+def _deterministic_doc_review(artifact_kind: str, text: str) -> dict[str, Any]:
+    checks: list[str] = []
+    findings: list[dict[str, str]] = []
+    if artifact_kind == "dcr":
+        checks.append("dcr_required_sections_present")
+        for heading in ("Summary", "Motivation", "Proposed Change", "Acceptance Criteria"):
+            if not re.search(rf"^##\s+{re.escape(heading)}\s*$", text, flags=re.MULTILINE):
+                findings.append(
+                    _doc_review_finding(
+                        issue=f"DCR section is missing: {heading}.",
+                        evidence=f"Expected '## {heading}'.",
+                        suggestion=f"Add a {heading} section before accepting or tasking this DCR.",
+                    )
+                )
+    elif artifact_kind == "workflow":
+        checks.extend(["workflow_allowed_paths_present", "workflow_verification_present"])
+        lowered = text.lower()
+        if "allowed_paths" not in lowered and not re.search(r"^##\s+allowed paths\s*$", text, flags=re.MULTILINE | re.IGNORECASE):
+            findings.append(
+                _doc_review_finding(
+                    issue="Workflow allowed paths are missing.",
+                    evidence="No allowed_paths metadata or Allowed Paths section found.",
+                    suggestion="Declare workflow allowed paths before execution.",
+                )
+            )
+        if (
+            "verification_commands" not in lowered
+            and "verify:" not in lowered
+            and not re.search(r"^##\s+verification", text, flags=re.MULTILINE | re.IGNORECASE)
+        ):
+            findings.append(
+                _doc_review_finding(
+                    issue="Workflow verification commands are missing.",
+                    evidence="No verification_commands metadata, verify field, or Verification section found.",
+                    suggestion="Declare verification commands or review gates before execution.",
+                )
+            )
+    else:
+        checks.append("artifact_nonempty")
+        if not text.strip():
+            findings.append(
+                _doc_review_finding(
+                    issue="Artifact is empty.",
+                    evidence="Reviewed artifact has no non-whitespace content.",
+                    suggestion="Add content before recording a ready document review.",
+                )
+            )
+
+    verdict = "ready" if not findings else "revise"
+    summary = "Deterministic document review passed." if not findings else f"Deterministic document review found {len(findings)} finding(s)."
+    return {"verdict": verdict, "summary": summary, "findings": findings, "checks": checks}
+
+
+def _doc_review_finding(*, issue: str, evidence: str, suggestion: str) -> dict[str, str]:
+    return {
+        "severity": "high",
+        "issue": issue,
+        "evidence": evidence,
+        "suggestion": suggestion,
+    }
+
+
+def _latest_ready_doc_review(root: Path, artifact_path: str) -> dict[str, Any] | None:
+    candidates: list[dict[str, Any]] = []
+    for path in sorted((root / "agent" / "doc-reviews").glob("DOCREVIEW-*.yml")):
+        record = load_data(path, {})
+        if not isinstance(record, dict):
+            continue
+        if record.get("schema") != DOC_REVIEW_SCHEMA:
+            continue
+        if record.get("artifact_path") != artifact_path:
+            continue
+        if record.get("verdict") == "ready":
+            candidates.append(record)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: str(item.get("reviewed_at") or item.get("id") or ""))
+    return candidates[-1]
+
+
+def _next_doc_review_id(root: Path) -> str:
+    review_dir = root / "agent" / "doc-reviews"
+    highest = 0
+    for path in review_dir.glob("DOCREVIEW-*.yml"):
+        stem = path.stem
+        if stem.startswith("DOCREVIEW-") and stem.split("-", 1)[1].isdigit():
+            highest = max(highest, int(stem.split("-", 1)[1]))
+    return f"DOCREVIEW-{highest + 1:04d}"
+
+
+def _doc_review_path(root: Path, review_id: str) -> Path:
+    candidate = Path(review_id)
+    if candidate.is_absolute():
+        return candidate
+    if candidate.suffix == ".yml":
+        if len(candidate.parts) > 1:
+            return root / candidate
+        return root / "agent" / "doc-reviews" / candidate.name
+    if len(candidate.parts) > 1:
+        return root / candidate
+    return root / "agent" / "doc-reviews" / f"{review_id}.yml"
 
 
 CODE_REVIEW_SCHEMA = "agentspec.code_review.v0"
