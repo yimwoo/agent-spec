@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T05:26:52Z
-- Last completed task: `T-099` agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md
-- Last run: `complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652`
+- Updated: 2026-05-11T05:34:53Z
+- Last completed task: `T-100` agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md
+- Last run: `complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -112,6 +112,7 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-097-add-legacy-execution-migration-tools.md` | complete | `complete-t-097-add-legacy-execution-migration-tools-20260511044649` | passed | REVIEW-0042 | 2026-05-11T04:46:49Z |
 | `agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md` | complete | `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348` | passed | REVIEW-0043 | 2026-05-11T05:13:48Z |
 | `agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md` | complete | `complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652` | passed | REVIEW-0044 | 2026-05-11T05:26:52Z |
+| `agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md` | complete | `complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453` | passed | REVIEW-0045 | 2026-05-11T05:34:53Z |
 
 ## Requirement Traceability
 

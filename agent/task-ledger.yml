@@ -1138,6 +1138,23 @@
         "path": "agent/reviews/REVIEW-0044.yml"
       },
       "updated_at": "2026-05-11T05:26:52Z"
+    },
+    "agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md": {
+      "status": "complete",
+      "run_id": "complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453",
+      "reason": "Portable handoff freshness fix completed for R-204/DCR-0069. New handoff writes omit local-only run counts, lifecycle stale handoff detection ignores legacy run-count mismatches, and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0045",
+        "verdict": "ready",
+        "summary": "R-204/DCR-0069 implementation is scoped to portable handoff freshness. New handoff writes omit local-only run counts, stale handoff detection ignores legacy run-count mismatches while preserving portable count checks, and targeted/full verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0045.yml"
+      },
+      "updated_at": "2026-05-11T05:34:53Z"
     }
   }
 }
