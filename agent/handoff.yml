@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T06:02:17Z",
+  "updated_at": "2026-05-11T06:14:08Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-102",
-    "context_pack": "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md",
-    "title": "T-102: Align emitted repo-local skills with lifecycle contract",
-    "run_id": "complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217",
-    "reason": "Completed R-206/DCR-0071: generated Claude repo-local skills now follow lifecycle-aligned skill-authoring guidance, generated Codex agent instructions point to aspec lifecycle and packaged aspec:* skills, and tests cover generated skill quality and no-local-Codex-skill boundaries.",
-    "updated_at": "2026-05-11T06:02:17Z",
+    "id": "T-103",
+    "context_pack": "agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md",
+    "title": "T-103: Refresh human-facing README and guide docs",
+    "run_id": "complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408",
+    "reason": "Completed R-207 documentation refresh: README front door, human getting-started guide, documentation/design registry, DCR/requirement/task/workflow evidence, and roadmap freshness.",
+    "updated_at": "2026-05-11T06:14:08Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0047",
+      "id": "REVIEW-0048",
       "verdict": "ready",
-      "reviewer": "human",
+      "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0047.yml"
+      "path": "agent/reviews/REVIEW-0048.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 206,
+      "total": 207,
       "by_status": {
-        "accepted": 206
+        "accepted": 207
       }
     },
     "dcrs": {
-      "total": 71,
+      "total": 72,
       "by_status": {
-        "accepted": 71
+        "accepted": 72
       }
     },
     "tasks": {
-      "total": 100,
+      "total": 101,
       "by_status": {
-        "complete": 100
+        "complete": 101
       },
       "by_type": {
-        "implementation": 92,
+        "implementation": 93,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -66,6 +66,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0047.yml"
+    "last_code_review": "agent/reviews/REVIEW-0048.yml"
   }
 }
