@@ -37,7 +37,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["name"], "aspec")
-        self.assertEqual(manifest["version"], "0.1.6")
+        self.assertEqual(manifest["version"], "0.1.10")
         self.assertIn("Claude Code", manifest["description"])
         self.assertIn("claude-code", manifest["keywords"])
         self.assertEqual(

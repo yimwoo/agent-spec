@@ -1,6 +1,6 @@
 {
   "name": "aspec",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Initialize AgentSpec repositories and continue AgentSpec work from Codex using CLI-backed skills for status, tasks, drift, and manual source intake.",
   "author": {
     "name": "AgentSpec",
