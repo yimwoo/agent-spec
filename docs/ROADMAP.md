@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T05:19:58Z
-- Last completed task: `T-098` agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md
-- Last run: `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348`
+- Updated: 2026-05-11T05:26:52Z
+- Last completed task: `T-099` agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md
+- Last run: `complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -111,18 +111,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-096-add-strict-lifecycle-enforcement.md` | complete | `complete-t-096-add-strict-lifecycle-enforcement-20260511043725` | passed | REVIEW-0041 | 2026-05-11T04:37:25Z |
 | `agent/context-packs/T-097-add-legacy-execution-migration-tools.md` | complete | `complete-t-097-add-legacy-execution-migration-tools-20260511044649` | passed | REVIEW-0042 | 2026-05-11T04:46:49Z |
 | `agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md` | complete | `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348` | passed | REVIEW-0043 | 2026-05-11T05:13:48Z |
+| `agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md` | complete | `complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652` | passed | REVIEW-0044 | 2026-05-11T05:26:52Z |
 
 ## Requirement Traceability
 
-- Requirements: 202
-- By status: accepted=202
-- By priority: P0=59, P1=61, P2=80, P3=2
+- Requirements: 203
+- By status: accepted=203
+- By priority: P0=60, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-193` | P0 | accepted | AgentSpec enforces workflow-pack coverage and generated roadmap status |
 | `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
 | `R-195` | P0 | accepted | AgentSpec uses native naming for legacy workflow surfaces |
 | `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
@@ -132,3 +132,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-200` | P0 | accepted | AgentSpec supports opt-in strict lifecycle enforcement |
 | `R-201` | P0 | accepted | AgentSpec provides idempotent legacy execution migration tooling |
 | `R-202` | P0 | accepted | AgentSpec exposes opt-in lifecycle skill gate projections |
+| `R-203` | P0 | accepted | AgentSpec supports its own end-to-end lifecycle dogfood workflow |

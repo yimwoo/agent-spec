@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.quality_gc_report.v0",
-  "generated_at": "2026-05-11T04:37:25Z",
+  "generated_at": "2026-05-11T05:26:53Z",
   "grade": "B",
   "summary": "0 error(s), 8 warning(s), 1 info finding(s).",
   "findings": [
@@ -94,24 +94,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 200,
+      "total": 203,
       "by_status": {
-        "accepted": 200
+        "accepted": 203
       }
     },
     "dcrs": {
-      "total": 65,
+      "total": 68,
       "by_status": {
-        "accepted": 65
+        "accepted": 68
       }
     },
     "tasks": {
-      "total": 94,
+      "total": 97,
       "by_status": {
-        "complete": 94
+        "complete": 97
       },
       "by_type": {
-        "implementation": 86,
+        "implementation": 89,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -121,8 +121,7 @@
     "runs": {
       "total": 3,
       "by_status": {
-        "aborted": 1,
-        "complete": 2
+        "complete": 3
       },
       "by_mode": {
         "research": 1,
@@ -153,18 +152,18 @@
   "handoff": {
     "present": true,
     "path": "agent/handoff.yml",
-    "updated_at": "2026-05-11T04:37:25Z",
-    "last_completed_task": "T-096",
+    "updated_at": "2026-05-11T05:26:52Z",
+    "last_completed_task": "T-099",
     "next_action": "idle",
     "next_command": "aspec status --json"
   },
   "cadence": {
     "task_interval": 3,
-    "completed_tasks": 94,
-    "completed_tasks_at_last_quality": 91,
+    "completed_tasks": 97,
+    "completed_tasks_at_last_quality": 94,
     "completed_tasks_since_last_quality": 3,
     "was_due": true,
-    "next_recommended_completed_tasks": 97
+    "next_recommended_completed_tasks": 100
   },
   "reports": {
     "structured": "reports/quality/latest.yml",

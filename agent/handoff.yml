@@ -1,52 +1,52 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T05:19:58Z",
+  "updated_at": "2026-05-11T05:26:52Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-098",
-    "context_pack": "agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md",
-    "title": "T-098: Add lifecycle skill gate projection",
-    "run_id": "complete-t-098-add-lifecycle-skill-gate-projection-20260511051348",
-    "reason": "Phase 8 skill gates are implemented for R-202/DCR-0067. Verification passed with python -m unittest discover -s tests -v, related lifecycle/config/status tests, python -m json.tool docs/traceability/requirements.yml, and git diff --check.",
-    "updated_at": "2026-05-11T05:13:48Z",
+    "id": "T-099",
+    "context_pack": "agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md",
+    "title": "T-099: Run AgentSpec lifecycle E2E smoke test",
+    "run_id": "complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652",
+    "reason": "AgentSpec-only lifecycle E2E smoke completed for R-203/DCR-0068. Verified task pack creation, native workflow creation, branch commit, targeted tests, review evidence, completion write-back, and roadmap/handoff update path without HOTL or Superpowers plugins.",
+    "updated_at": "2026-05-11T05:26:52Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0043",
+      "id": "REVIEW-0044",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0043.yml"
+      "path": "agent/reviews/REVIEW-0044.yml"
     }
   },
   "current_state": {
-    "overall": "idle",
-    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
+    "overall": "attention_needed",
+    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 202,
+      "total": 203,
       "by_status": {
-        "accepted": 202
+        "accepted": 203
       }
     },
     "dcrs": {
-      "total": 67,
+      "total": 68,
       "by_status": {
-        "accepted": 67
+        "accepted": 68
       }
     },
     "tasks": {
-      "total": 96,
+      "total": 97,
       "by_status": {
-        "complete": 96
+        "complete": 97
       },
       "by_type": {
-        "implementation": 88,
+        "implementation": 89,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,12 +54,13 @@
       }
     },
     "runs": {
-      "total": 1,
+      "total": 3,
       "by_status": {
-        "complete": 1
+        "complete": 3
       },
       "by_mode": {
-        "research": 1
+        "research": 1,
+        "supervised": 2
       }
     }
   },
@@ -75,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0043.yml"
+    "last_code_review": "agent/reviews/REVIEW-0044.yml"
   }
 }

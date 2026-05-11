@@ -1121,6 +1121,23 @@
         "path": "agent/reviews/REVIEW-0043.yml"
       },
       "updated_at": "2026-05-11T05:13:48Z"
+    },
+    "agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md": {
+      "status": "complete",
+      "run_id": "complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652",
+      "reason": "AgentSpec-only lifecycle E2E smoke completed for R-203/DCR-0068. Verified task pack creation, native workflow creation, branch commit, targeted tests, review evidence, completion write-back, and roadmap/handoff update path without HOTL or Superpowers plugins.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0044",
+        "verdict": "ready",
+        "summary": "AgentSpec-only lifecycle E2E smoke evidence is scoped to R-203/DCR-0068. Task pack, native workflow, branch commit, and verification commands were exercised without HOTL or Superpowers plugins.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0044.yml"
+      },
+      "updated_at": "2026-05-11T05:26:52Z"
     }
   }
 }
