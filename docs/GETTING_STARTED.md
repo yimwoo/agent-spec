@@ -25,13 +25,56 @@ Key terms:
 | Candidate snapshot | Imported external material awaiting review under `docs/source/candidates/`. |
 | Requirement | A traceable obligation, usually `R-###`, in `docs/traceability/requirements.yml`. |
 | DCR | A design change request for scope that changes after the accepted snapshot. |
-| Task context pack | The bounded work packet an agent may execute. |
+| Task context pack | The bounded work packet an agent may execute. Defines goal, allowed/forbidden paths, acceptance criteria, and verification commands. |
 | Workflow | The native AgentSpec execution plan linked to a task pack. |
+| Runner package | The per-step contract handed to the agent: prompt, iteration count, allowed paths, expected result schema. |
+| Supervised run | A task execution under iteration limits and policy gates, persisted in `agent/runs/`. |
+| Review evidence | Reviewer findings under `agent/reviews/`, required before a task can finish. |
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
 
 ## How The Pieces Fit
 
 Think of AgentSpec as layers around the code agent:
+
+```mermaid
+flowchart TB
+  Human["Human / Tech Lead"] --> Agent["Code Agent<br/>(Codex, Claude Code, …)"]
+  Agent --> Adapter["Adapter Layer<br/>plugin + emitted skills"]
+  Adapter --> CLI["Control Plane<br/>aspec CLI"]
+
+  subgraph SourceSpec["Source &amp; Spec"]
+    Intake["Source intake"]
+    Compile["Spec compiler"]
+    Trace["Traceability"]
+  end
+
+  subgraph Planning
+    Status["Status &amp; next action"]
+    Packs["Task context packs"]
+    Workflows["Workflows"]
+  end
+
+  subgraph Execution
+    Package["Runner package<br/>(codex / claude / generic)"]
+    Work["Bounded code work<br/>(allowed paths + tests)"]
+    Result["Structured runner result"]
+  end
+
+  subgraph Governance["Governance &amp; write-back"]
+    Policy["Policy gates<br/>(paths, secrets, iterations, tests)"]
+    Review["Review evidence"]
+    Finish["Task ledger + handoff + roadmap"]
+  end
+
+  CLI --> Intake --> Compile --> Trace
+  CLI --> Status --> Packs --> Workflows
+  Workflows --> Package --> Agent
+  Agent --> Work --> Result --> CLI
+  CLI --> Policy --> Review --> Finish
+  Trace --> Packs
+  Packs --> Package
+  Policy --> Package
+```
 
 | Layer | Responsibility |
 |---|---|
@@ -214,6 +257,36 @@ aspec --root "$TARGET" emit --target claude,codex
 After this, the target repo has canonical source snapshots, generated specs,
 requirements, discovery files, agent instructions, and the basic layout needed
 for governed implementation.
+
+### Files Added To Target Repositories
+
+Installing the plugin does not copy files into your project. Files appear only
+after `aspec init` + `aspec emit`:
+
+```text
+your-project/
+├── AGENTS.md                  # Codex-facing repo instructions
+├── CLAUDE.md                  # Claude Code-facing repo instructions
+├── .agentspec/config.yml      # AgentSpec project config
+├── .codex/agents/             # emitted Codex agents (optional)
+├── .claude/{agents,skills}/   # emitted Claude agents and skills (optional)
+├── agent/
+│   ├── context-packs/         # bounded task inputs (the contract)
+│   ├── workflows/             # execution plans
+│   ├── runs/                  # supervised run state (per-task)
+│   ├── reviews/               # review evidence
+│   ├── task-ledger.yml        # task lifecycle log
+│   └── handoff.yml            # latest durable project status
+├── docs/
+│   ├── source/                # canonical design snapshots
+│   ├── traceability/          # requirements and drift maps
+│   ├── spec/                  # generated spec index
+│   ├── adr/                   # architecture decisions
+│   ├── change-requests/       # DCR intake
+│   ├── discovery/             # assumptions, risks, readiness
+│   └── ROADMAP.md             # rolling roadmap
+└── reports/                   # doctor, drift, eval, quality evidence
+```
 
 ## Start A Task
 

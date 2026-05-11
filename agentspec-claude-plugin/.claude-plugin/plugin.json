@@ -1,14 +1,14 @@
 {
   "name": "aspec",
   "description": "Run AgentSpec workflows from Claude Code without bypassing repository governance.",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "author": {
     "name": "AgentSpec",
     "email": "maintainers@example.com"
   },
   "homepage": "https://github.com/yimwoo/agent-spec",
   "repository": "https://github.com/yimwoo/agent-spec",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "keywords": [
     "aspec",
     "agentspec",

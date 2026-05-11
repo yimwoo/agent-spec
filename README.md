@@ -1,279 +1,281 @@
 # AgentSpec
 
-**Repo-local product memory and task governance for Codex and Claude Code.**
+> **A persistent, repo-local operating contract that guides AI coding agents — Codex, Claude Code, and more — across the whole software lifecycle: design → planning → supervised execution → verification → review → handoff.**
 
 [![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-2563EB?style=flat-square)](pyproject.toml)
 
-AgentSpec turns design intent into durable, repo-local operating context for
-human + agent software delivery. It snapshots sources, derives accepted
-requirements, creates bounded task packs, runs governed execution loops,
-records verification/review evidence, and writes back roadmap + handoff state.
+AgentSpec turns your design docs into a **governed, file-based operating
+contract** for AI coding agents. The contract lives in your repo — accepted
+requirements, scoped tasks, allowed file paths, iteration limits, verification
+commands, and review evidence — all version-controlled. **No external service
+or database is required.**
 
-The goal is simple: a code agent should be able to continue work from the
-repository itself, not from chat history.
+Unlike a passive control plane, AgentSpec **actively guides the agent at every
+step**: it packages the next instruction, the allowed paths, the iteration
+budget, and the verification expectations, hands them to Codex or Claude Code,
+then validates what came back before deciding what to do next. You can stop a
+project mid-flight, come back days later, and continue from the repo — not
+from chat history.
 
-## Quick Start
+```text
+   Design doc  →  Accepted spec  →  Scoped task pack  ──┐
+                                                        │
+                                ┌───────────────────────┘
+                                ▼
+              Supervised run loop  (per step: prompt + allowed paths + budget)
+                                │
+                                ▼
+                    Verify  →  Review  →  Handoff
+                    (all evidence written back to the repo)
+```
 
-Install the code-agent plugin first. The plugin teaches Codex or Claude Code
-how to use AgentSpec safely; the `aspec` CLI remains the source of truth.
+---
 
-### 1. Install A Plugin
+## Why AgentSpec
 
-**Codex**
+AI coding agents are powerful, but the day-to-day pain is familiar:
+
+- **Context evaporates** — every session you re-paste the design, the conventions, the "don't touch that folder" rules.
+- **Scope creep** — the agent helpfully refactors a file you didn't ask it to.
+- **No paper trail** — you can't tell whether tests actually ran, what was reviewed, or what the next person should pick up.
+- **Drift** — the design doc says one thing, the code does another, and nobody notices until production.
+
+AgentSpec fixes this by keeping the operating contract — *what is canonical,
+what is in scope, what counts as verified, how many iterations remain* —
+**in the repository itself**, and re-asserting it on every step. A new agent
+(or a new teammate) can resume work without reading chat history.
+
+---
+
+## Quick start
+
+### 1. Install the CLI
+
+Stable release (recommended):
 
 ```bash
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.9"
+```
+
+Latest from main (dev):
+
+```bash
+pip install "git+https://github.com/yimwoo/agent-spec.git@main"
+```
+
+Requires Python 3.11+. Installs `aspec` and `agentspec` as console scripts.
+Verify:
+
+```bash
+aspec --help
+```
+
+### 2. Install the plugin for your agent
+
+The plugin teaches Codex or Claude Code how to call AgentSpec safely. The
+`aspec` CLI is still the source of truth — the plugin is a thin adapter that
+turns natural-language requests into `aspec` invocations.
+
+<details>
+<summary><b>Codex</b></summary>
+
+```bash
+# Current installer. Clones/updates the Codex plugin source from main.
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
-Then install or enable `aspec` in the Codex surface you use:
+> Release-pinned plugin installation is planned; today the installer tracks
+> `main`. Pin the CLI separately with `@v0.1.9` (see step 1).
+
+Then enable the plugin:
 
 ```text
-# Codex CLI
 codex
 /plugins
 ```
 
-In the CLI plugin browser, choose the local marketplace, open `aspec`, and
-select `Install plugin` or toggle it on. In the Codex app, restart Codex, open
-**Plugins > Local Plugins**, and install `aspec`.
+Choose the local marketplace, open `aspec`, select **Install plugin**. In the
+Codex desktop app, restart and enable `aspec` under **Plugins > Local Plugins**.
+</details>
 
-After installation, open the target repository you want AgentSpec to manage.
-
-**Claude Code**
-
-Inside Claude Code:
+<details>
+<summary><b>Claude Code</b></summary>
 
 ```text
 /plugin marketplace add yimwoo/agent-spec
 /plugin install aspec@agentspec
 ```
+</details>
 
-### 2. Install The CLI
+### 3. Ask the agent to drive AgentSpec
 
-The plugins call the CLI, so make `aspec` available on `PATH`:
+Open your repository, then prompt your agent.
 
-```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
-```
+**Bootstrap a new project:**
 
-For development from this checkout:
+> Use AgentSpec to initialize this repository. The design source is at
+> `docs/source/design.md`. Set up Codex and Claude agent guidance, compile the
+> requirements, report readiness and open questions, and propose the first
+> task context packs.
 
-```bash
-pip install -e .
-```
+**Continue an existing project:**
 
-Both commands expose `aspec` and `agentspec`. If you do not want shell entry
-points, use:
+> Use AgentSpec to continue this repository. Read `AGENTS.md`, run project
+> status, pick the next ready task pack, run the supervised execution loop,
+> record review evidence, finish the task, and refresh roadmap + handoff.
 
-```bash
-python3 -m agentspec.cli --help
-```
-
-### 3. Ask The Agent
-
-For a new project:
+Behind the scenes, the agent runs a CLI sequence like:
 
 ```text
-Use AgentSpec to initialize this repository. The design source is at
-docs/source/design.md. Set up Codex and Claude agent guidance, compile the
-requirements, report readiness/open questions, and propose the first task
-context packs. Do not start implementation until the task scope and allowed
-paths are clear.
+aspec init  →  aspec ingest  →  aspec compile  →  aspec task create
+            →  aspec plan    →  aspec run loop  ──► (agent executes)
+            →  run the task pack's verification commands
+            →  aspec review code  →  aspec finish
 ```
 
-For an existing AgentSpec project:
+The agent reports back: requirement IDs touched, task pack path, allowed paths,
+iteration count, verification commands and results, review ID, and updated
+handoff/roadmap state.
 
-```text
-Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
-pick the next ready task pack, follow its allowed paths, run verification,
-record review evidence, finish the task, and refresh roadmap/handoff state.
-```
+---
 
-For a new design or design change:
+## The operating contract: how AgentSpec guides execution
 
-```text
-Use AgentSpec to process this design update: <path-or-export>. Import it as a
-candidate or DCR, diff it against the accepted source, summarize the impact,
-and prepare the next task pack. Ask before promoting accepted source or
-expanding implementation scope.
-```
+AgentSpec is more than a wrapper around `before` and `after`. During a task,
+it runs a **supervised loop** — `aspec run loop` orchestrates step-by-step
+execution, and at every step it hands the agent a fresh contract:
 
-The agent should report requirement IDs, the task pack path, allowed paths,
-verification commands/results, review ID, and updated handoff/roadmap status.
+1. **A runner package** (`aspec run package`) containing the next executor
+   prompt, the active context pack, the iteration counter (e.g. *3 of 5*),
+   allowed and forbidden paths, and the expected result schema. The agent
+   reads this — not free-form chat — to know what to do next.
+2. **The agent executes one step**, then submits structured results back via
+   `aspec run result`.
+3. **AgentSpec validates** the result against policy: touched paths against
+   the allowlist, iteration count against `max_iterations`, destructive git
+   operations, credential leakage, missing tests.
+4. **AgentSpec decides** whether to continue (next runner package), halt
+   (budget exhausted, policy violation), or hand off for review.
 
-## What AgentSpec Creates
+What the agent receives in a **task context pack** is itself a contract:
 
-Plugin installation does not copy this repository's private dogfood state into
-your project. A target repository receives AgentSpec files only after you ask
-the agent to initialize or continue that repository.
+- **Goal** — the requirement the task implements.
+- **Requirements** — linked `R-###` IDs with priority and confidence.
+- **Source sections** — the design snippets that justify scope.
+- **Allowed paths** — whitelist of files the task may edit, each marked `confirmed` or `inferred`.
+- **Forbidden paths** — explicit boundaries.
+- **Tests to add or update** — verification targets.
+- **Acceptance criteria** — definition of done.
 
-After `aspec init --mode greenfield --targets claude,codex` and
-`aspec emit --target claude,codex`, a target repo looks like this:
+The result: scope creep is caught at the next step boundary, not after the
+PR is filed. Iteration limits prevent runaway loops. Verification is
+required before finish. The contract survives session boundaries because
+it lives in the repo, not in the model's context window.
 
-```text
-your-project/
-|-- AGENTS.md                         # Codex-facing repo instructions
-|-- CLAUDE.md                         # Claude Code-facing repo instructions
-|-- .agentspec/config.yml             # AgentSpec project config
-|-- .codex/agents/                    # optional emitted Codex agents
-|-- .claude/agents/                   # optional emitted Claude agents
-|-- .claude/skills/                   # optional emitted Claude skills
-|-- agent/
-|   |-- context-packs/                # bounded task inputs
-|   |-- roles/                        # repo-local agent role contracts
-|   |-- runs/                         # runtime state, ignored except summaries
-|   `-- workflows/                    # native execution plans
-|-- docs/
-|   |-- adr/                          # accepted architecture decisions
-|   |-- change-requests/              # DCR intake lane
-|   |-- discovery/                    # assumptions, risks, readiness
-|   |-- source/                       # canonical source snapshots
-|   |-- spec/                         # generated spec index
-|   `-- traceability/                 # requirements and drift maps
-`-- reports/                          # doctor, drift, eval, quality evidence
-```
-
-As work progresses, AgentSpec also writes task ledgers, handoff records, review
-evidence, and roadmap updates such as `agent/task-ledger.yml`,
-`agent/handoff.yml`, `agent/reviews/`, and `docs/ROADMAP.md`.
-
-## Why It Exists
-
-Code agents work best when the operating contract is explicit:
-
-- what source material is canonical
-- which requirements are accepted
-- what paths a task may touch
-- what verification and review evidence is required
-- what should be handed to the next human or agent
-
-AgentSpec keeps that contract in the target repo. Plugins and local skills are
-adapters over those files, not separate sources of truth.
-
-## Architecture
-
-AgentSpec is the lifecycle control plane around a code agent. Codex, Claude
-Code, or another runner still edits code and runs tests; AgentSpec owns the
-durable project state, task boundaries, policy checks, and write-back evidence.
-
-```mermaid
-flowchart TB
-  Human["Human / Tech Lead"] --> Agent["Code Agent\nCodex or Claude Code"]
-  Agent --> Adapter["Adapter Layer\nplugin skills + emitted guidance"]
-  Adapter --> CLI["Control Plane\naspec CLI + lifecycle commands"]
-
-  subgraph SourceSpec["Source And Spec Layer"]
-    Intake["Source Intake\naspec ingest / intake"]
-    Compile["Spec Compiler\nsections, specs, requirements"]
-    Trace["Traceability\nquestions, assumptions, readiness"]
-  end
-
-  subgraph Planning["Planning Layer"]
-    Status["Status + Next Action"]
-    Packs["Task Context Packs"]
-    Workflows["Workflows / Execution Plans"]
-  end
-
-  subgraph Execution["Execution Layer"]
-    Package["Runner Package\ncodex / claude / generic"]
-    Work["Bounded Code Work\nallowed paths + tests"]
-    Result["Structured Runner Result"]
-  end
-
-  subgraph Governance["Governance And Write-back"]
-    Policy["Policy Gates\npaths, iterations, secrets, tests"]
-    Review["Review Evidence"]
-    Finish["Ledger + Handoff + Roadmap"]
-  end
-
-  CLI --> Intake --> Compile --> Trace
-  CLI --> Status --> Packs --> Workflows
-  Workflows --> Package --> Agent
-  Agent --> Work --> Result --> CLI
-  CLI --> Policy --> Review --> Finish
-  Trace --> Packs
-  Packs --> Package
-  Policy --> Package
-```
-
-This split is intentional:
-
-- **Adapters** know the host surface, such as Codex skills or Claude Code
-  plugin commands.
-- **The CLI control plane** owns lifecycle transitions and repo-local state.
-- **The source/spec layer** turns accepted design material into traceable
-  requirements.
-- **The planning layer** creates bounded context packs and execution plans.
-- **The execution layer** packages work for the code agent and accepts
-  structured results back.
-- **Governance and write-back** enforce boundaries, record review evidence, and
-  update the task ledger, handoff, and roadmap.
+---
 
 ## Lifecycle
 
 ```mermaid
 flowchart LR
-  A["Brainstorm / DCR"] --> B["Design Intake"]
-  B --> C["Compile Spec"]
-  C --> D["Create Task Pack"]
-  D --> E["Plan Workflow"]
-  E --> F["Execute"]
-  F --> G["Verify"]
-  G --> H["Review"]
-  H --> I["Finish"]
-  I --> J["Roadmap + Handoff"]
+  A["Design intake<br/>(docs/source)"] --> B["Compile spec<br/>(requirements.yml)"]
+  B --> C["Create task pack<br/>(bounded scope)"]
+  C --> D["Plan workflow"]
+  D --> E["Supervised run loop<br/>(agent + AgentSpec)"]
+  E --> F["Verify<br/>(tests + checks)"]
+  F --> G["Review<br/>(evidence recorded)"]
+  G --> H["Finish<br/>(ledger + handoff + roadmap)"]
+  H -.->|next task| C
 ```
 
-With an installed plugin, humans prompt the code agent and the agent drives the
-matching `aspec` commands behind the scenes. For exact CLI sequences, runner
-integration, and recovery commands, read
-[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+AgentSpec defines **10 native lifecycle stages**: brainstorm, design, plan,
+branch start, **execute**, delegate, verify, review, branch finish, and
+handoff recovery. Every stage writes evidence back to the repo. Interrupted?
+The next session reads `agent/handoff.yml` and `agent/runs/` and continues
+from the right step.
 
-## Project Model
+For the full **control-plane and execution architecture** — adapter → CLI →
+source/spec → planning → supervised run → governance — see
+[docs/GETTING_STARTED.md#how-the-pieces-fit](docs/GETTING_STARTED.md#how-the-pieces-fit).
 
-- **Source snapshot**: immutable source material under `docs/source/`.
-- **Requirement**: accepted implementation obligation in
-  `docs/traceability/requirements.yml`.
-- **DCR**: design change request for anything that changes after the accepted
-  source snapshot.
-- **Task context pack**: bounded implementation unit under
-  `agent/context-packs/`.
-- **Workflow**: native execution plan under `agent/workflows/`.
-- **Review + finish evidence**: records under `agent/reviews/`,
-  `agent/task-ledger.yml`, `agent/handoff.yml`, and `docs/ROADMAP.md`.
+---
 
-In a target project, agents should start from `AGENTS.md`,
-`aspec status --json`, and the active task pack. Humans should start from this
-README and [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+## Files added to target repositories
 
-## Distribution Repo Layout
+Plugin install does **not** touch your project. Files appear only after
+`aspec init` + `aspec emit`, which create `AGENTS.md`, `CLAUDE.md`,
+`.agentspec/`, `agent/` (context packs, workflows, runs, reviews, ledger,
+handoff), `docs/` (source, spec, traceability, ADRs, DCRs, ROADMAP), and
+`reports/`. See the full tree in
+[docs/GETTING_STARTED.md#files-added-to-target-repositories](docs/GETTING_STARTED.md#files-added-to-target-repositories).
 
-```text
-agentspec/                  CLI implementation
-tests/                      regression tests
-docs/GETTING_STARTED.md     human guide for using AgentSpec
-agentspec-codex-plugin/     Codex adapter package
-agentspec-claude-plugin/    Claude Code adapter package
-.claude-plugin/             Claude Code marketplace metadata
-install.sh                  Codex local plugin installer
+---
+
+## Core concepts
+
+The key terms — source snapshot, requirement, DCR, task context pack,
+workflow, runner package, supervised run, handoff, review evidence — are
+defined in the glossary at
+[docs/GETTING_STARTED.md#mental-model](docs/GETTING_STARTED.md#mental-model).
+
+---
+
+## What AgentSpec does *not* do
+
+AgentSpec is a contract and a harness, not a guarantee. Out of scope:
+
+- **It does not replace code review.** It records review evidence and gates finish on it; humans (or other agents) still judge correctness.
+- **It does not guarantee correctness.** Verification gates run the tests you define — they don't know what you forgot to test.
+- **It does not sandbox the agent at the OS level.** Allowed-path policies are *enforced at each step boundary* (touched paths are validated and a runaway agent will be halted), but AgentSpec cannot prevent the agent process from writing to a forbidden path between steps. Pair it with OS-level sandboxing if you need hard isolation.
+- **It does not host project data.** All state lives in your repo's files. No external service, account, or database is required or used.
+
+### Security and data handling
+
+AgentSpec stores all state in repo-local files. Treat imported design docs,
+candidate snapshots, and task packs as **untrusted content** (the pack
+template explicitly marks design excerpts `UNTRUSTED SOURCE CONTENT`). Agents
+should operate within `AGENTS.md`, allowed paths, and review gates. Review
+DCRs and external imports before promoting them to accepted source.
+
+---
+
+## Docs and further reading
+
+- **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** — full human guide:
+  exact CLI sequences, control-plane and execution architecture, importing
+  changing sources, supervised run workflows, recovery commands.
+- **[agentspec/](agentspec/)** — CLI source: `run.py` (supervised loop),
+  `runner.py` (runner packages), `policy.py` (path + iteration gates),
+  `task.py` (context pack rendering), `lifecycle.py` (10 native stages).
+- **[agentspec-codex-plugin/](agentspec-codex-plugin/)** — Codex adapter.
+- **[agentspec-claude-plugin/](agentspec-claude-plugin/)** — Claude Code adapter.
+
+---
+
+## Contributing / Development
+
+```bash
+git clone https://github.com/yimwoo/agent-spec.git
+cd agent-spec
+pip install -e .
+python -m unittest discover -s tests -v
 ```
 
-This distribution repository intentionally does not publish its own dogfood
-AgentSpec state. Public clones contain the CLI, tests, public docs, installer,
-and plugin packages. Generated `agent/`, `reports/`, `.codex/`, `.claude/`,
-`.agentspec/`, design, plan, traceability, and source snapshot artifacts stay
-local here and are ignored by Git.
+Or run the CLI without installing console scripts:
 
-## Human Guide
+```bash
+python -m agentspec.cli --help
+```
 
-Read [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for:
+---
 
-- bootstrapping a new project
-- exact CLI command sequences
-- code-agent lifecycle workflow
-- importing changing external sources
-- creating and executing task packs
-- recording verification and review evidence
-- finishing work and refreshing handoff/roadmap state
-- deciding what to commit
+## License
+
+License pending — see this repository's `pyproject.toml` for current metadata.
+Until a `LICENSE` file is published, treat the source as "all rights reserved
+by the author" and contact the maintainer for permitted use.
+
+---
+
+**Keywords:** AI coding agent · spec-driven development · agent operating contract · agent execution harness · Codex plugin · Claude Code plugin · agent governance · repo-local memory · supervised AI agent · iteration-bounded agent · LLM development workflow · AI pair programming · agent control plane
