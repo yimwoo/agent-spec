@@ -61,6 +61,7 @@ from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import build_project_status, format_project_status
 from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
+from .writeback import finish_task
 from .workflow import build_workflow_contract_status, create_or_link_native_workflow, workflow_warning_lines
 
 
@@ -159,6 +160,20 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     plan.add_argument("--from-task", dest="from_task", help="Task id or context pack path to plan from.")
     plan.add_argument("--current", action="store_true", help="Use the current next ready task context pack.")
     plan.add_argument("--json", action="store_true")
+
+    finish = subparsers.add_parser(
+        "finish",
+        help="Finish a task by orchestrating completion write-back.",
+        description="Finish a task by orchestrating completion write-back.",
+    )
+    finish.add_argument("selector", nargs="?", help="Task id (for example T-094) or context pack path.")
+    finish.add_argument("--current", action="store_true", help="Use the active or next current task context pack.")
+    finish.add_argument("--dry-run", action="store_true", help="Report finish readiness without mutating state.")
+    finish.add_argument("--run-id")
+    finish.add_argument("--reason", default="Finished by user.")
+    finish.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    finish.add_argument("--review", dest="review_id", help="Code review id to link before completion.")
+    finish.add_argument("--json", action="store_true")
 
     outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
@@ -615,6 +630,25 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(f"{action} workflow: {result['workflow_path']}")
                 print(f"Task pack: {result['task_pack']}")
                 print(f"Next: {result['next_command']}")
+            return 0
+
+        if args.command == "finish":
+            result = finish_task(
+                root,
+                args.selector,
+                current=args.current,
+                dry_run=args.dry_run,
+                run_id=args.run_id,
+                reason=args.reason,
+                test_status=args.test_status,
+                review_id=args.review_id,
+            )
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                _print_finish_result(result)
+            if result.get("dry_run") and result.get("enforcement") == "strict" and not result.get("finishable"):
+                return 1
             return 0
 
         if args.command == "outcome":
@@ -1128,6 +1162,23 @@ def _command_label(args: argparse.Namespace, prog: str) -> str:
     if cmd:
         parts.append(str(cmd))
     return " ".join(parts)
+
+
+def _print_finish_result(result: dict[str, Any]) -> None:
+    context_pack = result.get("context_pack", "-")
+    if result.get("dry_run"):
+        status = "finishable" if result.get("finishable") else "needs attention"
+        print(f"Finish dry-run for {context_pack}: {status} (enforcement={result.get('enforcement')}).")
+    else:
+        print(f"Finished {context_pack} via run {result.get('run_id')}.")
+    for finding in result.get("findings", []):
+        if not isinstance(finding, dict):
+            continue
+        message = finding.get("message") or finding.get("type") or "Finish finding"
+        print(f"Warning: {message}")
+        repair = finding.get("repair") or finding.get("recommendation")
+        if repair:
+            print(f"Repair: {repair}")
 
 
 def _dispatch_next_action(root: Path) -> int:

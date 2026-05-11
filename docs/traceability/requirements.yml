@@ -5700,5 +5700,60 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-198",
+    "title": "AgentSpec exposes a finish orchestrator over completion write-back",
+    "description": "AgentSpec provides an `aspec finish` command that orchestrates existing task completion, write-back verification, review linkage, handoff, ledger, and roadmap behavior without introducing a parallel finish state or durable schema.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-17",
+      "lifecycle-engine-hardening-design:D-20.3",
+      "lifecycle-engine-hardening-design:D-21"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0063",
+    "acceptance": [
+      "aspec finish <task-selector> can complete a task through existing write-back and task completion formats.",
+      "aspec finish --dry-run <task-selector> reports whether a task is finishable without mutating ledger, handoff, run, or roadmap state.",
+      "Finish output includes repair commands when ledger, handoff, review, verification, or roadmap evidence is missing or stale.",
+      "Finish reuses existing review evidence and ledger schemas.",
+      "Strict mode is opt-in through config and fails completion when finish readiness findings remain.",
+      "Existing aspec task complete and supervised run completion behavior remains backward compatible.",
+      "Tests cover finish completion, dry-run diagnostics, strict-mode failure, and compatibility with shared write-back helpers."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/run.py",
+      "agentspec/writeback.py",
+      "agentspec/task.py",
+      "agentspec/status.py"
+    ],
+    "test_targets": [
+      "tests/test_finish_cli.py",
+      "tests/test_task_completion.py",
+      "tests/test_writeback.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-094-add-finish-orchestrator.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/doctor/repo-scan.yml",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml",
+      "docs/change-requests/DCR-0063-add-finish-orchestrator.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

@@ -10,7 +10,21 @@ from .roadmap import ROADMAP_PATH, check_roadmap
 LIFECYCLE_STATUS_SCHEMA = "agentspec.lifecycle_status.v0"
 COMPLETION_PROJECTION_SCHEMA = "agentspec.completion_projection.v0"
 WRITEBACK_VERIFICATION_SCHEMA = "agentspec.writeback_verification.v0"
+FINISH_PROJECTION_SCHEMA = "agentspec.finish_projection.v0"
+FINISH_RESULT_SCHEMA = "agentspec.finish_result.v0"
 PASSING_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
+FINISH_ENFORCEMENTS = frozenset({"warn", "strict"})
+
+
+class FinishBlockedError(ValueError):
+    """Raised when strict finish enforcement blocks task completion."""
+
+    def __init__(self, message: str, projection: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.projection = projection
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"projection": self.projection}
 
 
 def build_completion_projection(root: Path, task_selector: str | Path) -> dict[str, Any]:
@@ -135,6 +149,169 @@ def verify_writeback(root: Path, completion: dict[str, Any] | str | Path) -> dic
         "findings": findings,
         "projection": projection,
     }
+
+
+def build_finish_projection(
+    root: Path,
+    task_selector: str | Path | None = None,
+    *,
+    current: bool = False,
+    test_status: str = "not_run",
+    review_id: str | None = None,
+) -> dict[str, Any]:
+    """Build preflight and current write-back diagnostics for a finish request."""
+
+    root = root.resolve()
+    context_pack = resolve_finish_selector(root, task_selector, current=current)
+    enforcement = _finish_enforcement(root)
+    findings: list[dict[str, Any]] = []
+    code_review = None
+
+    if test_status != "passed":
+        findings.append(
+            {
+                "type": "missing_verification",
+                "severity": "warning",
+                "context_pack": context_pack,
+                "message": f"Finish verification has not passed; got {test_status!r}.",
+                "repair": f"aspec finish {context_pack} --test-status passed --review REVIEW-####",
+                "blocks_strict": True,
+            }
+        )
+
+    if review_id:
+        try:
+            from .review import validate_completion_review
+
+            code_review = validate_completion_review(root, review_id, context_pack=context_pack)
+        except Exception as exc:
+            findings.append(
+                {
+                    "type": "invalid_review",
+                    "severity": "warning",
+                    "context_pack": context_pack,
+                    "review_id": review_id,
+                    "message": str(exc),
+                    "repair": f"aspec review code --task {context_pack}",
+                    "blocks_strict": True,
+                }
+            )
+    else:
+        findings.append(
+            {
+                "type": "missing_review",
+                "severity": "warning",
+                "context_pack": context_pack,
+                "message": "Finish has no linked code review evidence.",
+                "repair": f"aspec review code --task {context_pack}",
+                "blocks_strict": True,
+            }
+        )
+
+    current_writeback = verify_writeback(root, context_pack)
+    writeback_findings = _finish_writeback_findings(
+        current_writeback.get("findings"),
+        context_pack=context_pack,
+    )
+    findings.extend(writeback_findings)
+    strict_blockers = [finding for finding in findings if finding.get("blocks_strict") is True]
+    return {
+        "schema": FINISH_PROJECTION_SCHEMA,
+        "context_pack": context_pack,
+        "task_id": _task_id_from_context_pack(context_pack),
+        "enforcement": enforcement,
+        "finishable": not strict_blockers,
+        "test_status": test_status,
+        "code_review": code_review,
+        "findings": findings,
+        "strict_blockers": strict_blockers,
+        "writeback": current_writeback,
+    }
+
+
+def finish_task(
+    root: Path,
+    task_selector: str | Path | None = None,
+    *,
+    current: bool = False,
+    dry_run: bool = False,
+    run_id: str | None = None,
+    reason: str = "Finished by user.",
+    test_status: str = "not_run",
+    review_id: str | None = None,
+) -> dict[str, Any]:
+    """Orchestrate task finish through existing completion and write-back APIs."""
+
+    root = root.resolve()
+    projection = build_finish_projection(
+        root,
+        task_selector,
+        current=current,
+        test_status=test_status,
+        review_id=review_id,
+    )
+    if dry_run:
+        return {
+            "schema": FINISH_RESULT_SCHEMA,
+            "dry_run": True,
+            "completed": False,
+            "context_pack": projection["context_pack"],
+            "enforcement": projection["enforcement"],
+            "finishable": projection["finishable"],
+            "findings": projection["findings"],
+            "projection": projection,
+        }
+
+    if projection["enforcement"] == "strict" and projection["strict_blockers"]:
+        raise FinishBlockedError(
+            "Finish blocked by strict enforcement; resolve findings or switch finish.enforcement to warn.",
+            projection,
+        )
+
+    from .run import complete_context_pack_run
+
+    state = complete_context_pack_run(
+        root,
+        str(projection["context_pack"]),
+        run_id=run_id,
+        reason=reason,
+        test_status=test_status,
+        review_id=review_id,
+    )
+    roadmap_path = update_roadmap(root)
+    verification = verify_writeback(root, state)
+    return {
+        "schema": FINISH_RESULT_SCHEMA,
+        "dry_run": False,
+        "completed": True,
+        "context_pack": state["context_pack"],
+        "run_id": state["run_id"],
+        "enforcement": projection["enforcement"],
+        "finishable": projection["finishable"],
+        "findings": projection["findings"],
+        "state": state,
+        "roadmap": str(roadmap_path.relative_to(root)),
+        "writeback": verification,
+    }
+
+
+def resolve_finish_selector(
+    root: Path,
+    task_selector: str | Path | None = None,
+    *,
+    current: bool = False,
+) -> str:
+    root = root.resolve()
+    if current and task_selector is not None:
+        raise ValueError("Select a finish task with either <task-selector> or --current, not both.")
+    if current:
+        selected = _current_finish_context_pack(root)
+        if selected is None:
+            raise ValueError("No current task context pack found for finish.")
+        return selected
+    if task_selector is None:
+        raise ValueError("Finish requires <task-selector> or --current.")
+    return _relative_or_absolute(root, _resolve_context_pack_selector(root, task_selector))
 
 
 def build_lifecycle_projection(
@@ -404,6 +581,81 @@ def _selected_handoff_warning(
     return None
 
 
+def _finish_writeback_findings(
+    findings: Any,
+    *,
+    context_pack: str,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for finding in _list(findings):
+        copied = dict(finding)
+        copied.setdefault("context_pack", context_pack)
+        copied["source"] = "writeback"
+        copied["blocks_strict"] = False
+        if copied.get("type") == "missing_ledger":
+            copied["repair"] = f"aspec finish {context_pack} --test-status passed --review REVIEW-####"
+        elif copied.get("type") in {"missing_handoff", "stale_handoff"}:
+            copied["repair"] = f"aspec finish {context_pack} --test-status passed --review REVIEW-####"
+        elif copied.get("type") == "stale_roadmap":
+            copied["repair"] = "aspec roadmap"
+        results.append(copied)
+    return results
+
+
+def _finish_enforcement(root: Path) -> str:
+    config = load_data(root / ".agentspec" / "config.yml", {}) or {}
+    if not isinstance(config, dict):
+        return "warn"
+    finish = config.get("finish") if isinstance(config.get("finish"), dict) else {}
+    lifecycle = config.get("lifecycle") if isinstance(config.get("lifecycle"), dict) else {}
+    raw = finish.get("enforcement") or lifecycle.get("finish_enforcement") or "warn"
+    enforcement = str(raw)
+    if enforcement == "block":
+        enforcement = "strict"
+    if enforcement not in FINISH_ENFORCEMENTS:
+        allowed = ", ".join(sorted(FINISH_ENFORCEMENTS))
+        raise ValueError(f"finish.enforcement must be one of: {allowed}.")
+    return enforcement
+
+
+def _current_finish_context_pack(root: Path) -> str | None:
+    active = _active_run_context_packs(root)
+    if len(active) == 1:
+        return active[0]
+    if len(active) > 1:
+        raise ValueError("Multiple active runs found; finish requires an explicit task selector.")
+
+    from .task import next_task_context_pack
+
+    next_task = next_task_context_pack(root)
+    if isinstance(next_task, dict) and next_task.get("path"):
+        return str(next_task["path"])
+
+    handoff = load_data(root / "agent" / "handoff.yml", {}) or {}
+    last = handoff.get("last_completed_task") if isinstance(handoff, dict) else {}
+    context_pack = last.get("context_pack") if isinstance(last, dict) else None
+    return context_pack if isinstance(context_pack, str) and context_pack else None
+
+
+def _active_run_context_packs(root: Path) -> list[str]:
+    run_root = root / "agent" / "runs"
+    states: list[tuple[str, str]] = []
+    if not run_root.exists():
+        return []
+    for state_path in run_root.glob("*/state.yml"):
+        state = load_data(state_path, {}) or {}
+        if not isinstance(state, dict):
+            continue
+        if state.get("status") not in {"started", "running", "paused"}:
+            continue
+        context_pack = state.get("context_pack")
+        updated_at = state.get("updated_at")
+        if isinstance(context_pack, str) and context_pack:
+            states.append((str(updated_at or ""), context_pack))
+    states.sort(reverse=True)
+    return [context_pack for _, context_pack in states]
+
+
 def _handoff_summary_for_task(handoff: Any, context_pack: str) -> dict[str, Any]:
     if not isinstance(handoff, dict) or not handoff:
         return {"present": False, "matches_task": False}
@@ -442,7 +694,10 @@ def _resolve_context_pack(root: Path, context_pack: Path) -> Path:
 
 def _task_id_from_context_pack(context_pack: str) -> str | None:
     name = Path(context_pack).name
-    return name.split("-", 1)[0] if name.startswith("T-") else None
+    parts = name.split("-", 2)
+    if len(parts) >= 2 and parts[0] == "T" and parts[1].isdigit():
+        return f"{parts[0]}-{parts[1]}"
+    return None
 
 
 def _required_string(payload: dict[str, Any], key: str) -> str:
