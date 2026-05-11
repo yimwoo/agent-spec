@@ -838,10 +838,27 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             record = next_task_context_pack(root, task_type=args.type, order=args.order)
             if record is None:
                 warnings = workflow_warning_lines(build_workflow_contract_status(root))
+                status_payload = build_project_status(root, recent_limit=0)
+                summary = status_payload.get("lifecycle_summary") if isinstance(status_payload, dict) else {}
+                summary = summary if isinstance(summary, dict) else {}
+                summary = _task_next_no_ready_summary(summary, args.type)
+                action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
+                commands = action.get("commands") if isinstance(action.get("commands"), list) else []
                 if args.json:
-                    print(json.dumps({"task": None, "workflow_warnings": warnings}, indent=2))
+                    print(
+                        json.dumps(
+                            {
+                                "task": None,
+                                "reason": summary.get("main_point", "No ready task context pack found."),
+                                "next_commands": commands,
+                                "lifecycle_summary": summary,
+                                "workflow_warnings": warnings,
+                            },
+                            indent=2,
+                        )
+                    )
                 else:
-                    print("No ready task context pack found.")
+                    _print_no_ready_task(summary, warnings)
                     for warning in warnings:
                         print(f"Warning: {warning}")
                 return 1
@@ -1221,6 +1238,55 @@ def _print_finish_result(result: dict[str, Any]) -> None:
         repair = finding.get("repair") or finding.get("recommendation")
         if repair:
             print(f"Repair: {repair}")
+
+
+def _print_no_ready_task(summary: dict[str, Any], warnings: list[str]) -> None:
+    action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
+    commands = action.get("commands") if isinstance(action.get("commands"), list) else []
+    reason = action.get("reason") or summary.get("main_point") or "No ready task context pack found."
+    print("No ready task context pack found.")
+    print(f"Why: {reason}")
+    print(f"Recommended next action: {action.get('label', 'Prepare the next AgentSpec task context pack.')}")
+    if commands:
+        print("Agent-safe next commands:")
+        for command in commands:
+            print(f"- {command}")
+    if warnings:
+        print("Workflow warnings:")
+
+
+def _task_next_no_ready_summary(summary: dict[str, Any], task_type: str | None) -> dict[str, Any]:
+    if not task_type:
+        return summary
+    main_point = f"No {task_type} task context pack is ready."
+    blocked_by = summary.get("blocked_by") if isinstance(summary.get("blocked_by"), list) else []
+    updated = dict(summary)
+    updated.update(
+        {
+            "main_point": main_point,
+            "current_stage": "task_type_unavailable",
+            "current_artifact": None,
+            "recommended_next_action": {
+                "label": f"Create or select a ready {task_type} task context pack.",
+                "human_decision_required": True,
+                "reason": f"The --type {task_type} filter excludes all currently ready context packs.",
+                "commands": [
+                    f"aspec task list --type {task_type}",
+                    f"aspec task create --type {task_type} --title <title>",
+                    "aspec status --json",
+                ],
+            },
+            "blocked_by": [
+                {
+                    "kind": "no_ready_task_type",
+                    "message": main_point,
+                    "task_type": task_type,
+                },
+                *blocked_by,
+            ],
+        }
+    )
+    return updated
 
 
 def _dispatch_next_action(root: Path) -> int:

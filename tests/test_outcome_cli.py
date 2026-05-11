@@ -31,6 +31,11 @@ class OutcomeCliTests(unittest.TestCase):
 
             text = format_outcome_status(status)
             self.assertIn("Readiness: blocked", text)
+            self.assertIn("Required gates are evidence checks", text)
+            self.assertIn("Ready Required Gates:", text)
+            self.assertIn("O-001/G-001: Backend run API works", text)
+            self.assertIn("Not Ready Required Gates:", text)
+            self.assertIn("O-001/G-002: Live per-step UI status works [blocked]", text)
             self.assertIn("O-001/G-002", text)
             self.assertIn("Wire real Run Detail to SSE", text)
 

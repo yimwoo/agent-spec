@@ -55,6 +55,23 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIsNotNone(record)
             self.assertEqual(record["id"], "T-004")
 
+    def test_cli_task_next_json_does_not_recommend_unfiltered_ready_task(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--type", "review", "--json"])
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertIsNone(payload["task"])
+            self.assertEqual(payload["lifecycle_summary"]["current_stage"], "task_type_unavailable")
+            self.assertIn("No review task context pack is ready", payload["reason"])
+            self.assertNotIn("T-004", payload["reason"])
+            self.assertIn("aspec task list --type review", payload["next_commands"])
+
     def test_cli_task_list_json_and_next(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -110,8 +127,33 @@ class TaskQueueTests(unittest.TestCase):
 
             self.assertEqual(code, 1)
             self.assertIn("No ready task context pack found", output.getvalue())
+            self.assertIn("Why:", output.getvalue())
+            self.assertIn("Recommended next action:", output.getvalue())
+            self.assertIn("Agent-safe next commands:", output.getvalue())
             self.assertIn("Warning: Legacy execution plan without task pack", output.getvalue())
             self.assertIn("aspec task create --from-workflow docs/plans/phase-five-workflow.md", output.getvalue())
+
+    def test_cli_task_next_json_explains_no_ready_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 45, "mode": "discovery+spike", "summary": "Readiness is 45/100."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--json"])
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertIsNone(payload["task"])
+            self.assertEqual(payload["lifecycle_summary"]["current_stage"], "source_or_requirements_needed")
+            self.assertIn("No implementation task is ready", payload["reason"])
+            self.assertIn("aspec status --json", payload["next_commands"])
 
     def test_task_create_help_uses_native_workflow_wording(self) -> None:
         output = io.StringIO()
