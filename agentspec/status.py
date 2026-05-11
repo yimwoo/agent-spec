@@ -54,6 +54,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "total": len(requirements),
         "by_status": _counts(record.get("status") for record in requirements),
         "by_priority": _counts(record.get("priority") for record in requirements),
+        "accepted_examples": _requirement_examples(requirements, status="accepted"),
     }
     dcr_counts = {
         "total": len(dcrs),
@@ -243,7 +244,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             "score": outcomes.get("score"),
             "summary": outcomes.get("summary"),
         },
-        "recommended_next_action": action,
+        "recommended_next_action": _with_agent_display(action),
         "blocked_by": blocked_by,
         "terms": _lifecycle_terms(),
     }
@@ -528,6 +529,7 @@ def _summary_lines(summary: dict[str, Any]) -> list[str]:
     action = _dict_or_empty(summary.get("recommended_next_action"))
     readiness = _dict_or_empty(summary.get("readiness"))
     commands = _string_list(action.get("commands"))
+    options = _list_or_empty(action.get("options"))
     lines = [
         f"Main point: {summary.get('main_point', '-')}",
         f"Lifecycle state: current={summary.get('current_stage', 'unknown')}; next={action.get('label', '-')}",
@@ -540,7 +542,18 @@ def _summary_lines(summary: dict[str, Any]) -> list[str]:
     if explanation:
         lines.append(f"Readiness meaning: {explanation}")
     if commands:
-        lines.append(f"Agent-safe next commands: {', '.join(commands)}")
+        lines.append("Terminal next commands:")
+        lines.extend(f"- {command}" for command in commands)
+    if options:
+        lines.append("Next options:")
+        for index, option in enumerate(options, start=1):
+            label = option.get("label") or f"Option {index}"
+            when = option.get("when")
+            lines.append(f"{index}. {label}")
+            if when:
+                lines.append(f"   Use when: {when}")
+            option_commands = _string_list(option.get("commands"))
+            lines.extend(f"   - {command}" for command in option_commands)
     lines.append("")
     return lines
 
@@ -594,6 +607,10 @@ def _no_ready_task_summary(
 ) -> tuple[str, str, list[dict[str, Any]], dict[str, Any]]:
     score = readiness.get("score")
     accepted_requirements = _status_count(requirements, "accepted")
+    accepted_examples = _list_or_empty(requirements.get("accepted_examples"))
+    example_requirement = accepted_examples[0] if accepted_examples else {}
+    requirement_id = str(example_requirement.get("id") or "R-001")
+    requirement_title = str(example_requirement.get("title") or "next accepted requirement")
     total_tasks = int(tasks.get("total", 0) or 0)
     classified_dcrs = _status_count(dcrs, "classified")
     accepted_dcrs = _status_count(dcrs, "accepted")
@@ -602,7 +619,19 @@ def _no_ready_task_summary(
         stage = "source_or_requirements_needed"
         main_point = "No implementation task is ready because AgentSpec has no accepted requirements yet."
         reason = "Accepted requirements must exist before AgentSpec can create a scoped implementation task."
-        commands = ["aspec status --json", "aspec ingest <design.md>", "aspec compile"]
+        commands = ["aspec status", "aspec status --json", "aspec ingest docs/source/design.md", "aspec compile"]
+        options = [
+            {
+                "label": "Import design/source material",
+                "when": "You already have a design, spec, issue, or Markdown note that should become AgentSpec source.",
+                "commands": ["aspec ingest docs/source/design.md", "aspec compile", "aspec status"],
+            },
+            {
+                "label": "Inspect current state",
+                "when": "You need to see why no requirements are accepted yet.",
+                "commands": ["aspec status", "aspec status --json"],
+            },
+        ]
     elif isinstance(score, int) and score < IMPLEMENTATION_READINESS_GATE:
         stage = "implementation_readiness_blocked"
         main_point = (
@@ -610,17 +639,79 @@ def _no_ready_task_summary(
             f"the {IMPLEMENTATION_READINESS_GATE}/100 implementation gate."
         )
         reason = "Resolve readiness blockers with discovery, spike, or scaffold work before creating production implementation tasks."
-        commands = ["aspec readiness", "aspec task create --type spike --title <title>", "aspec status --json"]
+        commands = [
+            "aspec status",
+            'aspec task create --type spike --title "Resolve readiness blockers"',
+            "aspec task next",
+        ]
+        options = [
+            {
+                "label": "Create a spike task",
+                "when": "The next step is investigation or design cleanup before production implementation is safe.",
+                "commands": [
+                    'aspec task create --type spike --title "Resolve readiness blockers"',
+                    "aspec task next",
+                ],
+            },
+            {
+                "label": "Recompile source after updating design inputs",
+                "when": "The readiness score is stale or source material was just revised.",
+                "commands": ["aspec compile", "aspec status"],
+            },
+        ]
     elif total_tasks == 0:
         stage = "task_context_needed"
         main_point = "No implementation task is ready because accepted requirements have not been converted into task context packs."
         reason = "A code agent needs a task context pack before it can safely edit files."
-        commands = ["aspec task create --requirement <R-id> --type implementation --title <title>", "aspec task next"]
+        commands = [
+            f'aspec task create --requirement {requirement_id} --type implementation --title "Implement {requirement_title}"',
+            "aspec task next",
+        ]
+        options = [
+            {
+                "label": f"Create an implementation task for {requirement_id}",
+                "when": "You want a code agent to start from an accepted requirement.",
+                "commands": commands,
+            },
+            {
+                "label": "Review accepted requirements before tasking",
+                "when": "You are not sure which requirement should be implemented next.",
+                "commands": ["aspec status --json"],
+            },
+        ]
     else:
         stage = "idle_no_ready_task"
         main_point = "No implementation task is ready; all known task context packs are complete, halted, or otherwise not executable."
         reason = "Create or classify the next DCR/task, or choose autonomous research mode if there is no known implementation scope."
-        commands = ["aspec status --json", "aspec dcr create --title <title> --classification implement-now", "aspec task next"]
+        followup_title = "Define the next AgentSpec improvement"
+        commands = [
+            f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
+            "aspec task next",
+            f'aspec dcr create --title "{followup_title}" --classification implement-now',
+        ]
+        options = [
+            {
+                "label": f"Create a follow-up task for {requirement_id}",
+                "when": "Existing accepted scope still needs another implementation slice.",
+                "commands": [
+                    f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
+                    "aspec task next",
+                ],
+            },
+            {
+                "label": "Capture a new change request",
+                "when": "The next work is a new idea, bug, or product change that is not yet represented by a requirement.",
+                "commands": [
+                    f'aspec dcr create --title "{followup_title}" --classification implement-now',
+                    "aspec status",
+                ],
+            },
+            {
+                "label": "Inspect the project before choosing",
+                "when": "You want to decide manually from current DCRs, requirements, runs, and outcomes.",
+                "commands": ["aspec status", "aspec outcome", "aspec task list"],
+            },
+        ]
 
     blocked_by = [
         {
@@ -636,8 +727,68 @@ def _no_ready_task_summary(
         "human_decision_required": True,
         "reason": reason,
         "commands": commands,
+        "options": options,
     }
     return stage, main_point, blocked_by, action
+
+
+def agent_display_for_next_action(action: dict[str, Any]) -> dict[str, Any]:
+    """Return command-free next-action text for code-agent user replies."""
+
+    options = []
+    for index, option in enumerate(_list_or_empty(action.get("options")), start=1):
+        options.append(
+            {
+                "label": str(option.get("label") or f"Option {index}"),
+                "when": str(option.get("when") or "").strip() or None,
+            }
+        )
+    return {
+        "label": str(action.get("label") or "Choose the next AgentSpec action."),
+        "reason": str(action.get("reason") or "").strip() or None,
+        "requires_human_reply": bool(action.get("human_decision_required")),
+        "show_terminal_commands": False,
+        "guidance": (
+            "For Codex or Claude Code responses, present this as plain-language next action "
+            "guidance and keep raw terminal commands internal unless the user asks for them."
+        ),
+        "options": options,
+    }
+
+
+def _with_agent_display(action: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(action)
+    updated["agent_display"] = agent_display_for_next_action(updated)
+    return updated
+
+
+def _requirement_examples(
+    requirements: list[dict[str, Any]],
+    *,
+    status: str,
+    limit: int = 3,
+) -> list[dict[str, str]]:
+    examples: list[dict[str, str]] = []
+    for requirement in reversed(requirements):
+        if str(requirement.get("status") or "") != status:
+            continue
+        requirement_id = requirement.get("id")
+        if not requirement_id:
+            continue
+        examples.append(
+            {
+                "id": str(requirement_id),
+                "title": _shell_title(str(requirement.get("title") or requirement_id)),
+            }
+        )
+        if len(examples) >= limit:
+            break
+    return examples
+
+
+def _shell_title(value: str) -> str:
+    cleaned = " ".join(value.replace('"', "'").split())
+    return cleaned[:80] if len(cleaned) > 80 else cleaned
 
 
 def _status_count(section: dict[str, Any], key: str) -> int:

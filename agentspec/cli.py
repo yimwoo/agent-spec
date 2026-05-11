@@ -61,7 +61,7 @@ from .source_registry import (
 )
 from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
-from .status import build_project_status, format_project_status
+from .status import agent_display_for_next_action, build_project_status, format_project_status
 from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
 from .writeback import finish_task
 from .workflow import build_workflow_contract_status, create_or_link_native_workflow, workflow_warning_lines
@@ -844,6 +844,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 summary = _task_next_no_ready_summary(summary, args.type)
                 action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
                 commands = action.get("commands") if isinstance(action.get("commands"), list) else []
+                options = action.get("options") if isinstance(action.get("options"), list) else []
+                agent_next_action = (
+                    action.get("agent_display")
+                    if isinstance(action.get("agent_display"), dict)
+                    else agent_display_for_next_action(action)
+                )
                 if args.json:
                     print(
                         json.dumps(
@@ -851,6 +857,8 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                                 "task": None,
                                 "reason": summary.get("main_point", "No ready task context pack found."),
                                 "next_commands": commands,
+                                "next_options": options,
+                                "agent_next_action": agent_next_action,
                                 "lifecycle_summary": summary,
                                 "workflow_warnings": warnings,
                             },
@@ -1243,14 +1251,27 @@ def _print_finish_result(result: dict[str, Any]) -> None:
 def _print_no_ready_task(summary: dict[str, Any], warnings: list[str]) -> None:
     action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
     commands = action.get("commands") if isinstance(action.get("commands"), list) else []
+    options = action.get("options") if isinstance(action.get("options"), list) else []
     reason = action.get("reason") or summary.get("main_point") or "No ready task context pack found."
     print("No ready task context pack found.")
     print(f"Why: {reason}")
     print(f"Recommended next action: {action.get('label', 'Prepare the next AgentSpec task context pack.')}")
     if commands:
-        print("Agent-safe next commands:")
+        print("Terminal next commands:")
         for command in commands:
             print(f"- {command}")
+    if options:
+        print("Next options:")
+        for index, option in enumerate(options, start=1):
+            if not isinstance(option, dict):
+                continue
+            print(f"{index}. {option.get('label', f'Option {index}')}")
+            when = option.get("when")
+            if when:
+                print(f"   Use when: {when}")
+            option_commands = option.get("commands") if isinstance(option.get("commands"), list) else []
+            for command in option_commands:
+                print(f"   - {command}")
     if warnings:
         print("Workflow warnings:")
 
@@ -1261,21 +1282,23 @@ def _task_next_no_ready_summary(summary: dict[str, Any], task_type: str | None) 
     main_point = f"No {task_type} task context pack is ready."
     blocked_by = summary.get("blocked_by") if isinstance(summary.get("blocked_by"), list) else []
     updated = dict(summary)
+    action = {
+        "label": f"Create or select a ready {task_type} task context pack.",
+        "human_decision_required": True,
+        "reason": f"The --type {task_type} filter excludes all currently ready context packs.",
+        "commands": [
+            f"aspec task list --type {task_type}",
+            f'aspec task create --type {task_type} --title "Prepare {task_type} work"',
+            "aspec status --json",
+        ],
+    }
+    action["agent_display"] = agent_display_for_next_action(action)
     updated.update(
         {
             "main_point": main_point,
             "current_stage": "task_type_unavailable",
             "current_artifact": None,
-            "recommended_next_action": {
-                "label": f"Create or select a ready {task_type} task context pack.",
-                "human_decision_required": True,
-                "reason": f"The --type {task_type} filter excludes all currently ready context packs.",
-                "commands": [
-                    f"aspec task list --type {task_type}",
-                    f"aspec task create --type {task_type} --title <title>",
-                    "aspec status --json",
-                ],
-            },
+            "recommended_next_action": action,
             "blocked_by": [
                 {
                     "kind": "no_ready_task_type",
@@ -1327,7 +1350,9 @@ def _dispatch_next_action(root: Path) -> int:
             print(f"Status: {state['status']}.")
         return 0
 
-    print(status_payload.get("recommendation"))
+    summary = status_payload.get("lifecycle_summary") if isinstance(status_payload.get("lifecycle_summary"), dict) else {}
+    workflows = status_payload.get("workflows") if isinstance(status_payload.get("workflows"), dict) else {}
+    _print_no_ready_task(summary, workflow_warning_lines(workflows))
     return 1
 
 

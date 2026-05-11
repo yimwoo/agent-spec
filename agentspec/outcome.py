@@ -69,6 +69,7 @@ def build_outcome_status(root: Path) -> dict[str, Any]:
         "outcomes": normalized,
         "blockers": _blockers(normalized),
         "next_actions": next_actions,
+        "agent_next_actions": _agent_next_actions(next_actions),
     }
 
 
@@ -302,7 +303,21 @@ def _next_actions(outcomes: list[dict[str, Any]], *, configured: bool) -> list[s
             action = gate.get("next_action")
             if gate.get("required") and gate.get("status") not in READY_GATE_STATUSES and action:
                 actions.append(str(action))
+    if not actions:
+        return ["No outcome gate action is required; run `aspec status` to choose the next lifecycle action."]
     return _dedupe(actions)
+
+
+def _agent_next_actions(actions: list[str]) -> list[str]:
+    agent_actions: list[str] = []
+    for action in actions:
+        if "aspec " in action:
+            agent_actions.append(
+                "No outcome gate action is required; choose the next lifecycle action from project status."
+            )
+        else:
+            agent_actions.append(action)
+    return _dedupe(agent_actions)
 
 
 def _evidence(value: Any) -> list[dict[str, Any]]:

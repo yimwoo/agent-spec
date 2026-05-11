@@ -93,12 +93,106 @@ class StatusCLITests(unittest.TestCase):
             self.assertIn("No implementation task is ready", summary["main_point"])
             self.assertTrue(summary["recommended_next_action"]["human_decision_required"])
             self.assertIn("aspec status --json", summary["recommended_next_action"]["commands"])
+            agent_display = summary["recommended_next_action"]["agent_display"]
+            self.assertFalse(agent_display["show_terminal_commands"])
+            self.assertNotIn("aspec", json.dumps(agent_display).lower())
             self.assertIn("SRC-*", summary["terms"])
             self.assertEqual(summary["readiness"]["implementation_gate"], 60)
 
             text = format_project_status(status)
             self.assertIn("Implementation gate: readiness 45/100 is below 60/100", text)
             self.assertIn("Mode: discovery+spike", text)
+
+    def test_status_no_ready_task_gives_concrete_human_options(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [
+                    {
+                        "id": "R-209",
+                        "status": "accepted",
+                        "priority": "P1",
+                        "title": "AgentSpec explains lifecycle summaries and next actions",
+                    }
+                ],
+            )
+            (root / "agent" / "context-packs" / "T-001-complete.md").write_text(
+                "# T-001: Complete\n\nType: `implementation`\n",
+                encoding="utf-8",
+            )
+            (root / "agent" / "reviews").mkdir()
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {
+                        "selector": "T-001",
+                        "context_pack": "agent/context-packs/T-001-complete.md",
+                    },
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "updated_at": "2026-05-01T00:00:00Z",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                        }
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-01T00:00:00Z",
+                    "last_completed_task": {
+                        "id": "T-001",
+                        "context_pack": "agent/context-packs/T-001-complete.md",
+                        "run_id": "run-001",
+                    },
+                    "code_review": {"id": "REVIEW-0001"},
+                    "current_state": {
+                        "requirements": {"total": 1},
+                        "dcrs": {"total": 0},
+                        "tasks": {"total": 1},
+                    },
+                    "next_action": {"kind": "idle", "command": "aspec status --json"},
+                },
+            )
+
+            status = build_project_status(root)
+            action = status["lifecycle_summary"]["recommended_next_action"]
+
+            self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+            self.assertTrue(action["options"])
+            self.assertIn("R-209", action["commands"][0])
+            self.assertNotIn("<title>", "\n".join(action["commands"]))
+            self.assertFalse(action["agent_display"]["show_terminal_commands"])
+            self.assertIn("Create a follow-up task for R-209", json.dumps(action["agent_display"]))
+            self.assertNotIn("aspec", json.dumps(action["agent_display"]).lower())
+
+            text = format_project_status(status)
+            self.assertIn("Terminal next commands:", text)
+            self.assertIn("Next options:", text)
+            self.assertIn("Create a follow-up task for R-209", text)
+            self.assertIn('aspec task create --requirement R-209 --type implementation', text)
+            self.assertNotIn("<title>", text)
 
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -231,6 +325,8 @@ class StatusCLITests(unittest.TestCase):
 
             self.assertEqual(code, 1)
             self.assertIn("No ready task context pack found", output.getvalue())
+            self.assertIn("Next options:", output.getvalue())
+            self.assertIn("aspec ingest docs/source/design.md", output.getvalue())
 
     def test_status_surfaces_orphan_workflow_warning(self) -> None:
         with tempfile.TemporaryDirectory() as td:

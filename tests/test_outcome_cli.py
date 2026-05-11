@@ -61,6 +61,28 @@ class OutcomeCliTests(unittest.TestCase):
             self.assertIn("AgentSpec Product Outcomes", human_output.getvalue())
             self.assertIn("required gates 1/2", human_output.getvalue())
 
+    def test_ready_outcome_still_points_to_next_lifecycle_action(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_ready_outcomes(root)
+
+            status = build_outcome_status(root)
+
+            self.assertEqual(status["readiness"], "ready")
+            self.assertEqual(
+                status["next_actions"],
+                ["No outcome gate action is required; run `aspec status` to choose the next lifecycle action."],
+            )
+            self.assertEqual(
+                status["agent_next_actions"],
+                ["No outcome gate action is required; choose the next lifecycle action from project status."],
+            )
+            self.assertNotIn("aspec", "\n".join(status["agent_next_actions"]).lower())
+
+            text = format_outcome_status(status)
+            self.assertIn("Next Actions:", text)
+            self.assertIn("aspec status", text)
+
     def test_status_includes_outcome_readiness(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -99,6 +121,30 @@ def _write_blocked_outcomes(root: Path) -> None:
                             "required": True,
                             "next_action": "Wire real Run Detail to SSE",
                         },
+                    ],
+                }
+            ],
+        },
+    )
+
+
+def _write_ready_outcomes(root: Path) -> None:
+    write_data(
+        root / "agent" / "outcomes.yml",
+        {
+            "schema": "agentspec.outcomes.v0",
+            "outcomes": [
+                {
+                    "id": "O-001",
+                    "title": "Run existing YAML testcase E2E",
+                    "gates": [
+                        {
+                            "id": "G-001",
+                            "title": "Backend run API works",
+                            "status": "passed",
+                            "required": True,
+                            "evidence": [{"kind": "pytest", "path": "tests/test_run.py"}],
+                        }
                     ],
                 }
             ],

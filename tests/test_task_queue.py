@@ -71,6 +71,10 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIn("No review task context pack is ready", payload["reason"])
             self.assertNotIn("T-004", payload["reason"])
             self.assertIn("aspec task list --type review", payload["next_commands"])
+            self.assertIn('aspec task create --type review --title "Prepare review work"', payload["next_commands"])
+            self.assertNotIn("<title>", "\n".join(payload["next_commands"]))
+            self.assertFalse(payload["agent_next_action"]["show_terminal_commands"])
+            self.assertNotIn("aspec", json.dumps(payload["agent_next_action"]).lower())
 
     def test_cli_task_list_json_and_next(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -129,7 +133,7 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIn("No ready task context pack found", output.getvalue())
             self.assertIn("Why:", output.getvalue())
             self.assertIn("Recommended next action:", output.getvalue())
-            self.assertIn("Agent-safe next commands:", output.getvalue())
+            self.assertIn("Terminal next commands:", output.getvalue())
             self.assertIn("Warning: Legacy execution plan without task pack", output.getvalue())
             self.assertIn("aspec task create --from-workflow docs/plans/phase-five-workflow.md", output.getvalue())
 
@@ -154,6 +158,11 @@ class TaskQueueTests(unittest.TestCase):
             self.assertEqual(payload["lifecycle_summary"]["current_stage"], "source_or_requirements_needed")
             self.assertIn("No implementation task is ready", payload["reason"])
             self.assertIn("aspec status --json", payload["next_commands"])
+            self.assertIn("next_options", payload)
+            self.assertTrue(payload["next_options"])
+            self.assertIn("agent_next_action", payload)
+            self.assertFalse(payload["agent_next_action"]["show_terminal_commands"])
+            self.assertNotIn("aspec", json.dumps(payload["agent_next_action"]).lower())
 
     def test_task_create_help_uses_native_workflow_wording(self) -> None:
         output = io.StringIO()
