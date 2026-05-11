@@ -23,6 +23,7 @@ from .intake import diff_candidate, format_diff_report, import_candidate, promot
 from .metrics import build_project_metrics, format_project_metrics
 from .init import init_project
 from .io import load_data
+from .migration import format_legacy_execution_migration, migrate_legacy_execution
 from .maturity import (
     ALLOWED_MATURITY_ENFORCEMENT,
     ALLOWED_MATURITY_LEVELS,
@@ -174,6 +175,17 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     finish.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
     finish.add_argument("--review", dest="review_id", help="Code review id to link before completion.")
     finish.add_argument("--json", action="store_true")
+
+    migrate = subparsers.add_parser("migrate", help="Migration utilities.")
+    migrate_subparsers = migrate.add_subparsers(dest="migrate_command")
+    migrate_legacy = migrate_subparsers.add_parser(
+        "legacy-execution",
+        help="Migrate legacy execution artifacts into AgentSpec governance.",
+        description="Migrate legacy execution artifacts into AgentSpec governance.",
+    )
+    migrate_legacy.add_argument("--from", dest="from_path", help="Limit migration to one scanner-recognized legacy execution artifact.")
+    migrate_legacy.add_argument("--write", action="store_true", help="Create missing AgentSpec task context packs. Defaults to dry-run.")
+    migrate_legacy.add_argument("--json", action="store_true")
 
     outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
@@ -649,6 +661,21 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 _print_finish_result(result)
             if result.get("dry_run") and result.get("enforcement") == "strict" and not result.get("finishable"):
                 return 1
+            return 0
+
+        if args.command == "migrate":
+            if args.migrate_command == "legacy-execution":
+                result = migrate_legacy_execution(
+                    root,
+                    from_path=args.from_path,
+                    write=args.write,
+                )
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(format_legacy_execution_migration(result))
+                return 0
+            parser.print_help()
             return 0
 
         if args.command == "outcome":

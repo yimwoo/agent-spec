@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T04:37:25Z
-- Last completed task: `T-096` agent/context-packs/T-096-add-strict-lifecycle-enforcement.md
-- Last run: `complete-t-096-add-strict-lifecycle-enforcement-20260511043725`
+- Updated: 2026-05-11T04:46:49Z
+- Last completed task: `T-097` agent/context-packs/T-097-add-legacy-execution-migration-tools.md
+- Last run: `complete-t-097-add-legacy-execution-migration-tools-20260511044649`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -109,18 +109,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-094-add-finish-orchestrator.md` | complete | `complete-t-094-add-finish-orchestrator-20260511041211` | passed | REVIEW-0039 | 2026-05-11T04:12:11Z |
 | `agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md` | complete | `complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722` | passed | REVIEW-0040 | 2026-05-11T04:27:22Z |
 | `agent/context-packs/T-096-add-strict-lifecycle-enforcement.md` | complete | `complete-t-096-add-strict-lifecycle-enforcement-20260511043725` | passed | REVIEW-0041 | 2026-05-11T04:37:25Z |
+| `agent/context-packs/T-097-add-legacy-execution-migration-tools.md` | complete | `complete-t-097-add-legacy-execution-migration-tools-20260511044649` | passed | REVIEW-0042 | 2026-05-11T04:46:49Z |
 
 ## Requirement Traceability
 
-- Requirements: 200
-- By status: accepted=200
-- By priority: P0=57, P1=61, P2=80, P3=2
+- Requirements: 201
+- By status: accepted=201
+- By priority: P0=58, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-191` | P0 | accepted | AgentSpec records multi-session worktree leases |
 | `R-192` | P0 | accepted | AgentSpec supports progressive maturity profiles |
 | `R-193` | P0 | accepted | AgentSpec enforces workflow-pack coverage and generated roadmap status |
 | `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
@@ -130,3 +130,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-198` | P0 | accepted | AgentSpec exposes a finish orchestrator over completion write-back |
 | `R-199` | P0 | accepted | AgentSpec preserves manual roadmap content in generated-block mode |
 | `R-200` | P0 | accepted | AgentSpec supports opt-in strict lifecycle enforcement |
+| `R-201` | P0 | accepted | AgentSpec provides idempotent legacy execution migration tooling |

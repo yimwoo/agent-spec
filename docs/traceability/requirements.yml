@@ -5865,5 +5865,61 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-201",
+    "title": "AgentSpec provides idempotent legacy execution migration tooling",
+    "description": "AgentSpec exposes an explicit migration command for legacy execution artifacts that is dry-run by default, safely backfills missing task context packs when requested, skips already migrated artifacts on rerun, and reports rollback guidance without overwriting source workflow content.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-19.2",
+      "lifecycle-engine-hardening-design:D-20.7"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0066",
+    "acceptance": [
+      "aspec migrate legacy-execution reports scanner-recognized orphan execution artifacts without mutating files.",
+      "aspec migrate legacy-execution --write creates task context packs for orphan legacy execution artifacts.",
+      "Re-running write mode does not create duplicate context packs.",
+      "--from <path> limits migration to one artifact and fails without writing when the path is not scanner-recognized.",
+      "Migration output includes rollback guidance for created artifacts.",
+      "Migration preserves source workflow and execution-state content exactly.",
+      "The phase has a design doc, an executable plan doc, and a dedicated git worktree/branch before implementation completion."
+    ],
+    "code_targets": [
+      "agentspec/cli.py",
+      "agentspec/migration.py",
+      "agentspec/task.py",
+      "agentspec/workflow.py"
+    ],
+    "test_targets": [
+      "tests/test_migration_cli.py",
+      "tests/test_workflow_contract.py",
+      "tests/test_task_queue.py",
+      "tests/test_status_cli.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-097-add-legacy-execution-migration-tools.md",
+      "agent/handoff.yml",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "docs/ROADMAP.md",
+      "docs/change-requests/DCR-0066-add-legacy-execution-migration-tools.md",
+      "docs/designs/2026-05-11-phase-7-migration-tools-design.md",
+      "docs/plans/2026-05-11-phase-7-migration-tools-workflow.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

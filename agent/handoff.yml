@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T04:37:25Z",
+  "updated_at": "2026-05-11T04:46:49Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-096",
-    "context_pack": "agent/context-packs/T-096-add-strict-lifecycle-enforcement.md",
-    "title": "T-096: Add strict lifecycle enforcement",
-    "run_id": "complete-t-096-add-strict-lifecycle-enforcement-20260511043725",
-    "reason": "Implemented Phase 6 strict lifecycle enforcement for R-200/DCR-0065. Added lifecycle.enforcement warn default, strict lifecycle blocking findings with repair guidance, finish integration for lifecycle strict mode, and focused strict enforcement coverage. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
-    "updated_at": "2026-05-11T04:37:25Z",
+    "id": "T-097",
+    "context_pack": "agent/context-packs/T-097-add-legacy-execution-migration-tools.md",
+    "title": "T-097: Add legacy execution migration tools",
+    "run_id": "complete-t-097-add-legacy-execution-migration-tools-20260511044649",
+    "reason": "Refreshed Phase 7 completion after closing the initial started run. Migration tooling for R-201/DCR-0066 is implemented and verified with python -m unittest discover -s tests -v and git diff --check.",
+    "updated_at": "2026-05-11T04:46:49Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0041",
+      "id": "REVIEW-0042",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0041.yml"
+      "path": "agent/reviews/REVIEW-0042.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 200,
+      "total": 201,
       "by_status": {
-        "accepted": 200
+        "accepted": 201
       }
     },
     "dcrs": {
-      "total": 65,
+      "total": 66,
       "by_status": {
-        "accepted": 65
+        "accepted": 66
       }
     },
     "tasks": {
-      "total": 94,
+      "total": 95,
       "by_status": {
-        "complete": 94
+        "complete": 95
       },
       "by_type": {
-        "implementation": 86,
+        "implementation": 87,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,14 +54,14 @@
       }
     },
     "runs": {
-      "total": 3,
+      "total": 4,
       "by_status": {
         "aborted": 1,
-        "complete": 2
+        "complete": 3
       },
       "by_mode": {
         "research": 1,
-        "supervised": 2
+        "supervised": 3
       }
     }
   },
@@ -77,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0041.yml"
+    "last_code_review": "agent/reviews/REVIEW-0042.yml"
   }
 }
