@@ -5977,5 +5977,52 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-203",
+    "title": "AgentSpec supports its own end-to-end lifecycle dogfood workflow",
+    "description": "AgentSpec can use only AgentSpec-native commands to carry a small dogfood task through task context pack creation, native workflow creation, isolated branch work, implementation commits, verification, review evidence, completion write-back, roadmap generation, and handoff refresh.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-21",
+      "agentspec-hotl-integration-without-hotl-names:D-19",
+      "agentspec-hotl-integration-without-hotl-names:D-19.1"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0068",
+    "acceptance": [
+      "A task context pack is created from R-203.",
+      "A native agent/workflows/W-*.md workflow is created and linked to the task context pack.",
+      "Work happens on branch codex/e2e-agentspec-lifecycle.",
+      "At least one implementation evidence commit is created before write-back.",
+      "Verification commands pass without HOTL or Superpowers plugins.",
+      "aspec review code records ready review evidence for the E2E task.",
+      "aspec task complete records passed verification with the review id.",
+      "aspec roadmap --check --json reports the roadmap current after write-back."
+    ],
+    "code_targets": [
+      "reports/dogfood/2026-05-11-agentspec-lifecycle-e2e.md"
+    ],
+    "test_targets": [
+      "tests/test_lifecycle_skill_gates.py",
+      "tests/test_status_cli.py"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0068-run-agentspec-lifecycle-e2e-smoke-test.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md",
+      "agent/workflows/W-099-run-agentspec-lifecycle-e2e-smoke-test.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]
