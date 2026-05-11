@@ -6,7 +6,7 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T05:13:48Z
+- Updated: 2026-05-11T05:19:58Z
 - Last completed task: `T-098` agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md
 - Last run: `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348`
 - Next action: idle -> `aspec status --json`

@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T05:13:48Z",
+  "updated_at": "2026-05-11T05:19:58Z",
   "root": ".",
   "last_completed_task": {
     "id": "T-098",
@@ -21,8 +21,8 @@
     }
   },
   "current_state": {
-    "overall": "attention_needed",
-    "recommendation": "Resolve lifecycle warning with `aspec roadmap`.",
+    "overall": "idle",
+    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
@@ -54,13 +54,12 @@
       }
     },
     "runs": {
-      "total": 3,
+      "total": 1,
       "by_status": {
-        "complete": 3
+        "complete": 1
       },
       "by_mode": {
-        "research": 1,
-        "supervised": 2
+        "research": 1
       }
     }
   },
