@@ -1189,6 +1189,23 @@
         "path": "agent/reviews/REVIEW-0047.yml"
       },
       "updated_at": "2026-05-11T06:02:17Z"
+    },
+    "agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md": {
+      "status": "complete",
+      "run_id": "complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408",
+      "reason": "Completed R-207 documentation refresh: README front door, human getting-started guide, documentation/design registry, DCR/requirement/task/workflow evidence, and roadmap freshness.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0048",
+        "verdict": "ready",
+        "summary": "Docs-only review for R-207 found no blocking issues. README is concise and links to the human guide; docs/GETTING_STARTED.md covers bootstrap, task, DCR, verification, review, finish, and commit guidance; docs/designs/README.md satisfies the maturity-recognized documentation registry path; verification passed with requirements JSON validation, git diff --check, maturity ready, status check, and roadmap freshness.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0048.yml"
+      },
+      "updated_at": "2026-05-11T06:14:08Z"
     }
   }
 }

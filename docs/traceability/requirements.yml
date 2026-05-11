@@ -6163,5 +6163,55 @@
       "spec-compiler",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-207",
+    "title": "AgentSpec has a clear human-facing README and guide index",
+    "description": "AgentSpec provides a concise human-facing README, getting-started guide, and documentation/design index so humans can understand the project model, install the CLI, run the lifecycle, and find canonical artifacts without depending on chat history or external workflow plugins.",
+    "source_sections": [
+      "D-03",
+      "D-05",
+      "D-10",
+      "D-18",
+      "agentspec-hotl-integration-without-hotl-names:D-19"
+    ],
+    "priority": "P1",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0072",
+    "acceptance": [
+      "README.md is rewritten as a concise front door with install, quickstart, lifecycle summary, core commands, and links to deeper docs.",
+      "A human getting-started guide explains the project model, source snapshots, DCRs, task packs, lifecycle commands, verification, review, finish, and what to commit.",
+      "A documentation/design index exists at a maturity-recognized path and points to canonical source snapshots, generated specs, DCRs, task packs, reviews, roadmap, and handoff state.",
+      "The docs cite AgentSpec requirement IDs where they describe governed lifecycle behavior.",
+      "Documentation verification confirms JSON validity, markdown diff hygiene, AgentSpec maturity/status readiness, and roadmap freshness."
+    ],
+    "code_targets": [
+      "README.md",
+      "docs/GETTING_STARTED.md",
+      "docs/designs/README.md"
+    ],
+    "test_targets": [
+      "README.md",
+      "docs/GETTING_STARTED.md",
+      "docs/designs/README.md"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0072-refresh-human-facing-readme-and-guide-docs.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md",
+      "agent/workflows/W-103-refresh-human-facing-readme-and-guide-docs.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]
