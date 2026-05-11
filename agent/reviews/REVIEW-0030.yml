@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0030",
+  "task": {
+    "selector": "T-088",
+    "context_pack": "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md"
+  },
+  "verdict": "ready",
+  "summary": "Reviewed R-193 workflow-pack coverage and roadmap implementation; full unittest discovery passed; no blocking findings.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T01:15:25Z"
+}

@@ -14,9 +14,13 @@ context pack.
 
 ```bash
 aspec task create --requirement <R-id> --type implementation --title "<title>"
+aspec task create --from-workflow <docs/.../plans/...workflow.md>
 aspec task next
 ```
 
 Open the generated context pack and work only inside its allowed paths. If the
 allowed paths are wrong, revise the context pack before implementation rather
 than silently expanding scope.
+
+Use `--from-workflow` to backfill HOTL work that started without an AgentSpec
+context pack.

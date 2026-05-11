@@ -84,6 +84,7 @@ def init_project(
         "docs/adr/0001-initial-architecture.md": _initial_adr(),
         "docs/change-requests/README.md": _change_requests_readme(),
         "agent/context-packs/template.md": _context_pack_template(),
+        "agent/context-packs/_TEMPLATE.md": _context_pack_template(),
         "agent/workflows/implement-feature.md": _workflow_template("Implement Feature", "implementation"),
         "agent/workflows/app-build.md": _app_build_workflow(),
         "agent/workflows/review-diff.md": _workflow_template("Review Diff", "review"),
@@ -240,6 +241,11 @@ def _context_pack_template() -> str:
 
 - ID:
 - Type:
+- Stream:
+- Milestone:
+- Slice:
+- Branch:
+- Workflow:
 - Goal:
 
 ## Source Sections

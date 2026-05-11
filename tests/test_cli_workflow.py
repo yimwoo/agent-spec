@@ -98,6 +98,8 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertEqual(main(["init"]), 0)
                 self.assertTrue((project / ".agentspec" / "config.yml").exists())
                 self.assertTrue((project / "agent" / "context-packs" / "template.md").exists())
+                self.assertTrue((project / "agent" / "context-packs" / "_TEMPLATE.md").exists())
+                self.assertIn("Workflow:", (project / "agent" / "context-packs" / "_TEMPLATE.md").read_text(encoding="utf-8"))
                 self.assertTrue((project / "agent" / "outcomes.yml").exists())
                 self.assertTrue((project / "agent" / "maturity.yml").exists())
                 self.assertTrue((project / "agent" / "sessions" / "active" / ".gitkeep").exists())
@@ -155,6 +157,11 @@ class CliWorkflowTests(unittest.TestCase):
                 self.assertEqual(status_payload["maturity"]["level"], "lightweight")
                 self.assertIn("sessions", status_payload)
                 self.assertEqual(status_payload["sessions"]["counts"], {"active": 0, "archived": 0})
+                self.assertIn("workflows", status_payload)
+
+                self.assertEqual(main(["roadmap"]), 0)
+                self.assertTrue((project / "docs" / "ROADMAP.md").exists())
+                self.assertEqual(main(["roadmap", "--check"]), 0)
 
                 self.assertEqual(main(["drift"]), 0)
                 self.assertTrue((project / "reports" / "drift" / "latest.md").exists())

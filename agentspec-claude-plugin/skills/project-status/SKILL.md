@@ -15,5 +15,6 @@ aspec task next
 ```
 
 Use the status recommendation to decide whether to continue a run, inspect a
-halted run, or start the next ready context pack. Do not mutate DCR,
+halted run, start the next ready context pack, or backfill an in-flight workflow
+with `aspec task create --from-workflow <file>`. Do not mutate DCR,
 requirement, task, source, or run state from this skill.

@@ -8,7 +8,7 @@ description: Run AgentSpec drift review from the repository root and inspect the
 Call this skill as `aspec:drift-review`.
 
 Use this skill to compare current code changes with AgentSpec requirements,
-ADRs, and task context packs.
+ADRs, task context packs, and HOTL workflow coverage.
 
 ## Command
 
@@ -17,3 +17,5 @@ aspec drift
 ```
 
 Report findings with requirement IDs and source section IDs where available.
+If the report lists orphan workflows, backfill them with
+`aspec task create --from-workflow <file>` before implementation work continues.

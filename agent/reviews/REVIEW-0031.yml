@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0031",
+  "task": {
+    "selector": "T-088",
+    "context_pack": "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md"
+  },
+  "verdict": "not-ready",
+  "summary": "Blocking finding: workflow backfill without --requirement attaches an unrelated accepted requirement; warning: finish-work roadmap command order can leave docs/ROADMAP.md stale after task completion.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T01:21:01Z"
+}

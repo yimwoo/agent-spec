@@ -8,6 +8,7 @@ from typing import Any
 
 from .io import ensure_writable_dir, load_data, utc_now_iso, write_text
 from .paths import path_matches_pattern
+from .workflow import build_workflow_contract_status, workflow_warning_lines
 
 
 SENSITIVE_PATH_HINTS = ["auth", "security", "secret", "permission", "policy", "billing"]
@@ -129,7 +130,8 @@ def run_drift(root: Path, diff_ref: str | None = None, report_dir: Path | None =
     sections = load_data(root / "docs" / "source" / "sections.yml", [])
     context_packs = _context_packs(root)
     adrs = _adr_paths(root)
-    report = _report(changes, requirements, sections, context_packs, adrs, diff_ref, bool(diff_text.strip()))
+    workflows = build_workflow_contract_status(root)
+    report = _report(changes, requirements, sections, context_packs, adrs, workflows, diff_ref, bool(diff_text.strip()))
     path = destination / "latest.md"
     write_text(path, report)
     return path
@@ -295,14 +297,15 @@ def _report(
     sections: list[dict[str, Any]],
     context_packs: list[ContextPack],
     adrs: list[str],
+    workflows: dict[str, Any],
     diff_ref: str | None,
     parsed_diff: bool,
 ) -> str:
     section_titles = {section["id"]: " ".join(section.get("heading_path", [])) for section in sections}
     changed_paths = [change.path for change in changes]
     assessments = [_assess_file(change, requirements, section_titles, context_packs, changed_paths) for change in changes]
-    findings = _summary_findings(assessments, changes, adrs, parsed_diff)
-    decision = _decision(assessments, changes, parsed_diff, findings)
+    findings = [*_summary_findings(assessments, changes, adrs, parsed_diff), *workflow_warning_lines(workflows)]
+    decision = _decision(assessments, changes, parsed_diff, findings, workflows)
 
     out = [
         "# Spec Compliance Review",
@@ -318,6 +321,7 @@ def _report(
         f"- Requirements loaded: {len(requirements)}",
         f"- Context packs loaded: {len(context_packs)}",
         f"- ADRs loaded: {len(adrs)}",
+        f"- HOTL workflow artifacts loaded: {workflows.get('total', 0)}",
         "",
         "## Changed Files",
         "",
@@ -345,6 +349,24 @@ def _report(
             )
     else:
         out.append("| None | review | - | - | - | No git diff was available or no files changed. |")
+
+    out.extend(["", "## Workflow Coverage", "", "| Artifact | Kind | Status | Referenced By | Backfill |", "|---|---|---|---|---|"])
+    artifacts = workflows.get("artifacts") if isinstance(workflows.get("artifacts"), list) else []
+    if artifacts:
+        for artifact in artifacts:
+            if not isinstance(artifact, dict):
+                continue
+            refs = artifact.get("referenced_by") if isinstance(artifact.get("referenced_by"), list) else []
+            out.append(
+                "| "
+                f"`{artifact.get('path')}` | "
+                f"{artifact.get('kind')} | "
+                f"{artifact.get('status')} | "
+                f"{_id_list([str(ref) for ref in refs])} | "
+                f"`{artifact.get('backfill_command')}` |"
+            )
+    else:
+        out.append("| - | - | - | - | - |")
 
     impacted = {requirement_id for assessment in assessments for requirement_id in assessment.requirement_ids}
     out.extend(["", "## Requirement Coverage", "", "| Requirement | Status | Evidence |", "|---|---|---|"])
@@ -501,7 +523,13 @@ def _summary_findings(assessments: list[FileAssessment], changes: list[FileChang
     return findings
 
 
-def _decision(assessments: list[FileAssessment], changes: list[FileChange], parsed_diff: bool, findings: list[str]) -> str:
+def _decision(
+    assessments: list[FileAssessment],
+    changes: list[FileChange],
+    parsed_diff: bool,
+    findings: list[str],
+    workflows: dict[str, Any] | None = None,
+) -> str:
     if not changes:
         return "approve-with-comments"
     if any(assessment.verdict != "aligned" for assessment in assessments):
@@ -509,6 +537,8 @@ def _decision(assessments: list[FileAssessment], changes: list[FileChange], pars
     if not parsed_diff:
         return "approve-with-comments"
     if any(finding.startswith("High-impact terms") for finding in findings):
+        return "approve-with-comments"
+    if workflows and int(workflows.get("orphan_count", 0)):
         return "approve-with-comments"
     return "approve"
 

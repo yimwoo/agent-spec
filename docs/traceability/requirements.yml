@@ -5426,5 +5426,65 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-193",
+    "title": "AgentSpec enforces workflow-pack coverage and generated roadmap status",
+    "description": "AgentSpec detects HOTL workflow Markdown and state artifacts that are not referenced by a task context pack, can backfill a context pack from an existing workflow file, surfaces workflow-pack warnings in status and next-task guidance, and generates or checks docs/ROADMAP.md from handoff, task ledger, and traceability artifacts.",
+    "source_sections": [
+      "D-03.2",
+      "D-06.8",
+      "D-06.10",
+      "D-12.12",
+      "D-12.13"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0058",
+    "acceptance": [
+      "aspec drift reports orphan HOTL workflow Markdown and state files that are not referenced by a task context pack.",
+      "aspec task create --from-workflow <file> creates a context pack with workflow metadata, allowed paths, verification commands, and standard verification support scope.",
+      "aspec status --json and human aspec status surface in-flight workflow warnings when no task pack references the workflow or state artifact.",
+      "aspec task next prints a workflow-pack warning when no ready task pack is available.",
+      "Fresh projects include an agent/context-packs/_TEMPLATE.md hand-authoring template with Stream, Milestone, Slice, Branch, and Workflow fields.",
+      "aspec roadmap writes docs/ROADMAP.md from handoff, task ledger, and traceability artifacts, and aspec roadmap --check detects stale output.",
+      "Codex and Claude plugin skills mention workflow backfill, status warnings, roadmap, and write-back checks."
+    ],
+    "code_targets": [
+      "agentspec/workflow.py",
+      "agentspec/roadmap.py",
+      "agentspec/drift.py",
+      "agentspec/task.py",
+      "agentspec/status.py",
+      "agentspec/cli.py",
+      "agentspec/init.py",
+      "agentspec-codex-plugin/skills/**/SKILL.md",
+      "agentspec-claude-plugin/skills/**/SKILL.md"
+    ],
+    "test_targets": [
+      "tests/test_workflow_contract.py",
+      "tests/test_task_queue.py",
+      "tests/test_status_cli.py",
+      "tests/test_cli_workflow.py",
+      "tests/test_claude_code_plugin.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md",
+      "agent/context-packs/_TEMPLATE.md",
+      "agent/context-packs/template.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "docs/change-requests/DCR-0058-enforce-workflow-pack-contract-and-roadmap-generation.md",
+      "docs/traceability/requirements.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]

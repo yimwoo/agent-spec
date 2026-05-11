@@ -18,6 +18,7 @@ for review.
 ```bash
 aspec outcome --json
 aspec status --json
+aspec roadmap --check
 ```
 
 3. Confirm the verification evidence covers the changed behavior, not only the
@@ -25,6 +26,10 @@ aspec status --json
 
 4. If the work changes user-facing product behavior, include workflow-level or
    browser/API evidence when available.
+
+5. For implementation tasks, confirm write-back state is current: `agent/handoff.yml`
+   is updated by completion and `docs/ROADMAP.md` is current or regenerated with
+   `aspec roadmap`.
 
 Boundary: this skill does not mark the task complete. Completion still requires
 review evidence and the normal `aspec task complete` flow.

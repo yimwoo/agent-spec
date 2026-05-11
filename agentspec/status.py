@@ -12,6 +12,7 @@ from .maturity import build_maturity_status
 from .outcome import build_outcome_status
 from .session import build_session_status
 from .task import list_task_context_packs, next_task_context_pack
+from .workflow import build_workflow_contract_status, workflow_warning_lines
 
 
 PROJECT_STATUS_SCHEMA = "agentspec.project_status.v0"
@@ -31,6 +32,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     outcomes = build_outcome_status(root)
     maturity = build_maturity_status(root)
     sessions = build_session_status(root)
+    workflows = build_workflow_contract_status(root)
 
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
@@ -40,7 +42,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "schema": PROJECT_STATUS_SCHEMA,
         "root": str(root),
         "overall": _overall_status(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs),
-        "recommendation": _recommendation(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs),
+        "recommendation": _recommendation(next_task=next_task, active_runs=active_runs, attention_runs=attention_runs, workflows=workflows),
         "readiness": {
             "score": readiness.get("score"),
             "mode": readiness.get("mode"),
@@ -74,6 +76,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             "recent": recent_runs,
         },
         "sessions": sessions,
+        "workflows": workflows,
     }
     handoff = load_project_handoff(root)
     if handoff is not None:
@@ -94,6 +97,7 @@ def format_project_status(status: dict[str, Any]) -> str:
     tasks = status.get("tasks", {})
     runs = status.get("runs", {})
     sessions = status.get("sessions", {})
+    workflows = status.get("workflows", {})
     maturity = status.get("maturity", {})
     outcomes = status.get("outcomes", {})
 
@@ -109,6 +113,7 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Tasks: {_count_text(tasks)}",
         f"Runs: {_count_text(runs)}",
         f"Sessions: {_count_text(sessions)}",
+        f"Workflow Pack Warnings: {_workflow_text(workflows)}",
         f"Next: {_next_text(tasks.get('next'))}",
         f"Recommendation: {status.get('recommendation')}",
     ]
@@ -135,6 +140,11 @@ def format_project_status(status: dict[str, Any]) -> str:
     if active_sessions:
         lines.extend(["", "Active Sessions:"])
         lines.extend(f"- {_session_text(session)}" for session in active_sessions)
+
+    workflow_warnings = workflow_warning_lines(workflows) if isinstance(workflows, dict) else []
+    if workflow_warnings:
+        lines.extend(["", "Workflow Warnings:"])
+        lines.extend(f"- {warning}" for warning in workflow_warnings)
 
     recent = runs.get("recent") if isinstance(runs, dict) else []
     if recent:
@@ -297,6 +307,7 @@ def _recommendation(
     next_task: dict[str, Any] | None,
     active_runs: list[dict[str, Any]],
     attention_runs: list[dict[str, Any]],
+    workflows: dict[str, Any] | None = None,
 ) -> str:
     if attention_runs:
         run_id = attention_runs[0].get("run_id")
@@ -306,6 +317,11 @@ def _recommendation(
         return f"Continue active run with `aspec run prompt {run_id}` or `aspec run loop --run-id {run_id}`."
     if next_task:
         return f"Start next ready task with `aspec run loop {next_task.get('path')}`."
+    warnings = workflow_warning_lines(workflows or {})
+    if warnings:
+        first = workflows.get("orphans", [{}])[0] if isinstance(workflows, dict) and isinstance(workflows.get("orphans"), list) else {}
+        command = first.get("backfill_command") if isinstance(first, dict) else None
+        return f"Backfill in-flight workflow with `{command}`." if command else warnings[0]
     return "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode."
 
 
@@ -345,6 +361,12 @@ def _maturity_text(maturity: Any) -> str:
         f"{maturity.get('readiness', 'unknown')} "
         f"({score_text}, enforcement={maturity.get('enforcement', 'unknown')})"
     )
+
+
+def _workflow_text(workflows: Any) -> str:
+    if not isinstance(workflows, dict):
+        return "unknown"
+    return f"{workflows.get('orphan_count', 0)} orphan(s) / {workflows.get('total', 0)} artifact(s)"
 
 
 def _next_text(next_task: Any) -> str:

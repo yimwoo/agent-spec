@@ -19,6 +19,7 @@ SKILL_NAMES = [
     "plan-workflow",
     "project-status",
     "review-code",
+    "roadmap",
     "verify-work",
 ]
 
@@ -29,7 +30,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["name"], "aspec")
-        self.assertEqual(manifest["version"], "0.1.3")
+        self.assertEqual(manifest["version"], "0.1.4")
         self.assertIn("Claude Code", manifest["description"])
         self.assertIn("claude-code", manifest["keywords"])
         self.assertEqual(
@@ -84,6 +85,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
             "aspec run loop",
             "aspec task create",
             "aspec review code",
+            "aspec roadmap",
             "aspec task complete",
             "aspec compile",
             "aspec drift",

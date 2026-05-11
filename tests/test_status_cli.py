@@ -202,6 +202,27 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("No ready task context pack found", output.getvalue())
 
+    def test_status_surfaces_orphan_workflow_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "plans").mkdir(parents=True)
+            (root / "docs" / "plans" / "phase-five-workflow.md").write_text(
+                "---\nintent: Phase five\n---\n\n## Steps\n",
+                encoding="utf-8",
+            )
+
+            status = build_project_status(root)
+            self.assertEqual(status["workflows"]["orphan_count"], 1)
+            self.assertIn(
+                "aspec task create --from-workflow docs/plans/phase-five-workflow.md",
+                status["recommendation"],
+            )
+
+            text = format_project_status(status)
+            self.assertIn("Workflow Warnings:", text)
+            self.assertIn("docs/plans/phase-five-workflow.md", text)
+
 
 def _seed(root: Path) -> None:
     (root / "agent" / "context-packs").mkdir(parents=True)

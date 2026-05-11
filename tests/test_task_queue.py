@@ -94,6 +94,24 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIn("| `agent/reviews/*.yml` | pattern; verification support |", text)
             self.assertIn("every non-verification allowed path is inferred", text)
 
+    def test_cli_task_next_warns_about_orphan_workflow_when_no_ready_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "plans").mkdir(parents=True)
+            (root / "docs" / "plans" / "phase-five-workflow.md").write_text(
+                "---\nintent: Phase five\n---\n\n## Steps\n",
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("No ready task context pack found", output.getvalue())
+            self.assertIn("aspec task create --from-workflow docs/plans/phase-five-workflow.md", output.getvalue())
+
 
 def _seed(root: Path) -> None:
     (root / "agent" / "context-packs").mkdir(parents=True)

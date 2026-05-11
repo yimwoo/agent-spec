@@ -14,10 +14,13 @@ and the user wants to close the task or branch.
 
 ```bash
 aspec task complete <T-id> --test-status passed --review <REVIEW-id>
+aspec roadmap
 aspec status --json
 aspec outcome --json
+aspec roadmap --check
 ```
 
 Summarize the completed requirement IDs, tests run, review id, outcome impact,
-and any remaining product-readiness blockers. Do not claim production readiness
-unless `aspec outcome` says the relevant outcome gates are ready.
+roadmap status, and any remaining product-readiness blockers. Do not claim
+production readiness unless `aspec outcome` says the relevant outcome gates are
+ready.

@@ -1,66 +1,66 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-10T23:25:54Z",
+  "updated_at": "2026-05-11T01:31:31Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-086",
-    "context_pack": "agent/context-packs/T-086-add-session-worktree-lease-governance.md",
-    "title": "T-086: Add session worktree lease governance",
-    "run_id": "complete-t-086-add-session-worktree-lease-governance-20260510232554",
-    "reason": "R-191 post-review hardening complete: session leases use collision-resistant IDs and exclusive creation; verification passed.",
-    "updated_at": "2026-05-10T23:25:54Z",
+    "id": "T-088",
+    "context_pack": "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md",
+    "title": "T-088: Enforce workflow-pack contract and roadmap generation",
+    "run_id": "complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131",
+    "reason": "Post-review fixes complete: workflow backfill no longer attaches implicit requirements, finish-work roadmap order is corrected, regression and full test suite passed.",
+    "updated_at": "2026-05-11T01:31:31Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0028",
+      "id": "REVIEW-0032",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0028.yml"
+      "path": "agent/reviews/REVIEW-0032.yml"
     }
   },
   "current_state": {
     "overall": "idle",
-    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
+    "recommendation": "Backfill in-flight workflow with `aspec task create --from-workflow docs/plans/2026-04-28-agentspec-mvp-workflow.md`.",
     "readiness": {
       "score": 100,
       "mode": "normal-implementation",
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 192,
+      "total": 193,
       "by_status": {
-        "accepted": 192
+        "accepted": 193
       }
     },
     "dcrs": {
-      "total": 57,
+      "total": 58,
       "by_status": {
-        "accepted": 57
+        "accepted": 58
       }
     },
     "tasks": {
-      "total": 85,
+      "total": 86,
       "by_status": {
-        "complete": 85
+        "complete": 86
       },
       "by_type": {
-        "implementation": 78,
+        "implementation": 79,
         "review": 3,
         "spec": 1,
         "spike": 3
       }
     },
     "runs": {
-      "total": 101,
+      "total": 103,
       "by_status": {
         "aborted": 4,
-        "complete": 97
+        "complete": 99
       },
       "by_mode": {
         "research": 1,
-        "supervised": 100
+        "supervised": 102
       }
     }
   },
@@ -76,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0028.yml"
+    "last_code_review": "agent/reviews/REVIEW-0032.yml"
   }
 }

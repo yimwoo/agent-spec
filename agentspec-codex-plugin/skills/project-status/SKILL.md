@@ -19,4 +19,5 @@ aspec task next
 ```
 
 Use the status recommendation to decide whether to continue a run, inspect a
-halted run, or start the next ready context pack.
+halted run, start the next ready context pack, or backfill an in-flight workflow
+with `aspec task create --from-workflow <file>`.

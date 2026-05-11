@@ -934,6 +934,23 @@
         "path": "agent/reviews/REVIEW-0029.yml"
       },
       "updated_at": "2026-05-10T23:25:54Z"
+    },
+    "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md": {
+      "status": "complete",
+      "run_id": "complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131",
+      "reason": "Post-review fixes complete: workflow backfill no longer attaches implicit requirements, finish-work roadmap order is corrected, regression and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0032",
+        "verdict": "ready",
+        "summary": "Re-verified REVIEW-0031 findings; both were accepted and fixed. Workflow backfill no longer attaches an implicit requirement, finish-work regenerates roadmap after completion, regression coverage added, and full unittest discovery passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0032.yml"
+      },
+      "updated_at": "2026-05-11T01:31:31Z"
     }
   }
 }

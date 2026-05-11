@@ -34,6 +34,7 @@ from .outcome import build_outcome_status, format_outcome_status
 from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import ALLOWED_CODE_REVIEW_VERDICTS, record_code_review
+from .roadmap import check_roadmap, write_roadmap
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
 from .session import (
@@ -59,7 +60,8 @@ from .source_registry import (
 from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import build_project_status, format_project_status
-from .task import create_task_context_pack, list_task_context_packs, next_task_context_pack
+from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
+from .workflow import build_workflow_contract_status, workflow_warning_lines
 
 
 def _default_prog() -> str:
@@ -144,6 +146,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     metrics = subparsers.add_parser("metrics", help="Print read-only project feedback-loop metrics.")
     metrics.add_argument("--json", action="store_true")
 
+    roadmap = subparsers.add_parser("roadmap", help="Generate or check docs/ROADMAP.md.")
+    roadmap.add_argument("--check", action="store_true", help="Fail if docs/ROADMAP.md is missing or stale.")
+    roadmap.add_argument("--json", action="store_true")
+
     outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
 
@@ -221,6 +227,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     task_subparsers = task.add_subparsers(dest="task_command")
     task_create = task_subparsers.add_parser("create", help="Create a task context pack.")
     task_create.add_argument("--requirement")
+    task_create.add_argument("--from-workflow", dest="from_workflow", help="Backfill a context pack from a HOTL workflow or state file.")
     task_create.add_argument("--type", default="implementation", choices=["discovery", "spec", "spike", "scaffold", "implementation", "review", "migration", "automation"])
     task_create.add_argument("--title")
     task_list = task_subparsers.add_parser("list", help="List task context packs.")
@@ -243,6 +250,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     context_subparsers = context.add_subparsers(dest="context_command")
     context_build = context_subparsers.add_parser("build", help="Create a task context pack.")
     context_build.add_argument("--requirement")
+    context_build.add_argument("--from-workflow", dest="from_workflow")
     context_build.add_argument("--type", default="implementation")
     context_build.add_argument("--title")
 
@@ -565,6 +573,21 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(format_project_metrics(metrics_payload))
             return 0
 
+        if args.command == "roadmap":
+            if args.check:
+                result = check_roadmap(root)
+                if args.json:
+                    print(json.dumps(result, indent=2))
+                else:
+                    print(result["summary"])
+                return 0 if result["current"] else 1
+            path = write_roadmap(root)
+            if args.json:
+                print(json.dumps({"path": str(path.relative_to(root))}, indent=2))
+            else:
+                print(f"Wrote roadmap: {path.relative_to(root)}")
+            return 0
+
         if args.command == "outcome":
             outcome_payload = build_outcome_status(root)
             if args.json:
@@ -684,7 +707,16 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "task" and args.task_command == "create":
-            path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
+            if args.from_workflow:
+                path = create_task_context_pack_from_workflow(
+                    root,
+                    Path(args.from_workflow),
+                    requirement_id=args.requirement,
+                    task_type=args.type,
+                    title=args.title,
+                )
+            else:
+                path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
             print(f"Created task context pack: {path.relative_to(root)}")
             return 0
 
@@ -700,7 +732,13 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
         if args.command == "task" and args.task_command == "next":
             record = next_task_context_pack(root, task_type=args.type, order=args.order)
             if record is None:
-                print("No ready task context pack found.")
+                warnings = workflow_warning_lines(build_workflow_contract_status(root))
+                if args.json:
+                    print(json.dumps({"task": None, "workflow_warnings": warnings}, indent=2))
+                else:
+                    print("No ready task context pack found.")
+                    for warning in warnings:
+                        print(f"Warning: {warning}")
                 return 1
             if args.json:
                 print(json.dumps(record, indent=2))
@@ -724,7 +762,16 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "context" and args.context_command == "build":
-            path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
+            if args.from_workflow:
+                path = create_task_context_pack_from_workflow(
+                    root,
+                    Path(args.from_workflow),
+                    requirement_id=args.requirement,
+                    task_type=args.type,
+                    title=args.title,
+                )
+            else:
+                path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
             print(f"Created task context pack: {path.relative_to(root)}")
             return 0
 
