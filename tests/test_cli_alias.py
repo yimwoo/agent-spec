@@ -5,6 +5,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import agentspec
 from agentspec.cli import build_parser, main
 
 
@@ -15,6 +16,11 @@ class CliAliasTests(unittest.TestCase):
         scripts = data["project"]["scripts"]
         self.assertEqual(scripts["agentspec"], "agentspec.cli:main")
         self.assertEqual(scripts["aspec"], "agentspec.cli:main")
+
+    def test_runtime_version_matches_pyproject_version(self) -> None:
+        data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+        self.assertEqual(agentspec.__version__, data["project"]["version"])
 
     def test_entry_point_targets_resolve_to_callables(self) -> None:
         """Each `[project.scripts]` entry must point at a real callable.
