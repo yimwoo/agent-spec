@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T04:46:49Z",
+  "updated_at": "2026-05-11T05:13:48Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-097",
-    "context_pack": "agent/context-packs/T-097-add-legacy-execution-migration-tools.md",
-    "title": "T-097: Add legacy execution migration tools",
-    "run_id": "complete-t-097-add-legacy-execution-migration-tools-20260511044649",
-    "reason": "Refreshed Phase 7 completion after closing the initial started run. Migration tooling for R-201/DCR-0066 is implemented and verified with python -m unittest discover -s tests -v and git diff --check.",
-    "updated_at": "2026-05-11T04:46:49Z",
+    "id": "T-098",
+    "context_pack": "agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md",
+    "title": "T-098: Add lifecycle skill gate projection",
+    "run_id": "complete-t-098-add-lifecycle-skill-gate-projection-20260511051348",
+    "reason": "Phase 8 skill gates are implemented for R-202/DCR-0067. Verification passed with python -m unittest discover -s tests -v, related lifecycle/config/status tests, python -m json.tool docs/traceability/requirements.yml, and git diff --check.",
+    "updated_at": "2026-05-11T05:13:48Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0042",
+      "id": "REVIEW-0043",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0042.yml"
+      "path": "agent/reviews/REVIEW-0043.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 201,
+      "total": 202,
       "by_status": {
-        "accepted": 201
+        "accepted": 202
       }
     },
     "dcrs": {
-      "total": 66,
+      "total": 67,
       "by_status": {
-        "accepted": 66
+        "accepted": 67
       }
     },
     "tasks": {
-      "total": 95,
+      "total": 96,
       "by_status": {
-        "complete": 95
+        "complete": 96
       },
       "by_type": {
-        "implementation": 87,
+        "implementation": 88,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,14 +54,13 @@
       }
     },
     "runs": {
-      "total": 4,
+      "total": 3,
       "by_status": {
-        "aborted": 1,
         "complete": 3
       },
       "by_mode": {
         "research": 1,
-        "supervised": 3
+        "supervised": 2
       }
     }
   },
@@ -77,6 +76,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0042.yml"
+    "last_code_review": "agent/reviews/REVIEW-0043.yml"
   }
 }

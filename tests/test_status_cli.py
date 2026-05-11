@@ -128,6 +128,7 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(status["dcrs"]["total"], 0)
             self.assertEqual(status["tasks"]["total"], 0)
             self.assertEqual(status["runs"]["total"], 0)
+            self.assertEqual(status["lifecycle"]["skill_gates"]["readiness"], "disabled")
 
     def test_summary_only_run_has_empty_recovery_context(self) -> None:
         with tempfile.TemporaryDirectory() as td:

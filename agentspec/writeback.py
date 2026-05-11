@@ -3,17 +3,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .config import merged_runtime_config
 from .io import load_data, utc_now_iso
 from .roadmap import ROADMAP_PATH, check_roadmap
 
 
 LIFECYCLE_STATUS_SCHEMA = "agentspec.lifecycle_status.v0"
+SKILL_GATE_STATUS_SCHEMA = "agentspec.lifecycle_skill_gates.v0"
 COMPLETION_PROJECTION_SCHEMA = "agentspec.completion_projection.v0"
 WRITEBACK_VERIFICATION_SCHEMA = "agentspec.writeback_verification.v0"
 FINISH_PROJECTION_SCHEMA = "agentspec.finish_projection.v0"
 FINISH_RESULT_SCHEMA = "agentspec.finish_result.v0"
 PASSING_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
 FINISH_ENFORCEMENTS = frozenset({"warn", "strict"})
+SKILL_GATE_IDS = ("design", "plan", "verification", "review", "finish")
 STRICT_LIFECYCLE_BLOCKERS = frozenset(
     {
         "orphan_workflow",
@@ -21,6 +24,7 @@ STRICT_LIFECYCLE_BLOCKERS = frozenset(
         "missing_review",
         "missing_verification",
         "stale_roadmap",
+        "skill_gate_missing",
     }
 )
 STRICT_FINISH_WRITEBACK_BLOCKERS = frozenset({"stale_roadmap"})
@@ -344,6 +348,8 @@ def build_lifecycle_projection(
     warnings.extend(_completion_warnings(root))
     warnings.extend(_handoff_warnings(handoff, project_counts))
     warnings.extend(_roadmap_warnings(root))
+    skill_gates = _build_skill_gate_projection(root, workflows=workflows, handoff=handoff)
+    warnings.extend(_list(skill_gates.get("findings")))
     enforcement = _lifecycle_enforcement(root)
     findings = _apply_lifecycle_enforcement(warnings, enforcement=enforcement)
     blocking = [finding for finding in findings if finding.get("severity") == "blocking"]
@@ -359,6 +365,7 @@ def build_lifecycle_projection(
         },
         "warnings": findings,
         "blocking": blocking,
+        "skill_gates": skill_gates,
     }
 
 
@@ -558,6 +565,238 @@ def _roadmap_warnings(root: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _build_skill_gate_projection(
+    root: Path,
+    *,
+    workflows: dict[str, Any],
+    handoff: dict[str, Any] | None,
+) -> dict[str, Any]:
+    lifecycle = _lifecycle_config(root)
+    raw = lifecycle.get("skill_gates") if isinstance(lifecycle.get("skill_gates"), dict) else {}
+    enabled = bool(raw.get("enabled")) if isinstance(raw, dict) else False
+    configured_required = _normalize_skill_gate_ids(raw.get("required") if isinstance(raw, dict) else [])
+    required = configured_required if enabled else []
+    gates = _skill_gate_records(root, workflows=workflows, handoff=handoff, required=required)
+    findings = [
+        _skill_gate_finding(gate)
+        for gate in gates
+        if gate.get("required") is True and gate.get("status") == "missing"
+    ]
+    readiness = "disabled" if not enabled else "needs_attention" if findings else "ready"
+    required_gates = [gate for gate in gates if gate.get("required") is True]
+    return {
+        "schema": SKILL_GATE_STATUS_SCHEMA,
+        "enabled": enabled,
+        "readiness": readiness,
+        "required": required,
+        "counts": {
+            "gates": len(gates),
+            "required": len(required_gates),
+            "passed_required": sum(1 for gate in required_gates if gate.get("status") == "passed"),
+            "missing_required": sum(1 for gate in required_gates if gate.get("status") == "missing"),
+            "not_applicable_required": sum(1 for gate in required_gates if gate.get("status") == "not_applicable"),
+        },
+        "gates": gates,
+        "findings": findings,
+    }
+
+
+def _normalize_skill_gate_ids(value: Any) -> list[str]:
+    if isinstance(value, str):
+        raw_ids = [value]
+    elif isinstance(value, list):
+        raw_ids = [item for item in value if isinstance(item, str)]
+    else:
+        raw_ids = []
+    normalized: list[str] = []
+    for item in raw_ids:
+        gate_id = item.strip().lower().replace("_", "-")
+        if gate_id == "workflow":
+            gate_id = "plan"
+        if gate_id == "writeback":
+            gate_id = "finish"
+        if gate_id in SKILL_GATE_IDS and gate_id not in normalized:
+            normalized.append(gate_id)
+    return normalized
+
+
+def _skill_gate_records(
+    root: Path,
+    *,
+    workflows: dict[str, Any],
+    handoff: dict[str, Any] | None,
+    required: list[str],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for gate_id in SKILL_GATE_IDS:
+        if gate_id == "design":
+            record = _design_skill_gate(root)
+        elif gate_id == "plan":
+            record = _plan_skill_gate(workflows)
+        elif gate_id == "verification":
+            record = _verification_skill_gate(root)
+        elif gate_id == "review":
+            record = _review_skill_gate(root)
+        else:
+            record = _finish_skill_gate(root, handoff)
+        record["required"] = gate_id in required
+        records.append(record)
+    return records
+
+
+def _design_skill_gate(root: Path) -> dict[str, Any]:
+    evidence = _glob_relative(root, "docs/designs/*.md")
+    return _skill_gate_record(
+        gate_id="design",
+        title="Design evidence",
+        stage="design",
+        evidence=evidence,
+        missing_message="Design gate requires a design document under docs/designs/.",
+        repair="Create or link a design document under docs/designs/ before implementation.",
+    )
+
+
+def _plan_skill_gate(workflows: dict[str, Any]) -> dict[str, Any]:
+    artifacts = _list(workflows.get("artifacts"))
+    evidence = [
+        str(record.get("path"))
+        for record in artifacts
+        if isinstance(record.get("path"), str) and record.get("status") == "referenced"
+    ]
+    missing = not evidence or bool(_list(workflows.get("orphans"))) or bool(_list(workflows.get("broken_links")))
+    return _skill_gate_record(
+        gate_id="plan",
+        title="Planning evidence",
+        stage="plan",
+        evidence=evidence,
+        status="missing" if missing else None,
+        missing_message="Planning gate requires a referenced workflow or execution plan.",
+        repair="Create an AgentSpec workflow for the task or run aspec task create --from-workflow <path> for an existing plan.",
+    )
+
+
+def _verification_skill_gate(root: Path) -> dict[str, Any]:
+    completed = _completed_task_entries(root)
+    evidence = [
+        context_pack
+        for context_pack, entry in completed
+        if _dict(entry.get("verification")).get("status") == "passed"
+    ]
+    status = "not_applicable" if not completed else "missing" if len(evidence) != len(completed) else "passed"
+    return _skill_gate_record(
+        gate_id="verification",
+        title="Verification evidence",
+        stage="verification",
+        evidence=evidence,
+        status=status,
+        missing_message="Verification gate requires completed tasks to record passed verification.",
+        repair="Run verification and finish the task with --test-status passed.",
+    )
+
+
+def _review_skill_gate(root: Path) -> dict[str, Any]:
+    completed = _completed_task_entries(root)
+    evidence: list[str] = []
+    missing = False
+    for context_pack, entry in completed:
+        review = _dict(entry.get("code_review"))
+        warning = _review_link_warning(root, context_pack, review)
+        if warning is not None:
+            missing = True
+            continue
+        review_id = review.get("id")
+        if isinstance(review_id, str) and review_id:
+            evidence.append(review_id)
+    status = "not_applicable" if not completed else "missing" if missing else "passed"
+    return _skill_gate_record(
+        gate_id="review",
+        title="Review evidence",
+        stage="review",
+        evidence=evidence,
+        status=status,
+        missing_message="Review gate requires completed tasks to link ready review evidence.",
+        repair="Record review evidence with aspec review code --task <task> and link it during finish.",
+    )
+
+
+def _finish_skill_gate(root: Path, handoff: dict[str, Any] | None) -> dict[str, Any]:
+    completed = _completed_task_entries(root)
+    evidence: list[str] = []
+    if isinstance(handoff, dict) and handoff:
+        evidence.append("agent/handoff.yml")
+    if (root / ROADMAP_PATH).exists() and check_roadmap(root).get("current"):
+        evidence.append(str(ROADMAP_PATH))
+    status = "not_applicable"
+    if completed:
+        status = "passed" if len(evidence) == 2 else "missing"
+    return _skill_gate_record(
+        gate_id="finish",
+        title="Finish write-back evidence",
+        stage="finish",
+        evidence=evidence,
+        status=status,
+        missing_message="Finish gate requires current handoff and roadmap write-back evidence.",
+        repair="Run aspec finish <task> --test-status passed --review REVIEW-####, then aspec roadmap if needed.",
+    )
+
+
+def _skill_gate_record(
+    *,
+    gate_id: str,
+    title: str,
+    stage: str,
+    evidence: list[str],
+    missing_message: str,
+    repair: str,
+    status: str | None = None,
+) -> dict[str, Any]:
+    resolved_status = status or ("passed" if evidence else "missing")
+    return {
+        "id": gate_id,
+        "title": title,
+        "stage": stage,
+        "status": resolved_status,
+        "evidence": evidence,
+        "message": missing_message if resolved_status == "missing" else None,
+        "repair": repair,
+    }
+
+
+def _skill_gate_finding(gate: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "skill_gate_missing",
+        "severity": "warning",
+        "gate": gate.get("id"),
+        "stage": gate.get("stage"),
+        "message": gate.get("message") or f"Required lifecycle skill gate is missing: {gate.get('id')}.",
+        "repair": gate.get("repair"),
+    }
+
+
+def _glob_relative(root: Path, pattern: str) -> list[str]:
+    return [
+        _relative_or_absolute(root, path)
+        for path in sorted(root.glob(pattern))
+        if path.is_file()
+    ]
+
+
+def _completed_task_entries(root: Path) -> list[tuple[str, dict[str, Any]]]:
+    ledger = load_data(root / "agent" / "task-ledger.yml", {}) or {}
+    tasks = ledger.get("tasks") if isinstance(ledger, dict) else {}
+    if not isinstance(tasks, dict):
+        return []
+    entries: list[tuple[str, dict[str, Any]]] = []
+    for context_pack, entry in sorted(tasks.items()):
+        if isinstance(context_pack, str) and isinstance(entry, dict) and entry.get("status") == "complete":
+            entries.append((context_pack, entry))
+    return entries
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
 def _ledger_entry(root: Path, context_pack: str) -> dict[str, Any] | None:
     ledger = load_data(root / "agent" / "task-ledger.yml", {}) or {}
     tasks = ledger.get("tasks") if isinstance(ledger, dict) else {}
@@ -679,10 +918,7 @@ def _finish_enforcement(root: Path) -> str:
 
 
 def _lifecycle_enforcement(root: Path) -> str:
-    config = load_data(root / ".agentspec" / "config.yml", {}) or {}
-    if not isinstance(config, dict):
-        return "warn"
-    lifecycle = config.get("lifecycle") if isinstance(config.get("lifecycle"), dict) else {}
+    lifecycle = _lifecycle_config(root)
     raw = lifecycle.get("enforcement") or lifecycle.get("finish_enforcement") or "warn"
     enforcement = str(raw)
     if enforcement == "block":
@@ -691,6 +927,14 @@ def _lifecycle_enforcement(root: Path) -> str:
         allowed = ", ".join(sorted(FINISH_ENFORCEMENTS))
         raise ValueError(f"lifecycle.enforcement must be one of: {allowed}.")
     return enforcement
+
+
+def _lifecycle_config(root: Path) -> dict[str, Any]:
+    config = load_data(root / ".agentspec" / "config.yml", {}) or {}
+    if not isinstance(config, dict):
+        config = {}
+    lifecycle = merged_runtime_config(config).get("lifecycle", {})
+    return lifecycle if isinstance(lifecycle, dict) else {}
 
 
 def _current_finish_context_pack(root: Path) -> str | None:

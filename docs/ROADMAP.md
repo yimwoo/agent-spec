@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T04:46:49Z
-- Last completed task: `T-097` agent/context-packs/T-097-add-legacy-execution-migration-tools.md
-- Last run: `complete-t-097-add-legacy-execution-migration-tools-20260511044649`
+- Updated: 2026-05-11T05:13:48Z
+- Last completed task: `T-098` agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md
+- Last run: `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -110,18 +110,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md` | complete | `complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722` | passed | REVIEW-0040 | 2026-05-11T04:27:22Z |
 | `agent/context-packs/T-096-add-strict-lifecycle-enforcement.md` | complete | `complete-t-096-add-strict-lifecycle-enforcement-20260511043725` | passed | REVIEW-0041 | 2026-05-11T04:37:25Z |
 | `agent/context-packs/T-097-add-legacy-execution-migration-tools.md` | complete | `complete-t-097-add-legacy-execution-migration-tools-20260511044649` | passed | REVIEW-0042 | 2026-05-11T04:46:49Z |
+| `agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md` | complete | `complete-t-098-add-lifecycle-skill-gate-projection-20260511051348` | passed | REVIEW-0043 | 2026-05-11T05:13:48Z |
 
 ## Requirement Traceability
 
-- Requirements: 201
-- By status: accepted=201
-- By priority: P0=58, P1=61, P2=80, P3=2
+- Requirements: 202
+- By status: accepted=202
+- By priority: P0=59, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-192` | P0 | accepted | AgentSpec supports progressive maturity profiles |
 | `R-193` | P0 | accepted | AgentSpec enforces workflow-pack coverage and generated roadmap status |
 | `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
 | `R-195` | P0 | accepted | AgentSpec uses native naming for legacy workflow surfaces |
@@ -131,3 +131,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-199` | P0 | accepted | AgentSpec preserves manual roadmap content in generated-block mode |
 | `R-200` | P0 | accepted | AgentSpec supports opt-in strict lifecycle enforcement |
 | `R-201` | P0 | accepted | AgentSpec provides idempotent legacy execution migration tooling |
+| `R-202` | P0 | accepted | AgentSpec exposes opt-in lifecycle skill gate projections |

@@ -85,6 +85,10 @@ def default_roadmap_config() -> dict[str, Any]:
 def default_lifecycle_config() -> dict[str, Any]:
     return {
         "enforcement": "warn",
+        "skill_gates": {
+            "enabled": False,
+            "required": [],
+        },
     }
 
 
@@ -132,11 +136,19 @@ def merged_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
         merged["roadmap"] = deepcopy(defaults["roadmap"])
     lifecycle = merged.setdefault("lifecycle", {})
     if isinstance(lifecycle, dict):
-        for key, value in defaults["lifecycle"].items():
-            lifecycle.setdefault(key, value)
+        _merge_nested_defaults(lifecycle, defaults["lifecycle"])
     else:
         merged["lifecycle"] = deepcopy(defaults["lifecycle"])
     return merged
+
+
+def _merge_nested_defaults(target: dict[str, Any], defaults: dict[str, Any]) -> None:
+    for key, value in defaults.items():
+        if key not in target:
+            target[key] = deepcopy(value)
+            continue
+        if isinstance(target[key], dict) and isinstance(value, dict):
+            _merge_nested_defaults(target[key], value)
 
 
 def resolve_agent_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]:

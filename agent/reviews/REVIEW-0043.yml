@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0043",
+  "task": {
+    "selector": "T-098",
+    "context_pack": "agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md"
+  },
+  "verdict": "ready",
+  "summary": "Phase 8 lifecycle skill gate projection is additive, disabled by default, derives findings from existing AgentSpec artifacts, and is covered by focused lifecycle/config/status tests plus the full unittest suite.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T05:13:43Z"
+}

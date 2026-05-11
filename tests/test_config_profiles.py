@@ -81,7 +81,22 @@ class ConfigProfileTests(unittest.TestCase):
             merged = merged_runtime_config({"version": 1})
 
             self.assertEqual(config["lifecycle"]["enforcement"], "warn")
+            self.assertEqual(
+                config["lifecycle"]["skill_gates"],
+                {"enabled": False, "required": []},
+            )
             self.assertEqual(merged["lifecycle"], config["lifecycle"])
+
+    def test_runtime_config_merges_nested_skill_gate_defaults(self) -> None:
+        config = {"lifecycle": {"skill_gates": {"enabled": True, "required": ["design"]}}}
+
+        merged = merged_runtime_config(config)
+
+        self.assertEqual(merged["lifecycle"]["enforcement"], "warn")
+        self.assertEqual(
+            merged["lifecycle"]["skill_gates"],
+            {"enabled": True, "required": ["design"]},
+        )
 
     def test_resolve_agent_profile_merges_defaults_for_existing_configs(self) -> None:
         profile = resolve_agent_profile({"version": 1}, "main_executor")
