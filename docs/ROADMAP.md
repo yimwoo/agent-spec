@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T04:12:11Z
-- Last completed task: `T-094` agent/context-packs/T-094-add-finish-orchestrator.md
-- Last run: `complete-t-094-add-finish-orchestrator-20260511041211`
+- Updated: 2026-05-11T04:27:22Z
+- Last completed task: `T-095` agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md
+- Last run: `complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -107,18 +107,18 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md` | complete | `t-092-create-and-link-native-workflow-artifacts-20260511032252` | passed | REVIEW-0037 | 2026-05-11T03:29:04Z |
 | `agent/context-packs/T-093-add-shared-write-back-module.md` | complete | `complete-t-093-add-shared-write-back-module-20260511040155` | passed | REVIEW-0038 | 2026-05-11T04:01:55Z |
 | `agent/context-packs/T-094-add-finish-orchestrator.md` | complete | `complete-t-094-add-finish-orchestrator-20260511041211` | passed | REVIEW-0039 | 2026-05-11T04:12:11Z |
+| `agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md` | complete | `complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722` | passed | REVIEW-0040 | 2026-05-11T04:27:22Z |
 
 ## Requirement Traceability
 
-- Requirements: 198
-- By status: accepted=198
-- By priority: P0=55, P1=61, P2=80, P3=2
+- Requirements: 199
+- By status: accepted=199
+- By priority: P0=56, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-189` | P1 | accepted | Claude Code plugin package mirrors AgentSpec workflow skills |
 | `R-190` | P0 | accepted | AgentSpec exposes product outcome gates and unified lifecycle skills |
 | `R-191` | P0 | accepted | AgentSpec records multi-session worktree leases |
 | `R-192` | P0 | accepted | AgentSpec supports progressive maturity profiles |
@@ -128,3 +128,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
 | `R-197` | P0 | accepted | AgentSpec centralizes completion write-back helpers |
 | `R-198` | P0 | accepted | AgentSpec exposes a finish orchestrator over completion write-back |
+| `R-199` | P0 | accepted | AgentSpec preserves manual roadmap content in generated-block mode |

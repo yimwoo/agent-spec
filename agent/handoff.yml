@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-05-11T04:12:11Z",
+  "updated_at": "2026-05-11T04:27:22Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-094",
-    "context_pack": "agent/context-packs/T-094-add-finish-orchestrator.md",
-    "title": "T-094: Add finish orchestrator",
-    "run_id": "complete-t-094-add-finish-orchestrator-20260511041211",
-    "reason": "Implemented Phase 3 finish orchestrator with aspec finish selector/current/dry-run support, warning diagnostics, config-backed strict blocking, roadmap update after finish, and CLI coverage. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
-    "updated_at": "2026-05-11T04:12:11Z",
+    "id": "T-095",
+    "context_pack": "agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md",
+    "title": "T-095: Add opt-in generated-block roadmap preservation mode while preserving the existing full-file\u2026",
+    "run_id": "complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722",
+    "reason": "Reconfirmed Phase 5 completion after closing the earlier starter run. T-095 is complete with REVIEW-0040, full-suite verification, roadmap refresh, and lifecycle-ready status.",
+    "updated_at": "2026-05-11T04:27:22Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0039",
+      "id": "REVIEW-0040",
       "verdict": "ready",
       "reviewer": "codex",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0039.yml"
+      "path": "agent/reviews/REVIEW-0040.yml"
     }
   },
   "current_state": {
@@ -29,24 +29,24 @@
       "summary": "Readiness is 100/100 (normal-implementation)."
     },
     "requirements": {
-      "total": 198,
+      "total": 199,
       "by_status": {
-        "accepted": 198
+        "accepted": 199
       }
     },
     "dcrs": {
-      "total": 63,
+      "total": 64,
       "by_status": {
-        "accepted": 63
+        "accepted": 64
       }
     },
     "tasks": {
-      "total": 92,
+      "total": 93,
       "by_status": {
-        "complete": 92
+        "complete": 93
       },
       "by_type": {
-        "implementation": 84,
+        "implementation": 85,
         "migration": 1,
         "review": 3,
         "spec": 1,
@@ -54,14 +54,14 @@
       }
     },
     "runs": {
-      "total": 112,
+      "total": 4,
       "by_status": {
-        "aborted": 6,
-        "complete": 106
+        "aborted": 1,
+        "complete": 3
       },
       "by_mode": {
         "research": 1,
-        "supervised": 111
+        "supervised": 3
       }
     }
   },
@@ -77,6 +77,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0039.yml"
+    "last_code_review": "agent/reviews/REVIEW-0040.yml"
   }
 }

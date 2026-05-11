@@ -4,11 +4,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .config import load_project_config, merged_runtime_config
 from .io import load_data, write_text
 
 
 ROADMAP_PATH = Path("docs/ROADMAP.md")
 ROADMAP_CHECK_SCHEMA = "agentspec.roadmap_check.v0"
+ROADMAP_MODE_FULL_FILE = "full-file"
+ROADMAP_MODE_GENERATED_BLOCK = "generated-block"
+ROADMAP_MODES = {ROADMAP_MODE_FULL_FILE, ROADMAP_MODE_GENERATED_BLOCK}
+ROADMAP_BLOCK_BEGIN = "<!-- AGENTSPEC:ROADMAP:BEGIN -->"
+ROADMAP_BLOCK_END = "<!-- AGENTSPEC:ROADMAP:END -->"
 
 
 def build_roadmap(root: Path) -> str:
@@ -64,24 +70,94 @@ def build_roadmap(root: Path) -> str:
 
 
 def write_roadmap(root: Path) -> Path:
-    path = root.resolve() / ROADMAP_PATH
-    write_text(path, build_roadmap(root))
+    root = root.resolve()
+    path = root / ROADMAP_PATH
+    mode = _roadmap_mode(root)
+    if mode == ROADMAP_MODE_FULL_FILE:
+        write_text(path, build_roadmap(root))
+    else:
+        write_text(path, _write_generated_block_content(root, path))
     return path
 
 
 def check_roadmap(root: Path) -> dict[str, Any]:
     root = root.resolve()
     path = root / ROADMAP_PATH
-    expected = build_roadmap(root)
+    mode = _roadmap_mode(root)
+    expected = build_roadmap(root) if mode == ROADMAP_MODE_FULL_FILE else _build_roadmap_block(root)
     actual = path.read_text(encoding="utf-8") if path.exists() else None
-    current = actual == expected
+    if mode == ROADMAP_MODE_GENERATED_BLOCK and actual is not None:
+        block = _extract_roadmap_block(actual)
+        if block is None:
+            current = False
+            summary = "docs/ROADMAP.md is missing the AgentSpec managed block."
+        else:
+            current = block == expected
+            summary = "docs/ROADMAP.md is current." if current else "docs/ROADMAP.md managed block is stale."
+    else:
+        current = actual == expected
+        summary = "docs/ROADMAP.md is current." if current else "docs/ROADMAP.md is missing or stale."
     return {
         "schema": ROADMAP_CHECK_SCHEMA,
         "path": str(ROADMAP_PATH),
+        "mode": mode,
         "exists": path.exists(),
         "current": current,
-        "summary": "docs/ROADMAP.md is current." if current else "docs/ROADMAP.md is missing or stale.",
+        "summary": summary,
     }
+
+
+def _roadmap_mode(root: Path) -> str:
+    config = merged_runtime_config(load_project_config(root))
+    roadmap = config.get("roadmap") if isinstance(config.get("roadmap"), dict) else {}
+    mode = str(roadmap.get("mode", ROADMAP_MODE_FULL_FILE))
+    if mode not in ROADMAP_MODES:
+        raise ValueError(f"Unsupported roadmap mode: {mode}")
+    return mode
+
+
+def _build_roadmap_block(root: Path) -> str:
+    return f"{ROADMAP_BLOCK_BEGIN}\n{build_roadmap(root).rstrip()}\n{ROADMAP_BLOCK_END}\n"
+
+
+def _write_generated_block_content(root: Path, path: Path) -> str:
+    block = _build_roadmap_block(root)
+    if not path.exists():
+        return block
+    existing = path.read_text(encoding="utf-8")
+    bounds = _roadmap_block_bounds(existing)
+    if bounds is None:
+        return _append_roadmap_block(existing, block)
+    start, end = bounds
+    return existing[:start] + block + existing[end:]
+
+
+def _append_roadmap_block(existing: str, block: str) -> str:
+    if not existing:
+        return block
+    separator = "" if existing.endswith("\n") else "\n"
+    return f"{existing}{separator}{block}"
+
+
+def _extract_roadmap_block(text: str) -> str | None:
+    bounds = _roadmap_block_bounds(text)
+    if bounds is None:
+        return None
+    start, end = bounds
+    return text[start:end]
+
+
+def _roadmap_block_bounds(text: str) -> tuple[int, int] | None:
+    start = text.find(ROADMAP_BLOCK_BEGIN)
+    if start < 0:
+        return None
+    end_marker_start = text.find(ROADMAP_BLOCK_END, start + len(ROADMAP_BLOCK_BEGIN))
+    if end_marker_start < 0:
+        return None
+    end = end_marker_start + len(ROADMAP_BLOCK_END)
+    if end < len(text) and text[end : end + 1] == "\n":
+        end += 1
+    return start, end
 
 
 def _handoff_lines(handoff: dict[str, Any]) -> list[str]:

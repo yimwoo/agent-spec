@@ -61,6 +61,17 @@ class ConfigProfileTests(unittest.TestCase):
             self.assertIsNone(quality_gc["report_dir"])
             self.assertEqual(merged["quality_gc"], quality_gc)
 
+    def test_runtime_config_merges_roadmap_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            init_project(root)
+
+            config = load_data(root / ".agentspec" / "config.yml")
+            merged = merged_runtime_config({"version": 1})
+
+            self.assertEqual(config["roadmap"]["mode"], "full-file")
+            self.assertEqual(merged["roadmap"], config["roadmap"])
+
     def test_resolve_agent_profile_merges_defaults_for_existing_configs(self) -> None:
         profile = resolve_agent_profile({"version": 1}, "main_executor")
 

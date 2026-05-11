@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "id": "REVIEW-0040",
+  "task": {
+    "selector": "T-095",
+    "context_pack": "agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md"
+  },
+  "verdict": "ready",
+  "summary": "Phase 5 roadmap preservation implementation is ready. Full-file mode remains default; generated-block mode is config-gated, preserves manual content outside AgentSpec markers, and check/write behavior is covered by focused, config, workflow, CLI, lifecycle, and full-suite verification.",
+  "reviewer": "codex",
+  "range": "worktree",
+  "created_at": "2026-05-11T04:26:09Z"
+}

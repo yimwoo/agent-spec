@@ -5755,5 +5755,58 @@
       "quality-gc-reviewer",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-199",
+    "title": "AgentSpec preserves manual roadmap content in generated-block mode",
+    "description": "AgentSpec keeps full-file roadmap generation as the default and adds an opt-in generated-block roadmap mode that preserves human-authored content outside the managed AgentSpec block.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-14",
+      "lifecycle-engine-hardening-design:D-20.5"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0064",
+    "acceptance": [
+      "Full-file roadmap generation remains the default behavior.",
+      "A repo config flag enables generated-block roadmap mode.",
+      "Generated-block mode preserves manual content before and after the managed block.",
+      "aspec roadmap --check succeeds when the generated block is current and fails when the block is missing or stale.",
+      "Tests cover full-file compatibility, generated-block write behavior, and generated-block check behavior.",
+      "The phase has a design doc, an executable plan doc, and a dedicated git worktree/branch before implementation completion."
+    ],
+    "code_targets": [
+      "agentspec/roadmap.py",
+      "agentspec/cli.py",
+      "agentspec/config.py"
+    ],
+    "test_targets": [
+      "tests/test_roadmap_preservation.py",
+      "tests/test_workflow_contract.py",
+      "tests/test_cli_workflow.py"
+    ],
+    "support_targets": [
+      "agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md",
+      "agent/handoff.yml",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "docs/ROADMAP.md",
+      "docs/change-requests/DCR-0064-add-roadmap-preservation-mode.md",
+      "docs/designs/2026-05-11-phase-5-roadmap-preservation-design.md",
+      "docs/plans/2026-05-11-phase-5-roadmap-preservation-workflow.md",
+      "docs/discovery/spikes/2026-05-11-agentspec-lifecycle-engine-hardening.md",
+      "docs/source/src-0003-lifecycle-engine-hardening-design.md",
+      "docs/traceability/requirements.yml",
+      "reports/doctor/repo-scan.yml",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "architect-reviewer",
+      "quality-gc-reviewer",
+      "test-eval-reviewer"
+    ]
   }
 ]
