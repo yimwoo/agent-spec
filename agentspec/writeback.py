@@ -529,7 +529,7 @@ def _handoff_warnings(
         return []
     current = handoff.get("current_state") if isinstance(handoff.get("current_state"), dict) else {}
     mismatches: list[str] = []
-    for key in ("requirements", "dcrs", "tasks", "runs"):
+    for key in ("requirements", "dcrs", "tasks"):
         expected = _total(project_counts.get(key))
         actual = _total(current.get(key)) if isinstance(current, dict) else None
         if actual is not None and expected is not None and actual != expected:

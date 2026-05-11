@@ -90,7 +90,6 @@ def _current_state(project_status: dict[str, Any]) -> dict[str, Any]:
         "requirements": _counts(project_status.get("requirements")),
         "dcrs": _counts(project_status.get("dcrs")),
         "tasks": _counts(project_status.get("tasks")),
-        "runs": _counts(project_status.get("runs")),
     }
 
 

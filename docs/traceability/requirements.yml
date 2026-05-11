@@ -6024,5 +6024,51 @@
       "coordinator",
       "test-eval-reviewer"
     ]
+  },
+  {
+    "id": "R-204",
+    "title": "AgentSpec handoff freshness is portable across clean checkouts",
+    "description": "AgentSpec committed handoff state does not become stale solely because the checkout lacks ignored local run state files from the worktree that wrote the handoff.",
+    "source_sections": [
+      "lifecycle-engine-hardening-design:D-21",
+      "agentspec-hotl-integration-without-hotl-names:D-19",
+      "agentspec-hotl-integration-without-hotl-names:D-19.1"
+    ],
+    "priority": "P0",
+    "status": "accepted",
+    "confidence": "medium",
+    "originating_dcr": "DCR-0069",
+    "acceptance": [
+      "New handoff writes do not include local-only run counts in current_state.",
+      "Lifecycle stale handoff detection ignores legacy handoff run-count mismatches.",
+      "Requirements, DCR, task count, and other portable handoff mismatches continue to report stale_handoff.",
+      "A regression test covers a clean checkout with fewer tracked run artifacts than the handoff writer worktree.",
+      "The AgentSpec lifecycle E2E clean-checkout probe no longer reports stale_handoff solely because of ignored local run state."
+    ],
+    "code_targets": [
+      "agentspec/handoff.py",
+      "agentspec/writeback.py"
+    ],
+    "test_targets": [
+      "tests/test_status_cli.py",
+      "tests/test_writeback.py",
+      "tests/test_lifecycle_enforcement.py"
+    ],
+    "support_targets": [
+      "docs/change-requests/DCR-0069-make-handoff-status-portable-across-clean-checkouts.md",
+      "docs/traceability/requirements.yml",
+      "agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md",
+      "agent/workflows/W-100-make-handoff-status-portable-across-clean-checkouts.md",
+      "agent/reviews/*.yml",
+      "agent/task-ledger.yml",
+      "agent/handoff.yml",
+      "docs/ROADMAP.md",
+      "reports/quality/latest.md",
+      "reports/quality/latest.yml"
+    ],
+    "owner_roles": [
+      "coordinator",
+      "test-eval-reviewer"
+    ]
   }
 ]

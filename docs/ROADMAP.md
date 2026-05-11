@@ -115,15 +115,14 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Requirement Traceability
 
-- Requirements: 203
-- By status: accepted=203
-- By priority: P0=60, P1=61, P2=80, P3=2
+- Requirements: 204
+- By status: accepted=204
+- By priority: P0=61, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
 | `R-195` | P0 | accepted | AgentSpec uses native naming for legacy workflow surfaces |
 | `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
 | `R-197` | P0 | accepted | AgentSpec centralizes completion write-back helpers |
@@ -133,3 +132,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-201` | P0 | accepted | AgentSpec provides idempotent legacy execution migration tooling |
 | `R-202` | P0 | accepted | AgentSpec exposes opt-in lifecycle skill gate projections |
 | `R-203` | P0 | accepted | AgentSpec supports its own end-to-end lifecycle dogfood workflow |
+| `R-204` | P0 | accepted | AgentSpec handoff freshness is portable across clean checkouts |

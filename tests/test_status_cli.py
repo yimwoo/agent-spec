@@ -294,6 +294,33 @@ Type: `implementation`
             self.assertIn("missing_verification", text)
             self.assertIn("stale_roadmap", text)
 
+    def test_status_lifecycle_ignores_local_only_run_count_handoff_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent").mkdir()
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-11T00:00:00Z",
+                    "current_state": {
+                        "requirements": {"total": 0},
+                        "dcrs": {"total": 0},
+                        "tasks": {"total": 0},
+                        "runs": {"total": 3},
+                    },
+                    "next_action": {"kind": "idle", "command": "aspec status --json"},
+                },
+            )
+
+            status = build_project_status(root)
+            warning_types = {warning["type"] for warning in status["lifecycle"]["warnings"]}
+
+            self.assertNotIn("stale_handoff", warning_types)
+
     def test_status_lifecycle_suppresses_legacy_missing_review_before_review_contract(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

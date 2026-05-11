@@ -29,6 +29,7 @@ class WriteBackTests(unittest.TestCase):
             self.assertEqual(handoff["last_completed_task"]["context_pack"], completion["context_pack"])
             self.assertEqual(handoff["last_completed_task"]["code_review"]["id"], "REVIEW-0001")
             self.assertEqual(handoff["artifacts"]["last_code_review"], "agent/reviews/REVIEW-0001.yml")
+            self.assertNotIn("runs", handoff["current_state"])
 
             roadmap_path = update_roadmap(root)
             self.assertTrue(roadmap_path.exists())
