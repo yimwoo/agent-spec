@@ -107,15 +107,14 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Requirement Traceability
 
-- Requirements: 195
-- By status: accepted=195
-- By priority: P0=52, P1=61, P2=80, P3=2
+- Requirements: 196
+- By status: accepted=196
+- By priority: P0=53, P1=61, P2=80, P3=2
 
 ## Recent Requirements
 
 | Requirement | Priority | Status | Title |
 |---|---|---|---|
-| `R-186` | P1 | accepted | Generated agent context stays current and project invariants are configured |
 | `R-187` | P1 | accepted | AgentSpec exposes a read-only project metrics surface |
 | `R-188` | P2 | accepted | First implementation language question is answered |
 | `R-189` | P1 | accepted | Claude Code plugin package mirrors AgentSpec workflow skills |
@@ -125,3 +124,4 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `R-193` | P0 | accepted | AgentSpec enforces workflow-pack coverage and generated roadmap status |
 | `R-194` | P0 | accepted | AgentSpec exposes lifecycle projection and write-back readiness |
 | `R-195` | P0 | accepted | AgentSpec uses native naming for legacy workflow surfaces |
+| `R-196` | P0 | accepted | AgentSpec creates and links native workflow artifacts |
