@@ -79,6 +79,8 @@ def format_outcome_status(status: dict[str, Any]) -> str:
         f"Readiness: {status.get('readiness', 'unknown')}",
         f"Score: {_score_text(status.get('score'))}",
         f"Summary: {status.get('summary', '-')}",
+        "Interpretation: Product outcomes track proof for critical user-visible workflows. "
+        "Required gates are evidence checks that must be ready before claiming outcome readiness.",
     ]
 
     outcomes = status.get("outcomes") if isinstance(status.get("outcomes"), list) else []
@@ -94,6 +96,15 @@ def format_outcome_status(status: dict[str, Any]) -> str:
             )
     else:
         lines.extend(["", "Outcomes:", "- none defined"])
+
+    ready_gates = _required_gates(outcomes, ready=True)
+    not_ready_gates = _required_gates(outcomes, ready=False)
+    if ready_gates:
+        lines.extend(["", "Ready Required Gates:"])
+        lines.extend(f"- {_gate_line(gate)}" for gate in ready_gates)
+    if not_ready_gates:
+        lines.extend(["", "Not Ready Required Gates:"])
+        lines.extend(f"- {_gate_line(gate, include_status=True)}" for gate in not_ready_gates[:5])
 
     blockers = status.get("blockers") if isinstance(status.get("blockers"), list) else []
     if blockers:
@@ -114,6 +125,40 @@ def format_outcome_status(status: dict[str, Any]) -> str:
             lines.append(f"- {action}")
 
     return "\n".join(lines)
+
+
+def _required_gates(outcomes: list[dict[str, Any]], *, ready: bool) -> list[dict[str, Any]]:
+    gates: list[dict[str, Any]] = []
+    for outcome in outcomes:
+        for gate in outcome.get("gates", []):
+            if not isinstance(gate, dict) or not gate.get("required"):
+                continue
+            is_ready = gate.get("status") in READY_GATE_STATUSES
+            if is_ready != ready:
+                continue
+            gates.append(
+                {
+                    "outcome_id": outcome.get("id"),
+                    "gate_id": gate.get("id"),
+                    "title": gate.get("title"),
+                    "status": gate.get("status"),
+                    "next_action": gate.get("next_action"),
+                }
+            )
+    return gates
+
+
+def _gate_line(gate: dict[str, Any], *, include_status: bool = False) -> str:
+    location = "/".join(
+        part
+        for part in [str(gate.get("outcome_id", "")), str(gate.get("gate_id", ""))]
+        if part
+    )
+    title = gate.get("title") or "Untitled gate"
+    status = f" [{gate.get('status')}]" if include_status else ""
+    next_action = gate.get("next_action")
+    suffix = f" -> {next_action}" if next_action else ""
+    return f"{location}: {title}{status}{suffix}"
 
 
 def _normalize_outcome(outcome: dict[str, Any]) -> dict[str, Any]:

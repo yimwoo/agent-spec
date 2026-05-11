@@ -17,8 +17,20 @@ from .writeback import build_lifecycle_projection, lifecycle_warning_lines
 
 
 PROJECT_STATUS_SCHEMA = "agentspec.project_status.v0"
+LIFECYCLE_SUMMARY_SCHEMA = "agentspec.lifecycle_summary.v0"
+IMPLEMENTATION_READINESS_GATE = 60
 ACTIVE_RUN_STATUSES = {"started", "running"}
 ATTENTION_RUN_STATUSES = {"paused", "halted"}
+LIFECYCLE_BREADCRUMB = [
+    "draft_source",
+    "ingest_source",
+    "compile_requirements",
+    "create_task_context_pack",
+    "run_task",
+    "verify_and_review",
+    "complete_task",
+    "outcome_readiness",
+]
 
 
 def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]:
@@ -109,7 +121,132 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     }
     if handoff is not None:
         payload["handoff"] = handoff
+    payload["lifecycle_summary"] = build_lifecycle_summary(payload)
     return payload
+
+
+def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
+    """Return a stable, human-oriented next-action projection for status JSON."""
+
+    readiness = _dict_or_empty(status.get("readiness"))
+    requirements = _dict_or_empty(status.get("requirements"))
+    tasks = _dict_or_empty(status.get("tasks"))
+    runs = _dict_or_empty(status.get("runs"))
+    workflows = _dict_or_empty(status.get("workflows"))
+    lifecycle = _dict_or_empty(status.get("lifecycle"))
+    outcomes = _dict_or_empty(status.get("outcomes"))
+    next_task = tasks.get("next") if isinstance(tasks.get("next"), dict) else None
+    attention_runs = _list_or_empty(runs.get("attention"))
+    active_runs = _list_or_empty(runs.get("active"))
+    workflow_warnings = workflow_warning_lines(workflows)
+
+    stage = "idle_no_ready_task"
+    main_point = "No implementation task is ready to run."
+    artifact: dict[str, Any] | None = None
+    blocked_by: list[dict[str, Any]] = []
+    action = {
+        "label": "Inspect AgentSpec status and create or classify the next task.",
+        "human_decision_required": True,
+        "reason": "AgentSpec needs a ready context pack before a code agent can safely start implementation.",
+        "commands": ["aspec status --json", "aspec task next"],
+    }
+
+    if attention_runs:
+        run = attention_runs[0]
+        run_id = str(run.get("run_id") or "unknown")
+        stage = "attention_run"
+        main_point = f"Run {run_id} needs attention before new work can continue."
+        artifact = _run_artifact(run)
+        blocked_by = _run_blockers(run)
+        action = {
+            "label": "Inspect the attention-needed run.",
+            "human_decision_required": True,
+            "reason": "A paused or halted run may require remediation or a human decision before AgentSpec starts another task.",
+            "commands": [f"aspec run inspect {run_id}", "aspec status --json"],
+        }
+    elif active_runs:
+        run = active_runs[0]
+        run_id = str(run.get("run_id") or "unknown")
+        stage = "active_run"
+        main_point = f"Run {run_id} is active."
+        artifact = _run_artifact(run)
+        action = {
+            "label": "Continue the active run.",
+            "human_decision_required": False,
+            "reason": "AgentSpec already has an in-progress run; continuing it preserves the current task boundary.",
+            "commands": [f"aspec run prompt {run_id}", f"aspec run loop --run-id {run_id}", "aspec status --json"],
+        }
+    elif next_task:
+        stage = "task_ready"
+        task_id = str(next_task.get("id") or "unknown")
+        path = str(next_task.get("path") or "")
+        main_point = f"Task {task_id} is ready to run."
+        artifact = {
+            "type": "task",
+            "id": task_id,
+            "title": next_task.get("title"),
+            "path": path or None,
+        }
+        action = {
+            "label": "Start the next ready task.",
+            "human_decision_required": False,
+            "reason": "A ready task context pack defines the scope, allowed paths, and verification expectations.",
+            "commands": [f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
+        }
+    elif lifecycle.get("readiness") in {"blocked", "needs_attention"}:
+        stage = "lifecycle_attention"
+        findings = _lifecycle_findings(lifecycle)
+        first = findings[0] if findings else {}
+        message = first.get("message") or first.get("type") or "Lifecycle drift needs attention."
+        main_point = f"Lifecycle attention is needed: {message}"
+        blocked_by = _finding_blockers(findings)
+        recommendation = first.get("recommendation")
+        commands = [str(recommendation)] if recommendation else ["aspec status --json"]
+        if "aspec status --json" not in commands:
+            commands.append("aspec status --json")
+        action = {
+            "label": "Resolve lifecycle warning.",
+            "human_decision_required": True,
+            "reason": message,
+            "commands": commands,
+        }
+    elif workflow_warnings:
+        stage = "workflow_backfill_needed"
+        main_point = "A workflow exists without a ready task context pack."
+        command = _first_workflow_backfill_command(workflows)
+        commands = [command] if command else ["aspec task create --from-workflow <workflow>"]
+        commands.append("aspec status --json")
+        blocked_by = [{"kind": "workflow_without_task_pack", "message": workflow_warnings[0]}]
+        action = {
+            "label": "Backfill the workflow into an AgentSpec task pack.",
+            "human_decision_required": False,
+            "reason": "Workflow files are executable only after AgentSpec links them to a context pack.",
+            "commands": commands,
+        }
+    else:
+        stage, main_point, blocked_by, action = _no_ready_task_summary(
+            readiness=readiness,
+            requirements=requirements,
+            tasks=tasks,
+            dcrs=_dict_or_empty(status.get("dcrs")),
+        )
+
+    return {
+        "schema": LIFECYCLE_SUMMARY_SCHEMA,
+        "main_point": main_point,
+        "current_stage": stage,
+        "breadcrumb": list(LIFECYCLE_BREADCRUMB),
+        "current_artifact": artifact,
+        "readiness": _readiness_summary(readiness),
+        "outcomes": {
+            "readiness": outcomes.get("readiness"),
+            "score": outcomes.get("score"),
+            "summary": outcomes.get("summary"),
+        },
+        "recommended_next_action": action,
+        "blocked_by": blocked_by,
+        "terms": _lifecycle_terms(),
+    }
 
 
 def load_run_records(root: Path) -> list[dict[str, Any]]:
@@ -119,6 +256,7 @@ def load_run_records(root: Path) -> list[dict[str, Any]]:
 
 
 def format_project_status(status: dict[str, Any]) -> str:
+    summary = status.get("lifecycle_summary")
     readiness = status.get("readiness", {})
     requirements = status.get("requirements", {})
     dcrs = status.get("dcrs", {})
@@ -130,8 +268,11 @@ def format_project_status(status: dict[str, Any]) -> str:
     outcomes = status.get("outcomes", {})
     lifecycle = status.get("lifecycle", {})
 
-    lines = [
-        "AgentSpec Status",
+    lines = ["AgentSpec Status"]
+    if isinstance(summary, dict):
+        lines.extend(_summary_lines(summary))
+
+    lines.extend([
         f"Root: {status.get('root')}",
         f"Overall: {status.get('overall')}",
         f"Readiness: {_readiness_text(readiness)}",
@@ -146,7 +287,7 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Lifecycle: {_lifecycle_text(lifecycle)}",
         f"Next: {_next_text(tasks.get('next'))}",
         f"Recommendation: {status.get('recommendation')}",
-    ]
+    ])
 
     handoff = status.get("handoff")
     if isinstance(handoff, dict):
@@ -381,6 +522,197 @@ def _lifecycle_recommendation(lifecycle: dict[str, Any] | None) -> str | None:
         first = warnings[0]
         return f"Resolve lifecycle warning: {first.get('message') or first.get('type')}."
     return None
+
+
+def _summary_lines(summary: dict[str, Any]) -> list[str]:
+    action = _dict_or_empty(summary.get("recommended_next_action"))
+    readiness = _dict_or_empty(summary.get("readiness"))
+    commands = _string_list(action.get("commands"))
+    lines = [
+        f"Main point: {summary.get('main_point', '-')}",
+        f"Lifecycle state: current={summary.get('current_stage', 'unknown')}; next={action.get('label', '-')}",
+        f"Recommended next action: {action.get('label', '-')}",
+        f"Human decision needed: {'yes' if action.get('human_decision_required') else 'no'}",
+        f"Mode: {readiness.get('mode', 'unknown')}",
+        _implementation_gate_text(readiness),
+    ]
+    explanation = readiness.get("explanation")
+    if explanation:
+        lines.append(f"Readiness meaning: {explanation}")
+    if commands:
+        lines.append(f"Agent-safe next commands: {', '.join(commands)}")
+    lines.append("")
+    return lines
+
+
+def _implementation_gate_text(readiness: dict[str, Any]) -> str:
+    score = readiness.get("score")
+    gate = readiness.get("implementation_gate", IMPLEMENTATION_READINESS_GATE)
+    if not isinstance(score, int):
+        return f"Implementation gate: readiness is unknown; compile accepted source before creating implementation tasks."
+    relation = "meets" if score >= gate else "is below"
+    consequence = (
+        "implementation tasks are allowed when a ready task pack exists"
+        if score >= gate
+        else "production implementation tasks are blocked"
+    )
+    return f"Implementation gate: readiness {score}/100 {relation} {gate}/100; {consequence}."
+
+
+def _readiness_summary(readiness: dict[str, Any]) -> dict[str, Any]:
+    score = readiness.get("score")
+    mode = readiness.get("mode") or "unknown"
+    allowed = isinstance(score, int) and score >= IMPLEMENTATION_READINESS_GATE
+    if not isinstance(score, int):
+        explanation = "Readiness has not been compiled yet, so AgentSpec cannot safely recommend implementation work."
+    elif allowed:
+        explanation = (
+            f"Readiness {score}/100 meets the {IMPLEMENTATION_READINESS_GATE}/100 implementation gate; "
+            "AgentSpec may recommend implementation tasks when a ready context pack exists."
+        )
+    else:
+        explanation = (
+            f"Readiness {score}/100 is below the {IMPLEMENTATION_READINESS_GATE}/100 implementation gate; "
+            "AgentSpec should stay in discovery, spike, or scaffold work until blockers are resolved."
+        )
+    return {
+        "score": score,
+        "mode": mode,
+        "summary": readiness.get("summary"),
+        "implementation_gate": IMPLEMENTATION_READINESS_GATE,
+        "implementation_allowed": allowed,
+        "explanation": explanation,
+    }
+
+
+def _no_ready_task_summary(
+    *,
+    readiness: dict[str, Any],
+    requirements: dict[str, Any],
+    tasks: dict[str, Any],
+    dcrs: dict[str, Any],
+) -> tuple[str, str, list[dict[str, Any]], dict[str, Any]]:
+    score = readiness.get("score")
+    accepted_requirements = _status_count(requirements, "accepted")
+    total_tasks = int(tasks.get("total", 0) or 0)
+    classified_dcrs = _status_count(dcrs, "classified")
+    accepted_dcrs = _status_count(dcrs, "accepted")
+
+    if accepted_requirements == 0:
+        stage = "source_or_requirements_needed"
+        main_point = "No implementation task is ready because AgentSpec has no accepted requirements yet."
+        reason = "Accepted requirements must exist before AgentSpec can create a scoped implementation task."
+        commands = ["aspec status --json", "aspec ingest <design.md>", "aspec compile"]
+    elif isinstance(score, int) and score < IMPLEMENTATION_READINESS_GATE:
+        stage = "implementation_readiness_blocked"
+        main_point = (
+            f"No implementation task is ready because readiness {score}/100 is below "
+            f"the {IMPLEMENTATION_READINESS_GATE}/100 implementation gate."
+        )
+        reason = "Resolve readiness blockers with discovery, spike, or scaffold work before creating production implementation tasks."
+        commands = ["aspec readiness", "aspec task create --type spike --title <title>", "aspec status --json"]
+    elif total_tasks == 0:
+        stage = "task_context_needed"
+        main_point = "No implementation task is ready because accepted requirements have not been converted into task context packs."
+        reason = "A code agent needs a task context pack before it can safely edit files."
+        commands = ["aspec task create --requirement <R-id> --type implementation --title <title>", "aspec task next"]
+    else:
+        stage = "idle_no_ready_task"
+        main_point = "No implementation task is ready; all known task context packs are complete, halted, or otherwise not executable."
+        reason = "Create or classify the next DCR/task, or choose autonomous research mode if there is no known implementation scope."
+        commands = ["aspec status --json", "aspec dcr create --title <title> --classification implement-now", "aspec task next"]
+
+    blocked_by = [
+        {
+            "kind": "no_ready_task",
+            "message": main_point,
+            "accepted_requirements": accepted_requirements,
+            "tasks_total": total_tasks,
+            "dcrs_ready_for_tasking": classified_dcrs + accepted_dcrs,
+        }
+    ]
+    action = {
+        "label": "Prepare the next AgentSpec task context pack.",
+        "human_decision_required": True,
+        "reason": reason,
+        "commands": commands,
+    }
+    return stage, main_point, blocked_by, action
+
+
+def _status_count(section: dict[str, Any], key: str) -> int:
+    by_status = section.get("by_status")
+    if not isinstance(by_status, dict):
+        return 0
+    value = by_status.get(key, 0)
+    return int(value) if isinstance(value, int) else 0
+
+
+def _run_artifact(run: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "run",
+        "id": run.get("run_id"),
+        "title": run.get("context_pack_title"),
+        "path": run.get("context_pack"),
+        "status": run.get("status"),
+    }
+
+
+def _run_blockers(run: dict[str, Any]) -> list[dict[str, Any]]:
+    flags = _string_list(run.get("policy_flags"))
+    blockers = [{"kind": "policy_flag", "message": flag} for flag in flags]
+    reason = run.get("last_review_reason")
+    if reason:
+        blockers.append({"kind": "reviewer_reason", "message": str(reason)})
+    return blockers
+
+
+def _lifecycle_findings(lifecycle: dict[str, Any]) -> list[dict[str, Any]]:
+    blocking = _list_or_empty(lifecycle.get("blocking"))
+    warnings = _list_or_empty(lifecycle.get("warnings"))
+    return blocking or warnings
+
+
+def _finding_blockers(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    blockers: list[dict[str, Any]] = []
+    for finding in findings[:5]:
+        blockers.append(
+            {
+                "kind": str(finding.get("type") or "lifecycle_warning"),
+                "message": str(finding.get("message") or finding.get("type") or "Lifecycle warning."),
+                "path": finding.get("path"),
+                "recommendation": finding.get("recommendation"),
+            }
+        )
+    return blockers
+
+
+def _first_workflow_backfill_command(workflows: dict[str, Any]) -> str | None:
+    orphans = workflows.get("orphans")
+    if not isinstance(orphans, list):
+        return None
+    for orphan in orphans:
+        if isinstance(orphan, dict) and orphan.get("backfill_command"):
+            return str(orphan["backfill_command"])
+    return None
+
+
+def _lifecycle_terms() -> dict[str, str]:
+    return {
+        "SRC-*": "AgentSpec source snapshot IDs for ingested design or source documents.",
+        "R-*": "Requirement IDs compiled from accepted source material and DCRs.",
+        "T-*": "Task context pack IDs that bound code-agent work, allowed paths, and verification.",
+        "O-*": "Product outcome IDs for user-visible workflows that need proof before readiness claims.",
+        "G-*": "Outcome gate IDs for required evidence checks under a product outcome.",
+    }
+
+
+def _string_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str) and item.strip()]
 
 
 def _readiness_text(readiness: Any) -> str:

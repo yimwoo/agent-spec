@@ -29,11 +29,69 @@ Key terms:
 | Workflow | The native AgentSpec execution plan linked to a task pack. |
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
 
+## How The Pieces Fit
+
+Think of AgentSpec as layers around the code agent:
+
+| Layer | Responsibility |
+|---|---|
+| Adapter | Codex or Claude Code plugin skills translate user intent into `aspec` commands. |
+| Control plane | The `aspec` CLI owns lifecycle transitions, status, task selection, run state, and finish/write-back. |
+| Source and spec | Accepted source snapshots compile into specs, requirements, assumptions, questions, and traceability. |
+| Planning | Context packs and workflows define the exact task, allowed paths, acceptance criteria, and verification expectations. |
+| Execution | Codex, Claude Code, or another runner performs the bounded code work and returns structured results. |
+| Governance | Policy, review, maturity, outcome, drift, and roadmap checks decide whether work can continue, finish, or needs human input. |
+| Write-back | Reviews, task ledger entries, handoff state, and roadmap updates make the next session recoverable from the repository. |
+
+The important boundary is that the code agent is the executor. AgentSpec is the
+stateful control plane that tells the agent what is in scope, records what
+happened, and keeps the next human or agent from depending on chat history.
+
 ## Prompt-First Operating Model
 
 AgentSpec is designed so humans can prompt a code agent instead of manually
 running every CLI command. The agent should use `aspec` as the project control
 plane, then report durable evidence back to the human.
+
+The practical loop looks like this:
+
+```mermaid
+sequenceDiagram
+  participant H as Human
+  participant A as Code Agent
+  participant P as AgentSpec Plugin
+  participant C as aspec CLI
+  participant R as Repo Artifacts
+
+  H->>A: Ask to initialize, continue, or process a design change
+  A->>P: Invoke the matching AgentSpec skill
+  P->>C: Run status, lifecycle, or intake commands
+  C->>R: Read and write source, specs, requirements, ledger, handoff
+  alt New project or changed design
+    P->>C: aspec ingest / intake import / compile
+    C->>R: Update docs/source, docs/spec, docs/traceability
+  end
+  P->>C: aspec task next or task create
+  C->>R: Select or create a bounded context pack
+  P->>C: aspec plan --current
+  C->>R: Link a workflow or execution plan
+  P->>C: aspec run package or run loop
+  C-->>A: Return scoped prompt, allowed paths, and verification expectations
+  A->>R: Edit code and run tests inside the declared scope
+  A->>P: Report output, touched paths, tests, and evidence
+  P->>C: aspec run result
+  C->>R: Record events and apply policy/reviewer verdict
+  alt Ready to finish
+    P->>C: aspec review code and aspec finish
+    C->>R: Update reviews, task ledger, handoff, and roadmap
+    A-->>H: Report requirement IDs, tests, review ID, and next action
+  else Needs decision or remediation
+    C-->>A: Pause or halt with the reason
+    A-->>H: Ask for the missing decision or report the blocker
+  else Safe to continue
+    C-->>A: Return the next scoped continuation package
+  end
+```
 
 Use this for a new project:
 
@@ -71,14 +129,14 @@ The agent should report:
 - review ID and verdict
 - roadmap and handoff status
 
-The sections below show the CLI commands behind those prompts. Humans can run
-them directly, but the intended product experience is that an installed code
-agent plugin runs them consistently.
+The sections below are the detailed command reference behind those prompts.
+Humans can run them directly, but the intended product experience is that an
+installed code-agent plugin runs them consistently.
 
 ## Install Plugin First
 
-AgentSpec ships code-agent plugins plus the CLI they call. Install or load a
-plugin first, then make sure `aspec` is available on `PATH`.
+AgentSpec ships code-agent plugins plus the CLI they call. Install a plugin
+first, then make sure `aspec` is available on `PATH`.
 
 Codex:
 
@@ -102,13 +160,6 @@ Claude Code:
 
 ```text
 /plugin marketplace add yimwoo/agent-spec-engine
-/plugin install aspec@agentspec
-```
-
-If GitHub SSH is not configured:
-
-```text
-/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git
 /plugin install aspec@agentspec
 ```
 
@@ -136,11 +187,6 @@ For normal GitHub-based CLI install:
 ```bash
 pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
 ```
-
-For plugin development from a local checkout, load the plugin directory itself:
-
-- Codex: `agentspec-codex-plugin/`
-- Claude Code: `agentspec-claude-plugin/`
 
 When prompted to initialize a new project, the code agent should run the same
 kind of sequence in the target repository:
@@ -332,6 +378,26 @@ aspec maturity status        # governance profile checks
 aspec outcome                # product outcome gates
 aspec roadmap --check --json # roadmap freshness
 ```
+
+## Lifecycle Example
+
+A complete AgentSpec handoff should make the current state and next action
+obvious without reading chat history:
+
+| Step | What changes | Command |
+|---|---|---|
+| Review draft design | Human decides whether the draft can become AgentSpec source. | human review |
+| Ingest source | The source is snapshotted as `SRC-####` under `docs/source/`. | `aspec ingest docs/source/design.md` |
+| Compile requirements | Source sections produce specs, `R-###` requirements, assumptions, questions, and readiness. | `aspec compile` |
+| Create task pack | A requirement becomes a bounded `T-###` context pack with allowed paths and tests. | `aspec task create --requirement R-### --type implementation --title "<title>"` |
+| Plan workflow | The task pack is linked to a native execution plan. | `aspec plan T-###` |
+| Run scoped work | The code agent works only inside the task pack scope. | `aspec run loop agent/context-packs/T-###-name.md` |
+| Verify and review | Tests pass and review evidence is recorded. | `aspec review code --task T-### --verdict ready --summary "<summary>"` |
+| Finish write-back | Ledger, handoff, and roadmap make the next session recoverable. | `aspec finish T-### --test-status passed --review REVIEW-####` |
+
+At any point, `aspec status` should lead with `Main point`,
+`Lifecycle state`, and `Recommended next action`. `aspec status --json`
+exposes the same information as `lifecycle_summary` for code agents.
 
 ## Recovery
 

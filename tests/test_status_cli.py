@@ -66,10 +66,39 @@ class StatusCLITests(unittest.TestCase):
             text = format_project_status(build_project_status(root))
 
             self.assertIn("AgentSpec Status", text)
+            self.assertIn("Main point:", text)
+            self.assertIn("Lifecycle state:", text)
+            self.assertIn("Recommended next action:", text)
             self.assertIn("Overall: attention_needed", text)
             self.assertIn("Next: T-003", text)
             self.assertIn("Attention Runs:", text)
             self.assertIn("run-halted", text)
+
+    def test_status_lifecycle_summary_explains_no_ready_task(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 45, "mode": "discovery+spike", "summary": "Readiness is 45/100."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+
+            status = build_project_status(root)
+
+            summary = status["lifecycle_summary"]
+            self.assertEqual(summary["schema"], "agentspec.lifecycle_summary.v0")
+            self.assertEqual(summary["current_stage"], "source_or_requirements_needed")
+            self.assertIn("No implementation task is ready", summary["main_point"])
+            self.assertTrue(summary["recommended_next_action"]["human_decision_required"])
+            self.assertIn("aspec status --json", summary["recommended_next_action"]["commands"])
+            self.assertIn("SRC-*", summary["terms"])
+            self.assertEqual(summary["readiness"]["implementation_gate"], 60)
+
+            text = format_project_status(status)
+            self.assertIn("Implementation gate: readiness 45/100 is below 60/100", text)
+            self.assertIn("Mode: discovery+spike", text)
 
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:

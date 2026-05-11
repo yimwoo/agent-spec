@@ -5,10 +5,10 @@ continuing AgentSpec-governed repositories. The plugin is a thin adapter:
 Claude Code follows the packaged skills, but the `aspec` CLI remains the source
 of truth.
 
-Install or load this directory as the plugin package. It contains only the
-Claude plugin manifest, this README, and the `skills/` tree; it does not
-include the AgentSpec engine repository's private `agent/`, `reports/`,
-`.codex/`, `.claude/`, `.agentspec/`, or generated design/traceability docs.
+The plugin package contains only the Claude plugin manifest, this README, and
+the `skills/` tree; it does not include the AgentSpec engine repository's
+private `agent/`, `reports/`, `.codex/`, `.claude/`, `.agentspec/`, or
+generated design/traceability docs.
 
 ## Install First
 
@@ -19,29 +19,10 @@ Marketplace install inside Claude Code:
 /plugin install aspec@agentspec
 ```
 
-If GitHub SSH is not configured, use the HTTPS repository URL:
-
-```text
-/plugin marketplace add https://github.com/yimwoo/agent-spec-engine.git
-/plugin install aspec@agentspec
-```
-
 Then make sure the CLI is available:
 
 ```bash
 python3 -m pip install "git+https://github.com/yimwoo/agent-spec-engine.git"
-```
-
-For local development, validate the plugin:
-
-```bash
-claude plugin validate agentspec-claude-plugin
-```
-
-Load it for one Claude Code session from this repository:
-
-```bash
-claude --plugin-dir ./agentspec-claude-plugin
 ```
 
 Claude Code exposes plugin skills with the plugin namespace, so
