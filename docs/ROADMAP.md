@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-05-11T03:00:42Z
-- Last completed task: `T-091` agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md
-- Last run: `complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042`
+- Updated: 2026-05-11T03:29:04Z
+- Last completed task: `T-092` agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md
+- Last run: `t-092-create-and-link-native-workflow-artifacts-20260511032252`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -104,6 +104,7 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-089-expose-lifecycle-projection-and-write-back-readiness.md` | complete | `complete-t-089-expose-lifecycle-projection-and-write-back-readiness-20260511022812` | passed | REVIEW-0034 | 2026-05-11T02:28:12Z |
 | `agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md` | complete | `complete-t-090-backfill-historical-agentspec-mvp-workflow-20260511023050` | passed | REVIEW-0035 | 2026-05-11T02:30:50Z |
 | `agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md` | complete | `complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042` | passed | REVIEW-0036 | 2026-05-11T03:00:42Z |
+| `agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md` | complete | `t-092-create-and-link-native-workflow-artifacts-20260511032252` | passed | REVIEW-0037 | 2026-05-11T03:29:04Z |
 
 ## Requirement Traceability
 
