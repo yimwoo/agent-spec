@@ -76,6 +76,36 @@ Workflow: `{workflow}`
             self.assertEqual(status["orphan_count"], 0)
             self.assertEqual(status["artifacts"][0]["referenced_by"], ["agent/context-packs/T-001-phase-five.md"])
 
+    def test_context_pack_workflow_preserves_hidden_state_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / ".hotl" / "state").mkdir(parents=True)
+            write_data(root / ".hotl" / "state" / "d1-pre-scaffolding.json", {"title": "D1 pre-scaffolding"})
+            (root / "agent" / "context-packs" / "T-001-phase-five.md").write_text(
+                """# T-001: Phase Five
+
+Type: `implementation`
+Workflow: `.hotl/state/d1-pre-scaffolding.json`
+
+## Requirements
+
+- No accepted requirement attached.
+
+## Allowed Paths
+
+- `agentspec/workflow.py`
+""",
+                encoding="utf-8",
+            )
+
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["artifacts"][0]["path"], ".hotl/state/d1-pre-scaffolding.json")
+            self.assertEqual(status["orphan_count"], 0)
+            self.assertEqual(status["broken_link_count"], 0)
+            self.assertEqual(status["artifacts"][0]["referenced_by"], ["agent/context-packs/T-001-phase-five.md"])
+
     def test_task_with_missing_workflow_reports_broken_link(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

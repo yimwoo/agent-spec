@@ -521,7 +521,7 @@ def _context_pack_workflow(text: str) -> str | None:
     match = re.search(r"^Workflow:\s*`?([^`\n]+)`?\s*$", text, flags=re.MULTILINE)
     if not match:
         return None
-    value = match.group(1).strip().replace("\\", "/").lstrip("./")
+    value = _normalize_relative_path_text(match.group(1).strip())
     if value.lower() in {"", "none", "unassigned"}:
         return None
     return value
@@ -915,7 +915,7 @@ def _normalize_path_candidate(root: Path, value: str, *, warnings: list[str] | N
     if not _looks_like_path(value):
         return None
 
-    normalized = value.replace("\\", "/").lstrip("./")
+    normalized = _normalize_relative_path_text(value)
     if _invalid_path_reason(normalized):
         if warnings is not None:
             warnings.append(f"Ignored non-path token from workflow extraction: {original!r}.")
@@ -984,7 +984,7 @@ def _normalize_optional_path(root: Path, value: str | None) -> str | None:
             return str(path.resolve().relative_to(root))
         except ValueError:
             return None
-    return str(path).replace("\\", "/").lstrip("./")
+    return _normalize_relative_path_text(str(path))
 
 
 def _resolve_under_root(root: Path, path: Path) -> Path:
@@ -1016,12 +1016,19 @@ def _strip_quotes(value: str) -> str:
     return value
 
 
+def _normalize_relative_path_text(value: str) -> str:
+    value = value.replace("\\", "/")
+    while value.startswith("./"):
+        value = value[2:]
+    return value
+
+
 def _dedupe(values: Any) -> list[str]:
     out: list[str] = []
     for value in values:
         if not isinstance(value, str):
             continue
-        normalized = value.strip().replace("\\", "/").lstrip("./")
+        normalized = _normalize_relative_path_text(value.strip())
         if normalized and normalized not in out:
             out.append(normalized)
     return out
