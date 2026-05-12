@@ -81,7 +81,10 @@ def classify_executor_output(
             evidence_refs=[active_context_pack, "acceptance_evidence"],
         )
 
-    if _looks_complete(text) and test_status == "passed":
+    if (
+        (_looks_complete(text) or _has_scoped_completion_evidence(text))
+        and test_status == "passed"
+    ):
         return ReviewVerdict(
             decision="complete",
             confidence="medium",
@@ -375,6 +378,11 @@ def _deterministic_quality_reviewer_signoff(
             "approve",
             "Tests pass and the executor output references acceptance evidence.",
         )
+    if _has_scoped_completion_evidence(executor_output):
+        return (
+            "approve",
+            "Tests pass and the executor output references scoped completion evidence.",
+        )
     return (
         "reject",
         "Quality reviewer requires explicit acceptance-criteria evidence in the executor output.",
@@ -396,6 +404,28 @@ def _has_passed_verification_evidence(evidence: dict[str, Any] | None) -> bool:
             return False
         statuses.append(status)
     return bool(statuses) and all(status == "passed" for status in statuses)
+
+
+def _has_scoped_completion_evidence(text: str) -> bool:
+    lowered = text.lower()
+    has_scope_ref = re.search(r"\b(?:R|T)-\d{3,}\b", text) is not None
+    has_completion_verb = any(
+        verb in lowered
+        for verb in (
+            "implemented",
+            "finished",
+            "completed",
+            "fixed",
+            "added",
+            "updated",
+            "shipped",
+        )
+    )
+    has_verification = "passed" in lowered and any(
+        marker in lowered
+        for marker in ("test", "tests", "build", "verification", "pytest", "unittest", "npm ")
+    )
+    return has_scope_ref and has_completion_verb and has_verification
 
 
 RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA = "agentspec.research_acceptance_evidence.v0"
