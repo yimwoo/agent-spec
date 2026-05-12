@@ -224,6 +224,11 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     session_start.add_argument("--mode", default="owner", choices=sorted(ALLOWED_SESSION_MODES))
     session_start.add_argument("--branch", help="Associated git branch, if any.")
     session_start.add_argument("--worktree", help="Associated git worktree path, if any.")
+    session_start.add_argument(
+        "--allow-shared",
+        action="store_true",
+        help="Allow an owner/patcher session to share an active branch or worktree lease.",
+    )
     session_start.add_argument("--session-id", help="Override the generated session id.")
     session_start.add_argument("--run-id", help="Associated AgentSpec run id, if any.")
     session_start.add_argument("--note", help="Optional session note.")
@@ -748,6 +753,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     mode=args.mode,
                     branch=args.branch,
                     worktree=args.worktree,
+                    allow_shared=args.allow_shared,
                     session_id=args.session_id,
                     run_id=args.run_id,
                     note=args.note,

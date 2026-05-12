@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import uuid
 from collections import Counter
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ SESSION_LIST_SCHEMA = "agentspec.session_list.v0"
 ALLOWED_SESSION_MODES = {"observer", "owner", "patcher"}
 ALLOWED_FINISH_DISPOSITIONS = {"discard", "keep", "merge", "pr"}
 ALLOWED_TEST_STATUSES = {"failed", "not_run", "passed"}
+WRITE_SESSION_MODES = {"owner", "patcher"}
 
 
 def start_session(
@@ -26,6 +28,7 @@ def start_session(
     mode: str = "owner",
     branch: str | None = None,
     worktree: str | None = None,
+    allow_shared: bool = False,
     session_id: str | None = None,
     run_id: str | None = None,
     note: str | None = None,
@@ -43,6 +46,18 @@ def start_session(
     archived_path = _archived_path(root, session_id)
     if active_path.exists() or archived_path.exists():
         raise FileExistsError(f"Session already exists: {session_id}")
+
+    branch = branch or _current_git_branch(root)
+    worktree = worktree or _current_git_worktree(root)
+    if not allow_shared:
+        conflict = _find_write_lease_conflict(
+            root,
+            mode=mode,
+            branch=branch,
+            worktree=worktree,
+        )
+        if conflict is not None:
+            raise ValueError(_format_write_lease_conflict(conflict))
 
     now = utc_now_iso()
     lease = {
@@ -323,6 +338,79 @@ def _default_session_id(root: Path, task_id: str | None) -> str:
         candidate = f"{base}-{index}"
         index += 1
     return candidate
+
+
+def _current_git_branch(root: Path) -> str | None:
+    branch = _git_stdout(root, "symbolic-ref", "--quiet", "--short", "HEAD")
+    if branch is None:
+        branch = _git_stdout(root, "rev-parse", "--abbrev-ref", "HEAD")
+    if not branch or branch == "HEAD":
+        return None
+    return branch
+
+
+def _current_git_worktree(root: Path) -> str | None:
+    worktree = _git_stdout(root, "rev-parse", "--show-toplevel")
+    if not worktree:
+        return None
+    return str(Path(worktree).resolve())
+
+
+def _git_stdout(root: Path, *args: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    value = result.stdout.strip()
+    return value or None
+
+
+def _find_write_lease_conflict(
+    root: Path,
+    *,
+    mode: str,
+    branch: str | None,
+    worktree: str | None,
+) -> dict[str, Any] | None:
+    if mode not in WRITE_SESSION_MODES:
+        return None
+    worktree_key = _worktree_key(root, worktree)
+    for _path, record in _records_in(_active_dir(root)):
+        if record.get("mode") not in WRITE_SESSION_MODES:
+            continue
+        existing_branch = record.get("branch")
+        if branch and existing_branch == branch:
+            return {"record": record, "kind": "branch", "value": branch}
+        existing_worktree_key = _worktree_key(root, record.get("worktree"))
+        if worktree_key and existing_worktree_key == worktree_key:
+            return {"record": record, "kind": "worktree", "value": record.get("worktree") or worktree}
+    return None
+
+
+def _worktree_key(root: Path, worktree: Any) -> str | None:
+    if not isinstance(worktree, str) or not worktree.strip():
+        return None
+    path = Path(worktree)
+    if not path.is_absolute():
+        path = root / path
+    return str(path.resolve())
+
+
+def _format_write_lease_conflict(conflict: dict[str, Any]) -> str:
+    record = conflict["record"]
+    subject = f"{conflict['kind']} {conflict['value']}"
+    task = record.get("task_id") or record.get("context_pack") or "unknown task"
+    return (
+        f"Active write session {record.get('session_id')} already leases {subject} for {task}. "
+        "Finish or release that session, start a dedicated branch/worktree, "
+        "use --mode observer for read-only work, or pass --allow-shared when intentionally sharing."
+    )
 
 
 def _validate_session_id(session_id: str) -> None:

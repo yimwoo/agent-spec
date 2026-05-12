@@ -21,13 +21,17 @@ aspec run prompt <run-id>
 ```
 
 2. Split only independent work. Each child assignment must have a task id,
-   allowed paths, expected output, verification command, and owner.
+   allowed paths, expected output, verification command, owner, and dedicated
+   branch/worktree lease for write-mode work. Do not point two owner/patcher
+   child sessions at the same branch or worktree unless `--allow-shared` is
+   explicitly part of the handoff.
 
 3. Use current AgentSpec package/result commands for handoff and fan-in:
 
 ```bash
 aspec run package --runner generic --json
 aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
+aspec session list --json
 aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
 ```
 

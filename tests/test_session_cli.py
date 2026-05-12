@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -183,6 +184,118 @@ class SessionCliTests(unittest.TestCase):
 
             self.assertEqual(load_data(path)["owner"], "first")
 
+    def test_session_start_infers_git_branch_and_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _init_git_repo(root, "codex/session-a")
+            _write_pack(root, "T-005-git-context.md")
+
+            start_payload = _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-005",
+                    "--owner",
+                    "codex",
+                    "--session-id",
+                    "S-inferred",
+                    "--json",
+                ],
+            )
+
+            self.assertEqual(start_payload["branch"], "codex/session-a")
+            self.assertEqual(start_payload["worktree"], str(root.resolve()))
+
+    def test_session_start_rejects_parallel_write_lease_on_same_branch_or_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_pack(root, "T-006-first.md")
+            _write_pack(root, "T-007-second.md")
+
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-006",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/shared",
+                    "--worktree",
+                    "../shared",
+                    "--session-id",
+                    "S-first",
+                    "--json",
+                ],
+            )
+
+            conflict = _run_json_error(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-007",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/shared",
+                    "--worktree",
+                    "../other",
+                    "--session-id",
+                    "S-conflict",
+                    "--json",
+                ],
+            )
+
+            self.assertEqual(conflict["error"]["type"], "ValueError")
+            self.assertIn("already leases branch feature/shared", conflict["error"]["message"])
+            self.assertFalse((root / "agent" / "sessions" / "active" / "S-conflict.yml").exists())
+
+            observer = _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-007",
+                    "--mode",
+                    "observer",
+                    "--branch",
+                    "feature/shared",
+                    "--worktree",
+                    "../shared",
+                    "--session-id",
+                    "S-observer",
+                    "--json",
+                ],
+            )
+            self.assertEqual(observer["status"], "active")
+            self.assertEqual(observer["mode"], "observer")
+
+            shared = _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-007",
+                    "--branch",
+                    "feature/shared",
+                    "--worktree",
+                    "../shared",
+                    "--allow-shared",
+                    "--session-id",
+                    "S-shared",
+                    "--json",
+                ],
+            )
+            self.assertEqual(shared["status"], "active")
+
 
 def _run_json(root: Path, args: list[str]) -> dict:
     output = io.StringIO()
@@ -194,6 +307,28 @@ def _run_json(root: Path, args: list[str]) -> dict:
             raise AssertionError(payload)
         return payload
     raise AssertionError(f"Command failed with result={result}: {output.getvalue()}")
+
+
+def _run_json_error(root: Path, args: list[str]) -> dict:
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = main(["--root", str(root), *args])
+    payload = json.loads(output.getvalue())
+    if result == 0:
+        raise AssertionError(f"Command unexpectedly succeeded: {output.getvalue()}")
+    return payload
+
+
+def _init_git_repo(root: Path, branch: str) -> None:
+    subprocess.run(["git", "init"], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+    subprocess.run(
+        ["git", "checkout", "-b", branch],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
 
 
 def _write_pack(root: Path, name: str) -> None:

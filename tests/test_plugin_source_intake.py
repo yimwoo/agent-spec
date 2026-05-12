@@ -126,6 +126,32 @@ class PluginSourceIntakeTests(unittest.TestCase):
         ]:
             self.assertIn(text, continue_skill)
 
+    def test_codex_start_and_delegate_skills_require_dedicated_write_leases(self) -> None:
+        plugin_root = REPO_ROOT / "agentspec-codex-plugin"
+        start_skill = (plugin_root / "skills" / "start-branch" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        delegate_skill = (
+            plugin_root / "skills" / "delegate-work" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+
+        for text in [
+            "dedicated git branch",
+            "dedicated git worktree",
+            "Do not reuse an active",
+            "--mode observer",
+            "--allow-shared",
+            "git worktree add",
+        ]:
+            self.assertIn(text, start_skill)
+        for text in [
+            "branch/worktree lease for write-mode",
+            "Do not point two owner/patcher",
+            "--allow-shared",
+            "aspec session list --json",
+        ]:
+            self.assertIn(text, delegate_skill)
+
     def test_emit_codex_uses_plugin_skills_instead_of_project_local_skills(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

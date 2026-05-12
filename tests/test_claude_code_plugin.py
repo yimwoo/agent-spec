@@ -129,6 +129,31 @@ class ClaudeCodePluginTests(unittest.TestCase):
             self.assertIn(text, normalized)
         self.assertNotIn("agentspec-codex-plugin", normalized)
 
+    def test_claude_start_and_delegate_skills_require_dedicated_write_leases(self) -> None:
+        start_skill = (PLUGIN_ROOT / "skills" / "start-branch" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        delegate_skill = (PLUGIN_ROOT / "skills" / "delegate-work" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        for text in [
+            "dedicated git branch",
+            "dedicated git worktree",
+            "Do not reuse an active",
+            "--mode observer",
+            "--allow-shared",
+            "git worktree add",
+        ]:
+            self.assertIn(text, start_skill)
+        for text in [
+            "branch/worktree lease for write-mode",
+            "Do not point two owner/patcher",
+            "--allow-shared",
+            "aspec session list --json",
+        ]:
+            self.assertIn(text, delegate_skill)
+
     def test_plugin_skills_hide_internal_cli_checks_from_human_replies(self) -> None:
         plugin_roots = [
             REPO_ROOT / "agentspec-codex-plugin",
