@@ -193,6 +193,7 @@ def resume_run(
     configured_reviewer_mode = config.get("supervised_runs", {}).get("reviewer_mode", "deterministic")
     reviewer_mode = reviewer_mode or configured_reviewer_mode
     iteration = int(state.get("iteration", 0)) + 1
+    max_iterations = int(state.get("max_iterations", 1))
     mode = state.get("mode", "supervised")
     if acceptance_evidence is not None:
         acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
@@ -214,8 +215,10 @@ def resume_run(
     policy_verdict = evaluate_policy(
         allowed_paths=list(state.get("allowed_paths", [])),
         touched_paths=touched_paths,
-        iteration=iteration,
-        max_iterations=int(state.get("max_iterations", 1)),
+        # Supervised resumes may use an extra report-only turn to provide
+        # completion evidence; keep other policy gates active for that turn.
+        iteration=min(iteration, max_iterations) if mode == "supervised" else iteration,
+        max_iterations=max_iterations,
         executor_output=executor_output,
         mode=mode,
     )
@@ -228,6 +231,15 @@ def resume_run(
         reviewer_profile=state.get("profiles", {}).get("continuation_reviewer"),
         acceptance_evidence=acceptance_evidence,
     )
+    if mode == "supervised" and iteration > max_iterations and review.decision != "complete":
+        review = dataclasses.replace(
+            review,
+            decision="halt",
+            reason=f"Iteration {iteration} exceeds max_iterations={max_iterations}.",
+            policy_flags=[*review.policy_flags, "max_iterations_exceeded"],
+            requires_human=True,
+            message_to_executor=None,
+        )
 
     redacted_executor_output = redact_sensitive_text(executor_output)
     executor_event = {

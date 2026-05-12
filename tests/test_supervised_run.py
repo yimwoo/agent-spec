@@ -137,6 +137,33 @@ class SupervisedRunTests(unittest.TestCase):
             self.assertIn("max_iterations_exceeded", second["review"]["policy_flags"])
             self.assertEqual(second["state"]["status"], "halted")
 
+    def test_resume_can_complete_paused_run_after_iteration_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, PACK)
+            start_run(root, Path("agent/context-packs/T-008-test.md"), run_id="run-001", max_iterations=1)
+
+            first = resume_run(
+                root,
+                "run-001",
+                executor_output="Implemented the scoped change. Verification passed.",
+                touched_paths=["agentspec/dcr.py"],
+                test_status="passed",
+            )
+            self.assertEqual(first["review"]["decision"], "pause_for_human")
+            self.assertEqual(first["state"]["status"], "paused")
+
+            second = resume_run(
+                root,
+                "run-001",
+                executor_output="T-008 complete. Acceptance criteria satisfied. Verification passed.",
+                touched_paths=["agentspec/dcr.py"],
+                test_status="passed",
+            )
+            self.assertEqual(second["review"]["decision"], "complete")
+            self.assertNotIn("max_iterations_exceeded", second["review"]["policy_flags"])
+            self.assertEqual(second["state"]["status"], "complete")
+
     def test_resume_completes_when_executor_reports_done_and_tests_pass(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
