@@ -172,8 +172,11 @@ def review_executor_output(
         return _deterministic_with_model_note(deterministic, f"Model reviewer response was invalid: {exc}")
 
     if model_payload is None:
-        if reviewer_mode == "model":
-            return _deterministic_with_model_note(deterministic, "Model reviewer was unavailable; fell back to deterministic pause.")
+        if reviewer_mode in {"model", "auto"}:
+            return _deterministic_with_model_note(
+                deterministic,
+                f"Model reviewer was unavailable in {reviewer_mode!r} mode; fell back to deterministic pause.",
+            )
         return deterministic
 
     return _sanitize_model_verdict(
@@ -302,7 +305,11 @@ def quality_reviewer_signoff(
         except ValueError as exc:
             if reviewer_mode == "model":
                 return "reject", f"Model quality reviewer response was invalid: {exc}"
-            return deterministic_decision, deterministic_reason
+            return (
+                deterministic_decision,
+                f"{deterministic_reason} Model quality reviewer response was invalid in 'auto' mode; "
+                "fell back to deterministic quality review.",
+            )
         if model_payload is not None:
             return (
                 str(model_payload["decision"]),
@@ -310,6 +317,12 @@ def quality_reviewer_signoff(
             )
         if reviewer_mode == "model":
             return "reject", "Model quality reviewer was unavailable."
+        if reviewer_mode == "auto":
+            return (
+                deterministic_decision,
+                f"{deterministic_reason} Model quality reviewer was unavailable in 'auto' mode; "
+                "fell back to deterministic quality review.",
+            )
 
     return deterministic_decision, deterministic_reason
 

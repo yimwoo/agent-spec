@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .config import load_project_config, merged_runtime_config
 from .io import ensure_writable_dir, write_data, write_text
+from .model_review import build_agent_profile_diagnostics
 from .policy import evaluate_project_invariants
 
 
@@ -35,6 +37,7 @@ def run_doctor(root: Path, report_dir: Path | None = None) -> dict[str, Any]:
             "docs": [path for path in files if path == "README.md" or path.startswith("docs/")],
         },
         "agent_context": _agent_context_freshness(root),
+        "agent_profiles": _agent_profile_diagnostics(root),
         "project_invariants": evaluate_project_invariants(root, files),
         "first_safe_tasks": _first_safe_tasks(files),
     }
@@ -214,6 +217,20 @@ def _existing_paths(root: Path, relative_paths: list[str]) -> list[str]:
     return [rel for rel in relative_paths if (root / rel).is_file()]
 
 
+def _agent_profile_diagnostics(root: Path) -> dict[str, Any]:
+    try:
+        config = merged_runtime_config(load_project_config(root))
+    except ValueError as exc:
+        return {
+            "schema": "agentspec.agent_profile_diagnostics.v0",
+            "status": "invalid_config",
+            "bindings": {},
+            "profiles": {},
+            "warnings": [{"profile": None, "message": str(exc)}],
+        }
+    return build_agent_profile_diagnostics(config)
+
+
 def _doctor_report(scan: dict[str, Any]) -> str:
     repo = scan["repo"]
     out = ["# Brownfield Doctor Report", "", "Read-only assessment.", ""]
@@ -228,6 +245,22 @@ def _doctor_report(scan: dict[str, Any]) -> str:
         out.append("")
         for warning in warnings:
             out.append(f"- Warning: {warning.get('message', 'Generated agent context may be stale.')}")
+    else:
+        out.append("- Warnings: -")
+    profiles = scan.get("agent_profiles", {})
+    out.extend(["", "## Agent Profiles", ""])
+    out.append(f"- Status: {profiles.get('status', 'unknown')}")
+    bindings = profiles.get("bindings") if isinstance(profiles.get("bindings"), dict) else {}
+    if bindings:
+        out.append(
+            "- Active bindings: "
+            + ", ".join(f"{role}={name}" for role, name in sorted(bindings.items()))
+        )
+    warnings = profiles.get("warnings") if isinstance(profiles.get("warnings"), list) else []
+    if warnings:
+        for warning in warnings:
+            profile_name = warning.get("profile") or "-"
+            out.append(f"- Warning: `{profile_name}` {warning.get('message', 'Profile may be unavailable.')}")
     else:
         out.append("- Warnings: -")
     invariants = scan.get("project_invariants", {})

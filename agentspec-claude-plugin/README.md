@@ -131,6 +131,18 @@ the resulting status.
 Use this when the repo already has AgentSpec artifacts and the user wants the
 next safe action.
 
+### Reviewer profile diagnostics
+
+AgentSpec reviewer profiles are project-local control-plane bindings. A Claude
+Code-only environment can keep using deterministic review without owning Codex
+dogfood model aliases. Use `aspec status --json` or `aspec doctor` to see
+which profiles are bound to continuation and terminal quality review, whether
+local model config and credentials can be resolved, and whether model-backed
+review is currently available. If a model-backed reviewer is unavailable,
+`--reviewer auto` falls back to deterministic review with diagnostics; explicit
+`--reviewer model` should fail or reject clearly instead of silently replacing
+the configured model with the current host default.
+
 ### CLI path
 
 ```bash

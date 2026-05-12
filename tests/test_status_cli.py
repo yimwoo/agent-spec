@@ -58,6 +58,50 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(payload["schema"], PROJECT_STATUS_SCHEMA)
             self.assertEqual(payload["overall"], "attention_needed")
 
+    def test_status_json_includes_active_agent_profile_bindings(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".agentspec").mkdir()
+            write_data(
+                root / ".agentspec" / "config.yml",
+                {
+                    "version": 1,
+                    "agent_profiles": {
+                        "main_executor": {"adapter": "current-host", "model": "host-default"},
+                        "continuation_reviewer": {
+                            "adapter": "codex",
+                            "credential_source": "codex-auth",
+                            "config_source": "codex-config",
+                            "model": None,
+                        },
+                        "test_eval_reviewer": {
+                            "adapter": "codex",
+                            "credential_source": "codex-auth",
+                            "config_source": "codex-config",
+                            "model": "oca/gpt5.3-codex",
+                        },
+                    },
+                    "supervised_runs": {
+                        "executor_profile": "main_executor",
+                        "continuation_reviewer_profile": "continuation_reviewer",
+                        "quality_reviewer_profile": "test_eval_reviewer",
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            profiles = status["agent_profiles"]
+            self.assertEqual(profiles["bindings"]["executor"], "main_executor")
+            self.assertEqual(profiles["bindings"]["continuation_reviewer"], "continuation_reviewer")
+            self.assertEqual(profiles["bindings"]["quality_reviewer"], "test_eval_reviewer")
+            self.assertEqual(profiles["profiles"]["test_eval_reviewer"]["configured_model"], "oca/gpt5.3-codex")
+            self.assertEqual(profiles["profiles"]["test_eval_reviewer"]["model_source"], "profile")
+
+            text = format_project_status(status)
+            self.assertIn("Agent Profiles:", text)
+
     def test_human_status_mentions_next_and_attention_runs(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

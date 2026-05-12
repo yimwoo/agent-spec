@@ -7,7 +7,14 @@ from pathlib import Path
 from unittest import mock
 
 from agentspec.cli import main
-from agentspec.model_review import MODEL_REVIEW_SCHEMA, QUALITY_REVIEW_SCHEMA, _resolve_chat_settings, parse_quality_review_response
+from agentspec.model_review import (
+    MODEL_REVIEW_SCHEMA,
+    QUALITY_REVIEW_SCHEMA,
+    _resolve_chat_settings,
+    build_agent_profile_diagnostics,
+    parse_quality_review_response,
+)
+from agentspec.review import quality_reviewer_signoff
 from agentspec.run import resume_run, start_run
 
 
@@ -148,6 +155,25 @@ class ModelReviewTests(unittest.TestCase):
             self.assertIn("fell back", review["reason"])
             self.assertEqual(result["state"]["status"], "paused")
 
+    def test_auto_reviewer_records_unavailable_model_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, None)
+            start_run(root, Path("agent/context-packs/T-018-test.md"), run_id="run-001")
+
+            result = resume_run(
+                root,
+                "run-001",
+                executor_output="Should I continue this implementation?",
+                reviewer_mode="auto",
+            )
+
+            review = result["review"]
+            self.assertEqual(review["decision"], "pause_for_human")
+            self.assertIn("model_review_unavailable", review["policy_flags"])
+            self.assertIn("'auto' mode", review["reason"])
+            self.assertEqual(result["state"]["status"], "paused")
+
     def test_model_complete_cannot_bypass_missing_or_failed_verification(self) -> None:
         for test_status in ["not_run", "failed"]:
             with self.subTest(test_status=test_status), tempfile.TemporaryDirectory() as td:
@@ -238,6 +264,133 @@ base_url = "https://example.test/20250206/app/litellm"
 
         self.assertEqual(payload["decision"], "approve")
         self.assertEqual(payload["confidence"], "high")
+
+    def test_auto_quality_review_records_unavailable_model_diagnostic(self) -> None:
+        decision, reason = quality_reviewer_signoff(
+            "All acceptance criteria are met.",
+            test_status="passed",
+            profile={"adapter": "static", "model": "missing-static-response"},
+            reviewer_mode="auto",
+        )
+
+        self.assertEqual(decision, "approve")
+        self.assertIn("auto", reason)
+        self.assertIn("deterministic quality review", reason)
+
+    def test_profile_diagnostics_resolve_codex_config_without_secrets(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            (home / ".codex").mkdir()
+            (home / ".codex" / "config.toml").write_text(
+                """
+model = "gpt-5.5"
+model_provider = "openai"
+
+[model_providers.openai]
+base_url = "https://example.test/v1"
+""",
+                encoding="utf-8",
+            )
+            (home / ".codex" / "auth.json").write_text(
+                json.dumps({"OPENAI_API_KEY": "secret-token"}),
+                encoding="utf-8",
+            )
+            config = {
+                "agent_profiles": {
+                    "main_executor": {"adapter": "current-host", "model": "host-default"},
+                    "continuation_reviewer": {
+                        "adapter": "codex",
+                        "credential_source": "codex-auth",
+                        "config_source": "codex-config",
+                        "model": None,
+                    },
+                    "quality_reviewer": {
+                        "adapter": "codex",
+                        "credential_source": "codex-auth",
+                        "config_source": "codex-config",
+                        "model": "oca/gpt-5.5",
+                    },
+                },
+                "supervised_runs": {
+                    "executor_profile": "main_executor",
+                    "continuation_reviewer_profile": "continuation_reviewer",
+                    "quality_reviewer_profile": "quality_reviewer",
+                },
+            }
+
+            with mock.patch("agentspec.model_review.Path.home", return_value=home):
+                diagnostics = build_agent_profile_diagnostics(config)
+
+        continuation = diagnostics["profiles"]["continuation_reviewer"]
+        quality = diagnostics["profiles"]["quality_reviewer"]
+        self.assertEqual(continuation["resolved_model"], "gpt-5.5")
+        self.assertEqual(continuation["model_source"], "codex-config")
+        self.assertEqual(continuation["credential_status"], "codex-auth")
+        self.assertTrue(continuation["usable_for_model_review"])
+        self.assertEqual(quality["resolved_model"], "oca/gpt-5.5")
+        self.assertEqual(quality["model_source"], "profile")
+        self.assertNotIn("secret-token", json.dumps(diagnostics))
+
+    def test_profile_diagnostics_do_not_replace_explicit_model_with_host_default(self) -> None:
+        config = {
+            "agent_profiles": {
+                "main_executor": {"adapter": "current-host", "model": "host-default"},
+                "continuation_reviewer": {
+                    "adapter": "codex",
+                    "credential_source": "codex-auth",
+                    "config_source": "codex-config",
+                    "model": "oca/gpt-5.4",
+                },
+            },
+            "supervised_runs": {
+                "executor_profile": "main_executor",
+                "continuation_reviewer_profile": "continuation_reviewer",
+                "quality_reviewer_profile": "missing_quality",
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch("agentspec.model_review.Path.home", return_value=Path(td)):
+                diagnostics = build_agent_profile_diagnostics(config)
+
+        continuation = diagnostics["profiles"]["continuation_reviewer"]
+        self.assertEqual(continuation["configured_model"], "oca/gpt-5.4")
+        self.assertEqual(continuation["resolved_model"], "oca/gpt-5.4")
+        self.assertEqual(continuation["model_source"], "profile")
+        self.assertNotEqual(continuation["resolved_model"], "host-default")
+        self.assertFalse(continuation["usable_for_model_review"])
+        self.assertEqual(diagnostics["profiles"]["missing_quality"]["status"], "missing")
+
+    def test_profile_diagnostics_support_deterministic_only_host_without_codex_config(self) -> None:
+        config = {
+            "agent_profiles": {
+                "main_executor": {"adapter": "current-host", "model": "host-default"},
+                "continuation_reviewer": {"adapter": "current-host", "model": "host-default"},
+                "quality_reviewer": {
+                    "adapter": "codex",
+                    "credential_source": "codex-auth",
+                    "config_source": "codex-config",
+                    "model": None,
+                },
+            },
+            "supervised_runs": {
+                "executor_profile": "main_executor",
+                "continuation_reviewer_profile": "continuation_reviewer",
+                "quality_reviewer_profile": "quality_reviewer",
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch("agentspec.model_review.Path.home", return_value=Path(td)):
+                diagnostics = build_agent_profile_diagnostics(config)
+
+        continuation = diagnostics["profiles"]["continuation_reviewer"]
+        quality = diagnostics["profiles"]["quality_reviewer"]
+        self.assertEqual(continuation["status"], "deterministic_only")
+        self.assertFalse(continuation["usable_for_model_review"])
+        self.assertEqual(quality["status"], "unavailable")
+        self.assertEqual(quality["config_source_status"], "missing")
+        self.assertIn("cannot resolve a model id", " ".join(quality["warnings"]))
 
 
 def _seed(root: Path, reviewer_response: str | None) -> None:

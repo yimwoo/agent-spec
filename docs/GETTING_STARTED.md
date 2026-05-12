@@ -258,6 +258,14 @@ After this, the target repo has canonical source snapshots, generated specs,
 requirements, discovery files, agent instructions, and the basic layout needed
 for governed implementation.
 
+AgentSpec reviewer profiles are project-local control-plane config, not a
+requirement that every user has the same model aliases. Fresh init keeps
+reviewer models portable by resolving from local host config when model-backed
+review is requested. Use `aspec status --json` or `aspec doctor` to inspect
+which profiles are bound to continuation and quality review, whether local
+Codex credentials/config can be resolved, and whether the project is currently
+deterministic-only.
+
 ### Files Added To Target Repositories
 
 Installing the plugin does not copy files into your project. Files appear only

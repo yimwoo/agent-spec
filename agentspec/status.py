@@ -5,10 +5,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .config import load_project_config, merged_runtime_config
 from .dcr import list_dcrs
 from .handoff import load_project_handoff
 from .io import load_data
 from .maturity import build_maturity_status
+from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
 from .session import build_session_status
 from .task import list_task_context_packs, next_task_context_pack
@@ -46,6 +48,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     maturity = build_maturity_status(root)
     sessions = build_session_status(root)
     workflows = build_workflow_contract_status(root)
+    agent_profiles = _agent_profile_status(root)
 
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
     attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
@@ -117,6 +120,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "tasks": task_counts,
         "runs": run_counts,
         "sessions": sessions,
+        "agent_profiles": agent_profiles,
         "workflows": workflows,
         "lifecycle": lifecycle,
     }
@@ -265,6 +269,7 @@ def format_project_status(status: dict[str, Any]) -> str:
     runs = status.get("runs", {})
     sessions = status.get("sessions", {})
     workflows = status.get("workflows", {})
+    agent_profiles = status.get("agent_profiles", {})
     maturity = status.get("maturity", {})
     outcomes = status.get("outcomes", {})
     lifecycle = status.get("lifecycle", {})
@@ -284,6 +289,7 @@ def format_project_status(status: dict[str, Any]) -> str:
         f"Tasks: {_count_text(tasks)}",
         f"Runs: {_count_text(runs)}",
         f"Sessions: {_count_text(sessions)}",
+        f"Agent Profiles: {_agent_profiles_text(agent_profiles)}",
         f"Workflow Pack Warnings: {_workflow_text(workflows)}",
         f"Lifecycle: {_lifecycle_text(lifecycle)}",
         f"Next: {_next_text(tasks.get('next'))}",
@@ -369,6 +375,20 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
         records.append(record)
 
     return sorted(records, key=lambda run: str(run.get("updated_at", "")), reverse=True)
+
+
+def _agent_profile_status(root: Path) -> dict[str, Any]:
+    try:
+        config = merged_runtime_config(load_project_config(root))
+    except ValueError as exc:
+        return {
+            "schema": "agentspec.agent_profile_diagnostics.v0",
+            "status": "invalid_config",
+            "bindings": {},
+            "profiles": {},
+            "warnings": [{"profile": None, "message": str(exc)}],
+        }
+    return build_agent_profile_diagnostics(config)
 
 
 def _load_optional_dict(path: Path) -> dict[str, Any]:
@@ -908,6 +928,16 @@ def _workflow_text(workflows: Any) -> str:
     if not isinstance(workflows, dict):
         return "unknown"
     return f"{workflows.get('orphan_count', 0)} orphan(s) / {workflows.get('total', 0)} artifact(s)"
+
+
+def _agent_profiles_text(agent_profiles: Any) -> str:
+    if not isinstance(agent_profiles, dict):
+        return "unknown"
+    profiles = agent_profiles.get("profiles")
+    profile_count = len(profiles) if isinstance(profiles, dict) else 0
+    warnings = agent_profiles.get("warnings")
+    warning_count = len(warnings) if isinstance(warnings, list) else 0
+    return f"{agent_profiles.get('status', 'unknown')} ({profile_count} profile(s), {warning_count} warning(s))"
 
 
 def _lifecycle_text(lifecycle: Any) -> str:

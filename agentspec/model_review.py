@@ -12,6 +12,7 @@ from typing import Any
 
 MODEL_REVIEW_SCHEMA = "agentspec.model_review.verdict.v0"
 QUALITY_REVIEW_SCHEMA = "agentspec.quality_review.verdict.v0"
+PROFILE_DIAGNOSTICS_SCHEMA = "agentspec.agent_profile_diagnostics.v0"
 ALLOWED_MODEL_DECISIONS = {"auto_continue", "pause_for_human", "halt", "complete"}
 ALLOWED_QUALITY_DECISIONS = {"approve", "reject"}
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
@@ -249,6 +250,178 @@ def _raw_model_response(profile: dict[str, Any], prompt: str) -> str | None:
     if adapter == "codex":
         return _litellm_chat_completion(profile, prompt)
     return None
+
+
+def build_agent_profile_diagnostics(config: dict[str, Any]) -> dict[str, Any]:
+    """Return non-secret model/profile health for AgentSpec control-plane use."""
+
+    profiles = config.get("agent_profiles")
+    if not isinstance(profiles, dict):
+        profiles = {}
+    runs = config.get("supervised_runs")
+    if not isinstance(runs, dict):
+        runs = {}
+    bindings = {
+        "executor": str(runs.get("executor_profile") or "main_executor"),
+        "continuation_reviewer": str(runs.get("continuation_reviewer_profile") or "continuation_reviewer"),
+        "quality_reviewer": str(runs.get("quality_reviewer_profile") or "quality_reviewer"),
+    }
+    roles_by_profile: dict[str, list[str]] = {}
+    for role, profile_name in bindings.items():
+        roles_by_profile.setdefault(profile_name, []).append(role)
+
+    profile_payload = {
+        name: _profile_diagnostic(name, profile, roles_by_profile.get(name, []))
+        for name, profile in sorted(profiles.items())
+        if isinstance(profile, dict)
+    }
+    for profile_name, roles in roles_by_profile.items():
+        if profile_name not in profile_payload:
+            profile_payload[profile_name] = _missing_profile_diagnostic(profile_name, roles)
+
+    warnings = [
+        {
+            "profile": name,
+            "message": warning,
+        }
+        for name, diagnostic in profile_payload.items()
+        for warning in diagnostic.get("warnings", [])
+    ]
+    return {
+        "schema": PROFILE_DIAGNOSTICS_SCHEMA,
+        "status": "warning" if warnings else "ready",
+        "bindings": bindings,
+        "profiles": profile_payload,
+        "warnings": warnings,
+    }
+
+
+def _profile_diagnostic(name: str, profile: dict[str, Any], roles: list[str]) -> dict[str, Any]:
+    adapter = profile.get("adapter")
+    configured_model = profile.get("model")
+    base = {
+        "name": name,
+        "roles": sorted(roles),
+        "adapter": adapter,
+        "configured_model": configured_model if isinstance(configured_model, str) else None,
+        "resolved_model": None,
+        "model_source": "missing",
+        "config_source": profile.get("config_source") if isinstance(profile.get("config_source"), str) else None,
+        "credential_source": profile.get("credential_source") if isinstance(profile.get("credential_source"), str) else None,
+        "config_source_status": "not_applicable",
+        "credential_status": "not_applicable",
+        "usable_for_model_review": False,
+        "status": "unsupported_adapter",
+        "warnings": [],
+    }
+
+    if adapter == "current-host":
+        return {
+            **base,
+            "resolved_model": configured_model if isinstance(configured_model, str) else None,
+            "model_source": "profile" if isinstance(configured_model, str) and configured_model.strip() else "host-default",
+            "status": "deterministic_only",
+            "warnings": [
+                "current-host profiles label the interactive executor; AgentSpec does not invoke them as model reviewers."
+            ]
+            if roles and roles != ["executor"]
+            else [],
+        }
+    if adapter == "static":
+        has_response = isinstance(profile.get("response"), str)
+        return {
+            **base,
+            "resolved_model": configured_model if isinstance(configured_model, str) else None,
+            "model_source": "profile" if isinstance(configured_model, str) and configured_model.strip() else "missing",
+            "credential_status": "not_required",
+            "usable_for_model_review": has_response,
+            "status": "ready" if has_response else "unavailable",
+            "warnings": [] if has_response else ["static reviewer profile has no response payload."],
+        }
+    if adapter == "codex":
+        return _codex_profile_diagnostic(name, profile, roles, base)
+
+    return {
+        **base,
+        "warnings": [f"Unsupported reviewer profile adapter: {adapter!r}."],
+    }
+
+
+def _missing_profile_diagnostic(name: str, roles: list[str]) -> dict[str, Any]:
+    return {
+        "name": name,
+        "roles": sorted(roles),
+        "adapter": None,
+        "configured_model": None,
+        "resolved_model": None,
+        "model_source": "missing",
+        "config_source": None,
+        "credential_source": None,
+        "config_source_status": "missing",
+        "credential_status": "missing",
+        "usable_for_model_review": False,
+        "status": "missing",
+        "warnings": [f"Active profile binding references missing agent profile {name!r}."],
+    }
+
+
+def _codex_profile_diagnostic(
+    name: str,
+    profile: dict[str, Any],
+    roles: list[str],
+    base: dict[str, Any],
+) -> dict[str, Any]:
+    configured_model = profile.get("model")
+    settings = _resolve_chat_settings(profile)
+    resolved_model = settings.get("model")
+    base_url = settings.get("base_url")
+    config_source = profile.get("config_source")
+    config_status = "not_configured"
+    if config_source == "codex-config":
+        config_status = "found" if _load_codex_config() else "missing"
+    credential_status = _credential_status(profile)
+    has_endpoint = isinstance(base_url, str) and bool(base_url.strip())
+    has_model = isinstance(resolved_model, str) and bool(resolved_model.strip())
+    has_token = credential_status in {"profile", "env", "codex-auth"}
+    warnings: list[str] = []
+    if not has_endpoint:
+        warnings.append("Codex reviewer profile cannot resolve a LiteLLM/OpenAI-compatible base_url.")
+    if not has_model:
+        warnings.append("Codex reviewer profile cannot resolve a model id.")
+    if not has_token:
+        warnings.append("Codex reviewer profile cannot resolve credentials from profile, env, or codex-auth.")
+
+    explicit_model = isinstance(configured_model, str) and bool(configured_model.strip())
+    model_source = "profile" if explicit_model else "codex-config" if has_model else "missing"
+    return {
+        **base,
+        "roles": sorted(roles),
+        "configured_model": configured_model if explicit_model else None,
+        "resolved_model": resolved_model if isinstance(resolved_model, str) and resolved_model.strip() else None,
+        "model_source": model_source,
+        "config_source_status": config_status,
+        "credential_status": credential_status,
+        "usable_for_model_review": has_endpoint and has_model and has_token,
+        "status": "ready" if has_endpoint and has_model and has_token else "unavailable",
+        "warnings": warnings,
+    }
+
+
+def _credential_status(profile: dict[str, Any]) -> str:
+    token = profile.get("api_key")
+    if isinstance(token, str) and token.strip():
+        return "profile"
+    if isinstance(os.environ.get("AGENTSPEC_LITELLM_API_KEY"), str) and os.environ.get("AGENTSPEC_LITELLM_API_KEY", "").strip():
+        return "env"
+    if profile.get("credential_source") != "codex-auth":
+        return "not_configured"
+    auth_path = Path.home() / ".codex" / "auth.json"
+    try:
+        auth = json.loads(auth_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "missing"
+    token = auth.get("OPENAI_API_KEY")
+    return "codex-auth" if isinstance(token, str) and token.strip() else "missing"
 
 
 def _litellm_chat_completion(profile: dict[str, Any], prompt: str) -> str | None:
