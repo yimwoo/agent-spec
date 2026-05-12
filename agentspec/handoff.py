@@ -31,6 +31,41 @@ def write_project_handoff(
     return payload
 
 
+def refresh_project_handoff(
+    root: Path,
+    *,
+    project_status: dict[str, Any],
+    updated_at: str | None = None,
+    only_if_run_id: str | None = None,
+) -> dict[str, Any] | None:
+    payload = load_data(root / HANDOFF_PATH)
+    if not isinstance(payload, dict):
+        return None
+    if only_if_run_id is not None and not _next_action_references_run(payload, only_if_run_id):
+        return None
+
+    refreshed = dict(payload)
+    refreshed["schema"] = refreshed.get("schema") or HANDOFF_SCHEMA
+    refreshed["updated_at"] = updated_at or refreshed.get("updated_at") or ""
+    refreshed["root"] = refreshed.get("root") or "."
+    refreshed["current_state"] = _current_state(project_status)
+    refreshed["next_action"] = _next_action(project_status)
+    refreshed["commands"] = {
+        "status": "aspec status --json",
+        "next_action": "aspec continue",
+        "task_next": "aspec task next",
+        **(refreshed.get("commands") if isinstance(refreshed.get("commands"), dict) else {}),
+    }
+    artifacts = refreshed.get("artifacts") if isinstance(refreshed.get("artifacts"), dict) else {}
+    refreshed["artifacts"] = {
+        "task_ledger": "agent/task-ledger.yml",
+        "handoff": str(HANDOFF_PATH),
+        **artifacts,
+    }
+    write_data(root / HANDOFF_PATH, refreshed)
+    return refreshed
+
+
 def build_project_handoff(
     root: Path,
     *,
@@ -146,3 +181,11 @@ def _counts(section: Any) -> dict[str, Any]:
 def _task_id(context_pack: str) -> str | None:
     match = re.search(r"(T-\d{3,})", Path(context_pack).name)
     return match.group(1) if match else None
+
+
+def _next_action_references_run(payload: dict[str, Any], run_id: str) -> bool:
+    action = payload.get("next_action") if isinstance(payload.get("next_action"), dict) else {}
+    if action.get("run_id") == run_id:
+        return True
+    command = action.get("command")
+    return isinstance(command, str) and run_id in command.split()

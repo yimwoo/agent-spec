@@ -7,7 +7,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import main
-from agentspec.io import write_data
+from agentspec.io import load_data, write_data
+from agentspec.run import abort_run
 from agentspec.status import PROJECT_STATUS_SCHEMA, build_project_status, format_project_status
 
 
@@ -895,6 +896,106 @@ Type: `implementation`
 
             self.assertEqual(len(review_warnings), 1)
             self.assertIn("review evidence is missing", review_warnings[0]["message"])
+
+    def test_abort_refreshes_handoff_next_action_for_aborted_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir()
+            (root / "agent" / "runs" / "research-stale").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-197", "status": "accepted", "priority": "P0"}],
+            )
+            (root / "agent" / "context-packs" / "T-001-complete.md").write_text(
+                """# T-001: Complete
+
+Type: `implementation`
+
+## Requirements
+
+- `R-197` Shared write-back helpers
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {"context_pack": "agent/context-packs/T-001-complete.md"},
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "status": "complete",
+                            "run_id": "complete-t001",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001", "path": "agent/reviews/REVIEW-0001.yml"},
+                            "updated_at": "2026-05-12T21:04:31Z",
+                        },
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "runs" / "research-stale" / "state.yml",
+                {
+                    "run_id": "research-stale",
+                    "status": "started",
+                    "mode": "research",
+                    "context_pack": "<research-mode>",
+                    "context_pack_title": "Research mode (no pack)",
+                    "iteration": 0,
+                    "max_iterations": 3,
+                    "last_decision": None,
+                    "updated_at": "2026-05-12T21:01:34Z",
+                },
+            )
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-12T21:04:31Z",
+                    "root": ".",
+                    "last_completed_task": {
+                        "id": "T-001",
+                        "context_pack": "agent/context-packs/T-001-complete.md",
+                        "run_id": "complete-t001",
+                    },
+                    "current_state": {
+                        "requirements": {"total": 1},
+                        "dcrs": {"total": 0},
+                        "tasks": {"total": 1},
+                    },
+                    "next_action": {
+                        "kind": "continue_active_run",
+                        "run_id": "research-stale",
+                        "command": "aspec run prompt research-stale",
+                    },
+                },
+            )
+
+            abort_run(root, "research-stale", reason="Superseded by completed implementation.")
+
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["next_action"]["kind"], "idle")
+            self.assertNotIn("research-stale", json.dumps(handoff["next_action"]))
+            self.assertEqual(handoff["current_state"]["tasks"]["total"], 1)
+
+            status = build_project_status(root)
+            self.assertEqual(status["runs"]["active"], [])
+            self.assertEqual(status["handoff"]["next_action"]["kind"], "idle")
 
 
 def _seed(root: Path) -> None:
