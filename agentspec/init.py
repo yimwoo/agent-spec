@@ -141,6 +141,12 @@ agent/runs/*
 !agent/runs/*/
 agent/runs/*/*
 !agent/runs/*/summary.yml
+# Session lease state is local runtime ownership metadata. Keep directory
+# markers trackable, but leave active/archived lease records out of commits.
+agent/sessions/active/*
+!agent/sessions/active/.gitkeep
+agent/sessions/archived/*
+!agent/sessions/archived/.gitkeep
 # Generated reports — regenerable via doctor / compile / drift.
 reports/*/*
 !reports/*/.gitkeep
@@ -165,7 +171,19 @@ def _write_or_append_gitignore(root: Path) -> bool:
         return True
     existing = path.read_text(encoding="utf-8")
     if _GITIGNORE_BLOCK_BEGIN in existing:
-        return False
+        begin = existing.index(_GITIGNORE_BLOCK_BEGIN)
+        end_marker = existing.find(_GITIGNORE_BLOCK_END, begin)
+        if end_marker == -1:
+            separator = "" if existing.endswith("\n") else "\n"
+            write_text(path, existing + separator + "\n" + _GITIGNORE_BLOCK)
+            return True
+        end = end_marker + len(_GITIGNORE_BLOCK_END)
+        current_block = existing[begin:end]
+        desired_block = _GITIGNORE_BLOCK.rstrip("\n")
+        if current_block == desired_block:
+            return False
+        write_text(path, existing[:begin] + desired_block + existing[end:])
+        return True
     separator = "" if existing.endswith("\n") else "\n"
     write_text(path, existing + separator + "\n" + _GITIGNORE_BLOCK)
     return True
