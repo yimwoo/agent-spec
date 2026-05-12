@@ -975,6 +975,7 @@ def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.", run_
     state["run_state_dir"] = str(_run_root(root, run_dir))
     _write_state(root, run_id, state, run_dir=run_dir)
     _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
+    _refresh_handoff_after_abort(root, run_id, state, run_dir=run_dir)
     return state
 
 
@@ -990,6 +991,26 @@ def load_run_state(root: Path, run_id: str, *, run_dir: Path | None = None) -> d
     if not isinstance(state, dict):
         raise FileNotFoundError(f"Run not found: {run_id}")
     return state
+
+
+def _refresh_handoff_after_abort(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    *,
+    run_dir: Path | None = None,
+) -> None:
+    if run_dir is not None:
+        return
+    from .handoff import refresh_project_handoff
+    from .status import build_project_status
+
+    refresh_project_handoff(
+        root,
+        project_status=build_project_status(root),
+        updated_at=str(state.get("updated_at") or ""),
+        only_if_run_id=run_id,
+    )
 
 
 def _profile_bindings(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
