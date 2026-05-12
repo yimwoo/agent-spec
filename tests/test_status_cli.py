@@ -662,6 +662,66 @@ Type: `implementation`
             self.assertIn("docs/plans/phase-five-workflow.md", text)
             self.assertNotIn("HOTL workflow", text)
 
+    def test_status_ignores_completed_context_pack_missing_workflow_for_lifecycle(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [{"id": "R-001", "status": "accepted"}])
+            (root / "agent" / "context-packs" / "T-001-complete.md").write_text(
+                """# T-001: Complete
+
+Type: `implementation`
+Workflow: `AgentSpec autonomous cycle`
+
+## Requirements
+
+- `R-001` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {"context_pack": "agent/context-packs/T-001-complete.md"},
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "updated_at": "2026-05-10T00:00:00Z",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                        }
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["workflows"]["broken_link_count"], 1)
+            self.assertEqual(status["workflows"]["broken_links"][0]["context_pack"], "agent/context-packs/T-001-complete.md")
+            self.assertEqual(status["lifecycle"]["readiness"], "ready")
+            self.assertFalse(
+                any(warning["type"] == "broken_workflow_link" for warning in status["lifecycle"]["warnings"])
+            )
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+
     def test_status_lifecycle_reports_writeback_readiness_warnings(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
