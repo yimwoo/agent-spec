@@ -1,6 +1,7 @@
 """Tests for R-142: research-mode fallback in autonomous runs."""
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -71,6 +72,66 @@ class ResearchPolicyEnforcementTests(unittest.TestCase):
             self.assertEqual(state["status"], "halted")
             review = result["review"]
             self.assertIn("forbidden_path", review.get("policy_flags", []))
+
+    def test_resume_ignores_preexisting_dirty_paths_from_git_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_git_dirty_research_workspace(root)
+            start_research_run(root, run_id="r-dirty-baseline")
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.parent.mkdir(parents=True, exist_ok=True)
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            result = resume_run(
+                root,
+                "r-dirty-baseline",
+                executor_output="Done.",
+                touched_paths=[
+                    "src/schema.ts",
+                    "docs/change-requests/DCR-0099-research.md",
+                ],
+                test_status="passed",
+                acceptance_evidence=_valid_research_evidence(),
+            )
+
+            self.assertEqual(result["state"]["status"], "complete")
+            self.assertEqual(result["review"]["decision"], "complete")
+            self.assertNotIn("forbidden_path", result["review"].get("policy_flags", []))
+            executor_event = _executor_event(root, "r-dirty-baseline")
+            self.assertEqual(
+                executor_event["touched_paths"],
+                ["docs/change-requests/DCR-0099-research.md"],
+            )
+            self.assertEqual(
+                executor_event["reported_touched_paths"],
+                ["src/schema.ts", "docs/change-requests/DCR-0099-research.md"],
+            )
+            self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
+
+    def test_resume_flags_dirty_paths_changed_after_research_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_git_dirty_research_workspace(root)
+            start_research_run(root, run_id="r-dirty-changed")
+            (root / "src" / "schema.ts").write_text("changed during run\n", encoding="utf-8")
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.parent.mkdir(parents=True, exist_ok=True)
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            result = resume_run(
+                root,
+                "r-dirty-changed",
+                executor_output="Done.",
+                touched_paths=["docs/change-requests/DCR-0099-research.md"],
+                test_status="passed",
+                acceptance_evidence=_valid_research_evidence(),
+            )
+
+            self.assertEqual(result["state"]["status"], "halted")
+            self.assertEqual(result["review"]["decision"], "halt")
+            self.assertIn("forbidden_path", result["review"].get("policy_flags", []))
+            executor_event = _executor_event(root, "r-dirty-changed")
+            self.assertIn("src/schema.ts", executor_event["touched_paths"])
 
     def test_writes_inside_findings_dirs_count_toward_cap(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -260,3 +321,43 @@ def _valid_research_evidence() -> dict:
         "source_checks": ["DCR parses with aspec dcr list"],
         "no_task_context_pack_reason": "Research mode intentionally produced proposal artifacts only.",
     }
+
+
+def _seed_git_dirty_research_workspace(root: Path) -> None:
+    _seed_workspace(root)
+    (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+    (root / "src").mkdir()
+    (root / "src" / "schema.ts").write_text("seed\n", encoding="utf-8")
+    _git(root, "init")
+    _git(root, "add", ".")
+    _git(
+        root,
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "user.name=AgentSpec Test",
+        "commit",
+        "-m",
+        "seed",
+    )
+    (root / "src" / "schema.ts").write_text("dirty before run\n", encoding="utf-8")
+
+
+def _executor_event(root: Path, run_id: str) -> dict:
+    events = [
+        json.loads(line)
+        for line in (root / "agent" / "runs" / run_id / "events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    return next(event for event in events if event["kind"] == "executor_output")
+
+
+def _git(root: Path, *args: str) -> None:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise AssertionError(completed.stderr or completed.stdout)
