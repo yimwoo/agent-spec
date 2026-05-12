@@ -292,6 +292,7 @@ def finish_task(
         reason=reason,
         test_status=test_status,
         review_id=review_id,
+        allow_existing_run=True,
     )
     roadmap_path = update_roadmap(root)
     from .status import build_project_status

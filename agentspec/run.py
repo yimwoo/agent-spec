@@ -649,6 +649,7 @@ def complete_context_pack_run(
     reason: str = "Marked complete by user.",
     test_status: str = "not_run",
     review_id: str | None = None,
+    allow_existing_run: bool = False,
 ) -> dict[str, Any]:
     root = root.resolve()
     context_path = _resolve_context_pack_selector(root, selector)
@@ -670,27 +671,59 @@ def complete_context_pack_run(
             context_pack=str(context_path.relative_to(root)),
         )
 
+    context_pack = str(context_path.relative_to(root))
+    existing_state: dict[str, Any] | None = None
     if _state_exists(root, run_id):
-        raise FileExistsError(f"Run already exists: {run_id}")
+        if not allow_existing_run:
+            raise FileExistsError(f"Run already exists: {run_id}")
+        existing_state = load_run_state(root, run_id)
+        if existing_state.get("context_pack") != context_pack:
+            raise ValueError(
+                f"Run {run_id} is already bound to {existing_state.get('context_pack')}, "
+                f"not {context_pack}."
+            )
 
-    state = {
-        "schema": STATE_SCHEMA,
-        "run_id": run_id,
-        "status": "complete",
-        "run_state_dir": str(_run_root(root, None)),
-        "context_pack": str(context_path.relative_to(root)),
-        "context_pack_title": context.get("title"),
-        "task_type": task_type,
-        "allowed_paths": context.get("allowed_paths", []),
-        "iteration": 1,
-        "max_iterations": configured_max or 3,
-        "profiles": _profile_bindings(config),
-        "created_at": _now(),
-        "updated_at": _now(),
-        "last_decision": "complete",
-        "completion_reason": reason,
-        "verification": {"status": test_status},
-    }
+    if existing_state is not None:
+        state = dict(existing_state)
+        state.update(
+            {
+                "schema": STATE_SCHEMA,
+                "run_id": run_id,
+                "status": "complete",
+                "run_state_dir": str(_run_root(root, None)),
+                "context_pack": context_pack,
+                "context_pack_title": context.get("title"),
+                "task_type": task_type,
+                "allowed_paths": context.get("allowed_paths", []),
+                "updated_at": _now(),
+                "last_decision": "complete",
+                "completion_reason": reason,
+                "verification": {"status": test_status},
+            }
+        )
+        state.setdefault("created_at", _now())
+        state.setdefault("iteration", 1)
+        state.setdefault("max_iterations", configured_max or 3)
+        state.setdefault("profiles", _profile_bindings(config))
+    else:
+        state = {
+            "schema": STATE_SCHEMA,
+            "run_id": run_id,
+            "status": "complete",
+            "run_state_dir": str(_run_root(root, None)),
+            "context_pack": context_pack,
+            "context_pack_title": context.get("title"),
+            "task_type": task_type,
+            "allowed_paths": context.get("allowed_paths", []),
+            "iteration": 1,
+            "max_iterations": configured_max or 3,
+            "profiles": _profile_bindings(config),
+            "created_at": _now(),
+            "updated_at": _now(),
+            "last_decision": "complete",
+            "completion_reason": reason,
+            "verification": {"status": test_status},
+        }
     if code_review is not None:
         state["code_review"] = code_review
     # R-146 / DCR-0024: ledger-first ordering. If the ledger write fails

@@ -54,7 +54,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     workflows = build_workflow_contract_status(root)
     agent_profiles = _agent_profile_status(root)
 
-    active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
+    active_runs, stale_active_runs = _classify_active_runs(runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     requirements_counts = {
@@ -80,6 +80,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "by_status": _counts(run.get("status") for run in runs),
         "by_mode": _counts(run.get("mode") for run in runs),
         "active": active_runs,
+        "stale_active": stale_active_runs,
         "attention": attention_runs,
         "stale_attention": stale_attention_runs,
         "recent": recent_runs,
@@ -421,6 +422,26 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
     return sorted(records, key=lambda run: str(run.get("updated_at", "")), reverse=True)
 
 
+def _classify_active_runs(
+    runs: list[dict[str, Any]],
+    tasks: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    active: list[dict[str, Any]] = []
+    stale_active: list[dict[str, Any]] = []
+    completed_by_pack = _completed_task_by_context_pack(tasks)
+
+    for run in runs:
+        if run.get("status") not in ACTIVE_RUN_STATUSES:
+            continue
+        stale = _superseded_by_completed_task_details(run, completed_by_pack)
+        if stale:
+            run["stale_active"] = stale
+            stale_active.append(run)
+        else:
+            active.append(run)
+    return active, stale_active
+
+
 def _classify_attention_runs(
     root: Path,
     runs: list[dict[str, Any]],
@@ -428,18 +449,49 @@ def _classify_attention_runs(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     attention: list[dict[str, Any]] = []
     stale_attention: list[dict[str, Any]] = []
+    completed_by_pack = _completed_task_by_context_pack(tasks)
     completed_scopes = _completed_task_allowed_scopes(root, tasks)
 
     for run in runs:
         if run.get("status") not in ATTENTION_RUN_STATUSES:
             continue
-        stale = _stale_research_attention_details(run, completed_scopes)
+        stale = _superseded_by_completed_task_details(run, completed_by_pack)
+        if stale is None:
+            stale = _stale_research_attention_details(run, completed_scopes)
         if stale:
             run["stale_attention"] = stale
             stale_attention.append(run)
         else:
             attention.append(run)
     return attention, stale_attention
+
+
+def _completed_task_by_context_pack(tasks: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    completed: dict[str, dict[str, Any]] = {}
+    for task in tasks:
+        if task.get("status") != "complete":
+            continue
+        context_pack = task.get("path")
+        if isinstance(context_pack, str) and context_pack:
+            completed[context_pack] = task
+    return completed
+
+
+def _superseded_by_completed_task_details(
+    run: dict[str, Any],
+    completed_by_pack: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    context_pack = run.get("context_pack")
+    if not isinstance(context_pack, str):
+        return None
+    completed = completed_by_pack.get(context_pack)
+    if not completed:
+        return None
+    return {
+        "reason": "Run is superseded by completed task ledger state.",
+        "covered_by_task": completed.get("id"),
+        "context_pack": context_pack,
+    }
 
 
 def _completed_task_allowed_scopes(

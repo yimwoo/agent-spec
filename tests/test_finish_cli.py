@@ -70,6 +70,78 @@ class FinishCLITests(unittest.TestCase):
             self.assertEqual(handoff["current_state"]["overall"], status["overall"])
             self.assertEqual(handoff["current_state"]["recommendation"], status["recommendation"])
 
+    def test_finish_with_existing_paused_run_id_completes_that_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0002", "agent/context-packs/T-013-task.md", "ready")
+            _write_paused_run(root, "t-013-paused", "agent/context-packs/T-013-task.md")
+
+            payload = _run_json(
+                root,
+                [
+                    "finish",
+                    "T-013",
+                    "--run-id",
+                    "t-013-paused",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0002",
+                    "--json",
+                ],
+            )
+
+            self.assertTrue(payload["completed"])
+            self.assertEqual(payload["run_id"], "t-013-paused")
+            state = load_data(root / "agent" / "runs" / "t-013-paused" / "state.yml")
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+            self.assertEqual(state["verification"]["status"], "passed")
+            self.assertEqual(state["code_review"]["id"], "REVIEW-0002")
+            ledger = load_data(root / "agent" / "task-ledger.yml")
+            entry = ledger["tasks"]["agent/context-packs/T-013-task.md"]
+            self.assertEqual(entry["run_id"], "t-013-paused")
+            status = build_project_status(root)
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["runs"]["attention"], [])
+
+    def test_finish_replacement_run_supersedes_older_paused_run_in_status_and_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0003", "agent/context-packs/T-013-task.md", "ready")
+            _write_paused_run(root, "t-013-paused", "agent/context-packs/T-013-task.md")
+
+            payload = _run_json(
+                root,
+                [
+                    "finish",
+                    "T-013",
+                    "--run-id",
+                    "complete-t-013",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0003",
+                    "--json",
+                ],
+            )
+
+            self.assertTrue(payload["completed"])
+            self.assertEqual(payload["run_id"], "complete-t-013")
+            status = build_project_status(root)
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["runs"]["attention"], [])
+            self.assertEqual(status["runs"]["stale_attention"][0]["run_id"], "t-013-paused")
+            self.assertEqual(
+                status["runs"]["stale_attention"][0]["stale_attention"]["covered_by_task"],
+                "T-013",
+            )
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["current_state"]["overall"], "idle")
+            self.assertNotIn("t-013-paused", handoff["current_state"]["recommendation"])
+
     def test_finish_dry_run_reports_findings_without_mutating_state(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -213,6 +285,50 @@ def _write_review(root: Path, review_id: str, context_pack: str, verdict: str) -
             "range": "worktree",
             "created_at": "2026-05-11T00:00:00Z",
         },
+    )
+
+
+def _write_paused_run(root: Path, run_id: str, context_pack: str) -> None:
+    write_data(
+        root / "agent" / "runs" / run_id / "state.yml",
+        {
+            "schema": "agentspec.supervised_run.state.v0",
+            "run_id": run_id,
+            "status": "paused",
+            "mode": "autonomous",
+            "context_pack": context_pack,
+            "context_pack_title": "T-013: Task",
+            "task_type": "implementation",
+            "allowed_paths": ["agentspec/writeback.py"],
+            "iteration": 1,
+            "max_iterations": 3,
+            "last_decision": "pause_for_human",
+            "created_at": "2026-05-12T00:00:00Z",
+            "updated_at": "2026-05-12T00:01:00Z",
+            "verification": {"status": "passed"},
+        },
+    )
+    (root / "agent" / "runs" / run_id / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "kind": "executor_output",
+                        "test_summary": {"status": "passed"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "kind": "reviewer_verdict",
+                        "decision": "pause_for_human",
+                        "reason": "No deterministic auto-continue rule matched the executor output.",
+                        "policy_flags": [],
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
 
