@@ -361,6 +361,11 @@ def _select_status_overlay(
         return ledger_status
     if ledger_status is None:
         return run_status
+    if (
+        ledger_status.get("status") == "complete"
+        and run_status.get("status") == "aborted"
+    ):
+        return ledger_status
     if str(run_status.get("updated_at", "")) >= str(ledger_status.get("updated_at", "")):
         return run_status
     return ledger_status
