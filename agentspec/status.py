@@ -57,11 +57,17 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
+    covered_requirement_ids = _task_requirement_ids(tasks)
     requirements_counts = {
         "total": len(requirements),
         "by_status": _counts(record.get("status") for record in requirements),
         "by_priority": _counts(record.get("priority") for record in requirements),
         "accepted_examples": _requirement_examples(requirements, status="accepted"),
+        "uncovered_accepted_examples": _requirement_examples(
+            requirements,
+            status="accepted",
+            exclude_ids=covered_requirement_ids,
+        ),
     }
     dcr_counts = {
         "total": len(dcrs),
@@ -899,7 +905,8 @@ def _no_ready_task_summary(
     score = readiness.get("score")
     accepted_requirements = _status_count(requirements, "accepted")
     accepted_examples = _list_or_empty(requirements.get("accepted_examples"))
-    example_requirement = accepted_examples[0] if accepted_examples else {}
+    uncovered_accepted_examples = _list_or_empty(requirements.get("uncovered_accepted_examples"))
+    example_requirement = (uncovered_accepted_examples or accepted_examples or [{}])[0]
     requirement_id = str(example_requirement.get("id") or "R-001")
     requirement_title = str(example_requirement.get("title") or "next accepted requirement")
     total_tasks = int(tasks.get("total", 0) or 0)
@@ -1014,7 +1021,7 @@ def _no_ready_task_summary(
                     "commands": ["aspec run loop --mode autonomous --json"],
                 },
             ]
-        else:
+        elif uncovered_accepted_examples:
             reason = "Create or classify the next DCR/task, or choose autonomous research mode if there is no known implementation scope."
             commands = [
                 f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
@@ -1042,6 +1049,36 @@ def _no_ready_task_summary(
                     "label": "Inspect the project before choosing",
                     "when": "You want to decide manually from current DCRs, requirements, runs, and outcomes.",
                     "commands": ["aspec status", "aspec outcome", "aspec task list"],
+                },
+            ]
+        else:
+            reason = (
+                "All accepted requirements are already represented by task context packs; "
+                "create or classify a new DCR/task only when there is new implementation scope."
+            )
+            commands = [
+                "aspec status",
+                "aspec task list",
+                f'aspec dcr create --title "{followup_title}" --classification implement-now',
+            ]
+            options = [
+                {
+                    "label": "Capture a new change request",
+                    "when": "The next work is a new idea, bug, or product change that is not yet represented by a requirement.",
+                    "commands": [
+                        f'aspec dcr create --title "{followup_title}" --classification implement-now',
+                        "aspec status",
+                    ],
+                },
+                {
+                    "label": "Inspect existing task coverage",
+                    "when": "You want to confirm completed, halted, and ready task packs before creating more work.",
+                    "commands": ["aspec task list", "aspec status --json"],
+                },
+                {
+                    "label": "Run research mode",
+                    "when": "There is no known implementation scope and you want AgentSpec to propose the next discovery artifact.",
+                    "commands": ["aspec run loop --mode autonomous --json"],
                 },
             ]
 
@@ -1099,13 +1136,17 @@ def _requirement_examples(
     *,
     status: str,
     limit: int = 3,
+    exclude_ids: set[str] | None = None,
 ) -> list[dict[str, str]]:
+    excluded = exclude_ids or set()
     examples: list[dict[str, str]] = []
     for requirement in reversed(requirements):
         if str(requirement.get("status") or "") != status:
             continue
         requirement_id = requirement.get("id")
         if not requirement_id:
+            continue
+        if str(requirement_id) in excluded:
             continue
         examples.append(
             {
@@ -1116,6 +1157,16 @@ def _requirement_examples(
         if len(examples) >= limit:
             break
     return examples
+
+
+def _task_requirement_ids(tasks: list[dict[str, Any]]) -> set[str]:
+    ids: set[str] = set()
+    for task in tasks:
+        for requirement in _list_or_empty(task.get("requirements")):
+            requirement_id = requirement.get("id")
+            if isinstance(requirement_id, str) and requirement_id:
+                ids.add(requirement_id)
+    return ids
 
 
 def _shell_title(value: str) -> str:
