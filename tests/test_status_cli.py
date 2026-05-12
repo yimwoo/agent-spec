@@ -486,6 +486,60 @@ class StatusCLITests(unittest.TestCase):
             )
             self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
 
+    def test_status_deprioritizes_halted_run_for_completed_context_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "runs" / "run-t007").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            (root / "agent" / "context-packs" / "T-007-task.md").write_text(
+                """# T-007: Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-001` Requirement
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-007-task.md": {
+                            "status": "complete",
+                            "run_id": "complete-t007",
+                            "updated_at": "2026-05-12T10:58:15Z",
+                        }
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "runs" / "run-t007" / "state.yml",
+                {
+                    "run_id": "run-t007",
+                    "status": "halted",
+                    "mode": "autonomous",
+                    "context_pack": "agent/context-packs/T-007-task.md",
+                    "context_pack_title": "T-007: Task",
+                    "iteration": 1,
+                    "max_iterations": 3,
+                    "last_decision": "halt",
+                    "updated_at": "2026-05-12T10:59:00Z",
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["runs"]["attention"], [])
+            self.assertEqual(status["runs"]["stale_attention"][0]["run_id"], "run-t007")
+            stale = status["runs"]["stale_attention"][0]["stale_attention"]
+            self.assertEqual(stale["covered_by_task"], "T-007")
+            self.assertNotIn("run inspect run-t007", status["recommendation"])
+
     def test_status_surfaces_orphan_workflow_warning(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

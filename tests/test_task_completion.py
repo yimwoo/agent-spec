@@ -2,12 +2,12 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
-from agentspec.run import complete_context_pack_run
+from agentspec.run import complete_context_pack_run, loop_run, start_run
 from agentspec.task import list_task_context_packs
 
 
@@ -187,7 +187,7 @@ class TaskCompletionTests(unittest.TestCase):
 
             self.assertFalse((root / "agent" / "runs" / "bad-ledger" / "state.yml").exists())
 
-    def test_cli_task_complete_json_and_duplicate_run_id(self) -> None:
+    def test_cli_task_complete_json_and_existing_run_id(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed(root)
@@ -214,8 +214,8 @@ class TaskCompletionTests(unittest.TestCase):
             self.assertEqual(payload["verification"]["status"], "passed")
             self.assertEqual(payload["quality_gc"]["status"], "skipped")
 
-            err = io.StringIO()
-            with redirect_stderr(err):
+            second = io.StringIO()
+            with redirect_stdout(second):
                 code = main(
                     [
                         "--root",
@@ -225,10 +225,82 @@ class TaskCompletionTests(unittest.TestCase):
                         "T-013",
                         "--run-id",
                         "complete-t013",
+                        "--json",
                     ]
                 )
-            self.assertEqual(code, 1)
-            self.assertIn("Run already exists", err.getvalue())
+            self.assertEqual(code, 0)
+            payload = json.loads(second.getvalue())
+            self.assertEqual(payload["status"], "complete")
+            self.assertEqual(payload["run_id"], "complete-t013")
+
+    def test_cli_task_complete_links_existing_active_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_run(root, Path("agent/context-packs/T-013-task.md"), run_id="run-t013")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "complete",
+                        "T-013",
+                        "--run-id",
+                        "run-t013",
+                        "--test-status",
+                        "passed",
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["status"], "complete")
+            self.assertEqual(payload["run_id"], "run-t013")
+            stored = load_data(root / "agent" / "runs" / "run-t013" / "state.yml")
+            self.assertEqual(stored["status"], "complete")
+            ledger = load_data(root / "agent" / "task-ledger.yml")
+            self.assertEqual(ledger["tasks"]["agent/context-packs/T-013-task.md"]["run_id"], "run-t013")
+
+    def test_loop_run_reuses_existing_active_context_pack_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            first = loop_run(root, Path("agent/context-packs/T-013-task.md"), run_id="run-t013")
+            second = loop_run(root, Path("agent/context-packs/T-013-task.md"))
+
+            self.assertTrue(first["started"])
+            self.assertFalse(second["started"])
+            self.assertEqual(second["run_id"], "run-t013")
+            self.assertEqual(len(list((root / "agent" / "runs").glob("*/state.yml"))), 1)
+
+    def test_loop_run_honors_explicit_new_run_id(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            loop_run(root, Path("agent/context-packs/T-013-task.md"), run_id="run-t013")
+
+            explicit = loop_run(root, Path("agent/context-packs/T-013-task.md"), run_id="run-t013-next")
+
+            self.assertTrue(explicit["started"])
+            self.assertEqual(explicit["run_id"], "run-t013-next")
+            self.assertEqual(len(list((root / "agent" / "runs").glob("*/state.yml"))), 2)
+
+    def test_autonomous_empty_queue_reuses_existing_research_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            first = loop_run(root, mode="autonomous", run_id="research-active")
+            second = loop_run(root, mode="autonomous")
+
+            self.assertTrue(first["started"])
+            self.assertFalse(second["started"])
+            self.assertEqual(second["run_id"], "research-active")
+            self.assertEqual(len(list((root / "agent" / "runs").glob("*/state.yml"))), 1)
 
     def test_task_complete_runs_quality_gc_when_enabled_and_due(self) -> None:
         with tempfile.TemporaryDirectory() as td:

@@ -17,7 +17,7 @@ from .outcome import build_outcome_status
 from .paths import path_matches_pattern
 from .run import RESEARCH_ALLOWED_PATHS
 from .session import build_session_preflight, build_session_status
-from .task import list_task_context_packs, next_task_context_pack
+from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_warning_lines
 from .writeback import build_lifecycle_projection, lifecycle_warning_lines
 
@@ -54,7 +54,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     workflows = build_workflow_contract_status(root)
     agent_profiles = _agent_profile_status(root)
 
-    active_runs, stale_active_runs = _classify_active_runs(runs, tasks)
+    active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     requirements_counts = {
@@ -423,12 +423,14 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
 
 
 def _classify_active_runs(
+    root: Path,
     runs: list[dict[str, Any]],
     tasks: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     active: list[dict[str, Any]] = []
     stale_active: list[dict[str, Any]] = []
     completed_by_pack = _completed_task_by_context_pack(tasks)
+    completed_by_pack.update(_completed_task_by_ledger(root))
 
     for run in runs:
         if run.get("status") not in ACTIVE_RUN_STATUSES:
@@ -450,6 +452,7 @@ def _classify_attention_runs(
     attention: list[dict[str, Any]] = []
     stale_attention: list[dict[str, Any]] = []
     completed_by_pack = _completed_task_by_context_pack(tasks)
+    completed_by_pack.update(_completed_task_by_ledger(root))
     completed_scopes = _completed_task_allowed_scopes(root, tasks)
 
     for run in runs:
@@ -475,6 +478,38 @@ def _completed_task_by_context_pack(tasks: list[dict[str, Any]]) -> dict[str, di
         if isinstance(context_pack, str) and context_pack:
             completed[context_pack] = task
     return completed
+
+
+def _completed_task_by_ledger(root: Path) -> dict[str, dict[str, Any]]:
+    try:
+        ledger = load_task_ledger(root)
+    except ValueError:
+        return {}
+    tasks = ledger.get("tasks", {})
+    if not isinstance(tasks, dict):
+        return {}
+
+    completed: dict[str, dict[str, Any]] = {}
+    for context_pack, entry in tasks.items():
+        if not isinstance(context_pack, str) or not isinstance(entry, dict):
+            continue
+        if entry.get("status") != "complete":
+            continue
+        completed[context_pack] = {
+            "id": _task_id_from_context_pack(context_pack),
+            "path": context_pack,
+            "status": "complete",
+            "status_source": "ledger",
+            "status_reason": f"Task ledger marks {context_pack} complete.",
+            "run_id": entry.get("run_id"),
+            "updated_at": entry.get("updated_at", ""),
+        }
+    return completed
+
+
+def _task_id_from_context_pack(context_pack: str) -> str | None:
+    match = re.search(r"\b(T-\d{3,})\b", Path(context_pack).name)
+    return match.group(1) if match else None
 
 
 def _superseded_by_completed_task_details(
