@@ -61,6 +61,27 @@ aspec intake promote <snapshot-id> --decision accepted --compile --json
 Do not auto-promote. Promotion changes the accepted repo-local source/spec
 projection and requires human review.
 
+## Human-Facing Output
+
+For Codex or Claude Code final replies, keep raw `aspec ...` commands internal
+unless the user asks for command-level logs or terminal reproduction steps.
+Report candidate import, diff, promotion, compile, and status checks by purpose
+and result, for example:
+
+- "Source candidate imported."
+- "Candidate diff is ready for review."
+- "Accepted source projections refreshed."
+
+Do not include a final "Tests / checks run" section that lists internal
+AgentSpec CLI commands such as `aspec intake import`, `aspec intake diff`,
+`aspec intake promote`, `aspec compile`, or `aspec status --json`.
+
+When human approval is still required, ask for it in plain language or provide a
+copy-ready prompt such as "Approve SRC-#### and refresh AgentSpec projections."
+After promotion, end with a short "Next" block that names the next valid move:
+review generated requirements, create a task context pack, start
+implementation, or clarify the source.
+
 ## Boundaries
 
 - Host-provided content is acceptable input.

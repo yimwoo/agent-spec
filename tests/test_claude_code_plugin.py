@@ -170,7 +170,15 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 verify_work = (
                     plugin_root / "skills" / "verify-work" / "SKILL.md"
                 ).read_text(encoding="utf-8")
-                combined = finish_work + "\n" + verify_work
+                design_work = (
+                    plugin_root / "skills" / "design-work" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                manual_source_intake = (
+                    plugin_root / "skills" / "manual-source-intake" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                combined = "\n".join(
+                    [finish_work, verify_work, design_work, manual_source_intake]
+                )
 
                 self.assertIn("Human-Facing Output", combined)
                 self.assertIn("keep raw `aspec ...` commands internal", combined)
@@ -178,6 +186,10 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 self.assertIn("Roadmap freshness check passed", combined)
                 self.assertIn("Do not include a final \"Tests / checks run\" section", combined)
                 self.assertIn("Do not list `aspec outcome --json`", combined)
+                self.assertIn("Source candidate diff reviewed", combined)
+                self.assertIn("Candidate diff is ready for review", combined)
+                self.assertIn("End with a short \"Next\" block", combined)
+                self.assertIn("Approve SRC-#### and refresh AgentSpec projections", combined)
 
     def test_plugin_guidance_requires_session_gate_before_execution(self) -> None:
         plugin_roots = [
