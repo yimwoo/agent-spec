@@ -12,7 +12,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.init import init_project
-from agentspec.io import load_data
+from agentspec.io import load_data, write_data
 from agentspec.policy import evaluate_policy
 from agentspec.run import start_run, resume_run
 
@@ -155,6 +155,47 @@ class AutonomousPauseTransformTests(unittest.TestCase):
                 if json.loads(line)["kind"] == "executor_output"
             )
             self.assertIn("[REDACTED_CREDENTIAL]", executor_event["output_excerpt"])
+
+    def test_auto_reviewer_unavailable_halts_without_product_finding(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pack = _seed_workspace(root)
+            config_path = root / ".agentspec" / "config.yml"
+            config = load_data(config_path)
+            config["agent_profiles"]["continuation_reviewer"] = {
+                "adapter": "static",
+                "model": "static-reviewer",
+            }
+            write_data(config_path, config)
+            start_run(root, pack, run_id="r-auto-reviewer-unavailable", mode="autonomous")
+
+            result = resume_run(
+                root,
+                "r-auto-reviewer-unavailable",
+                executor_output="Verification passed for the scoped implementation.",
+                touched_paths=["agentspec/fixture_target.py"],
+                test_status="passed",
+                reviewer_mode="auto",
+            )
+
+            review = result["review"]
+            state = result["state"]
+            self.assertIn("model_review_unavailable", review["policy_flags"])
+            self.assertEqual(state["status"], "halted")
+            self.assertEqual(state["last_decision"], "halt")
+            self.assertNotIn("autonomous_finding", state)
+            self.assertEqual(state["infrastructure_blocker"]["kind"], "model_review_unavailable")
+
+            qs = load_data(root / "docs" / "discovery" / "open-questions.yml", []) or []
+            self.assertFalse(
+                any(q.get("raised_by") == "r-auto-reviewer-unavailable" for q in qs),
+                "model reviewer infrastructure failures must not create product open questions",
+            )
+
+            summary = load_data(root / "agent" / "runs" / "r-auto-reviewer-unavailable" / "summary.yml")
+            self.assertEqual(summary["status"], "halted")
+            self.assertEqual(summary["blocked_findings"], [])
+            self.assertEqual(summary["event_counts"]["autonomous_infrastructure_block"], 1)
 
     def test_supervised_pause_for_human_unchanged(self) -> None:
         """Regression guard: supervised mode produces the existing pause status,
