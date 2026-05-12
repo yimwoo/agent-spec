@@ -437,6 +437,25 @@ class SessionCliTests(unittest.TestCase):
             self.assertEqual(satisfied["active_session"]["session_id"], "S-owner-preflight")
             self.assertEqual(satisfied["active_session"]["branch"], "feature/preflight-owner")
 
+    def test_session_preflight_recommends_context_pack_when_task_id_is_ambiguous(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            selected = _write_pack(root, "T-010-selected-task.md")
+            _write_pack(root, "T-010-historical-task.md")
+
+            missing = build_session_preflight(
+                root,
+                context_pack=str(selected.relative_to(root)),
+                task_id="T-010",
+            )
+
+            self.assertEqual(missing["status"], "missing")
+            self.assertIn(
+                "--task agent/context-packs/T-010-selected-task.md",
+                missing["recommended_command"],
+            )
+            self.assertNotIn("--task T-010 ", missing["recommended_command"])
+
     def test_session_preflight_allows_explicit_host_worktree_execution(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -546,7 +565,7 @@ def _subprocess_env() -> dict[str, str]:
     return env
 
 
-def _write_pack(root: Path, name: str) -> None:
+def _write_pack(root: Path, name: str) -> Path:
     path = root / "agent" / "context-packs" / name
     path.parent.mkdir(parents=True, exist_ok=True)
     task_id = name.split("-", 2)[0] + "-" + name.split("-", 2)[1]
@@ -567,6 +586,7 @@ Originating DCR: `DCR-0001`
 """,
         encoding="utf-8",
     )
+    return path
 
 
 if __name__ == "__main__":

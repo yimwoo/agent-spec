@@ -662,13 +662,32 @@ def _active_write_session_for_context(
 
 
 def _session_start_command(root: Path, context: dict[str, Any]) -> str:
-    task_selector = str(context.get("task_id") or context.get("context_pack") or "<task>")
+    task_selector = _session_start_task_selector(root, context)
     branch = _current_git_branch(root) or "<branch>"
     worktree = _current_git_worktree(root) or str(root)
     return (
         f"aspec session start --task {task_selector} --owner <owner> "
         f"--branch {branch} --worktree {worktree}"
     )
+
+
+def _session_start_task_selector(root: Path, context: dict[str, Any]) -> str:
+    task_id = context.get("task_id")
+    context_pack = context.get("context_pack")
+    if isinstance(task_id, str) and task_id:
+        if isinstance(context_pack, str) and context_pack and _task_id_is_ambiguous(root, task_id):
+            return context_pack
+        return task_id
+    if isinstance(context_pack, str) and context_pack:
+        return context_pack
+    return "<task>"
+
+
+def _task_id_is_ambiguous(root: Path, task_id: str) -> bool:
+    if not re.fullmatch(r"T-\d{3,}", task_id):
+        return False
+    matches = sorted((root / "agent" / "context-packs").glob(f"{task_id}-*.md"))
+    return len(matches) > 1
 
 
 def _validate_session_id(session_id: str) -> None:
