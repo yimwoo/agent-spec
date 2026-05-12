@@ -4,7 +4,12 @@ from pathlib import Path
 from typing import Any
 import re
 
-from .archetype import validate_path_provenance
+from .archetype import (
+    detect_archetype,
+    infer_code_targets,
+    infer_test_targets,
+    validate_path_provenance,
+)
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
 from .paths import slugify, truncate_on_word_boundary
@@ -396,9 +401,10 @@ def _pack_text(
     source_by_id = {source["id"]: source for source in sources}
     section_by_id = {section["id"]: section for section in sections}
     source_sections = sorted({section_id for requirement in requirements for section_id in requirement.get("source_sections", [])})
-    test_targets = _paths_from_requirements(requirements, "test_targets")
+    scope_requirements = _repository_aware_scope_requirements(root, requirements)
+    test_targets = _paths_from_requirements(scope_requirements, "test_targets")
     tests_to_update = test_targets or ["tests/"]
-    allowed_paths, allowed_path_sources = _allowed_path_scope(requirements, tests_to_update)
+    allowed_paths, allowed_path_sources = _allowed_path_scope(scope_requirements, tests_to_update)
 
     out = [
         f"# {task_id}: {title}",
@@ -700,6 +706,84 @@ def _allowed_path_scope(
     add(list(STANDARD_VERIFICATION_SUPPORT_PATHS), "verification support")
     add(tests_to_update, "task verification")
     return allowed_paths, sources_by_path
+
+
+def _repository_aware_scope_requirements(root: Path, requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    archetype = detect_archetype(root)
+    language = str(archetype.get("language") or "undetermined")
+    if language in {"python", "undetermined"}:
+        return requirements
+
+    scoped: list[dict[str, Any]] = []
+    for requirement in requirements:
+        adjusted = dict(requirement)
+        text = " ".join(
+            str(part)
+            for part in [
+                requirement.get("title"),
+                requirement.get("description"),
+                " ".join(_path_values(requirement.get("code_targets"))),
+                " ".join(_path_values(requirement.get("test_targets"))),
+            ]
+            if part
+        )
+        if _should_replace_repository_targets(
+            root,
+            _path_values(requirement.get("code_targets")),
+            archetype,
+            target_kind="code",
+        ):
+            adjusted["code_targets"] = infer_code_targets(text, archetype)
+        if _should_replace_repository_targets(
+            root,
+            _path_values(requirement.get("test_targets")),
+            archetype,
+            target_kind="test",
+        ):
+            adjusted["test_targets"] = infer_test_targets(text, archetype)
+        scoped.append(adjusted)
+    return scoped
+
+
+def _should_replace_repository_targets(
+    root: Path,
+    paths: list[str],
+    archetype: dict[str, Any],
+    *,
+    target_kind: str,
+) -> bool:
+    language = str(archetype.get("language") or "undetermined")
+    if language in {"python", "undetermined"}:
+        return False
+    if not paths:
+        return True
+    if any(_looks_like_agentspec_python_target(path) for path in paths):
+        return True
+    if any(_path_matches_archetype(path, archetype, target_kind=target_kind) for path in paths):
+        return False
+    return all(validate_path_provenance(path, root) == "inferred" for path in paths)
+
+
+def _looks_like_agentspec_python_target(path: str) -> bool:
+    return path.startswith("agentspec/") and path.endswith(".py")
+
+
+def _path_matches_archetype(path: str, archetype: dict[str, Any], *, target_kind: str) -> bool:
+    language = str(archetype.get("language") or "undetermined")
+    roots_key = "test_roots" if target_kind == "test" else "source_roots"
+    roots = [str(root) for root in archetype.get(roots_key) or []]
+    extensions = {
+        "typescript": (".ts", ".tsx"),
+        "javascript": (".js", ".jsx"),
+        "go": (".go",),
+        "rust": (".rs",),
+        "java": (".java",),
+        "ruby": (".rb",),
+    }.get(language, ())
+    if extensions and any(extension in path for extension in extensions):
+        return True
+    has_glob = any(char in path for char in ("*", "?", "["))
+    return bool(roots and has_glob and any(path.startswith(root) for root in roots))
 
 
 def _paths_from_requirements(requirements: list[dict[str, Any]], field: str) -> list[str]:
