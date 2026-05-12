@@ -234,6 +234,34 @@ class CreateTaskContextPackScopeTests(unittest.TestCase):
             self.assertIn("| `scripts/smoke_check.sh` | inferred; support artifact |", text)
             self.assertIn("| `fixtures/**` | pattern; verification support |", text)
 
+    def test_task_create_replaces_stale_python_targets_in_typescript_repo(self) -> None:
+        from agentspec.task import create_task_context_pack
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            requirement = _requirement(
+                "R-009",
+                "Implement OpenTelemetry GenAI and OpenInference crosswalk",
+                code_targets=["agentspec/emit.py"],
+                test_targets=["tests/test_cli_workflow.py"],
+            )
+            _seed_task_workspace(root, [requirement])
+            (root / "package.json").write_text('{"name":"fixture"}', encoding="utf-8")
+            (root / "src" / "schema.ts").write_text("export const schema = {};\n", encoding="utf-8")
+            (root / "tests" / "schema.test.ts").write_text("test('schema', () => {});\n", encoding="utf-8")
+
+            path = create_task_context_pack(root, requirement_id="R-009")
+            text = path.read_text(encoding="utf-8")
+            allowed_paths = _markdown_list_after_heading(text, "Allowed Paths")
+            tests_to_update = _markdown_list_after_heading(text, "Tests To Add Or Update")
+
+            self.assertIn("src/**/*.ts", allowed_paths)
+            self.assertIn("tests/**/*.ts", allowed_paths)
+            self.assertIn("tests/**/*.ts", tests_to_update)
+            self.assertNotIn("agentspec/emit.py", allowed_paths)
+            self.assertNotIn("tests/test_cli_workflow.py", allowed_paths)
+            self.assertNotIn("tests/test_cli_workflow.py", tests_to_update)
+
 
 class ValidatePathProvenanceTests(unittest.TestCase):
     def test_confirmed_path(self) -> None:
