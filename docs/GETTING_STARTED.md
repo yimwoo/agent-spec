@@ -29,6 +29,7 @@ Key terms:
 | Workflow | The native AgentSpec execution plan linked to a task pack. |
 | Runner package | The per-step contract handed to the agent: prompt, iteration count, allowed paths, expected result schema. |
 | Session lease | The branch/worktree/owner record that must cover implementation execution unless host-worktree execution is explicitly declared. |
+| Finish disposition | The final branch/worktree outcome for an owner/patcher session: `pr`, `merge`, `keep`, `discard`, or session `release`. |
 | Supervised run | A task execution under iteration limits and policy gates, persisted in `agent/runs/`. |
 | Review evidence | Reviewer findings under `agent/reviews/`, required before a task can finish. |
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
@@ -103,6 +104,14 @@ For implementation work, follow task pack -> workflow -> branch/worktree/session
 Claim or verify an active owner/patcher session lease before implementation execution.
 Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
 Explicit host-worktree execution is an auditable escape hatch when the workflow or task context pack declares it intentionally.
+Every implementation owner/patcher session ends with a branch/worktree
+disposition. Use `pr` for pull-request delivery, `merge` for direct merge,
+`keep` for intentional follow-up, `discard` for intentionally abandoned work,
+and session `release` for handoff or abandoned ownership. Cleanup eligibility
+is advisory: AgentSpec can report when a clean branch/worktree has task
+write-back, delivery closure, and no active owner/patcher lease, but it does
+not remove worktrees or delete branches without explicit confirmation or a
+later opt-in policy.
 
 ```mermaid
 sequenceDiagram
@@ -161,7 +170,8 @@ Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
 pick the next ready task pack, create or verify the workflow, claim or verify
 the branch/worktree/session lease, follow its allowed paths, run verification,
 record review evidence, finish the task, and refresh roadmap/handoff state.
-Do not start implementation execution until session preflight is satisfied.
+Record the final branch/worktree disposition and do not start implementation
+execution until session preflight is satisfied.
 ```
 
 Use this for a new design or design change:
@@ -181,7 +191,13 @@ The agent should report:
 - branch/worktree/session lease or explicit host-worktree execution decision
 - verification commands and results
 - review ID and verdict
+- branch/worktree disposition and any advisory cleanup eligibility
 - roadmap and handoff status
+
+The same finish lifecycle applies to ticket fixes, features, designs,
+milestones, and cross-repo AgentSpec work. The shape of the work changes, but
+task closure, delivery closure, and local-resource closure remain separate
+decisions.
 
 The sections below are the detailed command reference behind those prompts.
 Humans can run them directly, but the intended product experience is that an

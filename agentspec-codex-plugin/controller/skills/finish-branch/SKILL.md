@@ -31,15 +31,29 @@ aspec roadmap --check --json
 3. Archive a session lease when one exists:
 
 ```bash
-aspec session finish <session-id> --disposition merged --review <REVIEW-id> --test-status passed
+aspec session finish <session-id> --disposition merge --review <REVIEW-id> --test-status passed
 ```
+
+   Use `pr` when work is delivered through a pull request, `merge` when it is
+   merged directly, `keep` when the branch/worktree must remain available, and
+   `discard` when the work is intentionally abandoned. Use `aspec session
+   release` for handoff or abandoned ownership; release is not delivery
+   closure.
 
 4. Use git merge, push, or PR commands only when the user or project branch
    policy asks for that disposition.
 
+5. Treat local cleanup as advisory. `aspec status --json` reports cleanup
+   eligibility only after task/write-back closure, delivery closure, clean
+   branch/worktree resources, and no active owner/patcher lease for the same
+   resources. Do not remove a git worktree or delete a local branch without
+   explicit user confirmation or a later opt-in project policy.
+
 Boundary: current AgentSpec has `aspec finish` and session finish. A future
 dedicated branch-finish command can add clean-checkout verification and record
-merge, PR, keep, or discard disposition in one native flow.
+merge, PR, keep, discard, release, and advisory cleanup checks in one native
+flow. Ticket fixes, features, designs, milestones, and cross-repo AgentSpec
+work share the same finish lifecycle.
 
 ## Human-Facing Output
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from agentspec.cli import main
-from agentspec.io import load_data
+from agentspec.io import load_data, write_data
 from agentspec import session as session_module
 from agentspec.session import build_session_preflight
 
@@ -147,6 +147,171 @@ class SessionCliTests(unittest.TestCase):
                 status_payload["sessions"]["active"][0]["context_pack"],
                 "agent/context-packs/T-003-status.md",
             )
+
+    def test_session_status_marks_cleanup_eligible_after_merge_and_clean_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/cleanup")
+            pack = _write_pack(root, "T-013-cleanup.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            _finish_cleanup_session(root, worktree, "S-cleanup", disposition="merge")
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            archived = list_payload["archived"][0]
+            eligibility = archived["cleanup_eligibility"]
+
+            self.assertTrue(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "eligible")
+            self.assertEqual(eligibility["reasons"], [])
+            self.assertEqual(eligibility["closures"]["task"]["status"], "closed")
+            self.assertEqual(eligibility["closures"]["delivery"]["status"], "closed")
+            self.assertEqual(eligibility["closures"]["local_resources"]["status"], "eligible")
+            self.assertEqual(eligibility["resources"]["worktree"]["status"], "eligible")
+            self.assertEqual(eligibility["resources"]["branch"]["status"], "eligible_after_worktree")
+            self.assertIn("remove_worktree_first", eligibility["resources"]["branch"]["reasons"])
+            self.assertEqual(list_payload["cleanup"]["counts"]["eligible"], 1)
+            self.assertEqual(list_payload["cleanup"]["eligible"][0]["session_id"], "S-cleanup")
+
+    def test_session_status_marks_keep_disposition_as_not_cleanup_eligible(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/keep")
+            pack = _write_pack(root, "T-014-keep.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            _finish_cleanup_session(root, worktree, "S-keep", task="T-014", disposition="keep")
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "kept")
+            self.assertIn("disposition_keep", eligibility["reasons"])
+            self.assertEqual(eligibility["closures"]["delivery"]["status"], "kept")
+
+    def test_session_status_blocks_cleanup_when_active_write_session_uses_same_resources(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/active-block")
+            pack = _write_pack(root, "T-015-active-block.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            _finish_cleanup_session(root, worktree, "S-finished", task="T-015", disposition="merge")
+            _write_pack(root, "T-016-active.md")
+
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-016",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/active-block",
+                    "--worktree",
+                    str(worktree),
+                    "--session-id",
+                    "S-active",
+                    "--json",
+                ],
+            )
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            finished = next(record for record in list_payload["archived"] if record["session_id"] == "S-finished")
+            eligibility = finished["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "blocked")
+            self.assertIn("active_session_same_branch", eligibility["reasons"])
+            self.assertIn("active_session_same_worktree", eligibility["reasons"])
+
+    def test_session_status_blocks_cleanup_for_dirty_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/dirty")
+            pack = _write_pack(root, "T-017-dirty.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            (worktree / "untracked.txt").write_text("dirty\n", encoding="utf-8")
+            _finish_cleanup_session(root, worktree, "S-dirty", task="T-017", disposition="merge")
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "blocked")
+            self.assertIn("worktree_dirty", eligibility["reasons"])
+            self.assertIn("worktree:worktree_dirty", eligibility["reasons"])
+            self.assertEqual(eligibility["resources"]["worktree"]["status"], "blocked")
+
+    def test_session_status_blocks_cleanup_when_worktree_status_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = _seed_merged_branch_repo(Path(temp_dir), "feature/nongit")
+            nongit_worktree = Path(temp_dir) / "not-a-git-worktree"
+            nongit_worktree.mkdir()
+            pack = _write_pack(root, "T-018-nongit.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            _finish_cleanup_session(
+                root,
+                nongit_worktree,
+                "S-nongit",
+                task="T-018",
+                disposition="merge",
+                branch="feature/nongit",
+            )
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "blocked")
+            self.assertIn("worktree:worktree_status_unavailable", eligibility["reasons"])
+            self.assertEqual(eligibility["resources"]["worktree"]["status"], "blocked")
+            self.assertEqual(
+                eligibility["resources"]["worktree"]["reasons"],
+                ["worktree_status_unavailable"],
+            )
+
+    def test_session_status_blocks_cleanup_for_released_session(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/release")
+            _write_pack(root, "T-018-release-cleanup.md")
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-018",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/release",
+                    "--worktree",
+                    str(worktree),
+                    "--session-id",
+                    "S-release-cleanup",
+                    "--json",
+                ],
+            )
+            _run_json(root, ["session", "release", "S-release-cleanup", "--reason", "handoff", "--json"])
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "released")
+            self.assertIn("released_without_delivery_closure", eligibility["reasons"])
+            self.assertIn("released_without_task_closure", eligibility["reasons"])
+
+    def test_session_status_blocks_cleanup_without_task_writeback_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/missing-evidence")
+            _write_pack(root, "T-019-missing-evidence.md")
+            _finish_cleanup_session(root, worktree, "S-missing-evidence", task="T-019", disposition="merge")
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "blocked")
+            self.assertIn("task_writeback_missing", eligibility["reasons"])
+            self.assertEqual(eligibility["closures"]["task"]["status"], "blocked")
 
     def test_default_session_ids_are_unique_when_timestamp_matches(self) -> None:
         class FixedDatetime:
@@ -555,6 +720,141 @@ def _init_git_repo(root: Path, branch: str) -> None:
         text=True,
         check=True,
     )
+
+
+def _seed_cleanup_git_repo(base: Path, branch: str) -> tuple[Path, Path]:
+    root = _seed_merged_branch_repo(base, branch)
+    worktree = base / "cleanup-worktree"
+    _git(root, "worktree", "add", str(worktree), branch)
+    return root, worktree
+
+
+def _seed_merged_branch_repo(base: Path, branch: str) -> Path:
+    root = base / "repo"
+    root.mkdir(parents=True)
+    init = subprocess.run(
+        ["git", "init", "--initial-branch=main"],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if init.returncode != 0:
+        _git(root, "init")
+        _git(root, "checkout", "-b", "main")
+    _git(root, "config", "user.email", "agentspec@example.com")
+    _git(root, "config", "user.name", "AgentSpec Test")
+    (root / "README.md").write_text("base\n", encoding="utf-8")
+    _git(root, "add", "README.md")
+    _git(root, "commit", "-m", "base")
+    _git(root, "checkout", "-b", branch)
+    (root / "feature.txt").write_text(f"{branch}\n", encoding="utf-8")
+    _git(root, "add", "feature.txt")
+    _git(root, "commit", "-m", "feature")
+    _git(root, "checkout", "main")
+    _git(root, "merge", "--no-ff", branch, "-m", f"merge {branch}")
+    return root
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(
+        ["git", *args],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+
+
+def _write_task_closure(root: Path, pack: Path, review_id: str) -> None:
+    context_pack = str(pack.relative_to(root))
+    write_data(
+        root / "agent" / "reviews" / f"{review_id}.yml",
+        {
+            "schema": "agentspec.code_review.v0",
+            "id": review_id,
+            "task": {"selector": context_pack, "context_pack": context_pack},
+            "verdict": "ready",
+            "summary": "No blocking findings.",
+            "reviewer": "codex",
+            "range": "worktree",
+            "created_at": "2026-05-12T00:00:00Z",
+        },
+    )
+    write_data(
+        root / "agent" / "task-ledger.yml",
+        {
+            "schema": "agentspec.task_ledger.v0",
+            "tasks": {
+                context_pack: {
+                    "status": "complete",
+                    "run_id": f"complete-{pack.stem.split('-', 2)[0].lower()}",
+                    "updated_at": "2026-05-12T00:00:00Z",
+                    "verification": {"status": "passed"},
+                    "code_review": {"id": review_id, "verdict": "ready"},
+                }
+            },
+        },
+    )
+
+
+def _finish_cleanup_session(
+    root: Path,
+    worktree: Path,
+    session_id: str,
+    *,
+    task: str = "T-013",
+    disposition: str,
+    branch: str | None = None,
+) -> None:
+    branch = branch or _git_stdout(root, worktree, "rev-parse", "--abbrev-ref", "HEAD")
+    _run_json(
+        root,
+        [
+            "session",
+            "start",
+            "--task",
+            task,
+            "--owner",
+            "codex",
+            "--branch",
+            branch,
+            "--worktree",
+            str(worktree),
+            "--session-id",
+            session_id,
+            "--json",
+        ],
+    )
+    _run_json(
+        root,
+        [
+            "session",
+            "finish",
+            session_id,
+            "--disposition",
+            disposition,
+            "--test-status",
+            "passed",
+            "--review",
+            "REVIEW-0001",
+            "--json",
+        ],
+    )
+
+
+def _git_stdout(root: Path, cwd: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
 
 
 def _subprocess_env() -> dict[str, str]:

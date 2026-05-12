@@ -18,10 +18,13 @@ from .io import load_data, sha256_text, utc_now_iso
 SESSION_LEASE_SCHEMA = "agentspec.session_lease.v0"
 SESSION_LIST_SCHEMA = "agentspec.session_list.v0"
 SESSION_PREFLIGHT_SCHEMA = "agentspec.session_preflight.v0"
+SESSION_CLEANUP_SCHEMA = "agentspec.session_cleanup.v0"
 ALLOWED_SESSION_MODES = {"observer", "owner", "patcher"}
 ALLOWED_FINISH_DISPOSITIONS = {"discard", "keep", "merge", "pr"}
 ALLOWED_TEST_STATUSES = {"failed", "not_run", "passed"}
 WRITE_SESSION_MODES = {"owner", "patcher"}
+DELIVERY_CLOSED_DISPOSITIONS = {"discard", "merge", "pr"}
+PROTECTED_BRANCHES = {"main", "master"}
 SESSION_START_LOCK_TIMEOUT_SECONDS = 10.0
 SESSION_START_LOCK_POLL_SECONDS = 0.02
 
@@ -107,8 +110,19 @@ def list_sessions(root: Path) -> dict[str, Any]:
 
 def build_session_status(root: Path) -> dict[str, Any]:
     root = root.resolve()
-    active = [_summary(root, path, record) for path, record in _records_in(_active_dir(root))]
-    archived = [_summary(root, path, record) for path, record in _records_in(_archived_dir(root))]
+    active_records = _records_in(_active_dir(root))
+    archived_records = _records_in(_archived_dir(root))
+    active = [_summary(root, path, record) for path, record in active_records]
+    active_write_leases = _active_write_leases(root, active)
+    archived = [
+        _summary(
+            root,
+            path,
+            record,
+            cleanup_eligibility=_cleanup_eligibility(root, record, active_write_leases),
+        )
+        for path, record in archived_records
+    ]
     active = sorted(active, key=lambda record: str(record.get("updated_at", "")), reverse=True)
     archived = sorted(archived, key=lambda record: str(record.get("updated_at", "")), reverse=True)
     by_status = _counts([record.get("status") for record in active + archived])
@@ -123,6 +137,7 @@ def build_session_status(root: Path) -> dict[str, Any]:
         "by_status": by_status,
         "active": active,
         "archived": archived,
+        "cleanup": _cleanup_projection(archived),
     }
 
 
@@ -757,8 +772,14 @@ def _append_history(record: dict[str, Any], **event: Any) -> None:
     history.append({key: value for key, value in event.items() if value is not None})
 
 
-def _summary(root: Path, path: Path, record: dict[str, Any]) -> dict[str, Any]:
-    return {
+def _summary(
+    root: Path,
+    path: Path,
+    record: dict[str, Any],
+    *,
+    cleanup_eligibility: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    summary = {
         "session_id": record.get("session_id") or path.stem,
         "status": record.get("status"),
         "terminal": bool(record.get("terminal")),
@@ -776,6 +797,9 @@ def _summary(root: Path, path: Path, record: dict[str, Any]) -> dict[str, Any]:
         "disposition": record.get("disposition"),
         "path": _relative_or_absolute(root, path),
     }
+    if cleanup_eligibility is not None:
+        summary["cleanup_eligibility"] = cleanup_eligibility
+    return summary
 
 
 def _with_dynamic_path(root: Path, path: Path, record: dict[str, Any]) -> dict[str, Any]:
@@ -808,6 +832,404 @@ def _session_summary_text(record: dict[str, Any]) -> str:
     if updated_at:
         bits.append(f"updated {updated_at}")
     return " | ".join(bits)
+
+
+def _cleanup_projection(archived: list[dict[str, Any]]) -> dict[str, Any]:
+    eligible = [
+        _cleanup_summary(record)
+        for record in archived
+        if _dict(record.get("cleanup_eligibility")).get("eligible") is True
+    ]
+    blocked = [
+        _cleanup_summary(record)
+        for record in archived
+        if _dict(record.get("cleanup_eligibility")).get("eligible") is False
+    ]
+    by_status = _counts(
+        [
+            _dict(record.get("cleanup_eligibility")).get("status")
+            for record in archived
+            if isinstance(record.get("cleanup_eligibility"), dict)
+        ]
+    )
+    return {
+        "schema": SESSION_CLEANUP_SCHEMA,
+        "advisory": True,
+        "summary": "Cleanup is advisory; AgentSpec does not delete branches or worktrees without explicit confirmation.",
+        "counts": {
+            "eligible": len(eligible),
+            "blocked": len(blocked),
+            "by_status": by_status,
+        },
+        "eligible": eligible,
+        "blocked": blocked,
+    }
+
+
+def _cleanup_summary(record: dict[str, Any]) -> dict[str, Any]:
+    eligibility = _dict(record.get("cleanup_eligibility"))
+    return {
+        "session_id": record.get("session_id"),
+        "task_id": record.get("task_id"),
+        "branch": record.get("branch"),
+        "worktree": record.get("worktree"),
+        "disposition": record.get("disposition"),
+        "status": eligibility.get("status"),
+        "reasons": eligibility.get("reasons", []),
+        "closures": eligibility.get("closures", {}),
+        "resources": eligibility.get("resources", {}),
+    }
+
+
+def _cleanup_eligibility(
+    root: Path,
+    record: dict[str, Any],
+    active_write_leases: list[dict[str, Any]],
+) -> dict[str, Any]:
+    resources = {
+        "branch": _branch_cleanup_eligibility(root, record),
+        "worktree": _worktree_cleanup_eligibility(root, record),
+    }
+    task_closure = _task_closure(root, record)
+    delivery_closure = _delivery_closure(record)
+    local_resource_closure = _local_resource_closure(resources, delivery_closure)
+    closures = {
+        "task": task_closure,
+        "delivery": delivery_closure,
+        "local_resources": local_resource_closure,
+    }
+    reasons = _cleanup_blocking_reasons(root, record, active_write_leases)
+    for closure in closures.values():
+        reasons.extend(str(reason) for reason in closure.get("reasons", []))
+
+    reasons = sorted(set(reasons))
+    eligible = (
+        not reasons
+        and task_closure.get("status") == "closed"
+        and delivery_closure.get("status") == "closed"
+        and local_resource_closure.get("status") == "eligible"
+    )
+    status = _cleanup_status(
+        eligible=eligible,
+        task_closure=task_closure,
+        delivery_closure=delivery_closure,
+        local_resource_closure=local_resource_closure,
+    )
+    return {
+        "schema": SESSION_CLEANUP_SCHEMA,
+        "eligible": eligible,
+        "status": status,
+        "advisory": True,
+        "reasons": reasons,
+        "closures": closures,
+        "resources": resources,
+        "message": _cleanup_message(eligible, status, reasons),
+    }
+
+
+def _cleanup_status(
+    *,
+    eligible: bool,
+    task_closure: dict[str, Any],
+    delivery_closure: dict[str, Any],
+    local_resource_closure: dict[str, Any],
+) -> str:
+    if eligible:
+        return "eligible"
+    if delivery_closure.get("status") == "kept":
+        return "kept"
+    if delivery_closure.get("status") == "released":
+        return "released"
+    if (
+        task_closure.get("status") == "closed"
+        and delivery_closure.get("status") == "closed"
+        and local_resource_closure.get("status") == "already_removed"
+    ):
+        return "already_removed"
+    return "blocked"
+
+
+def _task_closure(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("mode") not in WRITE_SESSION_MODES:
+        return _closure_status("not_applicable", ["not_write_session"])
+    if record.get("status") == "released":
+        return _closure_status("released", ["released_without_task_closure"])
+    if record.get("status") != "finished" or not record.get("terminal"):
+        return _closure_status("blocked", ["session_not_finished"])
+
+    reasons: list[str] = []
+    if record.get("test_status") != "passed":
+        reasons.append("session_verification_not_passed")
+    if not record.get("review_id"):
+        reasons.append("session_review_missing")
+
+    context_pack = record.get("context_pack")
+    if not isinstance(context_pack, str) or not context_pack.strip():
+        reasons.append("missing_context_pack")
+    else:
+        ledger_entry = _task_ledger_entry(root, context_pack)
+        if not isinstance(ledger_entry, dict) or ledger_entry.get("status") != "complete":
+            reasons.append("task_writeback_missing")
+        else:
+            verification = _dict(ledger_entry.get("verification"))
+            if verification.get("status") != "passed":
+                reasons.append("task_verification_not_passed")
+            if not _dict(ledger_entry.get("code_review")).get("id"):
+                reasons.append("task_review_missing")
+
+    return _closure_status("closed" if not reasons else "blocked", reasons)
+
+
+def _delivery_closure(record: dict[str, Any]) -> dict[str, Any]:
+    disposition = record.get("disposition")
+    if record.get("status") == "released":
+        return _closure_status("released", ["released_without_delivery_closure"], disposition=disposition)
+    if disposition == "keep":
+        return _closure_status("kept", ["disposition_keep"], disposition=disposition)
+    if disposition in DELIVERY_CLOSED_DISPOSITIONS:
+        return _closure_status("closed", [], disposition=disposition)
+    return _closure_status("blocked", ["missing_delivery_disposition"], disposition=disposition)
+
+
+def _local_resource_closure(
+    resources: dict[str, dict[str, Any]],
+    delivery_closure: dict[str, Any],
+) -> dict[str, Any]:
+    if delivery_closure.get("status") != "closed":
+        return _closure_status("blocked", [])
+
+    blocked_reasons: list[str] = []
+    for name, resource in resources.items():
+        if _dict(resource).get("status") == "blocked":
+            blocked_reasons.extend(f"{name}:{reason}" for reason in _dict(resource).get("reasons", []))
+
+    if blocked_reasons:
+        return _closure_status("blocked", blocked_reasons)
+    if any(_dict(resource).get("eligible") is True for resource in resources.values()):
+        return _closure_status("eligible", [])
+    if resources and all(_dict(resource).get("status") == "already_removed" for resource in resources.values()):
+        return _closure_status("already_removed", [])
+    return _closure_status("blocked", ["no_cleanup_resource"])
+
+
+def _closure_status(status: str, reasons: list[str], **extra: Any) -> dict[str, Any]:
+    return {
+        "status": status,
+        "closed": status == "closed",
+        "reasons": reasons,
+        **extra,
+    }
+
+
+def _cleanup_blocking_reasons(
+    root: Path,
+    record: dict[str, Any],
+    active_write_leases: list[dict[str, Any]],
+) -> list[str]:
+    reasons: list[str] = []
+    if record.get("mode") not in WRITE_SESSION_MODES:
+        reasons.append("not_write_session")
+    if not record.get("terminal"):
+        reasons.append("session_not_terminal")
+    if _record_worktree_has_changes(root, record):
+        reasons.append("worktree_dirty")
+    branch = record.get("branch")
+    worktree_key = _worktree_key(root, record.get("worktree"))
+    for lease in active_write_leases:
+        if branch and lease.get("branch") == branch:
+            reasons.append("active_session_same_branch")
+        if worktree_key and lease.get("worktree_key") == worktree_key:
+            reasons.append("active_session_same_worktree")
+    return sorted(set(reasons))
+
+
+def _branch_cleanup_eligibility(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+    branch = record.get("branch")
+    if not isinstance(branch, str) or not branch.strip():
+        return _resource_status("blocked", False, ["missing_branch_metadata"])
+    if branch in PROTECTED_BRANCHES:
+        return _resource_status("blocked", False, ["protected_branch"])
+    if not _git_branch_exists(root, branch):
+        return _resource_status("already_removed", False, ["branch_missing"])
+
+    disposition = record.get("disposition")
+    if disposition == "discard":
+        reasons = ["discard_disposition"]
+    elif disposition in {"merge", "pr"}:
+        target = _merge_target(root)
+        if target and _git_ref_is_ancestor(root, branch, target):
+            reasons = [f"merged_into_{target}"]
+        else:
+            return _resource_status("blocked", False, ["missing_merge_evidence"])
+    else:
+        return _resource_status("blocked", False, ["delivery_not_closed"])
+
+    checkout_status = _branch_checkout_status(root, branch, record)
+    if checkout_status == "cleanup_worktree":
+        return _resource_status("eligible_after_worktree", True, [*reasons, "remove_worktree_first"])
+    if checkout_status == "other_worktree":
+        return _resource_status("blocked", False, ["branch_checked_out"])
+    return _resource_status("eligible", True, reasons)
+
+
+def _worktree_cleanup_eligibility(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+    worktree = record.get("worktree")
+    if not isinstance(worktree, str) or not worktree.strip():
+        return _resource_status("blocked", False, ["missing_worktree_metadata"])
+    path = Path(worktree)
+    if not path.is_absolute():
+        path = root / path
+    path = path.resolve()
+    if path == root:
+        return _resource_status("blocked", False, ["host_worktree_not_removed"])
+    if not path.exists():
+        return _resource_status("already_removed", False, ["worktree_missing"])
+    status = _git_status_porcelain(path)
+    if status is None:
+        return _resource_status("blocked", False, ["worktree_status_unavailable"])
+    if status.strip():
+        return _resource_status("blocked", False, ["worktree_dirty"])
+    if record.get("disposition") in DELIVERY_CLOSED_DISPOSITIONS:
+        return _resource_status("eligible", True, ["clean_worktree"])
+    return _resource_status("blocked", False, ["delivery_not_closed"])
+
+
+def _resource_status(status: str, eligible: bool, reasons: list[str]) -> dict[str, Any]:
+    return {
+        "status": status,
+        "eligible": eligible,
+        "reasons": reasons,
+    }
+
+
+def _cleanup_message(eligible: bool, status: str, reasons: list[str]) -> str:
+    if eligible:
+        return "Branch/worktree cleanup is eligible after explicit confirmation."
+    if status == "kept":
+        return "Branch/worktree is intentionally kept."
+    if status == "released":
+        return "Session was released without final delivery closure; cleanup is not implied."
+    if status == "already_removed":
+        return "Recorded branch/worktree resources are already absent."
+    return "Branch/worktree cleanup is blocked: " + ", ".join(reasons)
+
+
+def _active_write_leases(root: Path, active: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    leases: list[dict[str, Any]] = []
+    for record in active:
+        if record.get("mode") not in WRITE_SESSION_MODES:
+            continue
+        leases.append(
+            {
+                "session_id": record.get("session_id"),
+                "branch": record.get("branch"),
+                "worktree_key": _worktree_key(root, record.get("worktree")),
+            }
+        )
+    return leases
+
+
+def _task_ledger_entry(root: Path, context_pack: str) -> dict[str, Any] | None:
+    ledger = load_data(root / "agent" / "task-ledger.yml", {}) or {}
+    tasks = ledger.get("tasks") if isinstance(ledger, dict) else {}
+    if not isinstance(tasks, dict):
+        return None
+    entry = tasks.get(context_pack)
+    return entry if isinstance(entry, dict) else None
+
+
+def _git_branch_exists(root: Path, branch: str) -> bool:
+    return _git_success(root, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}")
+
+
+def _branch_checkout_status(root: Path, branch: str, record: dict[str, Any]) -> str | None:
+    ref = f"refs/heads/{branch}"
+    checkouts = [git_record for git_record in _git_worktree_records(root) if git_record.get("branch") == ref]
+    if not checkouts:
+        return None
+    worktree_key = _worktree_key(root, record.get("worktree"))
+    if worktree_key and all(_worktree_key(root, git_record.get("worktree")) == worktree_key for git_record in checkouts):
+        if worktree_key != str(root.resolve()):
+            return "cleanup_worktree"
+    return "other_worktree"
+
+
+def _merge_target(root: Path) -> str | None:
+    for branch in ("main", "master"):
+        if _git_branch_exists(root, branch):
+            return branch
+    return "HEAD" if _git_stdout(root, "rev-parse", "--verify", "HEAD") else None
+
+
+def _git_ref_is_ancestor(root: Path, ref: str, target: str) -> bool:
+    return _git_success(root, "merge-base", "--is-ancestor", ref, target)
+
+
+def _worktree_has_changes(path: Path) -> bool:
+    status = _git_status_porcelain(path)
+    return bool(status and status.strip())
+
+
+def _git_status_porcelain(root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout
+
+
+def _record_worktree_has_changes(root: Path, record: dict[str, Any]) -> bool:
+    worktree = record.get("worktree")
+    if not isinstance(worktree, str) or not worktree.strip():
+        return False
+    path = Path(worktree)
+    if not path.is_absolute():
+        path = root / path
+    path = path.resolve()
+    return path.exists() and _worktree_has_changes(path)
+
+
+def _git_success(root: Path, *args: str) -> bool:
+    try:
+        subprocess.run(
+            ["git", "-C", str(root), *args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    return True
+
+
+def _git_worktree_records(root: Path) -> list[dict[str, str]]:
+    text = _git_stdout(root, "worktree", "list", "--porcelain")
+    if not text:
+        return []
+    records: list[dict[str, str]] = []
+    current: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            if current:
+                records.append(current)
+                current = {}
+            continue
+        key, _, value = line.partition(" ")
+        current[key] = value
+    if current:
+        records.append(current)
+    return records
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _relative_or_absolute(root: Path, path: Path) -> str:
