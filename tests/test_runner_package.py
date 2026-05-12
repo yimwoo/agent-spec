@@ -8,6 +8,7 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
+from agentspec.errors import RunnerResultInvalidError
 from agentspec.runner import RUNNER_EVIDENCE_SCHEMA, RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
 from agentspec.run import start_research_run
 
@@ -34,6 +35,56 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(package["report_back"]["result_template"]["schema"], RUNNER_RESULT_SCHEMA)
             self.assertEqual(package["report_back"]["result_template"]["evidence"]["schema"], RUNNER_EVIDENCE_SCHEMA)
             self.assertEqual(package["report_back"]["touched_path_flag"], "--touched-path")
+            self.assertEqual(package["session_preflight"]["status"], "satisfied")
+            self.assertEqual(package["session_preflight"]["satisfied_by"], "explicit_host_worktree")
+
+    def test_package_blocks_executor_when_session_preflight_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, host_worktree=False)
+
+            package = package_run(root, run_id="pkg-preflight", runner="generic")
+
+            self.assertEqual(package["next_action"], "session_preflight_required")
+            self.assertFalse(package["should_execute"])
+            self.assertIsNone(package["execution"]["stdin"])
+            self.assertEqual(package["execution"]["env"]["AGENTSPEC_NEXT_ACTION"], "session_preflight_required")
+            self.assertEqual(package["session_preflight"]["status"], "missing")
+            self.assertEqual(package["step"]["session_preflight"]["status"], "missing")
+            self.assertIn("session start", package["session_preflight"]["recommended_command"])
+
+    def test_active_session_satisfies_package_execution_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, host_worktree=False)
+            with redirect_stdout(io.StringIO()):
+                main(
+                    [
+                        "--root",
+                        str(root),
+                        "session",
+                        "start",
+                        "--task",
+                        "T-022",
+                        "--owner",
+                        "codex",
+                        "--branch",
+                        "feature/runner-preflight",
+                        "--worktree",
+                        str(root),
+                        "--session-id",
+                        "S-runner-preflight",
+                        "--json",
+                    ]
+                )
+
+            package = package_run(root, run_id="pkg-session-preflight", runner="generic")
+
+            self.assertEqual(package["next_action"], "continue_executor")
+            self.assertTrue(package["should_execute"])
+            self.assertEqual(package["session_preflight"]["status"], "satisfied")
+            self.assertEqual(package["session_preflight"]["satisfied_by"], "session_lease")
+            self.assertEqual(package["session_preflight"]["active_session"]["session_id"], "S-runner-preflight")
 
     def test_package_includes_ui_evidence_template(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -331,6 +382,35 @@ class RunnerPackageTests(unittest.TestCase):
 
             self.assertFalse((root / "agent" / "runs" / "pkg-001" / "state.yml").exists())
 
+    def test_invalid_runner_result_for_existing_run_records_rejection_event_without_state_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            package_run(root, run_id="pkg-001", runner="generic")
+            state_path = root / "agent" / "runs" / "pkg-001" / "state.yml"
+            before = load_data(state_path)
+
+            with self.assertRaisesRegex(RunnerResultInvalidError, "executor_output"):
+                submit_runner_result(
+                    root,
+                    "pkg-001",
+                    {"schema": RUNNER_RESULT_SCHEMA, "touched_paths": ["agentspec/runner.py"]},
+                    runner="generic",
+                )
+
+            self.assertEqual(load_data(state_path), before)
+            events = _events(root, "pkg-001")
+            rejected = events[-1]
+            self.assertEqual(rejected["kind"], "runner_result_rejected")
+            self.assertEqual(rejected["mutation"], "none")
+            self.assertEqual(rejected["recovery_command"], "aspec run package --runner generic --run-id pkg-001 --json")
+            self.assertEqual(rejected["error"]["schema"], "agentspec.error.v1")
+            self.assertEqual(rejected["error"]["code"], "ASPEC_RUNNER_RESULT_INVALID")
+            self.assertEqual(rejected["error"]["layer"], "execution")
+            self.assertEqual(rejected["error"]["operation"], "run.result")
+            self.assertEqual(rejected["error"]["details"]["run_id"], "pkg-001")
+            self.assertEqual(rejected["error"]["details"]["mutation"], "none")
+
     def test_submit_runner_result_requires_existing_run(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -359,7 +439,7 @@ class RunnerPackageTests(unittest.TestCase):
             state_path = root / "agent" / "runs" / "pkg-001" / "state.yml"
             before = load_data(state_path)
 
-            with self.assertRaisesRegex(ValueError, "evidence.artifacts"):
+            with self.assertRaisesRegex(RunnerResultInvalidError, "evidence.artifacts"):
                 submit_runner_result(
                     root,
                     "pkg-001",
@@ -459,7 +539,7 @@ class RunnerPackageTests(unittest.TestCase):
             state_path = root / "agent" / "runs" / "pkg-research" / "state.yml"
             before = load_data(state_path)
 
-            with self.assertRaisesRegex(ValueError, "acceptance_evidence"):
+            with self.assertRaisesRegex(RunnerResultInvalidError, "acceptance_evidence"):
                 submit_runner_result(
                     root,
                     "pkg-research",
@@ -508,6 +588,14 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(code, 1)
             payload = json.loads(output.getvalue())
             self.assertEqual(payload["schema"], "agentspec.cli_error.v0")
+            self.assertEqual(payload["error"]["schema"], "agentspec.error.v1")
+            self.assertEqual(payload["error"]["code"], "ASPEC_RUNNER_RESULT_INVALID")
+            self.assertEqual(payload["error"]["operation"], "run.result")
+            self.assertEqual(
+                payload["error"]["recovery_command"],
+                "aspec run package --runner generic --run-id pkg-research --json",
+            )
+            self.assertEqual(payload["error"]["details"]["mutation"], "none")
             self.assertIn("acceptance_evidence", payload["error"]["message"])
             self.assertEqual(load_data(state_path), before)
 
@@ -519,7 +607,7 @@ class RunnerPackageTests(unittest.TestCase):
             state_path = root / "agent" / "runs" / "pkg-research" / "state.yml"
             before = load_data(state_path)
 
-            with self.assertRaisesRegex(ValueError, "durable_artifacts"):
+            with self.assertRaisesRegex(RunnerResultInvalidError, "durable_artifacts"):
                 submit_runner_result(
                     root,
                     "pkg-research",
@@ -543,7 +631,7 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(load_data(state_path), before)
 
 
-def _seed(root: Path) -> None:
+def _seed(root: Path, *, host_worktree: bool = True) -> None:
     (root / ".agentspec").mkdir(parents=True)
     (root / "agent" / "context-packs").mkdir(parents=True)
     (root / "agent" / "runs").mkdir(parents=True)
@@ -575,10 +663,12 @@ def _seed(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    host_metadata = "\nHost Worktree Execution: `explicit`\n" if host_worktree else ""
     (root / "agent" / "context-packs" / "T-022-runner-result-ingestion.md").write_text(
-        """# T-022: Runner Result Ingestion
+        f"""# T-022: Runner Result Ingestion
 
 Type: `implementation`
+{host_metadata}
 
 ## Requirements
 

@@ -22,8 +22,15 @@ aspec task next
 2. If a task is ready, start or resume the AgentSpec loop:
 
 ```bash
+aspec plan <T-id>
+aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
 aspec run loop
 ```
+
+For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+Claim or verify an active owner/patcher session lease before implementation execution.
+Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
+Explicit host-worktree execution is an auditable escape hatch when the workflow or context pack declares it intentionally.
 
 3. If a run needs attention, use the recovery command reported by status, such
    as:

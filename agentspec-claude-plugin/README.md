@@ -47,8 +47,10 @@ For an existing AgentSpec project:
 /aspec:continue-work
 
 Continue this repository. Read AGENTS.md, run project status, pick the next
-ready task pack, follow its allowed paths, run verification, record review
-evidence, finish the task, and refresh roadmap/handoff state.
+ready task pack, create or verify the workflow, claim or verify the
+branch/worktree/session lease, follow its allowed paths, run verification,
+record review evidence, finish the task, and refresh roadmap/handoff state. Do
+not start implementation execution until session preflight is satisfied.
 ```
 
 For a new design update:
@@ -63,6 +65,13 @@ task pack. Ask before promoting accepted source.
 
 Claude Code should report requirement IDs, task pack path, allowed paths,
 verification result, review ID, and handoff/roadmap status.
+
+## Implementation Order
+
+For implementation work, follow task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+Claim or verify an active owner/patcher session lease before implementation execution.
+Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
+Explicit host-worktree execution is an auditable escape hatch when the workflow or task context pack declares it intentionally.
 
 ## What Claude Code Will Create
 
@@ -148,6 +157,8 @@ the configured model with the current host default.
 ```bash
 aspec status
 aspec task next
+aspec plan <T-id>
+aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
 aspec run loop
 ```
 

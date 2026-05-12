@@ -1,9 +1,12 @@
 import json
 import shutil
 import subprocess
+import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+
+from agentspec.emit import emit_targets
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -175,6 +178,77 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 self.assertIn("Roadmap freshness check passed", combined)
                 self.assertIn("Do not include a final \"Tests / checks run\" section", combined)
                 self.assertIn("Do not list `aspec outcome --json`", combined)
+
+    def test_plugin_guidance_requires_session_gate_before_execution(self) -> None:
+        plugin_roots = [
+            REPO_ROOT / "agentspec-codex-plugin",
+            REPO_ROOT / "agentspec-claude-plugin",
+        ]
+        for plugin_root in plugin_roots:
+            with self.subTest(plugin=plugin_root.name):
+                combined = "\n".join(
+                    [
+                        (plugin_root / "README.md").read_text(encoding="utf-8"),
+                        (plugin_root / "skills" / "continue-work" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                        (plugin_root / "skills" / "create-task" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                        (plugin_root / "skills" / "plan-workflow" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                        (plugin_root / "skills" / "start-branch" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                        (plugin_root / "skills" / "execute-workflow" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                        (plugin_root / "skills" / "finish-work" / "SKILL.md").read_text(
+                            encoding="utf-8"
+                        ),
+                    ]
+                )
+                normalized = " ".join(combined.split())
+
+                for text in [
+                    "task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish",
+                    "Claim or verify an active owner/patcher session lease before implementation execution.",
+                    "Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.",
+                    "Explicit host-worktree execution is an auditable escape hatch",
+                ]:
+                    self.assertIn(text, normalized)
+
+    def test_emitted_agent_guidance_requires_session_gate_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            emit_targets(root, "agents-md,claude,codex")
+
+            combined = "\n".join(
+                [
+                    (root / "AGENTS.md").read_text(encoding="utf-8"),
+                    (root / "CLAUDE.md").read_text(encoding="utf-8"),
+                    (
+                        root / ".claude" / "skills" / "agentspec-execute-workflow" / "SKILL.md"
+                    ).read_text(encoding="utf-8"),
+                    (
+                        root / ".claude" / "skills" / "agentspec-start-branch" / "SKILL.md"
+                    ).read_text(encoding="utf-8"),
+                    (root / ".codex" / "agents" / "spec-reviewer.toml").read_text(
+                        encoding="utf-8"
+                    ),
+                ]
+            )
+            normalized = " ".join(combined.split())
+
+            for text in [
+                "task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish",
+                "Claim or verify an active owner/patcher session lease before implementation execution.",
+                "Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.",
+                "Explicit host-worktree execution is an auditable escape hatch",
+            ]:
+                self.assertIn(text, normalized)
 
     def test_claude_cli_validates_plugin_when_available(self) -> None:
         if shutil.which("claude") is None:

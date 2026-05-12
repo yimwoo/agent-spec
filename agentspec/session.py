@@ -17,6 +17,7 @@ from .io import load_data, sha256_text, utc_now_iso
 
 SESSION_LEASE_SCHEMA = "agentspec.session_lease.v0"
 SESSION_LIST_SCHEMA = "agentspec.session_list.v0"
+SESSION_PREFLIGHT_SCHEMA = "agentspec.session_preflight.v0"
 ALLOWED_SESSION_MODES = {"observer", "owner", "patcher"}
 ALLOWED_FINISH_DISPOSITIONS = {"discard", "keep", "merge", "pr"}
 ALLOWED_TEST_STATUSES = {"failed", "not_run", "passed"}
@@ -122,6 +123,92 @@ def build_session_status(root: Path) -> dict[str, Any]:
         "by_status": by_status,
         "active": active,
         "archived": archived,
+    }
+
+
+def build_session_preflight(
+    root: Path,
+    *,
+    task_selector: str | None = None,
+    context_pack: str | None = None,
+    task_id: str | None = None,
+    task_type: str | None = None,
+) -> dict[str, Any]:
+    """Report whether a task has an active write lease before execution."""
+
+    root = root.resolve()
+    context = _preflight_context(
+        root,
+        task_selector=task_selector,
+        context_pack=context_pack,
+        task_id=task_id,
+        task_type=task_type,
+    )
+    required = context["task_type"] == "implementation"
+    if not required:
+        return {
+            "schema": SESSION_PREFLIGHT_SCHEMA,
+            "status": "not_required",
+            "required": False,
+            **context,
+            "active_session": None,
+            "satisfied_by": None,
+            "message": "Branch/worktree session preflight applies only to implementation tasks.",
+            "recommended_command": None,
+            "agent_guidance": "Continue under the task context pack rules.",
+        }
+
+    active = _active_write_session_for_context(
+        root,
+        context_pack=context.get("context_pack"),
+        task_id=context.get("task_id"),
+    )
+    if active is not None:
+        return {
+            "schema": SESSION_PREFLIGHT_SCHEMA,
+            "status": "satisfied",
+            "required": True,
+            **context,
+            "active_session": active,
+            "satisfied_by": "session_lease",
+            "message": "Active owner/patcher session lease with branch and worktree metadata is present.",
+            "recommended_command": None,
+            "agent_guidance": "Continue execution inside the active session lease and task allowed paths.",
+        }
+
+    if _explicit_host_worktree_execution(context):
+        return {
+            "schema": SESSION_PREFLIGHT_SCHEMA,
+            "status": "satisfied",
+            "required": True,
+            **context,
+            "active_session": None,
+            "satisfied_by": "explicit_host_worktree",
+            "message": "Explicit host-worktree execution is declared for this implementation task.",
+            "recommended_command": None,
+            "agent_guidance": (
+                "Continue execution in the declared host worktree only because the "
+                "context pack records host-worktree execution as an intentional mode."
+            ),
+        }
+
+    command = _session_start_command(root, context)
+    return {
+        "schema": SESSION_PREFLIGHT_SCHEMA,
+        "status": "missing",
+        "required": True,
+        **context,
+        "active_session": None,
+        "satisfied_by": None,
+        "message": (
+            "No active owner or patcher session lease with branch and worktree metadata "
+            "covers this implementation task."
+        ),
+        "recommended_command": command,
+        "agent_guidance": (
+            "Claim or create a branch/worktree session before mutating code, or record "
+            "an explicit host-worktree session when sharing this checkout is intentional."
+        ),
     }
 
 
@@ -282,6 +369,7 @@ def _parse_context_pack(root: Path, path: Path) -> dict[str, Any]:
     match = re.match(r"^#\s+(T-\d{3,}):?\s*(.*)$", heading)
     task_id = match.group(1) if match else path.stem.split("-", 2)[0]
     title = match.group(2).strip() if match and match.group(2).strip() else heading.lstrip("# ").strip()
+    workflow = _first_metadata_value(text, "Workflow")
     return {
         "context_pack": str(path.relative_to(root)),
         "title": title,
@@ -289,6 +377,11 @@ def _parse_context_pack(root: Path, path: Path) -> dict[str, Any]:
         "task_id": task_id,
         "task_type": _first_metadata_value(text, "Type") or "implementation",
         "originating_dcr": _first_metadata_value(text, "Originating DCR"),
+        "workflow": workflow,
+        "branch": _effective_metadata_value(text, "Branch") or _workflow_metadata_value(root, workflow, "branch"),
+        "worktree": _effective_metadata_value(text, "Worktree") or _workflow_metadata_value(root, workflow, "worktree"),
+        "host_worktree_execution": _first_metadata_value(text, "Host Worktree Execution")
+        or _workflow_metadata_value(root, workflow, "host_worktree_execution"),
         "requirements": _requirement_ids(text),
         "allowed_paths": _markdown_list_after_heading(text, "Allowed Paths"),
     }
@@ -297,6 +390,41 @@ def _parse_context_pack(root: Path, path: Path) -> dict[str, Any]:
 def _first_metadata_value(text: str, name: str) -> str | None:
     match = re.search(rf"^{re.escape(name)}:\s*`?([^`\n]+)`?\s*$", text, flags=re.MULTILINE)
     return match.group(1).strip() if match else None
+
+
+def _effective_metadata_value(text: str, name: str) -> str | None:
+    value = _first_metadata_value(text, name)
+    if value is None or value.strip().lower() in {"", "none", "unassigned"}:
+        return None
+    return value
+
+
+def _workflow_metadata_value(root: Path, workflow: str | None, name: str) -> str | None:
+    if not workflow:
+        return None
+    path = Path(workflow)
+    candidate = path if path.is_absolute() else root / path
+    try:
+        candidate = candidate.resolve()
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    if not candidate.is_file():
+        return None
+    text = candidate.read_text(encoding="utf-8")
+    frontmatter = _frontmatter(text)
+    match = re.search(rf"^\s*{re.escape(name)}:\s*`?([^`\n]+)`?\s*$", frontmatter, flags=re.MULTILINE)
+    if not match:
+        return None
+    value = match.group(1).strip().strip('"').strip("'")
+    return value or None
+
+
+def _frontmatter(text: str) -> str:
+    if not text.startswith("---"):
+        return ""
+    parts = text.split("---", 2)
+    return parts[1] if len(parts) >= 3 else ""
 
 
 def _requirement_ids(text: str) -> list[str]:
@@ -474,6 +602,72 @@ def _format_write_lease_conflict(conflict: dict[str, Any]) -> str:
         f"Active write session {record.get('session_id')} already leases {subject} for {task}. "
         "Finish or release that session, start a dedicated branch/worktree, "
         "use --mode observer for read-only work, or pass --allow-shared when intentionally sharing."
+    )
+
+
+def _preflight_context(
+    root: Path,
+    *,
+    task_selector: str | None,
+    context_pack: str | None,
+    task_id: str | None,
+    task_type: str | None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "context_pack": context_pack,
+        "task_id": task_id,
+        "task_type": task_type or "implementation",
+    }
+    selector = task_selector or context_pack
+    if selector:
+        try:
+            parsed = _parse_context_pack(root, _resolve_context_pack_selector(root, selector))
+        except (FileNotFoundError, ValueError):
+            parsed = {}
+        if parsed:
+            context.update(
+                {
+                    "context_pack": parsed.get("context_pack"),
+                    "task_id": parsed.get("task_id"),
+                    "task_type": parsed.get("task_type") or context["task_type"],
+                    "branch": parsed.get("branch"),
+                    "worktree": parsed.get("worktree"),
+                    "host_worktree_execution": parsed.get("host_worktree_execution"),
+                }
+            )
+    return context
+
+
+def _explicit_host_worktree_execution(context: dict[str, Any]) -> bool:
+    value = context.get("host_worktree_execution")
+    return isinstance(value, str) and value.strip().lower() == "explicit"
+
+
+def _active_write_session_for_context(
+    root: Path,
+    *,
+    context_pack: Any,
+    task_id: Any,
+) -> dict[str, Any] | None:
+    for path, record in _records_in(_active_dir(root)):
+        if record.get("mode") not in WRITE_SESSION_MODES:
+            continue
+        if not record.get("branch") or not record.get("worktree"):
+            continue
+        if context_pack and record.get("context_pack") == context_pack:
+            return _summary(root, path, record)
+        if task_id and record.get("task_id") == task_id:
+            return _summary(root, path, record)
+    return None
+
+
+def _session_start_command(root: Path, context: dict[str, Any]) -> str:
+    task_selector = str(context.get("task_id") or context.get("context_pack") or "<task>")
+    branch = _current_git_branch(root) or "<branch>"
+    worktree = _current_git_worktree(root) or str(root)
+    return (
+        f"aspec session start --task {task_selector} --owner <owner> "
+        f"--branch {branch} --worktree {worktree}"
     )
 
 

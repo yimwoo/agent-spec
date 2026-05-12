@@ -120,6 +120,7 @@ def _seed(root: Path) -> None:
         """# T-023: Local Runner Demo E2E
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Requirements
 

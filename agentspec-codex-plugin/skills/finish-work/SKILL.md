@@ -25,6 +25,9 @@ roadmap status, and any remaining product-readiness blockers. Do not claim
 production readiness unless `aspec outcome` says the relevant outcome gates are
 ready.
 
+For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+If an owner/patcher session was claimed, finish it with an explicit disposition so the branch/worktree state is recoverable.
+
 ## Human-Facing Output
 
 For Codex or Claude Code final replies, keep raw `aspec ...` commands internal

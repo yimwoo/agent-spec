@@ -14,6 +14,7 @@ from unittest.mock import patch
 from agentspec.cli import main
 from agentspec.io import load_data
 from agentspec import session as session_module
+from agentspec.session import build_session_preflight
 
 
 class SessionCliTests(unittest.TestCase):
@@ -378,6 +379,129 @@ class SessionCliTests(unittest.TestCase):
 
             self.assertEqual(start_payload["status"], "active")
             self.assertFalse(lock_path.exists())
+
+    def test_session_preflight_requires_active_write_lease_with_branch_and_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_pack(root, "T-010-preflight.md")
+
+            missing = build_session_preflight(root, task_selector="T-010")
+
+            self.assertEqual(missing["status"], "missing")
+            self.assertTrue(missing["required"])
+            self.assertIn("session start", missing["recommended_command"])
+
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-010",
+                    "--mode",
+                    "observer",
+                    "--branch",
+                    "feature/preflight",
+                    "--worktree",
+                    str(root),
+                    "--session-id",
+                    "S-observer-preflight",
+                    "--json",
+                ],
+            )
+
+            observer_only = build_session_preflight(root, task_selector="T-010")
+            self.assertEqual(observer_only["status"], "missing")
+
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-010",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/preflight-owner",
+                    "--worktree",
+                    str(root / "owner-worktree"),
+                    "--session-id",
+                    "S-owner-preflight",
+                    "--json",
+                ],
+            )
+
+            satisfied = build_session_preflight(root, task_selector="T-010")
+            self.assertEqual(satisfied["status"], "satisfied")
+            self.assertEqual(satisfied["active_session"]["session_id"], "S-owner-preflight")
+            self.assertEqual(satisfied["active_session"]["branch"], "feature/preflight-owner")
+
+    def test_session_preflight_allows_explicit_host_worktree_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            pack = root / "agent" / "context-packs" / "T-011-host-worktree.md"
+            pack.parent.mkdir(parents=True, exist_ok=True)
+            pack.write_text(
+                """# T-011: Host Worktree Escape Hatch
+
+Type: `implementation`
+Host Worktree Execution: `explicit`
+
+## Allowed Paths
+
+- `agentspec/session.py`
+""",
+                encoding="utf-8",
+            )
+
+            preflight = build_session_preflight(root, task_selector="T-011")
+
+            self.assertEqual(preflight["status"], "satisfied")
+            self.assertEqual(preflight["satisfied_by"], "explicit_host_worktree")
+            self.assertEqual(preflight["host_worktree_execution"], "explicit")
+            self.assertIsNone(preflight["active_session"])
+            self.assertIn("host-worktree", preflight["message"])
+
+    def test_session_preflight_reads_host_worktree_escape_from_linked_workflow(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            workflow = root / "agent" / "workflows" / "W-011-host-worktree.md"
+            workflow.parent.mkdir(parents=True, exist_ok=True)
+            workflow.write_text(
+                """---
+workflow_id: W-011
+branch: feature/workflow-branch
+worktree: /tmp/workflow-worktree
+host_worktree_execution: explicit
+---
+
+# Workflow
+""",
+                encoding="utf-8",
+            )
+            pack = root / "agent" / "context-packs" / "T-012-workflow-host.md"
+            pack.parent.mkdir(parents=True, exist_ok=True)
+            pack.write_text(
+                """# T-012: Workflow Host Worktree Escape Hatch
+
+Type: `implementation`
+Branch: `unassigned`
+Workflow: `agent/workflows/W-011-host-worktree.md`
+
+## Allowed Paths
+
+- `agentspec/session.py`
+""",
+                encoding="utf-8",
+            )
+
+            preflight = build_session_preflight(root, task_selector="T-012")
+
+            self.assertEqual(preflight["status"], "satisfied")
+            self.assertEqual(preflight["satisfied_by"], "explicit_host_worktree")
+            self.assertEqual(preflight["branch"], "feature/workflow-branch")
+            self.assertEqual(preflight["worktree"], "/tmp/workflow-worktree")
 
 
 def _run_json(root: Path, args: list[str]) -> dict:

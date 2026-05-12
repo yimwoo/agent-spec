@@ -5,9 +5,15 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .errors import (
+    RunnerResultInvalidError,
+    RunnerStartFailedError,
+    RunnerTimeoutError,
+)
 from .review import research_acceptance_evidence_template, validate_research_acceptance_evidence
 from .policy import redact_sensitive_text
 from .run import (
+    append_run_event,
     controller_observed_touched_paths,
     load_run_state,
     step_run,
@@ -86,10 +92,32 @@ def submit_runner_result(
 ) -> dict[str, Any]:
     root = root.resolve()
     validate_run_id(run_id)
-    parsed = parse_runner_result(result)
+    try:
+        parsed = parse_runner_result(result)
+    except ValueError as exc:
+        try:
+            state = load_run_state(root, run_id, run_dir=run_dir)
+        except FileNotFoundError:
+            raise exc
+        raise _record_runner_result_rejected(
+            root,
+            run_id,
+            exc,
+            runner=runner,
+            state=state,
+            run_dir=run_dir,
+        ) from exc
     state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("mode") == "research" and parsed["test_status"] == "passed" and parsed.get("acceptance_evidence") is None:
-        raise ValueError("Research-mode passed runner results require acceptance_evidence.")
+        exc = ValueError("Research-mode passed runner results require acceptance_evidence.")
+        raise _record_runner_result_rejected(
+            root,
+            run_id,
+            exc,
+            runner=runner,
+            state=state,
+            run_dir=run_dir,
+        ) from exc
     mode = reviewer_mode or parsed.get("reviewer_mode")
     runner_reported_paths = list(parsed["touched_paths"])
     observed_available, observed_paths = controller_observed_touched_paths(
@@ -209,11 +237,32 @@ def execute_runner(
     final_package = initial_package
 
     if initial_package.get("should_execute"):
+        append_run_event(
+            root,
+            actual_run_id,
+            {
+                "kind": "runner_invocation_started",
+                "runner": runner,
+                "command": _runner_command_for_event(initial_package, command),
+                "recovery_command": _runner_package_recovery_command(actual_run_id, runner),
+            },
+            run_dir=run_dir,
+        )
         execution = _run_package_subprocess(
             root,
             initial_package,
             command=command,
             timeout_seconds=timeout_seconds,
+        )
+        append_run_event(
+            root,
+            actual_run_id,
+            _runner_invocation_finished_event(
+                execution,
+                runner=runner,
+                run_id=actual_run_id,
+            ),
+            run_dir=run_dir,
         )
         transcript.append({"kind": "subprocess", "execution": _redact_execution(execution)})
         result = {
@@ -245,6 +294,106 @@ def execute_runner(
         "final_should_execute": final_package.get("should_execute"),
         "final_state": final_package.get("step", {}).get("state") if isinstance(final_package.get("step"), dict) else None,
     }
+
+
+def _record_runner_result_rejected(
+    root: Path,
+    run_id: str,
+    exc: ValueError,
+    *,
+    runner: str,
+    state: dict[str, Any],
+    run_dir: Path | None,
+) -> RunnerResultInvalidError:
+    error = RunnerResultInvalidError(
+        str(exc),
+        operation="run.result",
+        recovery_command=_runner_package_recovery_command(run_id, runner),
+        details={
+            "mutation": "none",
+            "run_id": run_id,
+            "runner": runner,
+        },
+        type_name=type(exc).__name__,
+    )
+    append_run_event(
+        root,
+        run_id,
+        {
+            "kind": "runner_result_rejected",
+            "iteration": state.get("iteration"),
+            "runner": runner,
+            "mutation": "none",
+            "error": error.to_dict(),
+            "recovery_command": error.recovery_command,
+        },
+        run_dir=run_dir,
+    )
+    return error
+
+
+def _runner_invocation_finished_event(
+    execution: dict[str, Any],
+    *,
+    runner: str,
+    run_id: str,
+) -> dict[str, Any]:
+    event: dict[str, Any] = {
+        "kind": "runner_invocation_finished",
+        "runner": runner,
+        "execution": _execution_event_summary(execution),
+        "recovery_command": _runner_package_recovery_command(run_id, runner),
+    }
+    error = _runner_invocation_error(execution, runner=runner, run_id=run_id)
+    if error is not None:
+        event["error"] = error.to_dict()
+    return event
+
+
+def _runner_invocation_error(execution: dict[str, Any], *, runner: str, run_id: str):
+    recovery_command = _runner_package_recovery_command(run_id, runner)
+    details = {
+        "run_id": run_id,
+        "runner": runner,
+        "mutation": "run_event_only",
+    }
+    if execution.get("timed_out"):
+        return RunnerTimeoutError(
+            str(execution.get("error") or "Runner command timed out."),
+            operation="run.exec",
+            recovery_command=recovery_command,
+            details=details,
+        )
+    error = execution.get("error")
+    if isinstance(error, str) and error:
+        return RunnerStartFailedError(
+            error,
+            operation="run.exec",
+            recovery_command=recovery_command,
+            details=details,
+        )
+    return None
+
+
+def _runner_command_for_event(package: dict[str, Any], command: list[str] | None) -> list[str]:
+    argv = command if command is not None else list(package.get("execution", {}).get("argv") or [])
+    return [
+        redact_sensitive_text(item) if isinstance(item, str) else str(item)
+        for item in argv
+    ]
+
+
+def _runner_package_recovery_command(run_id: str, runner: str) -> str:
+    return f"aspec run package --runner {runner} --run-id {run_id} --json"
+
+
+def _execution_event_summary(execution: dict[str, Any]) -> dict[str, Any]:
+    summary = _redact_execution(execution)
+    for key in ("stdout", "stderr", "error"):
+        value = summary.get(key)
+        if isinstance(value, str) and len(value) > 1000:
+            summary[key] = f"{value[:1000]}... [truncated]"
+    return summary
 
 
 def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
@@ -408,6 +557,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
         "run_id": run_id,
         "next_action": step.get("next_action"),
         "should_execute": should_execute,
+        "session_preflight": step.get("session_preflight"),
         "step": step,
         "execution": {
             "argv": _runner_argv(runner),

@@ -101,6 +101,22 @@ class TaskQueueTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(output.getvalue().strip(), "agent/context-packs/T-001-oldest-ready.md")
 
+    def test_cli_task_next_json_includes_session_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--type", "implementation", "--json"])
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["id"], "T-003")
+            self.assertEqual(payload["session_preflight"]["status"], "missing")
+            self.assertTrue(payload["session_preflight"]["required"])
+            self.assertIn("session start", payload["session_preflight"]["recommended_command"])
+
     def test_created_task_pack_includes_standard_verification_support_scope(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

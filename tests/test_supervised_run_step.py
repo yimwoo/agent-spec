@@ -133,6 +133,7 @@ def _seed(root: Path) -> None:
         """# T-020: Harness Step Command
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Requirements
 

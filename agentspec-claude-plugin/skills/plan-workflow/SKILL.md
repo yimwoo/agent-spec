@@ -30,6 +30,9 @@ aspec task create --requirement <R-id> --type implementation --title "<title>"
    acceptance criteria, outcome gates, risk, and required evidence before
    editing.
 
+For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+After planning, claim or verify an active owner/patcher session lease before implementation execution.
+
 Boundary: this skill plans from AgentSpec artifacts. It does not promote source
 snapshots, bypass readiness gates, or expand write scope outside the context
 pack.

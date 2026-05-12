@@ -238,6 +238,58 @@ class StatusCLITests(unittest.TestCase):
             self.assertIn('aspec task create --requirement R-209 --type implementation', text)
             self.assertNotIn("<title>", text)
 
+    def test_status_recommends_session_before_ready_task_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_ready_task_only(root)
+
+            status = build_project_status(root)
+
+            summary = status["lifecycle_summary"]
+            action = summary["recommended_next_action"]
+            self.assertEqual(summary["current_stage"], "task_ready_session_needed")
+            self.assertIn("branch/worktree session", summary["main_point"])
+            self.assertEqual(action["label"], "Claim a branch/worktree session for the ready task.")
+            self.assertIn("session start", action["commands"][0])
+            self.assertFalse(action["agent_display"]["show_terminal_commands"])
+            self.assertNotIn("aspec", json.dumps(action["agent_display"]).lower())
+            self.assertEqual(summary["current_artifact"]["session_preflight"]["status"], "missing")
+
+    def test_status_active_session_satisfies_ready_task_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_ready_task_only(root)
+            with redirect_stdout(io.StringIO()):
+                main(
+                    [
+                        "--root",
+                        str(root),
+                        "session",
+                        "start",
+                        "--task",
+                        "T-003",
+                        "--owner",
+                        "codex",
+                        "--branch",
+                        "feature/status-preflight",
+                        "--worktree",
+                        str(root),
+                        "--session-id",
+                        "S-status-preflight",
+                        "--json",
+                    ]
+                )
+
+            status = build_project_status(root)
+
+            summary = status["lifecycle_summary"]
+            self.assertEqual(summary["current_stage"], "task_ready")
+            self.assertEqual(summary["current_artifact"]["session_preflight"]["status"], "satisfied")
+            self.assertEqual(
+                summary["current_artifact"]["session_preflight"]["active_session"]["session_id"],
+                "S-status-preflight",
+            )
+
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -312,7 +364,49 @@ class StatusCLITests(unittest.TestCase):
             self.assertEqual(summary_only["policy_flags"], [])
             self.assertIsNone(summary_only["test_status"])
             self.assertIsNone(summary_only["last_event_ref"])
+            self.assertIsNone(summary_only["last_error"])
             self.assertEqual(summary_only["recovery_command"], "aspec run inspect run-summary-only")
+
+    def test_status_exposes_latest_structured_run_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            events_path = root / "agent" / "runs" / "run-halted" / "events.jsonl"
+            with events_path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "kind": "runner_result_rejected",
+                            "recovery_command": "aspec run package --runner generic --run-id run-halted --json",
+                            "error": {
+                                "schema": "agentspec.error.v1",
+                                "code": "ASPEC_RUNNER_RESULT_INVALID",
+                                "layer": "execution",
+                                "message": "Runner result field test_status must be one of ['failed', 'not_run', 'passed'].",
+                                "retryable": False,
+                                "severity": "error",
+                                "operation": "run.result",
+                                "recovery_command": "aspec run package --runner generic --run-id run-halted --json",
+                                "details": {"mutation": "none", "run_id": "run-halted"},
+                            },
+                        }
+                    )
+                    + "\n"
+                )
+
+            status = build_project_status(root, recent_limit=5)
+            halted = status["runs"]["attention"][0]
+
+            self.assertEqual(halted["last_error"]["code"], "ASPEC_RUNNER_RESULT_INVALID")
+            self.assertEqual(halted["last_error"]["layer"], "execution")
+            self.assertEqual(halted["last_error"]["operation"], "run.result")
+            self.assertFalse(halted["last_error"]["retryable"])
+            self.assertEqual(halted["last_error"]["event_ref"], "agent/runs/run-halted/events.jsonl:3")
+            self.assertEqual(
+                halted["last_error"]["recovery_command"],
+                "aspec run package --runner generic --run-id run-halted --json",
+            )
+            self.assertIn("test_status", halted["last_error"]["message"])
 
     def test_next_action_inspects_attention_run(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -742,6 +836,35 @@ Type: `implementation`
             "updated_at": "2026-04-29T00:00:30Z",
             "terminal": True,
         },
+    )
+
+
+def _seed_ready_task_only(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "docs" / "discovery").mkdir(parents=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+    write_data(
+        root / "docs" / "discovery" / "readiness.yml",
+        {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+    )
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [{"id": "R-209", "status": "accepted", "priority": "P1"}],
+    )
+    (root / "agent" / "context-packs" / "T-003-ready.md").write_text(
+        """# T-003: Ready Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-209` Ready
+
+## Allowed Paths
+
+- `agentspec/status.py`
+""",
+        encoding="utf-8",
     )
 
 

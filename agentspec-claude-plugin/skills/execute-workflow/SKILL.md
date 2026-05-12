@@ -30,6 +30,10 @@ aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
 aspec run exec --runner codex --json
 ```
 
+Claim or verify an active owner/patcher session lease before implementation execution.
+Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
+Explicit host-worktree execution is an auditable escape hatch when the workflow or context pack declares it intentionally.
+
 3. Keep edits inside the task context pack allowed paths and report touched
    paths in the executor result.
 

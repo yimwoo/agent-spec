@@ -28,6 +28,7 @@ Key terms:
 | Task context pack | The bounded work packet an agent may execute. Defines goal, allowed/forbidden paths, acceptance criteria, and verification commands. |
 | Workflow | The native AgentSpec execution plan linked to a task pack. |
 | Runner package | The per-step contract handed to the agent: prompt, iteration count, allowed paths, expected result schema. |
+| Session lease | The branch/worktree/owner record that must cover implementation execution unless host-worktree execution is explicitly declared. |
 | Supervised run | A task execution under iteration limits and policy gates, persisted in `agent/runs/`. |
 | Review evidence | Reviewer findings under `agent/reviews/`, required before a task can finish. |
 | Handoff | The latest durable project status in `agent/handoff.yml`. |
@@ -98,6 +99,11 @@ plane, then report durable evidence back to the human.
 
 The practical loop looks like this:
 
+For implementation work, follow task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+Claim or verify an active owner/patcher session lease before implementation execution.
+Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
+Explicit host-worktree execution is an auditable escape hatch when the workflow or task context pack declares it intentionally.
+
 ```mermaid
 sequenceDiagram
   participant H as Human
@@ -118,6 +124,8 @@ sequenceDiagram
   C->>R: Select or create a bounded context pack
   P->>C: aspec plan --current
   C->>R: Link a workflow or execution plan
+  P->>C: aspec session start
+  C->>R: Record branch/worktree/session lease
   P->>C: aspec run package or run loop
   C-->>A: Return scoped prompt, allowed paths, and verification expectations
   A->>R: Edit code and run tests inside the declared scope
@@ -150,8 +158,10 @@ Use this for an existing AgentSpec project:
 
 ```text
 Use AgentSpec to continue this repository. Read AGENTS.md, run project status,
-pick the next ready task pack, follow its allowed paths, run verification,
+pick the next ready task pack, create or verify the workflow, claim or verify
+the branch/worktree/session lease, follow its allowed paths, run verification,
 record review evidence, finish the task, and refresh roadmap/handoff state.
+Do not start implementation execution until session preflight is satisfied.
 ```
 
 Use this for a new design or design change:
@@ -168,6 +178,7 @@ The agent should report:
 - requirement IDs and DCR IDs involved
 - generated or selected task context pack
 - allowed paths and acceptance criteria
+- branch/worktree/session lease or explicit host-worktree execution decision
 - verification commands and results
 - review ID and verdict
 - roadmap and handoff status

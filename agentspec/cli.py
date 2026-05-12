@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shlex
 import sys
 from pathlib import Path
@@ -15,9 +16,17 @@ from .dcr import (
     list_dcrs,
     set_classification,
 )
+from .diagnostics import configure_diagnostics, get_logger
 from .doctor import run_doctor
 from .drift import run_drift
 from .emit import emit_targets
+from .errors import (
+    AgentSpecError,
+    AgentSpecIOPermissionError,
+    AgentSpecValidationError,
+    RunStateNotFoundError,
+    RunnerResultInvalidError,
+)
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .lifecycle import build_lifecycle_contract, format_lifecycle_contract
@@ -51,6 +60,7 @@ from .session import (
     ALLOWED_FINISH_DISPOSITIONS,
     ALLOWED_SESSION_MODES,
     ALLOWED_TEST_STATUSES,
+    build_session_preflight,
     finish_session,
     format_session_list,
     format_session_record,
@@ -483,6 +493,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None, prog: str | None = None) -> int:
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
+    configure_diagnostics(os.environ)
     root = Path(args.root).resolve()
 
     try:
@@ -921,7 +932,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                         print(f"Warning: {warning}")
                 return 1
             if args.json:
-                print(json.dumps(record, indent=2))
+                payload = dict(record)
+                payload["session_preflight"] = build_session_preflight(
+                    root,
+                    context_pack=str(record.get("path") or ""),
+                    task_id=str(record.get("id") or ""),
+                    task_type=str(record.get("type") or "implementation"),
+                )
+                print(json.dumps(payload, indent=2))
             else:
                 print(f"{record['path']}")
             return 0
@@ -1041,6 +1059,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                         print(message)
                 else:
                     print(f"Status: {state['status']}.")
+                _print_session_preflight_summary(result.get("session_preflight"))
                 return 0
             if args.run_command == "step":
                 result = step_run(
@@ -1238,10 +1257,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
         parser.print_help()
         return 0
     except Exception as exc:
+        display_error = _structured_error_for_exception(exc, args)
+        get_logger().error("CLI command failed: %s", display_error)
         if getattr(args, "json", False):
-            print(json.dumps(_build_error_envelope(exc, parser.prog, args), indent=2))
+            print(json.dumps(_build_error_envelope(display_error, parser.prog, args), indent=2))
         else:
-            print(f"{parser.prog}: error: {exc}", file=sys.stderr)
+            print(_format_plain_error(display_error, parser.prog), file=sys.stderr)
         return 1
 
 
@@ -1254,23 +1275,114 @@ _RETRYABLE_EXCEPTIONS: tuple[type[BaseException], ...] = (TimeoutError, Connecti
 
 
 def _is_retryable(exc: BaseException) -> bool:
+    if isinstance(exc, AgentSpecError):
+        return exc.effective_retryable
     return isinstance(exc, _RETRYABLE_EXCEPTIONS)
 
 
 def _build_error_envelope(exc: BaseException, prog: str, args: argparse.Namespace) -> dict[str, Any]:
+    structured = _structured_error_for_exception(exc, args)
     envelope = {
         "schema": CLI_ERROR_SCHEMA,
         "error": {
-            "type": type(exc).__name__,
-            "message": str(exc),
-            "retryable": _is_retryable(exc),
+            "type": getattr(structured, "type_name", None) or type(structured).__name__,
+            "message": str(structured),
+            "retryable": _is_retryable(structured),
             "command": _command_label(args, prog),
         },
     }
-    to_dict = getattr(exc, "to_dict", None)
+    to_dict = getattr(structured, "to_dict", None)
     if callable(to_dict):
-        envelope["error"]["details"] = to_dict()
+        details = to_dict()
+        if isinstance(structured, AgentSpecError):
+            envelope["error"].update(details)
+        else:
+            envelope["error"]["details"] = details
     return envelope
+
+
+def _structured_error_for_exception(exc: BaseException, args: argparse.Namespace) -> BaseException:
+    if isinstance(exc, AgentSpecError):
+        return exc
+    operation = _operation_label(args)
+    recovery_command = _recovery_command_for_args(args)
+    run_id = getattr(args, "run_id", None)
+    details = {"mutation": "none"}
+    if isinstance(run_id, str) and run_id:
+        details["run_id"] = run_id
+    message = str(exc)
+    if isinstance(exc, FileNotFoundError) and message.startswith("Run not found:"):
+        return RunStateNotFoundError(
+            message,
+            operation=operation,
+            recovery_command=recovery_command,
+            details=details,
+            type_name=type(exc).__name__,
+        )
+    if isinstance(exc, ValueError) and message.startswith("Invalid run_id:"):
+        return AgentSpecValidationError(
+            message,
+            operation=operation,
+            recovery_command=recovery_command,
+            details=details,
+            type_name=type(exc).__name__,
+        )
+    if isinstance(exc, ValueError) and operation == "run.result":
+        return RunnerResultInvalidError(
+            message,
+            operation=operation,
+            recovery_command=recovery_command,
+            details=details,
+            type_name=type(exc).__name__,
+        )
+    if isinstance(exc, PermissionError):
+        return AgentSpecIOPermissionError(
+            message,
+            operation=operation,
+            recovery_command=recovery_command,
+            details=details,
+            type_name=type(exc).__name__,
+        )
+    return exc
+
+
+def _operation_label(args: argparse.Namespace) -> str | None:
+    command = getattr(args, "command", None)
+    if not command:
+        return None
+    subcommand = (
+        getattr(args, f"{command}_command", None)
+        or getattr(args, "run_command", None)
+        or getattr(args, "review_command", None)
+        or getattr(args, "task_command", None)
+        or getattr(args, "dcr_command", None)
+        or getattr(args, "intake_command", None)
+        or getattr(args, "source_command", None)
+    )
+    if subcommand:
+        return f"{command}.{subcommand}"
+    return str(command)
+
+
+def _recovery_command_for_args(args: argparse.Namespace) -> str | None:
+    if getattr(args, "command", None) == "run" and getattr(args, "run_command", None) == "result":
+        run_id = getattr(args, "run_id", None)
+        runner = getattr(args, "runner", None) or "generic"
+        if isinstance(run_id, str) and run_id:
+            return f"aspec run package --runner {runner} --run-id {run_id} --json"
+    if getattr(args, "command", None) == "run":
+        return "aspec status --json"
+    return None
+
+
+def _format_plain_error(exc: BaseException, prog: str) -> str:
+    if isinstance(exc, AgentSpecError):
+        code = exc.to_dict().get("code")
+        lines = [f"{prog}: error: [{code}] {exc}"]
+        if exc.recovery_command:
+            lines.append(f"Recovery: {exc.recovery_command}")
+        return "\n".join(lines)
+    return f"{prog}: error: {exc}"
 
 
 def _command_label(args: argparse.Namespace, prog: str) -> str:
@@ -1296,6 +1408,18 @@ def _print_finish_result(result: dict[str, Any]) -> None:
         repair = finding.get("repair") or finding.get("recommendation")
         if repair:
             print(f"Repair: {repair}")
+
+
+def _print_session_preflight_summary(preflight: Any) -> None:
+    if not isinstance(preflight, dict):
+        return
+    if preflight.get("status") == "missing":
+        print(f"Session preflight: {preflight.get('message')}")
+        command = preflight.get("recommended_command")
+        if command:
+            print(f"Next: {command}")
+    elif preflight.get("status") == "satisfied" and preflight.get("satisfied_by") == "explicit_host_worktree":
+        print("Session preflight: explicit host-worktree execution declared.")
 
 
 def _print_no_ready_task(summary: dict[str, Any], warnings: list[str]) -> None:

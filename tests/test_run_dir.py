@@ -10,6 +10,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import CLI_ERROR_SCHEMA, main
+from agentspec.errors import ERROR_SCHEMA
 from agentspec.io import load_data, write_data
 from agentspec.run import abort_run, build_next_executor_prompt, inspect_run, resume_run, start_run
 from agentspec.runner import package_run, submit_runner_result
@@ -18,6 +19,7 @@ from agentspec.runner import package_run, submit_runner_result
 PACK = """# T-057: Redirected Run State
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Allowed Paths
 
@@ -234,6 +236,12 @@ class RunDirTests(unittest.TestCase):
             payload = json.loads(stdout.getvalue())
             self.assertEqual(payload["schema"], CLI_ERROR_SCHEMA)
             self.assertEqual(payload["error"]["type"], "PermissionError")
+            self.assertEqual(payload["error"]["schema"], ERROR_SCHEMA)
+            self.assertEqual(payload["error"]["code"], "ASPEC_IO_PERMISSION")
+            self.assertEqual(payload["error"]["layer"], "control_plane")
+            self.assertEqual(payload["error"]["operation"], "run.loop")
+            self.assertEqual(payload["error"]["details"]["run_id"], "run-unwritable")
+            self.assertEqual(payload["error"]["details"]["mutation"], "none")
             self.assertFalse(payload["error"]["retryable"])
             self.assertIn(str(readonly), payload["error"]["message"])
             self.assertEqual(stderr.getvalue(), "")

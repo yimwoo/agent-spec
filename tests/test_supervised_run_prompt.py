@@ -36,6 +36,65 @@ class SupervisedRunPromptTests(unittest.TestCase):
             self.assertIn("Start the active context pack.", handoff["prompt"])
             self.assertIn("agent/context-packs/T-019-test.md", handoff["prompt"])
             self.assertIn("`agentspec/run.py`", handoff["prompt"])
+            self.assertEqual(handoff["session_preflight"]["status"], "missing")
+            self.assertIn("Branch/session preflight", handoff["prompt"])
+
+    def test_prompt_active_session_satisfies_branch_session_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            with redirect_stdout(io.StringIO()):
+                main(
+                    [
+                        "--root",
+                        str(root),
+                        "session",
+                        "start",
+                        "--task",
+                        "T-019",
+                        "--owner",
+                        "codex",
+                        "--branch",
+                        "feature/prompt-preflight",
+                        "--worktree",
+                        str(root),
+                        "--session-id",
+                        "S-prompt-preflight",
+                        "--json",
+                    ]
+                )
+            start_run(root, Path("agent/context-packs/T-019-test.md"), run_id="run-001")
+
+            handoff = build_next_executor_prompt(root, "run-001")
+
+            self.assertEqual(handoff["session_preflight"]["status"], "satisfied")
+            self.assertEqual(handoff["session_preflight"]["active_session"]["session_id"], "S-prompt-preflight")
+            self.assertIn("Active session lease: S-prompt-preflight", handoff["prompt"])
+
+    def test_prompt_surfaces_explicit_host_worktree_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            host_pack = root / "agent" / "context-packs" / "T-020-host-worktree.md"
+            host_pack.write_text(
+                """# T-020: Host Worktree Prompt
+
+Type: `implementation`
+Host Worktree Execution: `explicit`
+
+## Allowed Paths
+
+- `agentspec/run.py`
+""",
+                encoding="utf-8",
+            )
+            start_run(root, Path("agent/context-packs/T-020-host-worktree.md"), run_id="run-host")
+
+            handoff = build_next_executor_prompt(root, "run-host")
+
+            self.assertEqual(handoff["session_preflight"]["status"], "satisfied")
+            self.assertEqual(handoff["session_preflight"]["satisfied_by"], "explicit_host_worktree")
+            self.assertIn("Explicit host-worktree execution", handoff["prompt"])
 
     def test_prompt_after_auto_continue_includes_reviewer_instruction(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -60,10 +119,11 @@ class SupervisedRunPromptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed(root)
-            self.assertEqual(
-                main(["--root", str(root), "run", "start", "agent/context-packs/T-019-test.md", "--run-id", "run-001"]),
-                0,
-            )
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    main(["--root", str(root), "run", "start", "agent/context-packs/T-019-test.md", "--run-id", "run-001"]),
+                    0,
+                )
 
             output = io.StringIO()
             with redirect_stdout(output):

@@ -15,6 +15,7 @@ from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy, redact_sensitive_text
 from .review import quality_reviewer_signoff, review_executor_output, validate_research_acceptance_evidence
+from .session import build_session_preflight
 
 
 STATE_SCHEMA = "agentspec.supervised_run.state.v0"
@@ -24,6 +25,7 @@ HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 CONTROLLER_PATH_BASELINE_SCHEMA = "agentspec.controller_path_baseline.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
 SUMMARY_MODES = {"autonomous", "research"}
+SESSION_PREFLIGHT_REQUIRED_ACTION = "session_preflight_required"
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 # R-142 / ADR-0005: research-mode fallback constants. Allowed paths are
@@ -102,6 +104,11 @@ def start_run(
         "updated_at": _now(),
         "last_decision": None,
     }
+    state["session_preflight"] = build_session_preflight(
+        root,
+        context_pack=str(context_path.relative_to(root)),
+        task_type=str(task_type),
+    )
     _write_state(root, run_id, state, run_dir=run_dir)
     _append_event(root, run_id, {"kind": "run_started", "state": state}, run_dir=run_dir)
     _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
@@ -541,6 +548,8 @@ def loop_run(
     if run_dir is not None and result.get("state", {}).get("mode") == "research":
         result["target_write_requirements"] = list(RESEARCH_TARGET_WRITE_REQUIREMENTS)
 
+    result["session_preflight"] = _session_preflight_for_state(root, result["state"])
+
     return result
 
 
@@ -580,14 +589,21 @@ def step_run(
     )
     state = loop["state"]
     next_action = _next_action_for_status(str(state.get("status")))
+    session_preflight = _session_preflight_for_state(root, state)
+    state["session_preflight"] = session_preflight
+    if isinstance(loop.get("run_id"), str):
+        _write_state(root, str(loop["run_id"]), state, run_dir=run_dir)
     handoff = None
-    if next_action == "continue_executor":
+    if next_action == "continue_executor" and session_preflight.get("status") == "missing":
+        next_action = SESSION_PREFLIGHT_REQUIRED_ACTION
+    elif next_action == "continue_executor":
         handoff = build_next_executor_prompt(root, str(loop["run_id"]), run_dir=run_dir)
 
     return {
         "schema": HARNESS_STEP_SCHEMA,
         "run_id": loop["run_id"],
         "next_action": next_action,
+        "session_preflight": session_preflight,
         "selected_task": loop.get("selected_task"),
         "started": loop.get("started", False),
         "state": state,
@@ -595,6 +611,14 @@ def step_run(
         "handoff": handoff,
         "prompt": handoff.get("prompt") if isinstance(handoff, dict) else None,
     }
+
+
+def _session_preflight_for_state(root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    return build_session_preflight(
+        root,
+        context_pack=str(state.get("context_pack") or ""),
+        task_type=str(state.get("task_type") or "implementation"),
+    )
 
 
 def complete_context_pack_run(
@@ -750,6 +774,11 @@ def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None 
     reviewer_message = controller.get("message_to_executor") if controller else None
     if not isinstance(reviewer_message, str) or not reviewer_message.strip():
         reviewer_message = None
+    session_preflight = build_session_preflight(
+        root,
+        context_pack=str(state.get("context_pack") or ""),
+        task_type=str(state.get("task_type") or "implementation"),
+    )
 
     prompt = _render_next_executor_prompt(
         run_id=run_id,
@@ -757,6 +786,7 @@ def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None 
         allowed_paths=allowed_paths,
         reviewer_message=reviewer_message,
         reviewer=reviewer,
+        session_preflight=session_preflight,
     )
     return {
         "run_id": run_id,
@@ -767,6 +797,7 @@ def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None 
         "max_iterations": state.get("max_iterations"),
         "last_decision": state.get("last_decision"),
         "allowed_paths": allowed_paths,
+        "session_preflight": session_preflight,
         "reviewer_message": reviewer_message,
         "last_review": _review_summary(reviewer),
         "prompt": prompt,
@@ -800,6 +831,12 @@ def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.", run_
     _write_state(root, run_id, state, run_dir=run_dir)
     _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
     return state
+
+
+def append_run_event(root: Path, run_id: str, event: dict[str, Any], *, run_dir: Path | None = None) -> None:
+    """Append a structured run event for modules that already validated run scope."""
+    root = root.resolve()
+    _append_event(root, run_id, event, run_dir=run_dir)
 
 
 def load_run_state(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
@@ -1307,6 +1344,7 @@ def _render_next_executor_prompt(
     allowed_paths: list[str],
     reviewer_message: str | None,
     reviewer: dict[str, Any] | None,
+    session_preflight: dict[str, Any],
 ) -> str:
     lines = [
         f"Continue AgentSpec supervised run `{run_id}`.",
@@ -1329,6 +1367,38 @@ def _render_next_executor_prompt(
         lines.extend(
             [
                 f"Reviewer reason: {reviewer.get('reason') or '-'}",
+                "",
+            ]
+        )
+
+    if session_preflight.get("status") == "missing":
+        lines.extend(
+            [
+                "Branch/session preflight:",
+                f"Warning: {session_preflight.get('message')}",
+                f"Next: {session_preflight.get('recommended_command')}",
+                "",
+            ]
+        )
+    elif session_preflight.get("status") == "satisfied" and session_preflight.get("satisfied_by") == "explicit_host_worktree":
+        lines.extend(
+            [
+                "Branch/session preflight:",
+                "Explicit host-worktree execution is declared for this implementation task.",
+                f"Branch: {session_preflight.get('branch') or '-'}",
+                f"Worktree: {session_preflight.get('worktree') or '-'}",
+                "",
+            ]
+        )
+    elif session_preflight.get("status") == "satisfied":
+        active = session_preflight.get("active_session")
+        active = active if isinstance(active, dict) else {}
+        lines.extend(
+            [
+                "Branch/session preflight:",
+                f"Active session lease: {active.get('session_id') or '-'}",
+                f"Branch: {active.get('branch') or '-'}",
+                f"Worktree: {active.get('worktree') or '-'}",
                 "",
             ]
         )

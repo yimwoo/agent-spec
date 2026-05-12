@@ -19,6 +19,9 @@ halted run, start the next ready context pack, or backfill an in-flight workflow
 with `aspec task create --from-workflow <file>`. Do not mutate DCR,
 requirement, task, source, or run state from this skill.
 
+For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
+Claim or verify an active owner/patcher session lease before implementation execution.
+
 ## Human-Facing Output
 
 For Codex or Claude Code responses, present the status main point and next

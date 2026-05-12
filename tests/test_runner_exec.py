@@ -113,6 +113,53 @@ class RunnerExecTests(unittest.TestCase):
             self.assertEqual(review["decision"], "halt")
             self.assertIn("forbidden_path", review["policy_flags"])
 
+    def test_execute_runner_records_timeout_event(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            result = execute_runner(
+                root,
+                run_id="exec-timeout",
+                runner="generic",
+                command=[sys.executable, "-c", "import time; time.sleep(1)"],
+                timeout_seconds=0.01,
+            )
+
+            self.assertEqual(result["run_id"], "exec-timeout")
+            events = _events(root, "exec-timeout")
+            self.assertEqual(events[1]["kind"], "runner_invocation_started")
+            finished = next(event for event in events if event["kind"] == "runner_invocation_finished")
+            self.assertTrue(finished["execution"]["timed_out"])
+            self.assertEqual(finished["error"]["schema"], "agentspec.error.v1")
+            self.assertEqual(finished["error"]["code"], "ASPEC_RUNNER_TIMEOUT")
+            self.assertEqual(finished["error"]["layer"], "execution")
+            self.assertTrue(finished["error"]["retryable"])
+            self.assertEqual(finished["error"]["operation"], "run.exec")
+
+    def test_execute_runner_records_start_failure_event(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            result = execute_runner(
+                root,
+                run_id="exec-start-failed",
+                runner="generic",
+                command=[str(root / "missing-runner-command")],
+            )
+
+            self.assertEqual(result["run_id"], "exec-start-failed")
+            events = _events(root, "exec-start-failed")
+            self.assertEqual(events[1]["kind"], "runner_invocation_started")
+            finished = next(event for event in events if event["kind"] == "runner_invocation_finished")
+            self.assertFalse(finished["execution"]["timed_out"])
+            self.assertEqual(finished["error"]["schema"], "agentspec.error.v1")
+            self.assertEqual(finished["error"]["code"], "ASPEC_RUNNER_START_FAILED")
+            self.assertEqual(finished["error"]["layer"], "execution")
+            self.assertFalse(finished["error"]["retryable"])
+            self.assertEqual(finished["error"]["details"]["run_id"], "exec-start-failed")
+
     def test_execute_runner_redacts_credential_shaped_output_in_transcript(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -132,6 +179,26 @@ class RunnerExecTests(unittest.TestCase):
             self.assertNotIn(secret, payload)
             self.assertIn("[REDACTED_CREDENTIAL]", payload)
 
+    def test_execute_runner_does_not_invoke_command_when_session_preflight_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, host_worktree=False)
+            marker = root / "should-not-run.txt"
+            script = f"from pathlib import Path; Path({str(marker)!r}).write_text('ran', encoding='utf-8')"
+
+            result = execute_runner(
+                root,
+                run_id="exec-preflight",
+                runner="generic",
+                command=[sys.executable, "-c", script],
+            )
+
+            self.assertEqual(result["final_next_action"], "session_preflight_required")
+            self.assertFalse(result["final_should_execute"])
+            self.assertEqual([item["kind"] for item in result["transcript"]], ["package"])
+            self.assertFalse(marker.exists())
+            self.assertEqual(result["final_package"]["session_preflight"]["status"], "missing")
+
     def test_generic_runner_requires_explicit_command_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -143,7 +210,7 @@ class RunnerExecTests(unittest.TestCase):
             self.assertFalse((root / "agent" / "runs" / "exec-missing" / "state.yml").exists())
 
 
-def _seed(root: Path) -> None:
+def _seed(root: Path, *, host_worktree: bool = True) -> None:
     (root / ".agentspec").mkdir(parents=True)
     (root / "agent" / "context-packs").mkdir(parents=True)
     (root / "agent" / "runs").mkdir(parents=True)
@@ -175,10 +242,12 @@ def _seed(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+    host_metadata = "\nHost Worktree Execution: `explicit`\n" if host_worktree else ""
     (root / "agent" / "context-packs" / "T-024-local-subprocess-runner.md").write_text(
-        """# T-024: Local Subprocess Runner
+        f"""# T-024: Local Subprocess Runner
 
 Type: `implementation`
+{host_metadata}
 
 ## Requirements
 
@@ -204,6 +273,15 @@ Type: `implementation`
 
 def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=root, check=True, text=True, capture_output=True)
+
+
+def _events(root: Path, run_id: str) -> list[dict]:
+    events_path = root / "agent" / "runs" / run_id / "events.jsonl"
+    return [
+        json.loads(line)
+        for line in events_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 if __name__ == "__main__":

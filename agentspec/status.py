@@ -7,12 +7,13 @@ from typing import Any
 
 from .config import load_project_config, merged_runtime_config
 from .dcr import list_dcrs
+from .errors import ERROR_SCHEMA
 from .handoff import load_project_handoff
 from .io import load_data
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
-from .session import build_session_status
+from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_warning_lines
 from .writeback import build_lifecycle_projection, lifecycle_warning_lines
@@ -185,19 +186,57 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
         stage = "task_ready"
         task_id = str(next_task.get("id") or "unknown")
         path = str(next_task.get("path") or "")
+        session_preflight = build_session_preflight(
+            Path(str(status.get("root") or ".")),
+            context_pack=path,
+            task_id=task_id,
+            task_type=str(next_task.get("type") or "implementation"),
+        )
         main_point = f"Task {task_id} is ready to run."
         artifact = {
             "type": "task",
             "id": task_id,
             "title": next_task.get("title"),
             "path": path or None,
+            "session_preflight": session_preflight,
         }
-        action = {
-            "label": "Start the next ready task.",
-            "human_decision_required": False,
-            "reason": "A ready task context pack defines the scope, allowed paths, and verification expectations.",
-            "commands": [f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
-        }
+        if session_preflight.get("status") == "missing":
+            stage = "task_ready_session_needed"
+            main_point = f"Task {task_id} is ready, but a branch/worktree session should be claimed before execution."
+            command = str(session_preflight.get("recommended_command") or f"aspec session start --task {task_id}")
+            action = {
+                "label": "Claim a branch/worktree session for the ready task.",
+                "human_decision_required": False,
+                "reason": str(session_preflight.get("message") or "Implementation execution should have an active session lease."),
+                "commands": [command, f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
+                "options": [
+                    {
+                        "label": "Claim an implementation session",
+                        "when": "Before the code agent mutates files for the ready task.",
+                        "commands": [command],
+                    },
+                    {
+                        "label": "Run after the session is active",
+                        "when": "After the branch/worktree lease exists and matches the task.",
+                        "commands": [f"aspec run loop {path}" if path else "aspec task next"],
+                    },
+                ],
+            }
+            blocked_by = [
+                {
+                    "kind": "missing_session_lease",
+                    "message": str(session_preflight.get("message") or ""),
+                    "context_pack": path or None,
+                    "task_id": task_id,
+                }
+            ]
+        else:
+            action = {
+                "label": "Start the next ready task.",
+                "human_decision_required": False,
+                "reason": "A ready task context pack defines the scope, allowed paths, and verification expectations.",
+                "commands": [f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
+            }
     elif lifecycle.get("readiness") in {"blocked", "needs_attention"}:
         stage = "lifecycle_attention"
         findings = _lifecycle_findings(lifecycle)
@@ -429,6 +468,7 @@ def _recovery_context(
 ) -> dict[str, Any]:
     reviewer = _last_event(events, "reviewer_verdict")
     executor = _last_event(events, "executor_output")
+    last_error = _latest_structured_error(events)
     policy_flags = reviewer.get("policy_flags") if reviewer else []
     if not isinstance(policy_flags, list):
         policy_flags = []
@@ -438,6 +478,7 @@ def _recovery_context(
         "policy_flags": [str(flag) for flag in policy_flags],
         "test_status": _test_status_from_event(executor) or _test_status_from_state(data),
         "last_event_ref": reviewer.get("_event_ref") if reviewer else None,
+        "last_error": last_error,
         "recovery_command": _recovery_command(str(record.get("run_id") or run_dir.name), str(record.get("status", "unknown"))),
     }
 
@@ -446,6 +487,34 @@ def _last_event(events: list[dict[str, Any]], kind: str) -> dict[str, Any] | Non
     for event in reversed(events):
         if event.get("kind") == kind:
             return event
+    return None
+
+
+def _latest_structured_error(events: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for event in reversed(events):
+        error = event.get("error")
+        if not isinstance(error, dict) or error.get("schema") != ERROR_SCHEMA:
+            continue
+        payload = {
+            key: error.get(key)
+            for key in (
+                "code",
+                "layer",
+                "message",
+                "retryable",
+                "severity",
+                "operation",
+                "details",
+            )
+            if key in error
+        }
+        recovery_command = error.get("recovery_command") or event.get("recovery_command")
+        if recovery_command is not None:
+            payload["recovery_command"] = recovery_command
+        event_ref = event.get("_event_ref")
+        if event_ref is not None:
+            payload["event_ref"] = event_ref
+        return payload
     return None
 
 

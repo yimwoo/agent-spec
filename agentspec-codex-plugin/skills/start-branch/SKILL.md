@@ -36,6 +36,10 @@ aspec session list --json
 
 3. Open the selected context pack and confirm allowed paths before editing.
 
+Claim or verify an active owner/patcher session lease before implementation execution.
+Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
+Explicit host-worktree execution is an auditable escape hatch when the workflow or context pack declares it intentionally.
+
 Boundary: current AgentSpec records and enforces session leases, but branch and
 worktree creation is still performed by the host git tool. A future native
 branch-start command can combine both steps without adding plugin-owned state.
