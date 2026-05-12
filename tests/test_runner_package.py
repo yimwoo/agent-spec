@@ -10,7 +10,7 @@ from agentspec.cli import main
 from agentspec.io import load_data, write_data
 from agentspec.errors import RunnerResultInvalidError
 from agentspec.runner import RUNNER_EVIDENCE_SCHEMA, RUNNER_RESULT_SCHEMA, package_run, submit_runner_result
-from agentspec.run import start_research_run
+from agentspec.run import start_research_run, start_run
 
 
 class RunnerPackageTests(unittest.TestCase):
@@ -253,6 +253,46 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertEqual(executor_event["reported_touched_paths"], ["agentspec/runner.py"])
             self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
             self.assertIn("docs/source/sections.yml", executor_event["touched_paths"])
+
+    def test_submit_runner_result_ignores_preexisting_dirty_paths_for_supervised_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("agent/runs/\n", encoding="utf-8")
+            (root / "agentspec").mkdir()
+            (root / "agentspec" / "runner.py").write_text("seed\n", encoding="utf-8")
+            (root / "tests").mkdir()
+            (root / "tests" / "test_runner_package.py").write_text("seed\n", encoding="utf-8")
+            _git(root, "init")
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.com", "-c", "user.name=AgentSpec Test", "commit", "-m", "seed")
+            (root / "README.md").write_text("dirty before run\n", encoding="utf-8")
+            (root / "scratch").mkdir()
+            (root / "scratch" / "before.txt").write_text("untracked before run\n", encoding="utf-8")
+            start_run(root, Path("agent/context-packs/T-022-runner-result-ingestion.md"), run_id="pkg-supervised-dirty")
+            (root / "agentspec" / "runner.py").write_text("changed during run\n", encoding="utf-8")
+
+            package = submit_runner_result(
+                root,
+                "pkg-supervised-dirty",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are met.",
+                    "touched_paths": ["agentspec/runner.py"],
+                    "test_status": "passed",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "complete")
+            self.assertEqual(package["step"]["state"]["status"], "complete")
+            events = _events(root, "pkg-supervised-dirty")
+            executor_event = next(event for event in events if event["kind"] == "executor_output")
+            self.assertEqual(executor_event["touched_paths"], ["agentspec/runner.py"])
+            self.assertEqual(executor_event["reported_touched_paths"], ["agentspec/runner.py"])
+            self.assertEqual(executor_event["touched_paths_source"], "controller_observed")
+            self.assertNotIn("README.md", executor_event["touched_paths"])
+            self.assertNotIn("scratch/before.txt", executor_event["touched_paths"])
 
     def test_submit_runner_result_ignores_unchanged_dirty_paths_from_run_start(self) -> None:
         with tempfile.TemporaryDirectory() as td:
