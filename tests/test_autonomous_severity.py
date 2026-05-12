@@ -132,6 +132,29 @@ class AutonomousHighPauseTests(unittest.TestCase):
             self.assertEqual(dcr["classification"], "needs-adr")
             self.assertEqual(dcr["status"], "classified")
 
+    def test_high_pause_halt_remains_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pack = _seed_workspace(root)
+            start_run(root, pack, run_id="r-high-terminal", mode="autonomous")
+
+            resume_run(
+                root,
+                "r-high-terminal",
+                executor_output="Should we expand scope and modify ADR-0003 to allow this?",
+                touched_paths=[],
+                test_status="not_run",
+            )
+
+            with self.assertRaisesRegex(ValueError, "already halted"):
+                resume_run(
+                    root,
+                    "r-high-terminal",
+                    executor_output="Done. Acceptance criteria are covered and verification passed.",
+                    touched_paths=["agentspec/fixture_target.py"],
+                    test_status="passed",
+                )
+
 
 class AutonomousUnclassifiedFallbackTests(unittest.TestCase):
     def test_unclassified_pause_keeps_existing_t028_behavior(self) -> None:

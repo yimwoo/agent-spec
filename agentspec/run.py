@@ -1046,11 +1046,21 @@ def _halted_run_accepts_corrected_evidence(state: dict[str, Any], events: list[d
 
     for event in reversed(events):
         kind = event.get("kind")
-        if kind in {"autonomous_pause_to_dcr", "autonomous_infrastructure_block"}:
+        if kind == "autonomous_infrastructure_block":
+            return True
+        if kind == "autonomous_pause_to_dcr" and _is_quality_review_halt_event(event):
             return True
         if kind == "reviewer_verdict" and event.get("decision") == "halt":
             return False
     return isinstance(state.get("infrastructure_blocker"), dict)
+
+
+def _is_quality_review_halt_event(event: dict[str, Any]) -> bool:
+    reason = event.get("reason")
+    return (
+        isinstance(reason, str)
+        and reason.startswith("Quality reviewer rejected autonomous-mode complete:")
+    )
 
 
 def _is_model_review_unavailable_pause(review: Any) -> bool:
