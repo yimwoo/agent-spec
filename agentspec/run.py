@@ -239,6 +239,7 @@ def resume_run(
         reviewer_mode=reviewer_mode,
         reviewer_profile=state.get("profiles", {}).get("continuation_reviewer"),
         acceptance_evidence=acceptance_evidence,
+        evidence=evidence,
     )
     if mode == "supervised" and iteration > max_iterations and review.decision != "complete":
         review = dataclasses.replace(
@@ -328,6 +329,7 @@ def resume_run(
             profile=state.get("profiles", {}).get("quality_reviewer"),
             reviewer_mode=reviewer_mode,
             acceptance_evidence=acceptance_evidence,
+            evidence=evidence,
         )
         _append_event(
             root,

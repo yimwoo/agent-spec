@@ -197,6 +197,63 @@ class AutonomousPauseTransformTests(unittest.TestCase):
             self.assertEqual(summary["blocked_findings"], [])
             self.assertEqual(summary["event_counts"]["autonomous_infrastructure_block"], 1)
 
+    def test_auto_reviewer_unavailable_completes_with_runner_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pack = _seed_workspace(root)
+            config_path = root / ".agentspec" / "config.yml"
+            config = load_data(config_path)
+            config["agent_profiles"]["continuation_reviewer"] = {
+                "adapter": "static",
+                "model": "static-reviewer",
+            }
+            config["agent_profiles"]["quality_reviewer"] = {
+                "adapter": "static",
+                "model": "static-quality",
+            }
+            write_data(config_path, config)
+            start_run(root, pack, run_id="r-auto-runner-evidence", mode="autonomous")
+            evidence = {
+                "schema": "agentspec.runner_evidence.v0",
+                "artifacts": [],
+                "verification_commands": [
+                    {"command": "npm test", "status": "passed"},
+                    {"command": "npm run build", "status": "passed"},
+                ],
+            }
+
+            result = resume_run(
+                root,
+                "r-auto-runner-evidence",
+                executor_output="Verification passed for the scoped implementation.",
+                touched_paths=["agentspec/fixture_target.py"],
+                test_status="passed",
+                reviewer_mode="auto",
+                evidence=evidence,
+            )
+
+            review = result["review"]
+            state = result["state"]
+            self.assertEqual(review["decision"], "complete")
+            self.assertIn("runner_evidence", review["evidence_refs"])
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+            self.assertNotIn("infrastructure_blocker", state)
+            self.assertNotIn("autonomous_finding", state)
+
+            events_path = root / "agent" / "runs" / "r-auto-runner-evidence" / "events.jsonl"
+            events = [
+                json.loads(line)
+                for line in events_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            signoff = next(event for event in events if event["kind"] == "dual_signoff_check")
+            self.assertEqual(signoff["quality_decision"], "approve")
+
+            summary = load_data(root / "agent" / "runs" / "r-auto-runner-evidence" / "summary.yml")
+            self.assertEqual(summary["status"], "complete")
+            self.assertEqual(summary["blocked_findings"], [])
+
     def test_supervised_pause_for_human_unchanged(self) -> None:
         """Regression guard: supervised mode produces the existing pause status,
         no finding written, no halt override."""

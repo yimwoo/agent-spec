@@ -54,6 +54,7 @@ def classify_executor_output(
     policy_verdict: PolicyVerdict,
     test_status: str = "not_run",
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
     if policy_verdict.decision == "halt":
         return ReviewVerdict(
@@ -89,6 +90,17 @@ def classify_executor_output(
             requires_human=False,
             policy_flags=[],
             evidence_refs=[active_context_pack],
+        )
+
+    if test_status == "passed" and _has_passed_verification_evidence(evidence):
+        return ReviewVerdict(
+            decision="complete",
+            confidence="medium",
+            reason="Runner evidence records passed verification commands.",
+            message_to_executor=None,
+            requires_human=False,
+            policy_flags=[],
+            evidence_refs=[active_context_pack, "runner_evidence"],
         )
 
     if _asks_to_choose_task(text):
@@ -148,6 +160,7 @@ def review_executor_output(
     reviewer_mode: str = "deterministic",
     reviewer_profile: dict[str, Any] | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
     deterministic = classify_executor_output(
         executor_output=executor_output,
@@ -155,6 +168,7 @@ def review_executor_output(
         policy_verdict=policy_verdict,
         test_status=test_status,
         acceptance_evidence=acceptance_evidence,
+        evidence=evidence,
     )
     if reviewer_mode == "deterministic" or deterministic.decision != "pause_for_human":
         return deterministic
@@ -271,6 +285,7 @@ def quality_reviewer_signoff(
     profile: dict[str, Any] | None = None,
     reviewer_mode: str = "deterministic",
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Return ('approve', reason) or ('reject', reason).
 
@@ -289,6 +304,7 @@ def quality_reviewer_signoff(
         executor_output,
         test_status,
         acceptance_evidence=acceptance_evidence,
+        evidence=evidence,
     )
     if test_status != "passed":
         return deterministic_decision, deterministic_reason
@@ -332,6 +348,7 @@ def _deterministic_quality_reviewer_signoff(
     test_status: str,
     *,
     acceptance_evidence: dict[str, Any] | None = None,
+    evidence: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     if test_status != "passed":
         return (
@@ -342,6 +359,11 @@ def _deterministic_quality_reviewer_signoff(
         return (
             "approve",
             "Research acceptance evidence is valid and verification passed.",
+        )
+    if _has_passed_verification_evidence(evidence):
+        return (
+            "approve",
+            "Tests pass and runner evidence records passed verification commands.",
         )
 
     lowered = executor_output.lower()
@@ -357,6 +379,23 @@ def _deterministic_quality_reviewer_signoff(
         "reject",
         "Quality reviewer requires explicit acceptance-criteria evidence in the executor output.",
     )
+
+
+def _has_passed_verification_evidence(evidence: dict[str, Any] | None) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    commands = evidence.get("verification_commands")
+    if not isinstance(commands, list) or not commands:
+        return False
+    statuses: list[str] = []
+    for command in commands:
+        if not isinstance(command, dict):
+            return False
+        status = command.get("status")
+        if not isinstance(status, str):
+            return False
+        statuses.append(status)
+    return bool(statuses) and all(status == "passed" for status in statuses)
 
 
 RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA = "agentspec.research_acceptance_evidence.v0"
