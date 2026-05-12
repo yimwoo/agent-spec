@@ -398,6 +398,42 @@ Type: `implementation`
             # recent block rendered rather than being suppressed.
             self.assertIn("run-summary-only", text)
 
+    def test_human_status_includes_cleanup_eligible_sessions(self) -> None:
+        text = format_project_status(
+            {
+                "root": "/tmp/repo",
+                "overall": "idle",
+                "readiness": {},
+                "outcomes": {},
+                "maturity": {},
+                "requirements": {},
+                "dcrs": {},
+                "tasks": {},
+                "runs": {},
+                "sessions": {
+                    "cleanup": {
+                        "eligible": [
+                            {
+                                "session_id": "S-cleanup",
+                                "branch": "feature/cleanup",
+                                "worktree": "/tmp/cleanup-worktree",
+                                "disposition": "merge",
+                            }
+                        ]
+                    }
+                },
+                "agent_profiles": {},
+                "workflows": {},
+                "lifecycle": {},
+                "recommendation": "No action.",
+            }
+        )
+
+        self.assertIn("Cleanup Eligible Sessions:", text)
+        self.assertIn("S-cleanup", text)
+        self.assertIn("disposition=merge", text)
+        self.assertIn("advisory cleanup eligible", text)
+
     def test_status_includes_latest_handoff_when_present(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -370,6 +370,12 @@ def format_project_status(status: dict[str, Any]) -> str:
         lines.extend(["", "Active Sessions:"])
         lines.extend(f"- {_session_text(session)}" for session in active_sessions)
 
+    cleanup = sessions.get("cleanup") if isinstance(sessions, dict) else {}
+    cleanup_eligible = cleanup.get("eligible") if isinstance(cleanup, dict) else []
+    if cleanup_eligible:
+        lines.extend(["", "Cleanup Eligible Sessions:"])
+        lines.extend(f"- {_cleanup_text(session)}" for session in cleanup_eligible)
+
     lifecycle_warnings = lifecycle_warning_lines(lifecycle) if isinstance(lifecycle, dict) else []
     if lifecycle_warnings:
         lines.extend(["", "Lifecycle Warnings:"])
@@ -1353,6 +1359,21 @@ def _session_text(session: dict[str, Any]) -> str:
     updated_at = session.get("updated_at")
     if updated_at:
         bits.append(f"updated {updated_at}")
+    return " | ".join(bits)
+
+
+def _cleanup_text(session: dict[str, Any]) -> str:
+    bits = [
+        str(session.get("session_id")),
+        f"disposition={session.get('disposition') or '-'}",
+    ]
+    branch = session.get("branch")
+    if branch:
+        bits.append(f"branch {branch}")
+    worktree = session.get("worktree")
+    if worktree:
+        bits.append(f"worktree {worktree}")
+    bits.append("advisory cleanup eligible")
     return " | ".join(bits)
 
 

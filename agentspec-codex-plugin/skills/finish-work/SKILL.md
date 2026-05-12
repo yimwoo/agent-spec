@@ -28,6 +28,21 @@ ready.
 For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
 If an owner/patcher session was claimed, finish it with an explicit disposition so the branch/worktree state is recoverable.
 
+Disposition meanings:
+
+- `pr`: work is delivered through a pull request; local cleanup waits for merge or closure evidence.
+- `merge`: work has been merged into the target branch.
+- `keep`: branch/worktree remains intentionally available for follow-up.
+- `discard`: branch/worktree can be abandoned because the work is intentionally not delivered.
+- `release`: use `aspec session release` for handoff or abandoned ownership; it is not delivery closure.
+
+Cleanup is advisory. `aspec status --json` may report cleanup-eligible
+sessions only after task/write-back closure, delivery closure, clean local
+resources, and no active owner/patcher lease for the same branch/worktree.
+Do not remove a git worktree or delete a local branch without explicit user
+confirmation or a later opt-in project policy. Ticket fixes, features,
+designs, milestones, and cross-repo AgentSpec work share this finish lifecycle.
+
 ## Human-Facing Output
 
 For Codex or Claude Code final replies, keep raw `aspec ...` commands internal

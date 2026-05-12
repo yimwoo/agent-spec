@@ -76,7 +76,8 @@ source.
 ```
 
 Codex should report requirement IDs, task pack path, allowed paths,
-verification result, review ID, and handoff/roadmap status.
+verification result, review ID, branch/worktree disposition, and
+handoff/roadmap status.
 
 ## Implementation Order
 
@@ -84,6 +85,10 @@ For implementation work, follow task pack -> workflow -> branch/worktree/session
 Claim or verify an active owner/patcher session lease before implementation execution.
 Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
 Explicit host-worktree execution is an auditable escape hatch when the workflow or task context pack declares it intentionally.
+Every implementation owner/patcher session finishes with a disposition:
+`pr`, `merge`, `keep`, or `discard`; use session release for handoff or
+abandoned ownership. Cleanup is advisory and requires explicit confirmation
+before removing a git worktree or deleting a local branch.
 
 ## What Codex Will Create
 

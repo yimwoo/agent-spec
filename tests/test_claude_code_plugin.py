@@ -241,6 +241,13 @@ class ClaudeCodePluginTests(unittest.TestCase):
                         (plugin_root / "skills" / "finish-work" / "SKILL.md").read_text(
                             encoding="utf-8"
                         ),
+                        (
+                            plugin_root
+                            / "controller"
+                            / "skills"
+                            / "finish-branch"
+                            / "SKILL.md"
+                        ).read_text(encoding="utf-8"),
                     ]
                 )
                 normalized = " ".join(combined.split())
@@ -250,8 +257,13 @@ class ClaudeCodePluginTests(unittest.TestCase):
                     "Claim or verify an active owner/patcher session lease before implementation execution.",
                     "Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.",
                     "Explicit host-worktree execution is an auditable escape hatch",
+                    "Every implementation owner/patcher session finishes with a disposition",
+                    "Cleanup is advisory",
+                    "Ticket fixes, features, designs, milestones, and cross-repo AgentSpec work share",
+                    "aspec session finish <session-id> --disposition merge",
                 ]:
                     self.assertIn(text, normalized)
+                self.assertNotIn("--disposition merged", normalized)
 
     def test_emitted_agent_guidance_requires_session_gate_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -285,6 +297,8 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 "Claim or verify an active owner/patcher session lease before implementation execution.",
                 "Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.",
                 "Explicit host-worktree execution is an auditable escape hatch",
+                "Finish implementation owner/patcher sessions with an explicit disposition",
+                "cleanup is advisory and requires explicit confirmation",
             ]:
                 self.assertIn(text, normalized)
 
