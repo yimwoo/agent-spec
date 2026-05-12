@@ -4,6 +4,7 @@
 
 [![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-2563EB?style=flat-square)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-16A34A?style=flat-square)](LICENSE)
 
 AgentSpec turns your design docs into a **governed, file-based operating
 contract** for AI coding agents. The contract lives in your repo — accepted
@@ -272,9 +273,8 @@ python -m agentspec.cli --help
 
 ## License
 
-License pending — see this repository's `pyproject.toml` for current metadata.
-Until a `LICENSE` file is published, treat the source as "all rights reserved
-by the author" and contact the maintainer for permitted use.
+AgentSpec is released under the MIT License. See [LICENSE](LICENSE) for the
+full license text.
 
 ---
 

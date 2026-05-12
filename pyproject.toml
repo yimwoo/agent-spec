@@ -7,6 +7,7 @@ name = "agentspec"
 version = "0.1.18"
 description = "Design-to-agent workspace compiler and control plane for code agents."
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = []
 

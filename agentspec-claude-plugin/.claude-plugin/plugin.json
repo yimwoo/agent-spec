@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/yimwoo/agent-spec",
   "repository": "https://github.com/yimwoo/agent-spec",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "keywords": [
     "aspec",
     "agentspec",
