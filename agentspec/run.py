@@ -189,6 +189,14 @@ def resume_run(
     _ensure_run_state_writable(root, run_dir)
 
     touched_paths = touched_paths or []
+    if reported_touched_paths is None:
+        observed_available, observed_paths = controller_observed_touched_paths(
+            root,
+            state.get("controller_path_baseline"),
+        )
+        if observed_available:
+            reported_touched_paths = list(touched_paths)
+            touched_paths = observed_paths
     config = merged_runtime_config(load_project_config(root))
     configured_reviewer_mode = config.get("supervised_runs", {}).get("reviewer_mode", "deterministic")
     reviewer_mode = reviewer_mode or configured_reviewer_mode
