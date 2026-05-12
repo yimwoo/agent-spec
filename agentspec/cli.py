@@ -952,6 +952,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 reason=args.reason,
                 test_status=args.test_status,
                 review_id=args.review_id,
+                allow_existing_run=True,
             )
             if args.json:
                 print(json.dumps(state, indent=2))

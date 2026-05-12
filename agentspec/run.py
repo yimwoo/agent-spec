@@ -24,6 +24,7 @@ SUMMARY_SCHEMA = "agentspec.supervised_run.summary.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 CONTROLLER_PATH_BASELINE_SCHEMA = "agentspec.controller_path_baseline.v0"
 TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
+REUSABLE_RUN_STATUSES = {"started", "running"}
 SUMMARY_MODES = {"autonomous", "research"}
 SESSION_PREFLIGHT_REQUIRED_ACTION = "session_preflight_required"
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -167,7 +168,7 @@ def start_research_run(
 
 def _now_slug() -> str:
     """Compact timestamp for default research run ids."""
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
 
 def resume_run(
@@ -538,40 +539,59 @@ def loop_run(
                 if mode == "autonomous":
                     # R-142 / ADR-0005: empty queue + autonomous mode →
                     # fall through to research mode instead of halting.
-                    state = start_research_run(
-                        root,
-                        run_id=run_id,
-                        max_iterations=max_iterations,
-                        run_dir=run_dir,
-                    )
+                    state = None
+                    if run_id is None:
+                        state = _find_reusable_run_state(
+                            root,
+                            RESEARCH_CONTEXT_PACK_SENTINEL,
+                            run_dir=run_dir,
+                        )
+                    if state is None:
+                        state = start_research_run(
+                            root,
+                            run_id=run_id,
+                            max_iterations=max_iterations,
+                            run_dir=run_dir,
+                        )
+                        started = True
                     run_id = str(state["run_id"])
-                    started = True
                     selected_task = None
                 else:
                     raise ValueError("No ready task context pack found.")
             else:
                 context_pack = Path(selected_task["path"])
+                expected = str(_resolve_context_pack(root, context_pack).relative_to(root))
+                state = None
+                if run_id is None:
+                    state = _find_reusable_run_state(root, expected, run_dir=run_dir)
+                if state is None:
+                    state = start_run(
+                        root,
+                        context_pack,
+                        run_id=run_id,
+                        max_iterations=max_iterations,
+                        mode=mode,
+                        run_dir=run_dir,
+                    )
+                    started = True
+                run_id = str(state["run_id"])
+        else:
+            context_path = _resolve_context_pack(root, context_pack)
+            expected = str(context_path.relative_to(root))
+            state = None
+            if run_id is None:
+                state = _find_reusable_run_state(root, expected, run_dir=run_dir)
+            if state is None:
                 state = start_run(
                     root,
-                    context_pack,
+                    context_path,
                     run_id=run_id,
                     max_iterations=max_iterations,
                     mode=mode,
                     run_dir=run_dir,
                 )
-                run_id = str(state["run_id"])
                 started = True
-        else:
-            state = start_run(
-                root,
-                context_pack,
-                run_id=run_id,
-                max_iterations=max_iterations,
-                mode=mode,
-                run_dir=run_dir,
-            )
             run_id = str(state["run_id"])
-            started = True
 
     result: dict[str, Any] = {
         "run_id": run_id,
@@ -1205,13 +1225,45 @@ def _markdown_list_after_heading(text: str, heading: str) -> list[str]:
 
 
 def _default_run_id(context_pack: Path) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
     return f"{slugify(context_pack.stem)}-{stamp}"
 
 
 def _default_completion_run_id(context_pack: Path) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
     return f"complete-{slugify(context_pack.stem)}-{stamp}"
+
+
+def _find_reusable_run_state(
+    root: Path,
+    context_pack: str,
+    *,
+    run_dir: Path | None = None,
+) -> dict[str, Any] | None:
+    runs_root = _run_root(root, run_dir)
+    if not runs_root.is_dir():
+        return None
+
+    matches: list[dict[str, Any]] = []
+    for state_path in sorted(runs_root.glob("*/state.yml")):
+        state = load_data(state_path)
+        if not isinstance(state, dict):
+            continue
+        if state.get("context_pack") != context_pack:
+            continue
+        if state.get("status") not in REUSABLE_RUN_STATUSES:
+            continue
+        record = dict(state)
+        record.setdefault("run_id", state_path.parent.name)
+        matches.append(record)
+
+    if not matches:
+        return None
+    return sorted(
+        matches,
+        key=lambda state: str(state.get("updated_at") or state.get("created_at") or ""),
+        reverse=True,
+    )[0]
 
 
 def _run_root(root: Path, run_dir: Path | None = None) -> Path:
