@@ -254,6 +254,35 @@ class AutonomousPauseTransformTests(unittest.TestCase):
             self.assertEqual(summary["status"], "complete")
             self.assertEqual(summary["blocked_findings"], [])
 
+    def test_autonomous_deterministic_completion_accepts_scoped_verification_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pack = _seed_workspace(root)
+            start_run(root, pack, run_id="r-auto-scoped-summary", mode="autonomous")
+
+            result = resume_run(
+                root,
+                "r-auto-scoped-summary",
+                executor_output=(
+                    "Implemented local run comparison summaries for R-001; "
+                    "npm test and npm run build passed."
+                ),
+                touched_paths=["agentspec/fixture_target.py"],
+                test_status="passed",
+            )
+
+            review = result["review"]
+            state = result["state"]
+            self.assertEqual(review["decision"], "complete")
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+            self.assertNotIn("autonomous_finding", state)
+            self.assertNotIn("autonomous_dcr", state)
+
+            summary = load_data(root / "agent" / "runs" / "r-auto-scoped-summary" / "summary.yml")
+            self.assertEqual(summary["status"], "complete")
+            self.assertEqual(summary["blocked_findings"], [])
+
     def test_supervised_pause_for_human_unchanged(self) -> None:
         """Regression guard: supervised mode produces the existing pause status,
         no finding written, no halt override."""
