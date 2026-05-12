@@ -11,6 +11,7 @@ from typing import Any
 
 from .archetype import validate_path_provenance
 from .config import load_project_config, merged_runtime_config, resolve_agent_profile
+from .dcr import is_implementation_eligible, list_dcrs
 from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy, redact_sensitive_text
@@ -29,14 +30,20 @@ SUMMARY_MODES = {"autonomous", "research"}
 SESSION_PREFLIGHT_REQUIRED_ACTION = "session_preflight_required"
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
-# R-142 / ADR-0005: research-mode fallback constants. Allowed paths are
-# the three durable findings sinks; nothing else is writable. The
-# sentinel context-pack value avoids inventing a synthetic pack file
-# while still satisfying the run-state schema.
+# R-142 / ADR-0005: research-mode fallback constants. Research normally
+# writes only durable findings. When an implementation-eligible DCR already
+# exists, the run may also prepare requirements and a task pack, but still
+# cannot edit product code.
 RESEARCH_ALLOWED_PATHS: list[str] = [
     "reports/dogfood/**",
     "docs/discovery/open-questions.yml",
     "docs/change-requests/**",
+]
+RESEARCH_TASK_PREPARATION_ALLOWED_PATHS: list[str] = [
+    "docs/spec/**",
+    "docs/traceability/**",
+    "docs/discovery/readiness.yml",
+    "agent/context-packs/**",
 ]
 RESEARCH_TARGET_WRITE_REQUIREMENTS: list[str] = list(RESEARCH_ALLOWED_PATHS)
 RESEARCH_CONTEXT_PACK_SENTINEL = "<research-mode>"
@@ -128,12 +135,15 @@ def start_research_run(
     """Create a research-mode run state per ADR-0005 / R-142.
 
     Research mode does not consume a context pack; it produces findings
-    under the three research-allowed dirs. The state's `allowed_paths`
-    is set to the research findings dirs so the existing path-allowlist
-    gate enforces the write-restriction without any new policy code.
+    under the research-allowed dirs. If accepted/classified DCRs are already
+    implementation-eligible, the state's `allowed_paths` includes task
+    preparation artifacts so the next lifecycle step is not blocked by the
+    research run itself.
     """
     root = root.resolve()
     config = merged_runtime_config(load_project_config(root))
+    tasking_dcrs = _implementation_eligible_dcrs(root)
+    allowed_paths = _research_allowed_paths(tasking_dcrs)
     run_id = run_id or f"research-{_now_slug()}"
     record_dir = _run_dir(root, run_id, run_dir=run_dir)
     if record_dir.exists() and (record_dir / "state.yml").exists():
@@ -149,7 +159,8 @@ def start_research_run(
         "context_pack": RESEARCH_CONTEXT_PACK_SENTINEL,
         "context_pack_title": "Research mode (no pack)",
         "task_type": "research",
-        "allowed_paths": list(RESEARCH_ALLOWED_PATHS),
+        "allowed_paths": allowed_paths,
+        "target_write_requirements": list(allowed_paths),
         "controller_path_baseline": capture_controller_path_baseline(root),
         "iteration": 0,
         "max_iterations": max_iterations or 3,
@@ -160,6 +171,12 @@ def start_research_run(
         "updated_at": _now(),
         "last_decision": None,
     }
+    if tasking_dcrs:
+        state["task_preparation"] = {
+            "status": "available",
+            "dcrs": [str(dcr.get("id")) for dcr in tasking_dcrs],
+            "allowed_paths": list(RESEARCH_TASK_PREPARATION_ALLOWED_PATHS),
+        }
     _write_state(root, run_id, state, run_dir=run_dir)
     _append_event(root, run_id, {"kind": "research_run_started", "state": state}, run_dir=run_dir)
     _maybe_write_run_summary(root, run_id, state, run_dir=run_dir)
@@ -479,9 +496,7 @@ def resume_run(
                 )
 
     # R-146 / DCR-0024: research-mode `complete` must not write the
-    # implementation task ledger (ADR-0005 / R-142 confines research-mode
-    # writes to reports/dogfood/**, docs/discovery/open-questions.yml, and
-    # docs/change-requests/**). For non-research runs, write the ledger
+    # implementation task ledger. For non-research runs, write the ledger
     # BEFORE finalizing the state file so a failed ledger write cannot
     # leave a `complete` state file behind without a matching ledger entry.
     if review.decision == "complete" and state.get("mode") != "research":
@@ -618,7 +633,12 @@ def loop_run(
         result["review"] = resumed["review"]
 
     if run_dir is not None and result.get("state", {}).get("mode") == "research":
-        result["target_write_requirements"] = list(RESEARCH_TARGET_WRITE_REQUIREMENTS)
+        state_writes = result.get("state", {}).get("target_write_requirements")
+        result["target_write_requirements"] = (
+            list(state_writes)
+            if isinstance(state_writes, list)
+            else list(RESEARCH_TARGET_WRITE_REQUIREMENTS)
+        )
 
     result["session_preflight"] = _session_preflight_for_state(root, result["state"])
 
@@ -1172,6 +1192,17 @@ def _is_research_findings_path(path: str) -> bool:
     normalized = path.strip().lstrip("./")
     return any(normalized.startswith(prefix) or normalized == prefix.rstrip("/")
                for prefix in _RESEARCH_PATH_PREFIXES)
+
+
+def _implementation_eligible_dcrs(root: Path) -> list[dict[str, Any]]:
+    return [dcr for dcr in list_dcrs(root) if is_implementation_eligible(dcr)]
+
+
+def _research_allowed_paths(tasking_dcrs: list[dict[str, Any]]) -> list[str]:
+    allowed_paths = list(RESEARCH_ALLOWED_PATHS)
+    if tasking_dcrs:
+        allowed_paths.extend(RESEARCH_TASK_PREPARATION_ALLOWED_PATHS)
+    return allowed_paths
 
 
 def is_pack_autonomous_eligible(context_pack: Path, root: Path) -> bool:

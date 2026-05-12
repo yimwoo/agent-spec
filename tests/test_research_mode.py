@@ -6,12 +6,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from agentspec.dcr import accept_dcr, create_dcr_stub
 from agentspec.init import init_project
 from agentspec.io import load_data
 from agentspec.run import (
     MAX_RESEARCH_FINDINGS_DEFAULT,
     RESEARCH_ALLOWED_PATHS,
     RESEARCH_CONTEXT_PACK_SENTINEL,
+    RESEARCH_TASK_PREPARATION_ALLOWED_PATHS,
     loop_run,
     resume_run,
     start_research_run,
@@ -52,6 +54,28 @@ class StartResearchRunTests(unittest.TestCase):
             _seed_workspace(root)
             state = start_research_run(root, run_id="r-research-2", max_research_findings=2)
             self.assertEqual(state["max_research_findings"], 2)
+
+    def test_task_preparation_paths_are_added_for_taskable_dcrs(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            create_dcr_stub(
+                root,
+                "Prepare accepted DCR for tasking",
+                "implement-now",
+                dcr_id="DCR-0099",
+            )
+            accept_dcr(root, "DCR-0099")
+
+            state = start_research_run(root, run_id="r-research-tasking")
+
+            self.assertEqual(
+                set(state["allowed_paths"]),
+                set(RESEARCH_ALLOWED_PATHS + RESEARCH_TASK_PREPARATION_ALLOWED_PATHS),
+            )
+            self.assertEqual(state["target_write_requirements"], state["allowed_paths"])
+            self.assertEqual(state["task_preparation"]["status"], "available")
+            self.assertEqual(state["task_preparation"]["dcrs"], ["DCR-0099"])
 
 
 class ResearchPolicyEnforcementTests(unittest.TestCase):
@@ -149,6 +173,33 @@ class ResearchPolicyEnforcementTests(unittest.TestCase):
             state = result["state"]
             # Allowed write — counter incremented.
             self.assertEqual(state.get("research_findings_produced"), 1)
+
+    def test_tasking_paths_do_not_halt_when_dcr_is_ready_for_tasking(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            create_dcr_stub(
+                root,
+                "Prepare accepted DCR for tasking",
+                "implement-now",
+                dcr_id="DCR-0099",
+            )
+            accept_dcr(root, "DCR-0099")
+            start_research_run(root, run_id="r-tasking-paths")
+
+            result = resume_run(
+                root,
+                "r-tasking-paths",
+                executor_output="Prepared requirement and context-pack artifacts.",
+                touched_paths=[
+                    "docs/traceability/requirements.yml",
+                    "agent/context-packs/T-001-prepared-task.md",
+                ],
+                test_status="not_run",
+            )
+
+            self.assertNotEqual(result["state"]["status"], "halted")
+            self.assertNotIn("forbidden_path", result["review"].get("policy_flags", []))
 
     def test_terminates_at_max_research_findings(self) -> None:
         with tempfile.TemporaryDirectory() as td:
