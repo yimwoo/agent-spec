@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 from .config import load_project_config, merged_runtime_config
@@ -13,6 +14,8 @@ from .io import load_data
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
+from .paths import path_matches_pattern
+from .run import RESEARCH_ALLOWED_PATHS
 from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_warning_lines
@@ -52,7 +55,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     agent_profiles = _agent_profile_status(root)
 
     active_runs = [run for run in runs if run.get("status") in ACTIVE_RUN_STATUSES]
-    attention_runs = [run for run in runs if run.get("status") in ATTENTION_RUN_STATUSES]
+    attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     requirements_counts = {
         "total": len(requirements),
@@ -78,6 +81,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "by_mode": _counts(run.get("mode") for run in runs),
         "active": active_runs,
         "attention": attention_runs,
+        "stale_attention": stale_attention_runs,
         "recent": recent_runs,
     }
     handoff = load_project_handoff(root)
@@ -417,6 +421,113 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
     return sorted(records, key=lambda run: str(run.get("updated_at", "")), reverse=True)
 
 
+def _classify_attention_runs(
+    root: Path,
+    runs: list[dict[str, Any]],
+    tasks: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    attention: list[dict[str, Any]] = []
+    stale_attention: list[dict[str, Any]] = []
+    completed_scopes = _completed_task_allowed_scopes(root, tasks)
+
+    for run in runs:
+        if run.get("status") not in ATTENTION_RUN_STATUSES:
+            continue
+        stale = _stale_research_attention_details(run, completed_scopes)
+        if stale:
+            run["stale_attention"] = stale
+            stale_attention.append(run)
+        else:
+            attention.append(run)
+    return attention, stale_attention
+
+
+def _completed_task_allowed_scopes(
+    root: Path,
+    tasks: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    scopes: list[dict[str, Any]] = []
+    for task in tasks:
+        if task.get("status") != "complete":
+            continue
+        context_pack = task.get("path")
+        if not isinstance(context_pack, str) or not context_pack:
+            continue
+        allowed_paths = _context_pack_allowed_paths(root, context_pack)
+        if not allowed_paths:
+            continue
+        scopes.append(
+            {
+                "task_id": task.get("id"),
+                "title": task.get("title"),
+                "context_pack": context_pack,
+                "allowed_paths": allowed_paths,
+            }
+        )
+    return scopes
+
+
+def _stale_research_attention_details(
+    run: dict[str, Any],
+    completed_scopes: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if run.get("mode") != "research":
+        return None
+    if "forbidden_path" not in _string_list(run.get("policy_flags")):
+        return None
+    touched_paths = _string_list(run.get("touched_paths"))
+    if not touched_paths:
+        return None
+    implementation_paths = [
+        path
+        for path in touched_paths
+        if not _path_allowed_by_patterns(path, RESEARCH_ALLOWED_PATHS)
+    ]
+    if not implementation_paths:
+        return None
+    for scope in completed_scopes:
+        allowed_paths = _string_list(scope.get("allowed_paths"))
+        if all(_path_allowed_by_patterns(path, allowed_paths) for path in implementation_paths):
+            return {
+                "reason": "Research-mode forbidden paths are covered by a completed task context pack.",
+                "covered_by_task": scope.get("task_id"),
+                "context_pack": scope.get("context_pack"),
+                "covered_paths": implementation_paths,
+            }
+    return None
+
+
+def _context_pack_allowed_paths(root: Path, context_pack: str) -> list[str]:
+    path = root / context_pack
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    return _markdown_list_after_heading(text, "Allowed Paths")
+
+
+def _markdown_list_after_heading(text: str, heading: str) -> list[str]:
+    lines = text.splitlines()
+    items: list[str] = []
+    in_section = False
+    heading_re = re.compile(rf"^##\s+{re.escape(heading)}\s*$", flags=re.IGNORECASE)
+    for line in lines:
+        if heading_re.match(line.strip()):
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section:
+            match = re.match(r"^\s*-\s+`?([^`]+?)`?\s*$", line)
+            if match:
+                items.append(match.group(1).strip())
+    return items
+
+
+def _path_allowed_by_patterns(path: str, patterns: list[str]) -> bool:
+    return any(path_matches_pattern(path, pattern) for pattern in patterns)
+
+
 def _agent_profile_status(root: Path) -> dict[str, Any]:
     try:
         config = merged_runtime_config(load_project_config(root))
@@ -477,6 +588,8 @@ def _recovery_context(
     return {
         "last_review_reason": reviewer.get("reason") if reviewer else None,
         "policy_flags": [str(flag) for flag in policy_flags],
+        "touched_paths": _string_list(executor.get("touched_paths") if executor else []),
+        "reported_touched_paths": _string_list(executor.get("reported_touched_paths") if executor else []),
         "test_status": _test_status_from_event(executor) or _test_status_from_state(data),
         "last_event_ref": reviewer.get("_event_ref") if reviewer else None,
         "last_error": last_error,

@@ -466,6 +466,26 @@ class StatusCLITests(unittest.TestCase):
             self.assertIn("Next options:", output.getvalue())
             self.assertIn("aspec ingest docs/source/design.md", output.getvalue())
 
+    def test_status_deprioritizes_stale_research_attention_covered_by_completed_task(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_stale_research_attention(root)
+
+            status = build_project_status(root, recent_limit=5)
+
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["runs"]["attention"], [])
+            self.assertEqual(status["runs"]["stale_attention"][0]["run_id"], "research-stale")
+            self.assertIn("research-stale", [run["run_id"] for run in status["runs"]["recent"]])
+            self.assertNotIn("run inspect research-stale", status["recommendation"])
+            stale = status["runs"]["stale_attention"][0]["stale_attention"]
+            self.assertEqual(stale["covered_by_task"], "T-004")
+            self.assertEqual(
+                stale["covered_paths"],
+                ["src/schema.ts", "tests/schema.test.ts", "agent/task-ledger.yml"],
+            )
+            self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+
     def test_status_surfaces_orphan_workflow_warning(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -836,6 +856,119 @@ Type: `implementation`
             "updated_at": "2026-04-29T00:00:30Z",
             "terminal": True,
         },
+    )
+
+
+def _seed_stale_research_attention(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "agent" / "reviews").mkdir(parents=True)
+    (root / "agent" / "runs" / "research-stale").mkdir(parents=True)
+    (root / "docs" / "change-requests").mkdir(parents=True)
+    (root / "docs" / "discovery").mkdir(parents=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+    write_data(
+        root / "docs" / "discovery" / "readiness.yml",
+        {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+    )
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [{"id": "R-172", "status": "accepted", "priority": "P1"}],
+    )
+    (root / "docs" / "change-requests" / "DCR-0001-test.md").write_text(
+        """# DCR-0001: Test
+
+| Field | Value |
+|---|---|
+| Status | accepted |
+| Classification | implement-now |
+| Submitted | 2026-05-12 |
+| Submitted by | user |
+| Decided by | user |
+| Decided on | 2026-05-12 |
+| Confidence | medium |
+""",
+        encoding="utf-8",
+    )
+    (root / "agent" / "context-packs" / "T-004-implementation.md").write_text(
+        """# T-004: Implementation Task
+
+Type: `implementation`
+
+## Requirements
+
+- `R-172` Research mode
+
+## Allowed Paths
+
+- `src/schema.ts`
+- `tests/schema.test.ts`
+- `agent/task-ledger.yml`
+""",
+        encoding="utf-8",
+    )
+    write_data(
+        root / "agent" / "task-ledger.yml",
+        {
+            "schema": "agentspec.task_ledger.v0",
+            "tasks": {
+                "agent/context-packs/T-004-implementation.md": {
+                    "status": "complete",
+                    "run_id": "run-t-004",
+                    "verification": {"status": "passed"},
+                    "code_review": {"id": "REVIEW-0002", "path": "agent/reviews/REVIEW-0002.yml"},
+                    "updated_at": "2026-05-12T01:00:00Z",
+                }
+            },
+        },
+    )
+    write_data(
+        root / "agent" / "reviews" / "REVIEW-0002.yml",
+        {
+            "id": "REVIEW-0002",
+            "verdict": "ready",
+            "task": {"context_pack": "agent/context-packs/T-004-implementation.md"},
+        },
+    )
+    write_data(
+        root / "agent" / "runs" / "research-stale" / "state.yml",
+        {
+            "run_id": "research-stale",
+            "status": "halted",
+            "mode": "research",
+            "context_pack": "<research-mode>",
+            "context_pack_title": "Research mode (no pack)",
+            "iteration": 1,
+            "max_iterations": 3,
+            "last_decision": "halt",
+            "updated_at": "2026-05-12T00:30:00Z",
+        },
+    )
+    (root / "agent" / "runs" / "research-stale" / "events.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "kind": "executor_output",
+                        "touched_paths": [
+                            "src/schema.ts",
+                            "tests/schema.test.ts",
+                            "agent/task-ledger.yml",
+                        ],
+                        "test_summary": {"status": "passed"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "kind": "reviewer_verdict",
+                        "decision": "halt",
+                        "reason": "Touched path(s) outside allowed scope.",
+                        "policy_flags": ["forbidden_path"],
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
 
