@@ -1,7 +1,7 @@
 {
   "name": "aspec",
   "description": "Run AgentSpec workflows from Claude Code without bypassing repository governance.",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "author": {
     "name": "AgentSpec",
     "email": "maintainers@example.com"
