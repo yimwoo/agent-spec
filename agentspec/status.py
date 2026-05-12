@@ -273,6 +273,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             requirements=requirements,
             tasks=tasks,
             dcrs=_dict_or_empty(status.get("dcrs")),
+            outcomes=outcomes,
         )
 
     return {
@@ -693,6 +694,7 @@ def _no_ready_task_summary(
     requirements: dict[str, Any],
     tasks: dict[str, Any],
     dcrs: dict[str, Any],
+    outcomes: dict[str, Any],
 ) -> tuple[str, str, list[dict[str, Any]], dict[str, Any]]:
     score = readiness.get("score")
     accepted_requirements = _status_count(requirements, "accepted")
@@ -703,6 +705,15 @@ def _no_ready_task_summary(
     total_tasks = int(tasks.get("total", 0) or 0)
     classified_dcrs = _status_count(dcrs, "classified")
     accepted_dcrs = _status_count(dcrs, "accepted")
+    outcome_counts = outcomes.get("counts") if isinstance(outcomes.get("counts"), dict) else {}
+    outcomes_ready = (
+        outcomes.get("readiness") == "ready"
+        and int(outcome_counts.get("required_gates", 0) or 0) > 0
+        and int(outcome_counts.get("ready_required_gates", 0) or 0)
+        == int(outcome_counts.get("required_gates", 0) or 0)
+        and int(outcome_counts.get("blocked_required_gates", 0) or 0) == 0
+    )
+    action_label = "Prepare the next AgentSpec task context pack."
 
     if accepted_requirements == 0:
         stage = "source_or_requirements_needed"
@@ -771,36 +782,68 @@ def _no_ready_task_summary(
     else:
         stage = "idle_no_ready_task"
         main_point = "No implementation task is ready; all known task context packs are complete, halted, or otherwise not executable."
-        reason = "Create or classify the next DCR/task, or choose autonomous research mode if there is no known implementation scope."
         followup_title = "Define the next AgentSpec improvement"
-        commands = [
-            f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
-            "aspec task next",
-            f'aspec dcr create --title "{followup_title}" --classification implement-now',
-        ]
-        options = [
-            {
-                "label": f"Create a follow-up task for {requirement_id}",
-                "when": "Existing accepted scope still needs another implementation slice.",
-                "commands": [
-                    f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
-                    "aspec task next",
-                ],
-            },
-            {
-                "label": "Capture a new change request",
-                "when": "The next work is a new idea, bug, or product change that is not yet represented by a requirement.",
-                "commands": [
-                    f'aspec dcr create --title "{followup_title}" --classification implement-now',
-                    "aspec status",
-                ],
-            },
-            {
-                "label": "Inspect the project before choosing",
-                "when": "You want to decide manually from current DCRs, requirements, runs, and outcomes.",
-                "commands": ["aspec status", "aspec outcome", "aspec task list"],
-            },
-        ]
+        if outcomes_ready:
+            action_label = "Choose new AgentSpec scope."
+            reason = (
+                "All configured product outcomes and required gates are ready; "
+                "no existing requirement or gate currently identifies remaining implementation scope."
+            )
+            commands = [
+                "aspec outcome",
+                f'aspec dcr create --title "{followup_title}" --classification implement-now',
+                "aspec run loop --mode autonomous --json",
+            ]
+            options = [
+                {
+                    "label": "Capture a new change request",
+                    "when": "The next work is a new idea, bug, or product change that is not yet represented by a requirement.",
+                    "commands": [
+                        f'aspec dcr create --title "{followup_title}" --classification implement-now',
+                        "aspec status",
+                    ],
+                },
+                {
+                    "label": "Inspect ready outcomes before choosing",
+                    "when": "You want to confirm there is no uncovered outcome gate before tasking more work.",
+                    "commands": ["aspec outcome", "aspec task list"],
+                },
+                {
+                    "label": "Run research mode",
+                    "when": "There is no known implementation scope and you want AgentSpec to propose the next discovery artifact.",
+                    "commands": ["aspec run loop --mode autonomous --json"],
+                },
+            ]
+        else:
+            reason = "Create or classify the next DCR/task, or choose autonomous research mode if there is no known implementation scope."
+            commands = [
+                f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
+                "aspec task next",
+                f'aspec dcr create --title "{followup_title}" --classification implement-now',
+            ]
+            options = [
+                {
+                    "label": f"Create a follow-up task for {requirement_id}",
+                    "when": "Existing accepted scope still needs another implementation slice.",
+                    "commands": [
+                        f'aspec task create --requirement {requirement_id} --type implementation --title "Follow up on {requirement_title}"',
+                        "aspec task next",
+                    ],
+                },
+                {
+                    "label": "Capture a new change request",
+                    "when": "The next work is a new idea, bug, or product change that is not yet represented by a requirement.",
+                    "commands": [
+                        f'aspec dcr create --title "{followup_title}" --classification implement-now',
+                        "aspec status",
+                    ],
+                },
+                {
+                    "label": "Inspect the project before choosing",
+                    "when": "You want to decide manually from current DCRs, requirements, runs, and outcomes.",
+                    "commands": ["aspec status", "aspec outcome", "aspec task list"],
+                },
+            ]
 
     blocked_by = [
         {
@@ -812,7 +855,7 @@ def _no_ready_task_summary(
         }
     ]
     action = {
-        "label": "Prepare the next AgentSpec task context pack.",
+        "label": action_label,
         "human_decision_required": True,
         "reason": reason,
         "commands": commands,

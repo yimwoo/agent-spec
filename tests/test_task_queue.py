@@ -180,6 +180,38 @@ class TaskQueueTests(unittest.TestCase):
             self.assertFalse(payload["agent_next_action"]["show_terminal_commands"])
             self.assertNotIn("aspec", json.dumps(payload["agent_next_action"]).lower())
 
+    def test_cli_task_next_avoids_requirement_followup_when_outcomes_are_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_no_ready_task_with_ready_outcomes(root)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--json"])
+
+            self.assertEqual(code, 1)
+            payload = json.loads(output.getvalue())
+            self.assertIsNone(payload["task"])
+            self.assertEqual(payload["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+            action = payload["lifecycle_summary"]["recommended_next_action"]
+            self.assertIn("all configured product outcomes", action["reason"].lower())
+            commands = "\n".join(payload["next_commands"])
+            self.assertNotIn("task create --requirement", commands)
+            self.assertNotIn("Follow up on", commands)
+            self.assertIn("aspec outcome", commands)
+            option_text = json.dumps(payload["next_options"])
+            self.assertIn("Run research mode", option_text)
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next"])
+
+            self.assertEqual(code, 1)
+            text = output.getvalue()
+            self.assertIn("all configured product outcomes", text.lower())
+            self.assertNotIn("task create --requirement", text)
+            self.assertNotIn("Follow up on", text)
+
     def test_task_create_help_uses_native_workflow_wording(self) -> None:
         output = io.StringIO()
         with redirect_stdout(output), self.assertRaises(SystemExit) as raised:
@@ -279,6 +311,66 @@ def _seed_for_create(root: Path) -> None:
     write_data(root / "docs" / "source" / "sources.yml", [])
     write_data(root / "docs" / "discovery" / "assumptions.yml", [])
     write_data(root / "docs" / "discovery" / "readiness.yml", {"score": 100})
+
+
+def _seed_no_ready_task_with_ready_outcomes(root: Path) -> None:
+    (root / "agent" / "context-packs").mkdir(parents=True)
+    (root / "agent" / "runs" / "complete-run").mkdir(parents=True)
+    (root / "docs" / "discovery").mkdir(parents=True)
+    (root / "docs" / "traceability").mkdir(parents=True)
+    write_data(
+        root / "docs" / "discovery" / "readiness.yml",
+        {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+    )
+    write_data(
+        root / "docs" / "traceability" / "requirements.yml",
+        [
+            {
+                "id": "R-120",
+                "title": "FeatureDomain UI projection",
+                "description": "FeatureDomain UI projection.",
+                "status": "accepted",
+                "priority": "P1",
+            }
+        ],
+    )
+    _write_pack(
+        root / "agent" / "context-packs" / "T-001-complete.md",
+        "T-001",
+        "Complete R-120 Slice",
+        "implementation",
+        "R-120",
+    )
+    write_data(
+        root / "agent" / "runs" / "complete-run" / "state.yml",
+        {
+            "run_id": "complete-run",
+            "status": "complete",
+            "context_pack": "agent/context-packs/T-001-complete.md",
+            "updated_at": "2026-05-12T00:00:00Z",
+        },
+    )
+    write_data(
+        root / "agent" / "outcomes.yml",
+        {
+            "schema": "agentspec.outcomes.v0",
+            "outcomes": [
+                {
+                    "id": "OUT-005",
+                    "title": "FeatureDomain UI projection",
+                    "gates": [
+                        {
+                            "id": "G-001",
+                            "title": "FeatureDomain UI projection is verified",
+                            "status": "passed",
+                            "required": True,
+                            "evidence": [{"kind": "test", "path": "tests/test_feature_domain.py"}],
+                        }
+                    ],
+                }
+            ],
+        },
+    )
 
 
 def _write_pack(path: Path, task_id: str, title: str, task_type: str, requirement_id: str) -> None:
