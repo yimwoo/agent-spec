@@ -1,7 +1,9 @@
 import contextlib
 import io
 import json
+import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -296,6 +298,87 @@ class SessionCliTests(unittest.TestCase):
             )
             self.assertEqual(shared["status"], "active")
 
+    def test_simultaneous_owner_starts_do_not_share_write_lease(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_pack(root, "T-008-race.md")
+
+            base = [
+                sys.executable,
+                "-m",
+                "agentspec.cli",
+                "--root",
+                str(root),
+                "session",
+                "start",
+                "--task",
+                "T-008",
+                "--mode",
+                "owner",
+                "--branch",
+                "feature/race",
+                "--worktree",
+                str(root / "race-worktree"),
+                "--json",
+            ]
+            env = _subprocess_env()
+            first = subprocess.Popen(
+                [*base, "--owner", "first", "--session-id", "S-race-first"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=env,
+            )
+            second = subprocess.Popen(
+                [*base, "--owner", "second", "--session-id", "S-race-second"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=env,
+            )
+            first_stdout, _first_stderr = first.communicate()
+            second_stdout, _second_stderr = second.communicate()
+
+            results = [
+                (first.returncode, json.loads(first_stdout)),
+                (second.returncode, json.loads(second_stdout)),
+            ]
+            self.assertEqual([0, 1], sorted(returncode for returncode, _payload in results))
+            conflict_payload = next(payload for returncode, payload in results if returncode == 1)
+            self.assertEqual(conflict_payload["error"]["type"], "ValueError")
+            self.assertIn("already leases branch feature/race", conflict_payload["error"]["message"])
+
+            list_payload = _run_json(root, ["session", "list", "--json"])
+            owner_sessions = [record for record in list_payload["active"] if record["mode"] == "owner"]
+            self.assertEqual(1, len(owner_sessions))
+
+    def test_session_start_clears_stale_start_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_pack(root, "T-009-stale-lock.md")
+            lock_path = root / "agent" / "sessions" / "active" / ".session-start.lock"
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            lock_path.write_text("12345\n", encoding="utf-8")
+
+            with patch.object(session_module, "_process_exists", return_value=False):
+                start_payload = _run_json(
+                    root,
+                    [
+                        "session",
+                        "start",
+                        "--task",
+                        "T-009",
+                        "--owner",
+                        "codex",
+                        "--session-id",
+                        "S-stale-lock",
+                        "--json",
+                    ],
+                )
+
+            self.assertEqual(start_payload["status"], "active")
+            self.assertFalse(lock_path.exists())
+
 
 def _run_json(root: Path, args: list[str]) -> dict:
     output = io.StringIO()
@@ -329,6 +412,14 @@ def _init_git_repo(root: Path, branch: str) -> None:
         text=True,
         check=True,
     )
+
+
+def _subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    repo_root = str(Path(__file__).resolve().parent.parent)
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = repo_root if not existing else f"{repo_root}{os.pathsep}{existing}"
+    return env
 
 
 def _write_pack(root: Path, name: str) -> None:

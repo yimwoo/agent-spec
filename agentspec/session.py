@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
+import time
 import uuid
 from collections import Counter
+from contextlib import contextmanager, suppress
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,6 +21,8 @@ ALLOWED_SESSION_MODES = {"observer", "owner", "patcher"}
 ALLOWED_FINISH_DISPOSITIONS = {"discard", "keep", "merge", "pr"}
 ALLOWED_TEST_STATUSES = {"failed", "not_run", "passed"}
 WRITE_SESSION_MODES = {"owner", "patcher"}
+SESSION_START_LOCK_TIMEOUT_SECONDS = 10.0
+SESSION_START_LOCK_POLL_SECONDS = 0.02
 
 
 def start_session(
@@ -43,54 +48,55 @@ def start_session(
     _validate_session_id(session_id)
 
     active_path = _active_path(root, session_id)
-    archived_path = _archived_path(root, session_id)
-    if active_path.exists() or archived_path.exists():
-        raise FileExistsError(f"Session already exists: {session_id}")
+    with _session_start_lock(root):
+        archived_path = _archived_path(root, session_id)
+        if active_path.exists() or archived_path.exists():
+            raise FileExistsError(f"Session already exists: {session_id}")
 
-    branch = branch or _current_git_branch(root)
-    worktree = worktree or _current_git_worktree(root)
-    if not allow_shared:
-        conflict = _find_write_lease_conflict(
-            root,
-            mode=mode,
-            branch=branch,
-            worktree=worktree,
-        )
-        if conflict is not None:
-            raise ValueError(_format_write_lease_conflict(conflict))
+        branch = branch or _current_git_branch(root)
+        worktree = worktree or _current_git_worktree(root)
+        if not allow_shared:
+            conflict = _find_write_lease_conflict(
+                root,
+                mode=mode,
+                branch=branch,
+                worktree=worktree,
+            )
+            if conflict is not None:
+                raise ValueError(_format_write_lease_conflict(conflict))
 
-    now = utc_now_iso()
-    lease = {
-        "schema": SESSION_LEASE_SCHEMA,
-        "session_id": session_id,
-        "status": "active",
-        "terminal": False,
-        "owner": owner or "unknown",
-        "mode": mode,
-        "created_at": now,
-        "updated_at": now,
-        "context_pack": context["context_pack"],
-        "context_pack_title": context["title"],
-        "context_pack_sha256": context["sha256"],
-        "task_id": context.get("task_id"),
-        "task_type": context.get("task_type"),
-        "originating_dcr": context.get("originating_dcr"),
-        "requirements": context.get("requirements", []),
-        "allowed_paths": context.get("allowed_paths", []),
-        "branch": branch,
-        "worktree": worktree,
-        "run_id": run_id,
-        "note": note,
-        "history": [
-            {
-                "at": now,
-                "action": "started",
-                "by": owner or "unknown",
-                "note": note,
-            }
-        ],
-    }
-    _write_new_session(active_path, lease)
+        now = utc_now_iso()
+        lease = {
+            "schema": SESSION_LEASE_SCHEMA,
+            "session_id": session_id,
+            "status": "active",
+            "terminal": False,
+            "owner": owner or "unknown",
+            "mode": mode,
+            "created_at": now,
+            "updated_at": now,
+            "context_pack": context["context_pack"],
+            "context_pack_title": context["title"],
+            "context_pack_sha256": context["sha256"],
+            "task_id": context.get("task_id"),
+            "task_type": context.get("task_type"),
+            "originating_dcr": context.get("originating_dcr"),
+            "requirements": context.get("requirements", []),
+            "allowed_paths": context.get("allowed_paths", []),
+            "branch": branch,
+            "worktree": worktree,
+            "run_id": run_id,
+            "note": note,
+            "history": [
+                {
+                    "at": now,
+                    "action": "started",
+                    "by": owner or "unknown",
+                    "note": note,
+                }
+            ],
+        }
+        _write_new_session(active_path, lease)
     return _with_dynamic_path(root, active_path, lease)
 
 
@@ -242,6 +248,10 @@ def _archived_path(root: Path, session_id: str) -> Path:
     return _archived_dir(root) / f"{session_id}.yml"
 
 
+def _session_start_lock_path(root: Path) -> Path:
+    return _active_dir(root) / ".session-start.lock"
+
+
 def _resolve_context_pack_selector(root: Path, selector: str) -> Path:
     raw = selector.strip()
     if not raw:
@@ -369,6 +379,60 @@ def _git_stdout(root: Path, *args: str) -> str | None:
         return None
     value = result.stdout.strip()
     return value or None
+
+
+@contextmanager
+def _session_start_lock(root: Path):
+    lock_path = _session_start_lock_path(root)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + SESSION_START_LOCK_TIMEOUT_SECONDS
+    acquired = False
+    while not acquired:
+        try:
+            with lock_path.open("x", encoding="utf-8") as handle:
+                handle.write(f"{os.getpid()}\n")
+            acquired = True
+        except FileExistsError as exc:
+            if _clear_stale_session_start_lock(lock_path):
+                continue
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"Timed out waiting for session start lock: {lock_path}") from exc
+            time.sleep(SESSION_START_LOCK_POLL_SECONDS)
+    try:
+        yield
+    finally:
+        with suppress(FileNotFoundError):
+            lock_path.unlink()
+
+
+def _clear_stale_session_start_lock(lock_path: Path) -> bool:
+    pid = _read_session_start_lock_pid(lock_path)
+    if pid is None or _process_exists(pid):
+        return False
+    with suppress(FileNotFoundError):
+        lock_path.unlink()
+        return True
+    return False
+
+
+def _read_session_start_lock_pid(lock_path: Path) -> int | None:
+    try:
+        raw = lock_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not raw.isdigit():
+        return None
+    return int(raw)
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except (PermissionError, OSError):
+        return True
+    return True
 
 
 def _find_write_lease_conflict(
