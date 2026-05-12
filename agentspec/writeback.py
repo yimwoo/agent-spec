@@ -352,7 +352,7 @@ def build_lifecycle_projection(
 
     root = root.resolve()
     warnings: list[dict[str, Any]] = []
-    warnings.extend(_workflow_warnings(workflows))
+    warnings.extend(_workflow_warnings(root, workflows))
     warnings.extend(_completion_warnings(root))
     warnings.extend(_handoff_warnings(handoff, project_counts))
     warnings.extend(_roadmap_warnings(root))
@@ -390,8 +390,9 @@ def lifecycle_warning_lines(lifecycle: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _workflow_warnings(workflows: dict[str, Any]) -> list[dict[str, Any]]:
+def _workflow_warnings(root: Path, workflows: dict[str, Any]) -> list[dict[str, Any]]:
     warnings: list[dict[str, Any]] = []
+    completed_context_packs = {context_pack for context_pack, _ in _completed_task_entries(root)}
     for orphan in _list(workflows.get("orphans")):
         path = orphan.get("path")
         warnings.append(
@@ -405,6 +406,8 @@ def _workflow_warnings(workflows: dict[str, Any]) -> list[dict[str, Any]]:
         )
     for broken in _list(workflows.get("broken_links")):
         context_pack = broken.get("context_pack") or broken.get("task_pack")
+        if isinstance(context_pack, str) and context_pack in completed_context_packs:
+            continue
         warnings.append(
             {
                 "type": "broken_workflow_link",
