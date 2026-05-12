@@ -1,0 +1,35 @@
+{
+  "schema": "agentspec.skill_manifest.v0",
+  "public_skills": [
+    "init-project",
+    "project-status",
+    "brainstorm",
+    "design-work",
+    "plan-workflow",
+    "continue-work",
+    "review-doc",
+    "finish-work",
+    "outcome-audit"
+  ],
+  "controller_skills": [
+    {"id": "manual-source-intake", "public_entrypoint": "design-work", "fallback": "aspec intake import"},
+    {"id": "compile-spec", "public_entrypoint": "design-work", "fallback": "aspec compile"},
+    {"id": "create-task", "public_entrypoint": "plan-workflow", "fallback": "aspec task create"},
+    {"id": "start-branch", "public_entrypoint": "continue-work", "fallback": "aspec session start"},
+    {"id": "execute-workflow", "public_entrypoint": "continue-work", "fallback": "aspec run loop"},
+    {"id": "delegate-work", "public_entrypoint": "continue-work", "fallback": "aspec run package"},
+    {"id": "verify-work", "public_entrypoint": "finish-work", "fallback": "aspec outcome --json"},
+    {"id": "review-code", "public_entrypoint": "finish-work", "fallback": "aspec review code"},
+    {"id": "drift-review", "public_entrypoint": "outcome-audit", "fallback": "aspec drift"},
+    {"id": "roadmap", "public_entrypoint": "project-status", "fallback": "aspec roadmap"},
+    {"id": "finish-branch", "public_entrypoint": "finish-work", "fallback": "aspec finish"},
+    {"id": "handoff-recovery", "public_entrypoint": "project-status", "fallback": "aspec next-action"}
+  ],
+  "worker_bundles": [
+    {"id": "implementation-disciplines", "delivery": "worker_bundle", "path": "workers/bundles/implementation-disciplines.md"}
+  ],
+  "reviewer_profiles": [
+    {"id": "document-reviewer", "public_entrypoint": "review-doc", "delivery": "reviewer_profile", "path": "reviewers/profiles/document-reviewer.md"}
+  ]
+}
+

@@ -153,8 +153,10 @@ class CliWorkflowTests(unittest.TestCase):
                 )
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-spec-reviewer.md").exists())
                 self.assertTrue((project / ".claude" / "agents" / "agentspec-quality-gc-reviewer.md").exists())
-                self.assertTrue((project / ".claude" / "skills" / "agentspec-lifecycle" / "SKILL.md").exists())
-                self.assertTrue((project / ".claude" / "skills" / "agentspec-execute-workflow" / "SKILL.md").exists())
+                self.assertTrue((project / ".claude" / "skills" / "agentspec-project-status" / "SKILL.md").exists())
+                self.assertTrue((project / ".claude" / "skills" / "agentspec-continue-work" / "SKILL.md").exists())
+                self.assertFalse((project / ".claude" / "skills" / "agentspec-lifecycle" / "SKILL.md").exists())
+                self.assertFalse((project / ".claude" / "skills" / "agentspec-execute-workflow" / "SKILL.md").exists())
                 self.assertTrue((project / ".codex" / "agents" / "spec-reviewer.toml").exists())
                 self.assertTrue((project / ".codex" / "agents" / "quality-gc-reviewer.toml").exists())
                 self.assertIn(
