@@ -48,6 +48,7 @@ _STANDARD_VERIFICATION_SUPPORT_PATHS = frozenset(
         "agent/handoff.yml",
     }
 )
+_MODEL_REVIEW_UNAVAILABLE_FLAG = "model_review_unavailable"
 _RESEARCH_PATH_PREFIXES: tuple[str, ...] = (
     "reports/dogfood/",
     "docs/discovery/open-questions.yml",
@@ -358,7 +359,36 @@ def resume_run(
     # demote to auto_continue; None → existing T-028 path
     # (open-question + halt) — the conservative fallback when the
     # deterministic classifier doesn't match either bucket.
-    if review.decision == "pause_for_human" and mode in {"autonomous", "research"}:
+    if (
+        review.decision == "pause_for_human"
+        and mode in {"autonomous", "research"}
+        and _is_model_review_unavailable_pause(review)
+    ):
+        state["status"] = "halted"
+        state["last_decision"] = "halt"
+        state["infrastructure_blocker"] = {
+            "kind": _MODEL_REVIEW_UNAVAILABLE_FLAG,
+            "reason": review.reason,
+            "recovery": (
+                "Configure a usable continuation reviewer profile, rerun with "
+                "--reviewer deterministic, or record explicit review evidence before finishing."
+            ),
+        }
+        _append_event(
+            root,
+            run_id,
+            {
+                "kind": "autonomous_infrastructure_block",
+                "iteration": iteration,
+                "policy_flags": list(review.policy_flags),
+                "original_decision": "pause_for_human",
+                "applied_decision": "halt",
+                "reason": review.reason,
+                "recovery": state["infrastructure_blocker"]["recovery"],
+            },
+            run_dir=run_dir,
+        )
+    elif review.decision == "pause_for_human" and mode in {"autonomous", "research"}:
         severity = review.severity
         if severity == "high":
             dcr_id = _record_high_pause_dcr_stub(root, run_id, state, review)
@@ -946,6 +976,11 @@ def _next_action_for_status(status: str) -> str:
         "halted": "stop",
         "aborted": "stop",
     }.get(status, "await_human")
+
+
+def _is_model_review_unavailable_pause(review: Any) -> bool:
+    flags = getattr(review, "policy_flags", [])
+    return _MODEL_REVIEW_UNAVAILABLE_FLAG in flags
 
 
 def _resolve_context_pack(root: Path, context_pack: Path) -> Path:
