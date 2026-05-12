@@ -670,6 +670,45 @@ class RunnerPackageTests(unittest.TestCase):
 
             self.assertEqual(load_data(state_path), before)
 
+    def test_runner_result_recovers_halted_research_run_with_acceptance_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research-recover")
+
+            halted = submit_runner_result(
+                root,
+                "pkg-research-recover",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                    "reviewer_mode": "model",
+                },
+                runner="generic",
+            )
+            self.assertEqual(halted["step"]["state"]["status"], "halted")
+
+            recovered = submit_runner_result(
+                root,
+                "pkg-research-recover",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done. Acceptance criteria are covered by the DCR and verification passed.",
+                    "touched_paths": ["docs/change-requests/DCR-0099-research.md"],
+                    "test_status": "passed",
+                    "acceptance_evidence": _valid_research_evidence(),
+                    "reviewer_mode": "deterministic",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(recovered["next_action"], "complete")
+            self.assertEqual(recovered["step"]["state"]["status"], "complete")
+            self.assertTrue(any(event["kind"] == "halted_run_reopened" for event in _events(root, "pkg-research-recover")))
+
 
 def _seed(root: Path, *, host_worktree: bool = True) -> None:
     (root / ".agentspec").mkdir(parents=True)

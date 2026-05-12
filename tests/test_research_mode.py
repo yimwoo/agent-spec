@@ -247,6 +247,29 @@ class ResearchHardLimitsTests(unittest.TestCase):
             self.assertEqual(state["status"], "halted")
             self.assertIn("destructive_git", result["review"].get("policy_flags", []))
 
+    def test_policy_halt_remains_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-policy-terminal")
+
+            resume_run(
+                root,
+                "r-policy-terminal",
+                executor_output="ran git push --force origin main",
+                touched_paths=[],
+                test_status="not_run",
+            )
+
+            with self.assertRaisesRegex(ValueError, "already halted"):
+                resume_run(
+                    root,
+                    "r-policy-terminal",
+                    executor_output="Done. Acceptance criteria are covered and verification passed.",
+                    touched_paths=["docs/change-requests/DCR-0099-research.md"],
+                    test_status="passed",
+                )
+
     def test_acceptance_attempt_halts(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -287,6 +310,37 @@ class ResearchHardLimitsTests(unittest.TestCase):
 
 
 class ResearchAcceptanceEvidenceTests(unittest.TestCase):
+    def test_halted_research_run_accepts_corrected_quality_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-corrected-evidence")
+
+            first = resume_run(
+                root,
+                "r-corrected-evidence",
+                executor_output="Done.",
+                touched_paths=["docs/change-requests/DCR-0099-research.md"],
+                test_status="passed",
+            )
+            self.assertEqual(first["state"]["status"], "halted")
+            self.assertEqual(first["review"]["decision"], "pause_for_human")
+
+            corrected = resume_run(
+                root,
+                "r-corrected-evidence",
+                executor_output="Done. Acceptance criteria are covered by the DCR and verification passed.",
+                touched_paths=["docs/change-requests/DCR-0099-research.md"],
+                test_status="passed",
+            )
+
+            self.assertEqual(corrected["state"]["status"], "complete")
+            self.assertEqual(corrected["review"]["decision"], "complete")
+
+            events = _events(root, "r-corrected-evidence")
+            self.assertTrue(any(event["kind"] == "autonomous_pause_to_dcr" for event in events))
+            self.assertTrue(any(event["kind"] == "halted_run_reopened" for event in events))
+
     def test_valid_research_evidence_completes_with_terse_output(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -395,11 +449,16 @@ def _seed_git_dirty_research_workspace(root: Path) -> None:
 
 
 def _executor_event(root: Path, run_id: str) -> dict:
-    events = [
+    events = _events(root, run_id)
+    return next(event for event in events if event["kind"] == "executor_output")
+
+
+def _events(root: Path, run_id: str) -> list[dict]:
+    return [
         json.loads(line)
         for line in (root / "agent" / "runs" / run_id / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
     ]
-    return next(event for event in events if event["kind"] == "executor_output")
 
 
 def _git(root: Path, *args: str) -> None:

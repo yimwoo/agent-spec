@@ -203,8 +203,15 @@ def resume_run(
 ) -> dict[str, Any]:
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
-    if state.get("status") in {"halted", "complete", "aborted"}:
+    status = str(state.get("status"))
+    was_halted = status == "halted"
+    events: list[dict[str, Any]] = []
+    if status in {"complete", "aborted"}:
         raise ValueError(f"Run {run_id} is already {state.get('status')}.")
+    if was_halted:
+        events = _load_events(root, run_id, run_dir=run_dir)
+        if not _halted_run_accepts_corrected_evidence(state, events):
+            raise ValueError(f"Run {run_id} is already {state.get('status')}.")
     _ensure_run_state_writable(root, run_dir)
 
     touched_paths = touched_paths or []
@@ -293,6 +300,19 @@ def resume_run(
         "reviewer_profile": _reviewer_profile_for_decision(state, review.decision),
         **review.to_dict(),
     }
+    if was_halted:
+        _append_event(
+            root,
+            run_id,
+            {
+                "kind": "halted_run_reopened",
+                "iteration": iteration,
+                "previous_status": "halted",
+                "previous_last_decision": state.get("last_decision"),
+                "reason": "Corrected executor evidence submitted after a reviewer-created halt.",
+            },
+            run_dir=run_dir,
+        )
     _append_event(root, run_id, executor_event, run_dir=run_dir)
     _append_event(root, run_id, reviewer_event, run_dir=run_dir)
 
@@ -1018,6 +1038,19 @@ def _next_action_for_status(status: str) -> str:
         "halted": "stop",
         "aborted": "stop",
     }.get(status, "await_human")
+
+
+def _halted_run_accepts_corrected_evidence(state: dict[str, Any], events: list[dict[str, Any]]) -> bool:
+    if state.get("mode") not in {"autonomous", "research"}:
+        return False
+
+    for event in reversed(events):
+        kind = event.get("kind")
+        if kind in {"autonomous_pause_to_dcr", "autonomous_infrastructure_block"}:
+            return True
+        if kind == "reviewer_verdict" and event.get("decision") == "halt":
+            return False
+    return isinstance(state.get("infrastructure_blocker"), dict)
 
 
 def _is_model_review_unavailable_pause(review: Any) -> bool:
