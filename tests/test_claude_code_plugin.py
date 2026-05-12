@@ -11,23 +11,26 @@ from agentspec.emit import emit_targets
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN_ROOT = REPO_ROOT / "agentspec-claude-plugin"
-SKILL_NAMES = [
+PUBLIC_SKILL_NAMES = [
     "brainstorm",
-    "compile-spec",
     "continue-work",
-    "create-task",
-    "delegate-work",
     "design-work",
-    "drift-review",
-    "execute-workflow",
-    "finish-branch",
     "finish-work",
-    "handoff-recovery",
     "init-project",
-    "manual-source-intake",
     "outcome-audit",
     "plan-workflow",
     "project-status",
+    "review-doc",
+]
+CONTROLLER_SKILL_NAMES = [
+    "compile-spec",
+    "create-task",
+    "delegate-work",
+    "drift-review",
+    "execute-workflow",
+    "finish-branch",
+    "handoff-recovery",
+    "manual-source-intake",
     "review-code",
     "roadmap",
     "start-branch",
@@ -50,9 +53,15 @@ class ClaudeCodePluginTests(unittest.TestCase):
             sorted((PLUGIN_ROOT / ".claude-plugin").glob("*")),
         )
 
-        for skill_name in SKILL_NAMES:
+        for skill_name in PUBLIC_SKILL_NAMES:
             self.assertTrue(
                 (PLUGIN_ROOT / "skills" / skill_name / "SKILL.md").exists(),
+                skill_name,
+            )
+        for skill_name in CONTROLLER_SKILL_NAMES:
+            self.assertFalse((PLUGIN_ROOT / "skills" / skill_name / "SKILL.md").exists())
+            self.assertTrue(
+                (PLUGIN_ROOT / "controller" / "skills" / skill_name / "SKILL.md").exists(),
                 skill_name,
             )
 
@@ -70,7 +79,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
         self.assertIn("AgentSpec", plugin["description"])
 
     def test_claude_plugin_skills_have_discoverable_frontmatter(self) -> None:
-        for skill_name in SKILL_NAMES:
+        for skill_name in PUBLIC_SKILL_NAMES:
             skill_path = PLUGIN_ROOT / "skills" / skill_name / "SKILL.md"
             text = skill_path.read_text(encoding="utf-8")
             frontmatter = _frontmatter(text)
@@ -88,6 +97,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
             "/plugin install aspec@agentspec",
             "/aspec:init-project",
             "/aspec:continue-work",
+            "/aspec:review-doc",
             "CLI path",
             "Plugin path",
             "aspec --root \"$TARGET\" init",
@@ -100,7 +110,11 @@ class ClaudeCodePluginTests(unittest.TestCase):
     def test_claude_plugin_skills_are_cli_backed_thin_adapters(self) -> None:
         combined = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in sorted((PLUGIN_ROOT / "skills").glob("*/SKILL.md"))
+            for path in [
+                *sorted((PLUGIN_ROOT / "skills").glob("*/SKILL.md")),
+                *sorted((PLUGIN_ROOT / "controller" / "skills").glob("*/SKILL.md")),
+                PLUGIN_ROOT / "reviewers" / "profiles" / "document-reviewer.md",
+            ]
         )
         readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
         normalized = " ".join((combined + "\n" + readme).split())
@@ -133,12 +147,14 @@ class ClaudeCodePluginTests(unittest.TestCase):
         self.assertNotIn("agentspec-codex-plugin", normalized)
 
     def test_claude_start_and_delegate_skills_require_dedicated_write_leases(self) -> None:
-        start_skill = (PLUGIN_ROOT / "skills" / "start-branch" / "SKILL.md").read_text(
+        start_skill = (
+            PLUGIN_ROOT / "controller" / "skills" / "start-branch" / "SKILL.md"
+        ).read_text(
             encoding="utf-8"
         )
-        delegate_skill = (PLUGIN_ROOT / "skills" / "delegate-work" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
+        delegate_skill = (
+            PLUGIN_ROOT / "controller" / "skills" / "delegate-work" / "SKILL.md"
+        ).read_text(encoding="utf-8")
 
         for text in [
             "dedicated git branch",
@@ -168,9 +184,17 @@ class ClaudeCodePluginTests(unittest.TestCase):
                     plugin_root / "skills" / "finish-work" / "SKILL.md"
                 ).read_text(encoding="utf-8")
                 verify_work = (
-                    plugin_root / "skills" / "verify-work" / "SKILL.md"
+                    plugin_root / "controller" / "skills" / "verify-work" / "SKILL.md"
                 ).read_text(encoding="utf-8")
-                combined = finish_work + "\n" + verify_work
+                design_work = (
+                    plugin_root / "skills" / "design-work" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                manual_source_intake = (
+                    plugin_root / "controller" / "skills" / "manual-source-intake" / "SKILL.md"
+                ).read_text(encoding="utf-8")
+                combined = "\n".join(
+                    [finish_work, verify_work, design_work, manual_source_intake]
+                )
 
                 self.assertIn("Human-Facing Output", combined)
                 self.assertIn("keep raw `aspec ...` commands internal", combined)
@@ -178,6 +202,10 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 self.assertIn("Roadmap freshness check passed", combined)
                 self.assertIn("Do not include a final \"Tests / checks run\" section", combined)
                 self.assertIn("Do not list `aspec outcome --json`", combined)
+                self.assertIn("Source candidate diff reviewed", combined)
+                self.assertIn("Candidate diff is ready for review", combined)
+                self.assertIn("End with a short \"Next\" block", combined)
+                self.assertIn("Approve SRC-#### and refresh AgentSpec projections", combined)
 
     def test_plugin_guidance_requires_session_gate_before_execution(self) -> None:
         plugin_roots = [
@@ -192,18 +220,24 @@ class ClaudeCodePluginTests(unittest.TestCase):
                         (plugin_root / "skills" / "continue-work" / "SKILL.md").read_text(
                             encoding="utf-8"
                         ),
-                        (plugin_root / "skills" / "create-task" / "SKILL.md").read_text(
-                            encoding="utf-8"
-                        ),
                         (plugin_root / "skills" / "plan-workflow" / "SKILL.md").read_text(
                             encoding="utf-8"
                         ),
-                        (plugin_root / "skills" / "start-branch" / "SKILL.md").read_text(
+                        (
+                            plugin_root / "controller" / "skills" / "create-task" / "SKILL.md"
+                        ).read_text(encoding="utf-8"),
+                        (
+                            plugin_root / "controller" / "skills" / "start-branch" / "SKILL.md"
+                        ).read_text(
                             encoding="utf-8"
                         ),
-                        (plugin_root / "skills" / "execute-workflow" / "SKILL.md").read_text(
-                            encoding="utf-8"
-                        ),
+                        (
+                            plugin_root
+                            / "controller"
+                            / "skills"
+                            / "execute-workflow"
+                            / "SKILL.md"
+                        ).read_text(encoding="utf-8"),
                         (plugin_root / "skills" / "finish-work" / "SKILL.md").read_text(
                             encoding="utf-8"
                         ),
@@ -230,10 +264,7 @@ class ClaudeCodePluginTests(unittest.TestCase):
                     (root / "AGENTS.md").read_text(encoding="utf-8"),
                     (root / "CLAUDE.md").read_text(encoding="utf-8"),
                     (
-                        root / ".claude" / "skills" / "agentspec-execute-workflow" / "SKILL.md"
-                    ).read_text(encoding="utf-8"),
-                    (
-                        root / ".claude" / "skills" / "agentspec-start-branch" / "SKILL.md"
+                        root / ".claude" / "skills" / "agentspec-continue-work" / "SKILL.md"
                     ).read_text(encoding="utf-8"),
                     (root / ".codex" / "agents" / "spec-reviewer.toml").read_text(
                         encoding="utf-8"
@@ -241,6 +272,13 @@ class ClaudeCodePluginTests(unittest.TestCase):
                 ]
             )
             normalized = " ".join(combined.split())
+            emitted_skills = {
+                path.parent.name
+                for path in (root / ".claude" / "skills").glob("*/SKILL.md")
+            }
+            self.assertIn("agentspec-continue-work", emitted_skills)
+            self.assertNotIn("agentspec-execute-workflow", emitted_skills)
+            self.assertNotIn("agentspec-start-branch", emitted_skills)
 
             for text in [
                 "task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish",
@@ -265,6 +303,20 @@ class ClaudeCodePluginTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("Validation passed", result.stdout)
+
+    def test_claude_internal_guidance_manifest_routes_from_public_skills(self) -> None:
+        manifest = json.loads(
+            (PLUGIN_ROOT / "manifests" / "skill-manifest.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(manifest["schema"], "agentspec.skill_manifest.v0")
+        self.assertEqual(sorted(manifest["public_skills"]), sorted(PUBLIC_SKILL_NAMES))
+        controller_by_id = {skill["id"]: skill for skill in manifest["controller_skills"]}
+        self.assertEqual(sorted(controller_by_id), sorted(CONTROLLER_SKILL_NAMES))
+        self.assertEqual(controller_by_id["execute-workflow"]["public_entrypoint"], "continue-work")
+        self.assertEqual(controller_by_id["manual-source-intake"]["public_entrypoint"], "design-work")
+        self.assertTrue((PLUGIN_ROOT / manifest["worker_bundles"][0]["path"]).exists())
+        self.assertTrue((PLUGIN_ROOT / manifest["reviewer_profiles"][0]["path"]).exists())
 
 
 def _frontmatter(text: str) -> dict[str, str]:

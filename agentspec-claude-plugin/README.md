@@ -5,10 +5,10 @@ continuing AgentSpec-governed repositories. The plugin is a thin adapter:
 Claude Code follows the packaged skills, but the `aspec` CLI remains the source
 of truth.
 
-The plugin package contains only the Claude plugin manifest, this README, and
-the `skills/` tree; it does not include the AgentSpec engine repository's
-private `agent/`, `reports/`, `.codex/`, `.claude/`, `.agentspec/`, or
-generated design/traceability docs.
+The plugin package contains only the Claude plugin manifest, this README,
+public `skills/`, and non-public controller/worker/reviewer guidance; it does
+not include the AgentSpec engine repository's private `agent/`, `reports/`,
+`.codex/`, `.claude/`, `.agentspec/`, or generated design/traceability docs.
 
 ## Install First
 
@@ -56,7 +56,7 @@ not start implementation execution until session preflight is satisfied.
 For a new design update:
 
 ```text
-/aspec:manual-source-intake
+/aspec:design-work
 
 Process this design update: <path-or-export>. Import it as a candidate or DCR,
 diff it against the accepted source, summarize the impact, and prepare the next
@@ -175,13 +175,24 @@ Promotion remains a human-reviewed action.
 
 Ask Claude Code to use `/aspec:continue-work`.
 
-Use related skills for specific jobs:
+Public AgentSpec plugin skills are intentionally limited to the human entry
+menu:
 
 - `/aspec:project-status`
-- `/aspec:create-task`
-- `/aspec:compile-spec`
-- `/aspec:drift-review`
-- `/aspec:manual-source-intake`
+- `/aspec:init-project`
+- `/aspec:brainstorm`
+- `/aspec:design-work`
+- `/aspec:plan-workflow`
+- `/aspec:continue-work`
+- `/aspec:review-doc`
+- `/aspec:finish-work`
+- `/aspec:outcome-audit`
+
+Lower-level controller procedures such as source intake, compile, task
+creation, branch/session start, workflow execution, verification, review-code,
+roadmap, and handoff recovery live under `controller/` and are invoked by the
+public entrypoints or by the AgentSpec CLI fallback commands listed in
+`manifests/skill-manifest.json`.
 
 ## Boundaries
 

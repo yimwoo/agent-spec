@@ -10,18 +10,21 @@ from .status import build_project_status
 
 EMITTED_CLAUDE_SKILLS: tuple[dict[str, str], ...] = (
     {
-        "name": "agentspec-lifecycle",
-        "description": "Inspect the native AgentSpec lifecycle operating contract, stage coverage, commands, skills, and adapter boundaries.",
-        "body": """Use this skill before choosing a lifecycle action or when the user asks what AgentSpec can govern.
+        "name": "agentspec-init-project",
+        "description": "Initialize AgentSpec in a new or existing repository, then emit repo-local Claude and Codex guidance.",
+        "body": """Use this skill when the user wants to set up AgentSpec in a repository.
 
 ## Commands
 
 ```bash
-aspec lifecycle --json
-aspec status --json
+aspec --root "$TARGET" init --mode greenfield --targets claude,codex
+aspec --root "$TARGET" emit --target claude,codex
+aspec --root "$TARGET" status
 ```
 
-Summarize the stage, status, native commands, and next native step. Do not invent dedicated commands for stages marked partial or planned.
+If the user has an initial design document, ingest it and compile requirements.
+Do not fabricate requirements from thin input; recommend discovery or
+brownfield mapping when source material is missing.
 """,
     },
     {
@@ -32,6 +35,7 @@ Summarize the stage, status, native commands, and next native step. Do not inven
 ## Commands
 
 ```bash
+aspec lifecycle --json
 aspec status --json
 aspec task next
 ```
@@ -42,24 +46,29 @@ Claim or verify an active owner/patcher session lease before implementation exec
 """,
     },
     {
-        "name": "agentspec-compile",
-        "description": "Compile accepted AgentSpec source snapshots into repo-local spec, requirements, assumptions, questions, and traceability.",
-        "body": """Use this skill after accepted source snapshots, DCR-backed requirements, or design source files change.
+        "name": "agentspec-brainstorm",
+        "description": "Frame ambiguous AgentSpec work as source-backed DCRs, discovery notes, or design inputs before implementation starts.",
+        "body": """Use this skill when the user has an idea, concern, failure pattern, or broad product direction that is not yet ready for implementation.
 
 ## Commands
 
 ```bash
-aspec compile
+aspec lifecycle --json
 aspec status --json
+aspec dcr create --title "<idea>" --classification spike
+aspec dcr create --title "<change>" --classification implement-now
+aspec dogfood record --title "<observation>" --slug "<short-slug>"
 ```
 
-Check generated requirements and cite requirement IDs and source sections in summaries.
+Summarize the problem, candidate scope, likely affected requirements, and what
+still needs design or source intake. This skill does not create implementation
+scope by itself.
 """,
     },
     {
-        "name": "agentspec-source-intake",
-        "description": "Import, diff, and promote local design or contract exports through AgentSpec source-governed candidate snapshots.",
-        "body": """Use this skill when a user provides a design export, Markdown note, API contract, or other local source file.
+        "name": "agentspec-design-work",
+        "description": "Turn accepted design material into AgentSpec source snapshots, requirements, and traceability without bypassing source governance.",
+        "body": """Use this skill when a user provides design material, a source export, a DCR-backed design update, or accepted source changes.
 
 ## Commands
 
@@ -68,15 +77,17 @@ aspec ingest <markdown-path>
 aspec intake import <path> --kind markdown --source-key <source-key> --classification internal --storage-mode committed --as-candidate
 aspec intake diff <snapshot-id>
 aspec intake promote <snapshot-id> --decision accepted --compile
+aspec compile
+aspec status --json
 ```
 
 Do not auto-promote candidate snapshots. AgentSpec owns source parsing, diffing, promotion, and accepted snapshots.
 """,
     },
     {
-        "name": "agentspec-create-task",
-        "description": "Create or select an AgentSpec task context pack from accepted requirements before implementation begins.",
-        "body": """Use this skill when implementation scope needs a bounded task pack with allowed paths.
+        "name": "agentspec-plan-workflow",
+        "description": "Create or select an AgentSpec task context pack and native workflow artifact before implementation begins.",
+        "body": """Use this skill when implementation scope needs a bounded task pack with allowed paths and a workflow plan.
 
 ## Commands
 
@@ -92,49 +103,17 @@ workflow planning and branch/worktree/session setup first.
 """,
     },
     {
-        "name": "agentspec-plan-workflow",
-        "description": "Create or link an AgentSpec native workflow artifact for a task context pack before execution.",
-        "body": """Use this skill before substantial feature, refactor, or lifecycle work.
+        "name": "agentspec-continue-work",
+        "description": "Continue work in an existing AgentSpec repository by reading status, selecting the next task, and respecting task-pack governance.",
+        "body": """Use this skill when the user wants to continue or resume AgentSpec-governed work.
 
 ## Commands
 
 ```bash
 aspec status --json
-aspec plan <T-id>
-```
-
-Verify the workflow is linked from the task pack and that verification commands are explicit.
-For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
-""",
-    },
-    {
-        "name": "agentspec-start-branch",
-        "description": "Start AgentSpec-governed branch or session work by claiming a task, branch, worktree, and allowed-path lease.",
-        "body": """Use this skill before implementation execution for any write-mode task.
-
-## Commands
-
-```bash
-aspec lifecycle --json
-aspec status --json
+aspec task next
 aspec session list --json
-git worktree add ../<worktree-name> -b <branch>
 aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
-```
-
-Claim or verify an active owner/patcher session lease before implementation execution.
-Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
-Explicit host-worktree execution is an auditable escape hatch when the workflow or context pack declares it intentionally.
-""",
-    },
-    {
-        "name": "agentspec-execute-workflow",
-        "description": "Run or resume AgentSpec task execution through native run state, task packs, allowed paths, and runner packages.",
-        "body": """Use this skill when the task context pack and workflow are ready for implementation.
-
-## Commands
-
-```bash
 aspec run loop
 aspec run prompt <run-id>
 aspec run package --runner generic --json
@@ -148,34 +127,21 @@ Keep edits inside the task context pack allowed paths and report touched paths i
 """,
     },
     {
-        "name": "agentspec-verify-work",
-        "description": "Verify AgentSpec implementation work with declared checks, lifecycle status, outcome gates, and roadmap freshness.",
-        "body": """Use this skill before claiming work is complete or ready for review.
+        "name": "agentspec-review-doc",
+        "description": "Review AgentSpec DCRs, designs, source candidates, discovery notes, and workflows through the document-review CLI.",
+        "body": """Use this skill when the user asks to review an AgentSpec design artifact before it becomes implementation authority.
 
 ## Commands
 
 ```bash
-aspec status --json
-aspec outcome --json
-aspec roadmap --check --json
+aspec review doc <path> --mode deterministic --json
+aspec review doc <path> --verdict ready --reviewer human --summary "<summary>" --json
+aspec review doc --check <path> --json
 ```
 
-Run the task pack verification commands too. Verification does not complete the task by itself.
-""",
-    },
-    {
-        "name": "agentspec-review-code",
-        "description": "Record AgentSpec task-level code review evidence after implementation and verification, before task completion.",
-        "body": """Use this skill after verification passes and before finishing the task.
-
-## Commands
-
-```bash
-aspec review code --task <T-id> --verdict ready --summary "No blocking findings."
-aspec status --json
-```
-
-Link the ready review id when completing or finishing the task.
+Review generated or agent-authored DCRs, design notes, discovery spikes, source
+candidates, and workflow plans before accepting, promoting, tasking, or
+executing them.
 """,
     },
     {
@@ -186,9 +152,12 @@ Link the ready review id when completing or finishing the task.
 ## Commands
 
 ```bash
+aspec status --json
+aspec outcome --json
+aspec roadmap --check --json
+aspec review code --task <T-id> --verdict ready --summary "No blocking findings."
 aspec finish <T-id> --dry-run --test-status passed --review REVIEW-####
 aspec finish <T-id> --test-status passed --review REVIEW-#### --reason "<summary>"
-aspec roadmap --check --json
 ```
 
 Finish after verification and review evidence. If an implementation session was
@@ -199,51 +168,37 @@ lifecycle status are ready.
 """,
     },
     {
-        "name": "agentspec-handoff-recovery",
-        "description": "Recover AgentSpec work from durable handoff, active run state, next-action guidance, and roadmap status.",
-        "body": """Use this skill when work was interrupted or the user asks what to do next.
+        "name": "agentspec-outcome-audit",
+        "description": "Audit AgentSpec product outcome readiness through workflow gates, blockers, evidence, and next actions.",
+        "body": """Use this skill when the user asks whether a project is ready for a production workflow, E2E journey, release, or milestone.
 
 ## Commands
 
 ```bash
-aspec lifecycle --json
+aspec outcome --json
 aspec status --json
-aspec next-action
-aspec run prompt <run-id>
-```
-
-Repair stale write-back with the command reported by status before continuing.
-""",
-    },
-    {
-        "name": "agentspec-drift-review",
-        "description": "Run AgentSpec drift review and inspect differences between current changes, source snapshots, requirements, and task scope.",
-        "body": """Use this skill for read-only drift checks before or after implementation.
-
-## Commands
-
-```bash
+aspec quality --json
 aspec drift
-aspec status --json
 ```
 
-Inspect `reports/drift/latest.md` and summarize findings with requirement IDs and source sections.
+Report outcome readiness separately from task counts. A completed task ledger
+does not prove production E2E readiness unless the relevant outcome gates are
+ready and backed by evidence.
 """,
     },
 )
 
 
 CODEX_LIFECYCLE_SKILLS = (
+    "aspec:init-project",
     "aspec:project-status",
     "aspec:brainstorm",
     "aspec:design-work",
     "aspec:plan-workflow",
-    "aspec:execute-workflow",
-    "aspec:delegate-work",
-    "aspec:verify-work",
-    "aspec:review-code",
-    "aspec:finish-branch",
-    "aspec:handoff-recovery",
+    "aspec:continue-work",
+    "aspec:review-doc",
+    "aspec:finish-work",
+    "aspec:outcome-audit",
 )
 
 

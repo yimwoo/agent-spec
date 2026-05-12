@@ -9,43 +9,58 @@ from agentspec.emit import EMITTED_CLAUDE_SKILLS, emit_targets
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+PUBLIC_SKILL_NAMES = [
+    "brainstorm",
+    "continue-work",
+    "design-work",
+    "finish-work",
+    "init-project",
+    "outcome-audit",
+    "plan-workflow",
+    "project-status",
+    "review-doc",
+]
+CONTROLLER_SKILL_NAMES = [
+    "compile-spec",
+    "create-task",
+    "delegate-work",
+    "drift-review",
+    "execute-workflow",
+    "finish-branch",
+    "handoff-recovery",
+    "manual-source-intake",
+    "review-code",
+    "roadmap",
+    "start-branch",
+    "verify-work",
+]
 
 
 class PluginSourceIntakeTests(unittest.TestCase):
     def test_codex_plugin_manual_source_intake_skill_is_cli_backed(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"
-        manifest_path = plugin_root / ".codex-plugin" / "plugin.json"
-        skill_path = plugin_root / "skills" / "manual-source-intake" / "SKILL.md"
+        plugin_manifest_path = plugin_root / ".codex-plugin" / "plugin.json"
+        skill_path = plugin_root / "controller" / "skills" / "manual-source-intake" / "SKILL.md"
         status_skill_path = plugin_root / "skills" / "project-status" / "SKILL.md"
+        skill_manifest_path = plugin_root / "manifests" / "skill-manifest.json"
 
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = json.loads(plugin_manifest_path.read_text(encoding="utf-8"))
+        skill_manifest = json.loads(skill_manifest_path.read_text(encoding="utf-8"))
         skill = skill_path.read_text(encoding="utf-8")
         status_skill = status_skill_path.read_text(encoding="utf-8")
 
         self.assertEqual(manifest["name"], "aspec")
         self.assertEqual(manifest["interface"]["displayName"], "aspec")
-        for skill_name in [
-            "brainstorm",
-            "compile-spec",
-            "continue-work",
-            "create-task",
-            "delegate-work",
-            "design-work",
-            "drift-review",
-            "execute-workflow",
-            "finish-branch",
-            "finish-work",
-            "handoff-recovery",
-            "init-project",
-            "manual-source-intake",
-            "outcome-audit",
-            "plan-workflow",
-            "project-status",
-            "review-code",
-            "start-branch",
-            "verify-work",
-        ]:
+        self.assertEqual(sorted(skill_manifest["public_skills"]), sorted(PUBLIC_SKILL_NAMES))
+        self.assertEqual(
+            sorted(skill["id"] for skill in skill_manifest["controller_skills"]),
+            sorted(CONTROLLER_SKILL_NAMES),
+        )
+        for skill_name in PUBLIC_SKILL_NAMES:
             self.assertTrue((plugin_root / "skills" / skill_name / "SKILL.md").exists())
+        for skill_name in CONTROLLER_SKILL_NAMES:
+            self.assertFalse((plugin_root / "skills" / skill_name / "SKILL.md").exists())
+            self.assertTrue((plugin_root / "controller" / "skills" / skill_name / "SKILL.md").exists())
         self.assertIn("Initialize AgentSpec", manifest["description"])
         self.assertIn("Continue AgentSpec work", manifest["interface"]["defaultPrompt"])
         self.assertIn("aspec intake import", skill)
@@ -72,6 +87,7 @@ class PluginSourceIntakeTests(unittest.TestCase):
             "aspec:init-project",
             "aspec status",
             "aspec:continue-work",
+            "aspec:review-doc",
             "Codex CLI",
             "/plugins",
             "Codex app",
@@ -128,11 +144,13 @@ class PluginSourceIntakeTests(unittest.TestCase):
 
     def test_codex_start_and_delegate_skills_require_dedicated_write_leases(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"
-        start_skill = (plugin_root / "skills" / "start-branch" / "SKILL.md").read_text(
+        start_skill = (
+            plugin_root / "controller" / "skills" / "start-branch" / "SKILL.md"
+        ).read_text(
             encoding="utf-8"
         )
         delegate_skill = (
-            plugin_root / "skills" / "delegate-work" / "SKILL.md"
+            plugin_root / "controller" / "skills" / "delegate-work" / "SKILL.md"
         ).read_text(encoding="utf-8")
 
         for text in [
@@ -166,7 +184,9 @@ class PluginSourceIntakeTests(unittest.TestCase):
                 self.assertIn("\ndeveloper_instructions =", role_text)
                 self.assertIn("developer_instructions", role_config)
                 self.assertIn("aspec lifecycle --json", role_config["developer_instructions"])
-                self.assertIn("aspec:execute-workflow", role_config["developer_instructions"])
+                self.assertIn("aspec:continue-work", role_config["developer_instructions"])
+                self.assertIn("aspec:review-doc", role_config["developer_instructions"])
+                self.assertNotIn("aspec:execute-workflow", role_config["developer_instructions"])
                 self.assertIn("Do not create project-local Codex skill state", role_config["developer_instructions"])
                 self.assertNotIn("instructions", role_config)
             self.assertFalse(
@@ -179,10 +199,12 @@ class PluginSourceIntakeTests(unittest.TestCase):
             root = Path(td)
             written = emit_targets(root, "claude")
             skill_names = [skill["name"] for skill in EMITTED_CLAUDE_SKILLS]
+            expected_skill_names = [f"agentspec-{name}" for name in PUBLIC_SKILL_NAMES]
 
-            self.assertIn("agentspec-lifecycle", skill_names)
-            self.assertIn("agentspec-execute-workflow", skill_names)
-            self.assertIn("agentspec-handoff-recovery", skill_names)
+            self.assertEqual(sorted(skill_names), sorted(expected_skill_names))
+            for controller_name in CONTROLLER_SKILL_NAMES:
+                self.assertNotIn(f"agentspec-{controller_name}", skill_names)
+            self.assertNotIn("agentspec-lifecycle", skill_names)
             for skill_name in skill_names:
                 skill_path = root / ".claude" / "skills" / skill_name / "SKILL.md"
                 self.assertIn(skill_path, written)
@@ -196,6 +218,11 @@ class PluginSourceIntakeTests(unittest.TestCase):
                 self.assertIn("## Commands", text)
                 self.assertIn("Boundary:", text)
                 self.assertNotIn("Run the matching AgentSpec CLI command", text)
+            emitted_dirs = sorted(
+                path.parent.name
+                for path in (root / ".claude" / "skills").glob("*/SKILL.md")
+            )
+            self.assertEqual(sorted(expected_skill_names), emitted_dirs)
 
             combined = "\n".join(
                 (root / ".claude" / "skills" / skill_name / "SKILL.md").read_text(
@@ -208,12 +235,13 @@ class PluginSourceIntakeTests(unittest.TestCase):
                 "aspec status --json",
                 "aspec compile",
                 "aspec intake import",
+                "aspec task create",
                 "aspec plan",
                 "aspec run loop",
                 "aspec outcome --json",
+                "aspec review doc",
                 "aspec review code",
                 "aspec finish",
-                "aspec next-action",
                 "aspec drift",
             ]:
                 self.assertIn(command, combined)
@@ -234,8 +262,24 @@ class PluginSourceIntakeTests(unittest.TestCase):
             "reports/",
         )
         plugin_roots = {
-            "agentspec-codex-plugin": {".codex-plugin", "README.md", "skills"},
-            "agentspec-claude-plugin": {".claude-plugin", "README.md", "skills"},
+            "agentspec-codex-plugin": {
+                ".codex-plugin",
+                "README.md",
+                "controller",
+                "manifests",
+                "reviewers",
+                "skills",
+                "workers",
+            },
+            "agentspec-claude-plugin": {
+                ".claude-plugin",
+                "README.md",
+                "controller",
+                "manifests",
+                "reviewers",
+                "skills",
+                "workers",
+            },
         }
 
         for plugin_name, allowed_roots in plugin_roots.items():
@@ -306,7 +350,7 @@ class PluginSourceIntakeTests(unittest.TestCase):
     def test_manual_source_intake_explains_ingest_baseline_source_key(self) -> None:
         plugin_root = REPO_ROOT / "agentspec-codex-plugin"
         skill = (
-            plugin_root / "skills" / "manual-source-intake" / "SKILL.md"
+            plugin_root / "controller" / "skills" / "manual-source-intake" / "SKILL.md"
         ).read_text(encoding="utf-8")
 
         for text in [
@@ -326,21 +370,31 @@ class PluginSourceIntakeTests(unittest.TestCase):
 
         combined = "\n".join(path.read_text(encoding="utf-8") for path in docs)
 
-        self.assertIn("aspec:init-project", combined)
-        self.assertIn("aspec:continue-work", combined)
-        self.assertIn("aspec:brainstorm", combined)
-        self.assertIn("aspec:design-work", combined)
-        self.assertIn("aspec:start-branch", combined)
-        self.assertIn("aspec:execute-workflow", combined)
-        self.assertIn("aspec:delegate-work", combined)
-        self.assertIn("aspec:outcome-audit", combined)
-        self.assertIn("aspec:plan-workflow", combined)
-        self.assertIn("aspec:verify-work", combined)
-        self.assertIn("aspec:review-code", combined)
-        self.assertIn("aspec:finish-branch", combined)
-        self.assertIn("aspec:finish-work", combined)
-        self.assertIn("aspec:handoff-recovery", combined)
+        for skill_name in PUBLIC_SKILL_NAMES:
+            self.assertIn(f"aspec:{skill_name}", combined)
+        for skill_name in CONTROLLER_SKILL_NAMES:
+            self.assertNotIn(f"aspec:{skill_name}", combined)
         self.assertNotIn("agentspec-codex-plugin:", combined)
+
+    def test_codex_internal_guidance_is_reachable_outside_public_skills(self) -> None:
+        plugin_root = REPO_ROOT / "agentspec-codex-plugin"
+        manifest = json.loads(
+            (plugin_root / "manifests" / "skill-manifest.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(manifest["schema"], "agentspec.skill_manifest.v0")
+        controller_by_id = {skill["id"]: skill for skill in manifest["controller_skills"]}
+        self.assertEqual(controller_by_id["execute-workflow"]["public_entrypoint"], "continue-work")
+        self.assertEqual(controller_by_id["review-code"]["public_entrypoint"], "finish-work")
+        self.assertEqual(controller_by_id["manual-source-intake"]["public_entrypoint"], "design-work")
+        self.assertTrue((plugin_root / manifest["worker_bundles"][0]["path"]).exists())
+        self.assertTrue((plugin_root / manifest["reviewer_profiles"][0]["path"]).exists())
+        self.assertIn(
+            "aspec run loop",
+            (plugin_root / "controller" / "skills" / "execute-workflow" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
 
 
 def _frontmatter(text: str) -> dict[str, str]:
