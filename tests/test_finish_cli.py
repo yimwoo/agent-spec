@@ -8,6 +8,7 @@ from pathlib import Path
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
 from agentspec.roadmap import check_roadmap, write_roadmap
+from agentspec.status import build_project_status
 
 
 class FinishCLITests(unittest.TestCase):
@@ -16,6 +17,21 @@ class FinishCLITests(unittest.TestCase):
             root = Path(td)
             _seed(root)
             _write_review(root, "REVIEW-0001", "agent/context-packs/T-013-task.md", "ready")
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-09T00:00:00Z",
+                    "current_state": {
+                        "requirements": {"total": 0},
+                        "dcrs": {"total": 0},
+                        "tasks": {"total": 0},
+                    },
+                    "next_action": {"kind": "idle", "command": "aspec status --json"},
+                },
+            )
+            write_roadmap(root)
+            self.assertEqual(check_roadmap(root)["current"], True)
 
             payload = _run_json(
                 root,
@@ -48,6 +64,11 @@ class FinishCLITests(unittest.TestCase):
             handoff = load_data(root / "agent" / "handoff.yml")
             self.assertEqual(handoff["last_completed_task"]["run_id"], "finish-t013")
             self.assertEqual(handoff["last_completed_task"]["code_review"]["id"], "REVIEW-0001")
+            status = build_project_status(root)
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["lifecycle"]["warnings"], [])
+            self.assertEqual(handoff["current_state"]["overall"], status["overall"])
+            self.assertEqual(handoff["current_state"]["recommendation"], status["recommendation"])
 
     def test_finish_dry_run_reports_findings_without_mutating_state(self) -> None:
         with tempfile.TemporaryDirectory() as td:
