@@ -238,6 +238,98 @@ class StatusCLITests(unittest.TestCase):
             self.assertIn('aspec task create --requirement R-209 --type implementation', text)
             self.assertNotIn("<title>", text)
 
+    def test_status_no_ready_task_does_not_recommend_duplicate_covered_requirement(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [
+                    {
+                        "id": "R-209",
+                        "status": "accepted",
+                        "priority": "P1",
+                        "title": "AgentSpec explains lifecycle summaries and next actions",
+                    }
+                ],
+            )
+            (root / "agent" / "context-packs" / "T-001-complete.md").write_text(
+                """# T-001: Complete
+
+Type: `implementation`
+
+## Requirements
+
+- `R-209` AgentSpec explains lifecycle summaries and next actions
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {
+                        "selector": "T-001",
+                        "context_pack": "agent/context-packs/T-001-complete.md",
+                    },
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "updated_at": "2026-05-01T00:00:00Z",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                        }
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "updated_at": "2026-05-01T00:00:00Z",
+                    "last_completed_task": {
+                        "id": "T-001",
+                        "context_pack": "agent/context-packs/T-001-complete.md",
+                        "run_id": "run-001",
+                    },
+                    "current_state": {
+                        "requirements": {"total": 1},
+                        "dcrs": {"total": 0},
+                        "tasks": {"total": 1},
+                    },
+                    "next_action": {"kind": "idle", "command": "aspec status --json"},
+                },
+            )
+
+            status = build_project_status(root)
+            action = status["lifecycle_summary"]["recommended_next_action"]
+            commands = "\n".join(action["commands"])
+
+            self.assertEqual(status["requirements"]["uncovered_accepted_examples"], [])
+            self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+            self.assertIn("already represented by task context packs", action["reason"])
+            self.assertNotIn("aspec task create --requirement R-209", commands)
+            self.assertNotIn("Create a follow-up task for R-209", json.dumps(action["agent_display"]))
+
+            text = format_project_status(status)
+            self.assertNotIn("aspec task create --requirement R-209", text)
+
     def test_status_recommends_session_before_ready_task_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
