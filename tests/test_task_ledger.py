@@ -87,6 +87,38 @@ class TaskLedgerTests(unittest.TestCase):
             self.assertEqual(record["status_source"], "ledger")
             self.assertIn("new-ledger", record["status_reason"])
 
+    def test_completed_ledger_ignores_newer_aborted_stale_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            record_task_ledger_status(
+                root,
+                context_pack="agent/context-packs/T-001-ledger-complete.md",
+                status="complete",
+                run_id="finish-run",
+                updated_at="2026-04-28T20:00:00Z",
+            )
+            write_data(
+                root / "agent" / "runs" / "stale-run" / "state.yml",
+                {
+                    "run_id": "stale-run",
+                    "status": "aborted",
+                    "context_pack": "agent/context-packs/T-001-ledger-complete.md",
+                    "updated_at": "2026-04-28T21:00:00Z",
+                },
+            )
+
+            records = list_task_context_packs(root)
+            by_id = {record["id"]: record for record in records}
+            self.assertEqual(by_id["T-001"]["status"], "complete")
+            self.assertEqual(by_id["T-001"]["status_source"], "ledger")
+            self.assertIn("finish-run", by_id["T-001"]["status_reason"])
+
+            next_record = next_task_context_pack(root)
+            self.assertIsNotNone(next_record)
+            self.assertEqual(next_record["id"], "T-002")
+
     def test_record_task_ledger_status_writes_sorted_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
