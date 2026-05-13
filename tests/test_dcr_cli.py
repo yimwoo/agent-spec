@@ -61,14 +61,46 @@ class DCRCLICreateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed_workspace(root)
+            output = io.StringIO()
             with pushd(root):
-                rc = main(["dcr", "create", "--title", "Test idea", "--classification", "spike"])
+                with contextlib.redirect_stdout(output):
+                    rc = main(["dcr", "create", "--title", "Test idea", "--classification", "spike"])
             self.assertEqual(rc, 0)
             files = list((root / "docs" / "change-requests").glob("DCR-*.md"))
             self.assertEqual(len(files), 1)
             dcr = parse_dcr(files[0])
             self.assertEqual(dcr["classification"], "spike")
             self.assertEqual(dcr["status"], "classified")
+            self.assertIn("Next: Document review is missing", output.getvalue())
+            self.assertIn("Prompt: Review DCR-0001", output.getvalue())
+            self.assertNotIn("aspec review doc", output.getvalue())
+
+    def test_create_json_includes_structured_guidance_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            output = io.StringIO()
+            with pushd(root), contextlib.redirect_stdout(output):
+                rc = main(
+                    [
+                        "dcr",
+                        "create",
+                        "--title",
+                        "Test idea",
+                        "--classification",
+                        "spike",
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(rc, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["schema"], "agentspec.dcr_create_result.v0")
+            guidance = payload["guidance"]
+            self.assertEqual(guidance["artifact"]["id"], "DCR-0001")
+            self.assertEqual(guidance["state"], "review_missing")
+            self.assertIn("aspec review doc", guidance["next_actions"][0]["commands"][0])
+            self.assertFalse(guidance["agent_display"]["show_terminal_commands"])
 
     def test_create_auto_numbers_id(self) -> None:
         with tempfile.TemporaryDirectory() as td:

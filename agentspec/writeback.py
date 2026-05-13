@@ -294,6 +294,9 @@ def finish_task(
         review_id=review_id,
         allow_existing_run=True,
     )
+    from .workflow import mark_linked_workflow_complete
+
+    workflow = mark_linked_workflow_complete(root, str(projection["context_pack"]))
     roadmap_path = update_roadmap(root)
     from .status import build_project_status
 
@@ -313,6 +316,7 @@ def finish_task(
         "finishable": projection["finishable"],
         "findings": projection["findings"],
         "state": state,
+        "workflow": workflow,
         "roadmap": str(roadmap_path.relative_to(root)),
         "writeback": verification,
     }

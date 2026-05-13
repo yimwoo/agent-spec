@@ -244,6 +244,37 @@ Workflow: `agent/workflows/W-001-phase-five.md`
             self.assertNotIn("`R-001`", text)
             self.assertIn("No accepted requirement attached", text)
 
+    def test_native_workflow_plan_defaults_implementation_branch_to_codex_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_minimal(root)
+            (root / "agent" / "context-packs" / "T-001-lifecycle-gates.md").write_text(
+                """# T-001: Lifecycle Gates
+
+Type: `implementation`
+Branch: `unassigned`
+
+## Goal
+
+Harden lifecycle gates.
+
+## Allowed Paths
+
+- `agentspec/workflow.py`
+""",
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "plan", "T-001", "--json"])
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            workflow_text = (root / payload["workflow_path"]).read_text(encoding="utf-8")
+            self.assertIn("branch: codex/t-001-lifecycle-gates", workflow_text)
+            self.assertNotIn("branch: main", workflow_text)
+
     def test_task_create_from_legacy_state_sanitizes_extracted_scope(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .guidance import POST_ARTIFACT_GUIDANCE_SCHEMA
+
 
 LIFECYCLE_CONTRACT_SCHEMA = "agentspec.lifecycle_contract.v0"
 
@@ -20,6 +22,15 @@ def build_lifecycle_contract(root: Path) -> dict[str, Any]:
         "schema": LIFECYCLE_CONTRACT_SCHEMA,
         "root": str(root),
         "summary": "AgentSpec owns the repo-local operating contract for human-plus-agent software delivery.",
+        "post_artifact_guidance": {
+            "schema": POST_ARTIFACT_GUIDANCE_SCHEMA,
+            "command": "aspec guidance <artifact> --json",
+            "human_command": "aspec guidance <artifact>",
+            "agent_display": {
+                "show_terminal_commands": False,
+                "guidance": "Use this projection after creating or updating an artifact to show state-aware next choices without raw commands.",
+            },
+        },
         "adapter_boundary": {
             "agent_spec_owns": [
                 "canonical source snapshots",
@@ -99,6 +110,7 @@ def _lifecycle_stages() -> list[dict[str, Any]]:
                 "aspec intake diff",
                 "aspec intake promote",
                 "aspec compile",
+                "aspec guidance <artifact> --json",
             ],
             "skill_names": ["design-work", "manual-source-intake", "compile-spec"],
             "artifacts": ["docs/source/**", "docs/spec/**", "docs/traceability/requirements.yml"],
@@ -109,7 +121,7 @@ def _lifecycle_stages() -> list[dict[str, Any]]:
             "title": "Plan Workflow",
             "status": "available",
             "description": "Create bounded task packs and native workflow artifacts from accepted requirements.",
-            "native_commands": ["aspec task create", "aspec plan"],
+            "native_commands": ["aspec task create", "aspec plan", "aspec guidance <artifact> --json"],
             "skill_names": ["create-task", "plan-workflow"],
             "artifacts": ["agent/context-packs/T-*.md", "agent/workflows/W-*.md"],
             "next_native_step": None,
@@ -185,7 +197,13 @@ def _lifecycle_stages() -> list[dict[str, Any]]:
             "title": "Handoff And Recovery",
             "status": "available",
             "description": "Resume from durable state and dispatch the next safe action.",
-            "native_commands": ["aspec status --json", "aspec next-action", "aspec continue", "aspec roadmap"],
+            "native_commands": [
+                "aspec status --json",
+                "aspec guidance <artifact> --json",
+                "aspec next-action",
+                "aspec continue",
+                "aspec roadmap",
+            ],
             "skill_names": ["handoff-recovery", "project-status", "roadmap"],
             "artifacts": ["agent/handoff.yml", "docs/ROADMAP.md"],
             "next_native_step": None,

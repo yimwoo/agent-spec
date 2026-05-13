@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import os
 import re
+import time
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .io import load_data, utc_now_iso, write_data
+from .io import load_data, utc_now_iso
 from .model_review import classify_severity, request_model_review, request_quality_review
 from .policy import PolicyVerdict
 from .task import list_task_context_packs
@@ -527,6 +531,8 @@ ALLOWED_DOC_REVIEW_VERDICTS = frozenset(
 ALLOWED_DOC_REVIEW_REVIEWERS = frozenset(
     {"human", "deterministic", "model", "agent"}
 )
+REVIEW_ID_LOCK_TIMEOUT_SECONDS = 10.0
+REVIEW_ID_LOCK_POLL_SECONDS = 0.02
 
 
 def record_doc_review(
@@ -580,10 +586,8 @@ def record_doc_review(
         rubric = {"deterministic_checks": [], "ai_checks": []}
 
     timestamp = utc_now_iso()
-    review_id = _next_doc_review_id(root)
     record = {
         "schema": DOC_REVIEW_SCHEMA,
-        "id": review_id,
         "artifact_path": _relative_or_absolute(root, artifact_path),
         "artifact_kind": artifact_kind,
         "verdict": verdict_value,
@@ -601,8 +605,7 @@ def record_doc_review(
         "reviewed_at": timestamp,
         "created_at": timestamp,
     }
-    write_data(_doc_review_path(root, review_id), record)
-    return record
+    return _write_review_artifact(root, directory="doc-reviews", prefix="DOCREVIEW", record=record)
 
 
 def check_doc_review(root: Path, *, artifact_selector: str) -> dict[str, Any]:
@@ -779,13 +782,7 @@ def _latest_ready_doc_review(root: Path, artifact_path: str) -> dict[str, Any] |
 
 
 def _next_doc_review_id(root: Path) -> str:
-    review_dir = root / "agent" / "doc-reviews"
-    highest = 0
-    for path in review_dir.glob("DOCREVIEW-*.yml"):
-        stem = path.stem
-        if stem.startswith("DOCREVIEW-") and stem.split("-", 1)[1].isdigit():
-            highest = max(highest, int(stem.split("-", 1)[1]))
-    return f"DOCREVIEW-{highest + 1:04d}"
+    return _next_review_artifact_id(root / "agent" / "doc-reviews", "DOCREVIEW")
 
 
 def _doc_review_path(root: Path, review_id: str) -> Path:
@@ -825,10 +822,8 @@ def record_code_review(
         raise ValueError("Code review summary is required.")
 
     context_pack = _resolve_review_context_pack(root, task_selector)
-    review_id = _next_review_id(root)
     record = {
         "schema": CODE_REVIEW_SCHEMA,
-        "id": review_id,
         "task": {
             "selector": task_selector,
             "context_pack": context_pack,
@@ -839,8 +834,7 @@ def record_code_review(
         "range": range_ref,
         "created_at": utc_now_iso(),
     }
-    write_data(_review_path(root, review_id), record)
-    return record
+    return _write_review_artifact(root, directory="reviews", prefix="REVIEW", record=record)
 
 
 def load_code_review(root: Path, review_id: str) -> dict[str, Any]:
@@ -912,13 +906,107 @@ def _resolve_review_context_pack(root: Path, selector: str) -> str:
 
 
 def _next_review_id(root: Path) -> str:
-    review_dir = root / "agent" / "reviews"
+    return _next_review_artifact_id(root / "agent" / "reviews", "REVIEW")
+
+
+def _next_review_artifact_id(review_dir: Path, prefix: str) -> str:
     highest = 0
-    for path in review_dir.glob("REVIEW-*.yml"):
+    for path in review_dir.glob(f"{prefix}-*.yml"):
         stem = path.stem
-        if stem.startswith("REVIEW-") and stem.split("-", 1)[1].isdigit():
+        if stem.startswith(f"{prefix}-") and stem.split("-", 1)[1].isdigit():
             highest = max(highest, int(stem.split("-", 1)[1]))
-    return f"REVIEW-{highest + 1:04d}"
+    return f"{prefix}-{highest + 1:04d}"
+
+
+def _write_review_artifact(
+    root: Path,
+    *,
+    directory: str,
+    prefix: str,
+    record: dict[str, Any],
+) -> dict[str, Any]:
+    """Write a review artifact with an atomically allocated id.
+
+    Args:
+        root: Project root.
+        directory: Evidence directory name below `agent/`.
+        prefix: Review id prefix, such as `DOCREVIEW` or `REVIEW`.
+        record: Review artifact data without an `id` field.
+
+    Returns:
+        The stored review artifact, including its allocated id.
+    """
+
+    review_dir = root / "agent" / directory
+    with _review_id_lock(review_dir):
+        while True:
+            review_id = _next_review_artifact_id(review_dir, prefix)
+            stored = {**record, "id": review_id}
+            try:
+                _write_data_exclusive(review_dir / f"{review_id}.yml", stored)
+            except FileExistsError:
+                continue
+            return stored
+
+
+def _write_data_exclusive(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(data, indent=2, sort_keys=False) + "\n"
+    with path.open("x", encoding="utf-8") as handle:
+        handle.write(text)
+
+
+@contextmanager
+def _review_id_lock(review_dir: Path):
+    lock_path = review_dir / ".review-id.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + REVIEW_ID_LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            with lock_path.open("x", encoding="utf-8") as handle:
+                handle.write(f"{os.getpid()}\n")
+            break
+        except FileExistsError as exc:
+            if _clear_stale_review_id_lock(lock_path):
+                continue
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"Timed out waiting for review id lock: {lock_path}") from exc
+            time.sleep(REVIEW_ID_LOCK_POLL_SECONDS)
+    try:
+        yield
+    finally:
+        with suppress(FileNotFoundError):
+            lock_path.unlink()
+
+
+def _clear_stale_review_id_lock(lock_path: Path) -> bool:
+    pid = _read_review_id_lock_pid(lock_path)
+    if pid is None or _process_exists(pid):
+        return False
+    with suppress(FileNotFoundError):
+        lock_path.unlink()
+        return True
+    return False
+
+
+def _read_review_id_lock_pid(lock_path: Path) -> int | None:
+    try:
+        raw = lock_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not raw.isdigit():
+        return None
+    return int(raw)
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except (PermissionError, OSError):
+        return True
+    return True
 
 
 def _review_path(root: Path, review_id: str) -> Path:

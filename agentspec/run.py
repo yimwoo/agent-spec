@@ -16,6 +16,15 @@ from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy, redact_sensitive_text
 from .review import quality_reviewer_signoff, review_executor_output, validate_research_acceptance_evidence
+from .run_transitions import (
+    MODEL_REVIEW_UNAVAILABLE_FLAG as _MODEL_REVIEW_UNAVAILABLE_FLAG,
+    REUSABLE_RUN_STATUSES,
+    TERMINAL_RUN_STATUSES,
+    halted_run_accepts_corrected_evidence as _halted_run_accepts_corrected_evidence,
+    is_model_review_unavailable_pause as _is_model_review_unavailable_pause,
+    next_action_for_status as _next_action_for_status,
+    status_for_decision as _status_for_decision,
+)
 from .session import build_session_preflight
 
 
@@ -24,8 +33,6 @@ EVENT_SCHEMA = "agentspec.supervised_run.event.v0"
 SUMMARY_SCHEMA = "agentspec.supervised_run.summary.v0"
 HARNESS_STEP_SCHEMA = "agentspec.harness_step.v0"
 CONTROLLER_PATH_BASELINE_SCHEMA = "agentspec.controller_path_baseline.v0"
-TERMINAL_RUN_STATUSES = {"halted", "complete", "aborted"}
-REUSABLE_RUN_STATUSES = {"started", "running"}
 SUMMARY_MODES = {"autonomous", "research"}
 SESSION_PREFLIGHT_REQUIRED_ACTION = "session_preflight_required"
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -56,7 +63,6 @@ _STANDARD_VERIFICATION_SUPPORT_PATHS = frozenset(
         "agent/handoff.yml",
     }
 )
-_MODEL_REVIEW_UNAVAILABLE_FLAG = "model_review_unavailable"
 _RESEARCH_PATH_PREFIXES: tuple[str, ...] = (
     "reports/dogfood/",
     "docs/discovery/open-questions.yml",
@@ -706,7 +712,7 @@ def step_run(
     if isinstance(loop.get("run_id"), str):
         _write_state(root, str(loop["run_id"]), state, run_dir=run_dir)
     handoff = None
-    if next_action == "continue_executor" and session_preflight.get("status") == "missing":
+    if next_action == "continue_executor" and session_preflight.get("status") in {"blocked", "missing"}:
         next_action = SESSION_PREFLIGHT_REQUIRED_ACTION
     elif next_action == "continue_executor":
         handoff = build_next_executor_prompt(root, str(loop["run_id"]), run_dir=run_dir)
@@ -1039,54 +1045,6 @@ def _reviewer_profile_for_decision(state: dict[str, Any], decision: str) -> dict
     if decision == "complete":
         return profiles.get("quality_reviewer")
     return profiles.get("continuation_reviewer")
-
-
-def _status_for_decision(decision: str) -> str:
-    return {
-        "auto_continue": "running",
-        "pause_for_human": "paused",
-        "halt": "halted",
-        "complete": "complete",
-    }.get(decision, "paused")
-
-
-def _next_action_for_status(status: str) -> str:
-    return {
-        "started": "continue_executor",
-        "running": "continue_executor",
-        "paused": "await_human",
-        "complete": "complete",
-        "halted": "stop",
-        "aborted": "stop",
-    }.get(status, "await_human")
-
-
-def _halted_run_accepts_corrected_evidence(state: dict[str, Any], events: list[dict[str, Any]]) -> bool:
-    if state.get("mode") not in {"autonomous", "research"}:
-        return False
-
-    for event in reversed(events):
-        kind = event.get("kind")
-        if kind == "autonomous_infrastructure_block":
-            return True
-        if kind == "autonomous_pause_to_dcr" and _is_quality_review_halt_event(event):
-            return True
-        if kind == "reviewer_verdict" and event.get("decision") == "halt":
-            return False
-    return isinstance(state.get("infrastructure_blocker"), dict)
-
-
-def _is_quality_review_halt_event(event: dict[str, Any]) -> bool:
-    reason = event.get("reason")
-    return (
-        isinstance(reason, str)
-        and reason.startswith("Quality reviewer rejected autonomous-mode complete:")
-    )
-
-
-def _is_model_review_unavailable_pause(review: Any) -> bool:
-    flags = getattr(review, "policy_flags", [])
-    return _MODEL_REVIEW_UNAVAILABLE_FLAG in flags
 
 
 def _resolve_context_pack(root: Path, context_pack: Path) -> Path:
@@ -1608,7 +1566,7 @@ def _render_next_executor_prompt(
             ]
         )
 
-    if session_preflight.get("status") == "missing":
+    if session_preflight.get("status") in {"blocked", "missing"}:
         lines.extend(
             [
                 "Branch/session preflight:",

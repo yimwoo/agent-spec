@@ -42,6 +42,11 @@ class LifecycleCliTests(unittest.TestCase):
             self.assertIn("finish write-back", owners)
             self.assertIn("host-specific model invocation", adapters)
             self.assertIn("subagent process spawning", adapters)
+            self.assertEqual(
+                contract["post_artifact_guidance"]["schema"],
+                "agentspec.post_artifact_guidance.v0",
+            )
+            self.assertFalse(contract["post_artifact_guidance"]["agent_display"]["show_terminal_commands"])
 
             inspiration = " ".join(source["value"] for source in contract["source_inspirations"])
             self.assertIn("idea refinement", inspiration)
@@ -62,6 +67,7 @@ class LifecycleCliTests(unittest.TestCase):
             by_id = {stage["id"]: stage for stage in payload["stages"]}
             self.assertEqual(by_id["plan"]["status"], "available")
             self.assertIn("aspec plan", by_id["plan"]["native_commands"])
+            self.assertIn("aspec guidance <artifact> --json", by_id["plan"]["native_commands"])
             self.assertEqual(by_id["delegate"]["status"], "planned")
             self.assertEqual(by_id["delegate"]["native_commands"], [])
             self.assertIn("delegate-work", by_id["delegate"]["skill_names"])

@@ -27,6 +27,7 @@ from .errors import (
     RunStateNotFoundError,
     RunnerResultInvalidError,
 )
+from .guidance import build_post_artifact_guidance, format_post_artifact_guidance
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .lifecycle import build_lifecycle_contract, format_lifecycle_contract
@@ -164,6 +165,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
         help="Print the native AgentSpec lifecycle operating contract.",
     )
     lifecycle.add_argument("--json", action="store_true")
+
+    guidance = subparsers.add_parser("guidance", help="Project post-artifact next-step guidance.")
+    guidance.add_argument("artifact", help="Artifact path to inspect.")
+    guidance.add_argument("--json", action="store_true")
 
     quality = subparsers.add_parser("quality", help="Run recurring quality garbage-collection diagnostics.")
     quality.add_argument("--json", action="store_true")
@@ -456,6 +461,7 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     dcr_create.add_argument("--title", required=True)
     dcr_create.add_argument("--classification", required=True, choices=sorted(ALLOWED_CLASSIFICATIONS))
     dcr_create.add_argument("--id", dest="dcr_id_override", help="Override the auto-numbered DCR id (e.g. DCR-0099).")
+    dcr_create.add_argument("--json", action="store_true")
 
     dcr_classify = dcr_subparsers.add_parser("classify", help="Update an existing DCR's classification.")
     dcr_classify.add_argument("dcr_id")
@@ -636,6 +642,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(lifecycle_payload, indent=2))
             else:
                 print(format_lifecycle_contract(lifecycle_payload))
+            return 0
+
+        if args.command == "guidance":
+            guidance_payload = build_post_artifact_guidance(root, args.artifact)
+            if args.json:
+                print(json.dumps(guidance_payload, indent=2))
+            else:
+                print(format_post_artifact_guidance(guidance_payload))
             return 0
 
         if args.command == "quality":
@@ -1192,7 +1206,25 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     classification=args.classification,
                     dcr_id=args.dcr_id_override,
                 )
-                print(f"Created DCR: {path.relative_to(root)}")
+                rel_path = path.relative_to(root)
+                guidance = build_post_artifact_guidance(root, rel_path)
+                if args.json:
+                    print(
+                        json.dumps(
+                            {
+                                "schema": "agentspec.dcr_create_result.v0",
+                                "path": str(rel_path),
+                                "guidance": guidance,
+                            },
+                            indent=2,
+                        )
+                    )
+                    return 0
+                display = guidance["agent_display"]
+                print(f"Created DCR: {rel_path}")
+                print(f"Next: {display['guidance']}")
+                if display.get("prompt"):
+                    print(f"Prompt: {display['prompt']}")
                 return 0
             if args.dcr_command == "classify":
                 path = set_classification(root, args.dcr_id, args.classification)
@@ -1414,7 +1446,7 @@ def _print_finish_result(result: dict[str, Any]) -> None:
 def _print_session_preflight_summary(preflight: Any) -> None:
     if not isinstance(preflight, dict):
         return
-    if preflight.get("status") == "missing":
+    if preflight.get("status") in {"blocked", "missing"}:
         print(f"Session preflight: {preflight.get('message')}")
         command = preflight.get("recommended_command")
         if command:

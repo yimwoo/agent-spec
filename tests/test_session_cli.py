@@ -602,6 +602,47 @@ class SessionCliTests(unittest.TestCase):
             self.assertEqual(satisfied["active_session"]["session_id"], "S-owner-preflight")
             self.assertEqual(satisfied["active_session"]["branch"], "feature/preflight-owner")
 
+    def test_session_preflight_blocks_protected_implementation_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            pack = _write_pack(root, "T-010-main-branch.md")
+            text = pack.read_text(encoding="utf-8")
+            pack.write_text(text.replace("Type: `implementation`", "Type: `implementation`\nBranch: `main`"), encoding="utf-8")
+
+            blocked = build_session_preflight(root, task_selector="T-010")
+
+            self.assertEqual(blocked["status"], "blocked")
+            self.assertEqual(blocked["blocker"]["type"], "protected_branch")
+            self.assertIn("protected branch", blocked["message"])
+            self.assertIn("--branch codex/t-010-implementation", blocked["recommended_command"])
+
+    def test_session_start_rejects_protected_implementation_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            _write_pack(root, "T-010-start-main.md")
+
+            payload = _run_json_error(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-010",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "main",
+                    "--worktree",
+                    str(root),
+                    "--session-id",
+                    "S-main-blocked",
+                    "--json",
+                ],
+            )
+
+            self.assertEqual(payload["error"]["type"], "ValueError")
+            self.assertIn("protected branch", payload["error"]["message"])
+
     def test_session_preflight_recommends_context_pack_when_task_id_is_ambiguous(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

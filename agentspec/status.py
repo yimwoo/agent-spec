@@ -18,7 +18,7 @@ from .paths import path_matches_pattern
 from .run import RESEARCH_ALLOWED_PATHS
 from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
-from .workflow import build_workflow_contract_status, workflow_warning_lines
+from .workflow import build_workflow_contract_status, workflow_lifecycle_for_context_pack, workflow_warning_lines
 from .writeback import build_lifecycle_projection, lifecycle_warning_lines
 
 
@@ -203,20 +203,33 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             task_id=task_id,
             task_type=str(next_task.get("type") or "implementation"),
         )
+        workflow_plan = workflow_lifecycle_for_context_pack(
+            Path(str(status.get("root") or ".")),
+            path,
+        ) if path else None
         main_point = f"Task {task_id} is ready to run."
         artifact = {
             "type": "task",
             "id": task_id,
             "title": next_task.get("title"),
             "path": path or None,
+            "workflow_plan": workflow_plan,
             "session_preflight": session_preflight,
         }
-        if session_preflight.get("status") == "missing":
+        if session_preflight.get("status") in {"missing", "blocked"}:
             stage = "task_ready_session_needed"
-            main_point = f"Task {task_id} is ready, but a branch/worktree session should be claimed before execution."
+            if session_preflight.get("status") == "blocked":
+                stage = "task_ready_session_blocked"
+                main_point = f"Task {task_id} is ready, but branch/worktree isolation is blocked."
+            else:
+                main_point = f"Task {task_id} is ready, but a branch/worktree session should be claimed before execution."
             command = str(session_preflight.get("recommended_command") or f"aspec session start --task {task_id}")
             action = {
-                "label": "Claim a branch/worktree session for the ready task.",
+                "label": (
+                    "Fix branch/worktree isolation for the ready task."
+                    if session_preflight.get("status") == "blocked"
+                    else "Claim a branch/worktree session for the ready task."
+                ),
                 "human_decision_required": False,
                 "reason": str(session_preflight.get("message") or "Implementation execution should have an active session lease."),
                 "commands": [command, f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
@@ -235,7 +248,11 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             }
             blocked_by = [
                 {
-                    "kind": "missing_session_lease",
+                    "kind": (
+                        "blocked_session_isolation"
+                        if session_preflight.get("status") == "blocked"
+                        else "missing_session_lease"
+                    ),
                     "message": str(session_preflight.get("message") or ""),
                     "context_pack": path or None,
                     "task_id": task_id,
@@ -830,6 +847,8 @@ def _lifecycle_recommendation(lifecycle: dict[str, Any] | None) -> str | None:
 def _summary_lines(summary: dict[str, Any]) -> list[str]:
     action = _dict_or_empty(summary.get("recommended_next_action"))
     readiness = _dict_or_empty(summary.get("readiness"))
+    artifact = _dict_or_empty(summary.get("current_artifact"))
+    workflow_plan = _dict_or_empty(artifact.get("workflow_plan"))
     commands = _string_list(action.get("commands"))
     options = _list_or_empty(action.get("options"))
     lines = [
@@ -843,6 +862,14 @@ def _summary_lines(summary: dict[str, Any]) -> list[str]:
     explanation = readiness.get("explanation")
     if explanation:
         lines.append(f"Readiness meaning: {explanation}")
+    if workflow_plan.get("path"):
+        lines.append(
+            "Workflow plan: "
+            f"{workflow_plan.get('path')} "
+            f"(status={workflow_plan.get('status') or '-'}, "
+            f"stage={workflow_plan.get('current_stage') or '-'}, "
+            f"branch={workflow_plan.get('branch') or '-'})"
+        )
     if commands:
         lines.append("Terminal next commands:")
         lines.extend(f"- {command}" for command in commands)

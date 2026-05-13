@@ -135,6 +135,126 @@ def parse_workflow_file(root: Path, workflow_file: Path) -> dict[str, Any]:
     return _parse_markdown_workflow(root, path, rel)
 
 
+def workflow_lifecycle_for_context_pack(root: Path, context_pack: str | Path) -> dict[str, Any]:
+    """Return linked workflow lifecycle metadata for a task context pack.
+
+    Args:
+        root: Project root.
+        context_pack: Task id or context-pack path.
+
+    Returns:
+        A stable dictionary with workflow presence, path, status, stage, branch,
+        and worktree metadata for status and finish gates.
+    """
+
+    root = root.resolve()
+    task_path = _resolve_context_pack(root, context_pack)
+    task = _parse_context_pack_for_plan(root, task_path)
+    workflow = task.get("workflow")
+    if not isinstance(workflow, str) or not workflow:
+        return {
+            "present": False,
+            "path": None,
+            "status": None,
+            "current_stage": None,
+            "branch": task.get("branch"),
+            "worktree": None,
+            "task_pack": task.get("path"),
+        }
+
+    workflow_path = root / workflow
+    if not workflow_path.exists():
+        return {
+            "present": False,
+            "path": workflow,
+            "status": "missing",
+            "current_stage": None,
+            "branch": task.get("branch"),
+            "worktree": None,
+            "task_pack": task.get("path"),
+        }
+
+    try:
+        parsed = parse_workflow_file(root, Path(workflow))
+    except (FileNotFoundError, ValueError):
+        return {
+            "present": False,
+            "path": workflow,
+            "status": "invalid",
+            "current_stage": None,
+            "branch": task.get("branch"),
+            "worktree": None,
+            "task_pack": task.get("path"),
+        }
+    return {
+        "present": True,
+        "path": workflow,
+        "status": parsed.get("status"),
+        "current_stage": parsed.get("current_stage"),
+        "branch": parsed.get("branch") or task.get("branch"),
+        "worktree": parsed.get("worktree"),
+        "host_worktree_execution": parsed.get("host_worktree_execution"),
+        "task_pack": parsed.get("task_pack") or task.get("path"),
+    }
+
+
+def mark_linked_workflow_complete(root: Path, context_pack: str | Path) -> dict[str, Any]:
+    """Mark the linked native workflow complete after task finish.
+
+    Args:
+        root: Project root.
+        context_pack: Task id or context-pack path.
+
+    Returns:
+        The updated workflow lifecycle metadata, or the current lifecycle
+        metadata when no native markdown workflow can be updated.
+    """
+
+    root = root.resolve()
+    lifecycle = workflow_lifecycle_for_context_pack(root, context_pack)
+    workflow_path = lifecycle.get("path")
+    if not isinstance(workflow_path, str) or not workflow_path.startswith("agent/workflows/"):
+        return lifecycle
+
+    path = _native_workflow_path(root, workflow_path)
+    if path is None or not path.is_file() or path.suffix.lower() != ".md":
+        return lifecycle
+
+    text = path.read_text(encoding="utf-8")
+    updated = _set_frontmatter_values(
+        text,
+        {
+            "status": "complete",
+            "current_stage": "finish",
+            "updated_at": utc_now_iso(),
+        },
+    )
+    path.write_text(updated, encoding="utf-8")
+    return workflow_lifecycle_for_context_pack(root, context_pack)
+
+
+def _native_workflow_path(root: Path, workflow_path: str) -> Path | None:
+    """Return a resolved native workflow path when it is safe to write.
+
+    Args:
+        root: Project root.
+        workflow_path: Workflow path recorded in a task context pack.
+
+    Returns:
+        The resolved path when it is inside `agent/workflows/`; otherwise None.
+    """
+
+    path = Path(workflow_path)
+    candidate = path if path.is_absolute() else root / path
+    native_dir = (root / "agent" / "workflows").resolve()
+    try:
+        resolved = candidate.resolve()
+        resolved.relative_to(native_dir)
+    except ValueError:
+        return None
+    return resolved
+
+
 def workflow_warning_lines(status: dict[str, Any]) -> list[str]:
     orphans = status.get("orphans") if isinstance(status.get("orphans"), list) else []
     lines: list[str] = []
@@ -215,6 +335,11 @@ def _parse_markdown_workflow(root: Path, path: Path, rel: str) -> dict[str, Any]
         "path": rel,
         "workflow_path": rel,
         "task_pack": task_pack,
+        "status": _first_string(metadata.get("status")) or "planned",
+        "current_stage": _first_string(metadata.get("current_stage")) or "planning",
+        "branch": _first_string(metadata.get("branch")),
+        "worktree": _first_string(metadata.get("worktree")),
+        "host_worktree_execution": _first_string(metadata.get("host_worktree_execution")),
         "title": truncate_on_word_boundary(title, limit=96),
         "intent": _first_string(metadata.get("intent")) or title,
         "allowed_paths": allowed_paths,
@@ -266,6 +391,11 @@ def _parse_json_state(root: Path, path: Path, rel: str) -> dict[str, Any]:
         "path": rel,
         "workflow_path": workflow_path or rel,
         "task_pack": task_pack,
+        "status": _first_json_string(data, ("status", "workflow_status")) or "unknown",
+        "current_stage": _first_json_string(data, ("current_stage", "stage")) or None,
+        "branch": _first_json_string(data, ("branch", "git_branch")),
+        "worktree": _first_json_string(data, ("worktree", "workspace")),
+        "host_worktree_execution": _first_json_string(data, ("host_worktree_execution",)),
         "title": truncate_on_word_boundary(title, limit=96),
         "intent": title,
         "allowed_paths": allowed_paths,
@@ -309,6 +439,26 @@ def _parse_simple_metadata(text: str) -> dict[str, Any]:
             if isinstance(existing, list):
                 existing.append(value)
     return data
+
+
+def _set_frontmatter_values(text: str, values: dict[str, str]) -> str:
+    frontmatter, body = _frontmatter(text)
+    if not frontmatter:
+        lines = ["---", *(f"{key}: {value}" for key, value in values.items()), "---", "", body]
+        return "\n".join(lines)
+
+    existing = frontmatter.splitlines()
+    remaining = dict(values)
+    updated_lines: list[str] = []
+    for line in existing:
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$", line)
+        if match and match.group(1) in remaining:
+            key = match.group(1)
+            updated_lines.append(f"{key}: {remaining.pop(key)}")
+        else:
+            updated_lines.append(line)
+    updated_lines.extend(f"{key}: {value}" for key, value in remaining.items())
+    return "\n".join(["---", *updated_lines, "---", body])
 
 
 def _verification_commands_from_markdown(
@@ -664,6 +814,7 @@ def _write_native_workflow(root: Path, path: Path, task: dict[str, Any], *, work
     timestamp = utc_now_iso()
     allowed_paths = _dedupe(task.get("allowed_paths") or [])
     verification_commands = _dedupe(task.get("verification_commands") or [])
+    branch = _planned_branch(task)
     frontmatter = [
         "---",
         f"workflow_id: {workflow_id}",
@@ -674,7 +825,7 @@ def _write_native_workflow(root: Path, path: Path, task: dict[str, Any], *, work
         f"stream: {task.get('stream') or 'unassigned'}",
         f"milestone: {task.get('milestone') or 'unassigned'}",
         f"slice: {task.get('slice') or 'unassigned'}",
-        f"branch: {task.get('branch') or 'unassigned'}",
+        f"branch: {branch}",
         f"created_at: {timestamp}",
         f"updated_at: {timestamp}",
         "allowed_paths:",
@@ -744,6 +895,16 @@ def _write_native_workflow(root: Path, path: Path, task: dict[str, Any], *, work
         ]
     )
     path.write_text(text, encoding="utf-8")
+
+
+def _planned_branch(task: dict[str, Any]) -> str:
+    branch = str(task.get("branch") or "").strip()
+    if branch and branch.lower() not in {"none", "unassigned"}:
+        return branch
+    if task.get("type") == "implementation":
+        slug = slugify(f"{task.get('id', 'task')}-{task.get('title', 'implementation')}")
+        return f"codex/{slug}"
+    return "unassigned"
 
 
 def _fenced_commands(commands: list[str]) -> list[str]:

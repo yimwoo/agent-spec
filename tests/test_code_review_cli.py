@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
+from agentspec import review as review_module
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
 
@@ -50,6 +52,50 @@ class CodeReviewCLITests(unittest.TestCase):
 
             artifact = load_data(root / "agent" / "reviews" / "REVIEW-0001.yml")
             self.assertEqual(artifact, payload)
+
+    def test_review_code_retries_when_allocated_id_collides(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            original_write = review_module._write_data_exclusive
+            collided = False
+
+            def collide_once(path: Path, data: object) -> None:
+                nonlocal collided
+                if not collided:
+                    collided = True
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text('{"schema": "collision"}\n', encoding="utf-8")
+                    raise FileExistsError(path)
+                original_write(path, data)
+
+            output = io.StringIO()
+            with mock.patch.object(review_module, "_write_data_exclusive", side_effect=collide_once):
+                with redirect_stdout(output):
+                    code = main(
+                        [
+                            "--root",
+                            str(root),
+                            "review",
+                            "code",
+                            "--task",
+                            "T-013",
+                            "--verdict",
+                            "ready",
+                            "--summary",
+                            "No blocking findings.",
+                            "--reviewer",
+                            "codex",
+                            "--json",
+                        ]
+                    )
+
+            self.assertEqual(code, 0)
+            payload = json.loads(output.getvalue())
+            self.assertEqual(payload["id"], "REVIEW-0002")
+            self.assertTrue((root / "agent" / "reviews" / "REVIEW-0001.yml").exists())
+            artifact = load_data(root / "agent" / "reviews" / "REVIEW-0002.yml")
+            self.assertEqual(artifact["id"], "REVIEW-0002")
 
     def test_review_code_rejects_unknown_task_before_writing_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as td:

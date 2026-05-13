@@ -70,6 +70,103 @@ class FinishCLITests(unittest.TestCase):
             self.assertEqual(handoff["current_state"]["overall"], status["overall"])
             self.assertEqual(handoff["current_state"]["recommendation"], status["recommendation"])
 
+    def test_finish_marks_linked_native_workflow_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            pack = root / "agent" / "context-packs" / "T-013-task.md"
+            pack.write_text(
+                pack.read_text(encoding="utf-8").replace(
+                    "Type: `implementation`",
+                    "Type: `implementation`\nWorkflow: `agent/workflows/W-013-task.md`",
+                ),
+                encoding="utf-8",
+            )
+            workflow = root / "agent" / "workflows" / "W-013-task.md"
+            workflow.parent.mkdir(parents=True, exist_ok=True)
+            workflow.write_text(
+                """---
+workflow_id: W-013
+task_pack: agent/context-packs/T-013-task.md
+status: planned
+current_stage: planning
+branch: codex/t-013-task
+---
+
+# Workflow W-013: Task
+""",
+                encoding="utf-8",
+            )
+            _write_review(root, "REVIEW-0013", "agent/context-packs/T-013-task.md", "ready")
+
+            payload = _run_json(
+                root,
+                [
+                    "finish",
+                    "T-013",
+                    "--run-id",
+                    "finish-t013-workflow",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0013",
+                    "--json",
+                ],
+            )
+
+            self.assertEqual(payload["workflow"]["status"], "complete")
+            self.assertEqual(payload["workflow"]["current_stage"], "finish")
+            workflow_text = workflow.read_text(encoding="utf-8")
+            self.assertIn("status: complete", workflow_text)
+            self.assertIn("current_stage: finish", workflow_text)
+
+    def test_finish_does_not_write_traversed_workflow_path(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            pack = root / "agent" / "context-packs" / "T-013-task.md"
+            pack.write_text(
+                pack.read_text(encoding="utf-8").replace(
+                    "Type: `implementation`",
+                    "Type: `implementation`\nWorkflow: `agent/workflows/../../docs/victim.md`",
+                ),
+                encoding="utf-8",
+            )
+            (root / "agent" / "workflows").mkdir(parents=True, exist_ok=True)
+            victim = root / "docs" / "victim.md"
+            victim.write_text(
+                """---
+status: planned
+current_stage: planning
+---
+
+# Victim
+""",
+                encoding="utf-8",
+            )
+            _write_review(root, "REVIEW-0014", "agent/context-packs/T-013-task.md", "ready")
+
+            payload = _run_json(
+                root,
+                [
+                    "finish",
+                    "T-013",
+                    "--run-id",
+                    "finish-t013-traversal",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0014",
+                    "--json",
+                ],
+            )
+
+            self.assertTrue(payload["completed"])
+            victim_text = victim.read_text(encoding="utf-8")
+            self.assertIn("status: planned", victim_text)
+            self.assertIn("current_stage: planning", victim_text)
+            self.assertNotIn("status: complete", victim_text)
+
     def test_finish_with_existing_paused_run_id_completes_that_run(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

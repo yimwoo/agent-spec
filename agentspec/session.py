@@ -59,6 +59,17 @@ def start_session(
 
         branch = branch or _current_git_branch(root)
         worktree = worktree or _current_git_worktree(root)
+        if (
+            mode in WRITE_SESSION_MODES
+            and context.get("task_type") == "implementation"
+            and not _explicit_host_worktree_execution(context)
+            and _protected_branch(branch)
+        ):
+            raise ValueError(
+                "Implementation sessions require an isolated branch/worktree; "
+                f"refusing protected branch {branch!r}. Declare Host Worktree Execution: `explicit` "
+                "in the task or workflow only when host-worktree execution is intentional."
+            )
         if not allow_shared:
             conflict = _find_write_lease_conflict(
                 root,
@@ -173,24 +184,6 @@ def build_session_preflight(
             "agent_guidance": "Continue under the task context pack rules.",
         }
 
-    active = _active_write_session_for_context(
-        root,
-        context_pack=context.get("context_pack"),
-        task_id=context.get("task_id"),
-    )
-    if active is not None:
-        return {
-            "schema": SESSION_PREFLIGHT_SCHEMA,
-            "status": "satisfied",
-            "required": True,
-            **context,
-            "active_session": active,
-            "satisfied_by": "session_lease",
-            "message": "Active owner/patcher session lease with branch and worktree metadata is present.",
-            "recommended_command": None,
-            "agent_guidance": "Continue execution inside the active session lease and task allowed paths.",
-        }
-
     if _explicit_host_worktree_execution(context):
         return {
             "schema": SESSION_PREFLIGHT_SCHEMA,
@@ -205,6 +198,53 @@ def build_session_preflight(
                 "Continue execution in the declared host worktree only because the "
                 "context pack records host-worktree execution as an intentional mode."
             ),
+        }
+
+    context_blocker = _branch_isolation_blocker(context)
+    if context_blocker is not None:
+        return {
+            "schema": SESSION_PREFLIGHT_SCHEMA,
+            "status": "blocked",
+            "required": True,
+            **context,
+            "active_session": None,
+            "satisfied_by": None,
+            "blocker": context_blocker,
+            "message": context_blocker["message"],
+            "recommended_command": _session_start_command(root, context),
+            "agent_guidance": context_blocker["guidance"],
+        }
+
+    active = _active_write_session_for_context(
+        root,
+        context_pack=context.get("context_pack"),
+        task_id=context.get("task_id"),
+    )
+    if active is not None:
+        active_blocker = _branch_isolation_blocker(active)
+        if active_blocker is not None:
+            return {
+                "schema": SESSION_PREFLIGHT_SCHEMA,
+                "status": "blocked",
+                "required": True,
+                **context,
+                "active_session": active,
+                "satisfied_by": None,
+                "blocker": active_blocker,
+                "message": active_blocker["message"],
+                "recommended_command": _session_start_command(root, context),
+                "agent_guidance": active_blocker["guidance"],
+            }
+        return {
+            "schema": SESSION_PREFLIGHT_SCHEMA,
+            "status": "satisfied",
+            "required": True,
+            **context,
+            "active_session": active,
+            "satisfied_by": "session_lease",
+            "message": "Active owner/patcher session lease with isolated branch and worktree metadata is present.",
+            "recommended_command": None,
+            "agent_guidance": "Continue execution inside the active session lease and task allowed paths.",
         }
 
     command = _session_start_command(root, context)
@@ -645,6 +685,7 @@ def _preflight_context(
                     "context_pack": parsed.get("context_pack"),
                     "task_id": parsed.get("task_id"),
                     "task_type": parsed.get("task_type") or context["task_type"],
+                    "workflow": parsed.get("workflow"),
                     "branch": parsed.get("branch"),
                     "worktree": parsed.get("worktree"),
                     "host_worktree_execution": parsed.get("host_worktree_execution"),
@@ -656,6 +697,28 @@ def _preflight_context(
 def _explicit_host_worktree_execution(context: dict[str, Any]) -> bool:
     value = context.get("host_worktree_execution")
     return isinstance(value, str) and value.strip().lower() == "explicit"
+
+
+def _branch_isolation_blocker(context: dict[str, Any]) -> dict[str, Any] | None:
+    branch = context.get("branch")
+    if _protected_branch(branch):
+        return {
+            "type": "protected_branch",
+            "branch": branch,
+            "message": (
+                "Implementation lifecycle requires an isolated branch/worktree; "
+                f"protected branch {branch!r} is not allowed without an explicit host-worktree escape hatch."
+            ),
+            "guidance": (
+                "Create or switch to a dedicated branch/worktree before implementation, "
+                "or declare Host Worktree Execution: `explicit` in the task/workflow when this is intentional."
+            ),
+        }
+    return None
+
+
+def _protected_branch(branch: Any) -> bool:
+    return isinstance(branch, str) and branch.strip() in PROTECTED_BRANCHES
 
 
 def _active_write_session_for_context(
@@ -678,12 +741,23 @@ def _active_write_session_for_context(
 
 def _session_start_command(root: Path, context: dict[str, Any]) -> str:
     task_selector = _session_start_task_selector(root, context)
-    branch = _current_git_branch(root) or "<branch>"
+    branch = _recommended_session_branch(root, context)
     worktree = _current_git_worktree(root) or str(root)
     return (
         f"aspec session start --task {task_selector} --owner <owner> "
         f"--branch {branch} --worktree {worktree}"
     )
+
+
+def _recommended_session_branch(root: Path, context: dict[str, Any]) -> str:
+    context_branch = context.get("branch")
+    if isinstance(context_branch, str) and context_branch.strip() and not _protected_branch(context_branch):
+        return context_branch.strip()
+    current = _current_git_branch(root)
+    if current and not _protected_branch(current):
+        return current
+    task_id = str(context.get("task_id") or "task").lower()
+    return f"codex/{task_id}-implementation"
 
 
 def _session_start_task_selector(root: Path, context: dict[str, Any]) -> str:

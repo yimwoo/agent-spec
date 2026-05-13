@@ -8,6 +8,13 @@ from unittest import mock
 from agentspec.init import init_project
 from agentspec.io import load_data
 from agentspec.run import resume_run, start_research_run, start_run
+from agentspec.run_transitions import (
+    MODEL_REVIEW_UNAVAILABLE_FLAG,
+    halted_run_accepts_corrected_evidence,
+    is_model_review_unavailable_pause,
+    next_action_for_status,
+    status_for_decision,
+)
 
 
 def _seed_implementation_pack(root: Path, slug: str = "T-996-atomicity-fixture") -> Path:
@@ -34,6 +41,68 @@ def _ledger_tasks(root: Path) -> dict:
         return {}
     data = load_data(_ledger_path(root), {}) or {}
     return data.get("tasks", {})
+
+
+class RunTransitionBoundaryTests(unittest.TestCase):
+    """R-146/DCR-0087: transition helpers stay readable and deterministic."""
+
+    def test_status_for_decision_uses_safe_paused_default(self) -> None:
+        self.assertEqual(status_for_decision("auto_continue"), "running")
+        self.assertEqual(status_for_decision("pause_for_human"), "paused")
+        self.assertEqual(status_for_decision("halt"), "halted")
+        self.assertEqual(status_for_decision("complete"), "complete")
+        self.assertEqual(status_for_decision("unknown"), "paused")
+
+    def test_next_action_for_status_uses_safe_human_default(self) -> None:
+        self.assertEqual(next_action_for_status("started"), "continue_executor")
+        self.assertEqual(next_action_for_status("running"), "continue_executor")
+        self.assertEqual(next_action_for_status("paused"), "await_human")
+        self.assertEqual(next_action_for_status("complete"), "complete")
+        self.assertEqual(next_action_for_status("halted"), "stop")
+        self.assertEqual(next_action_for_status("aborted"), "stop")
+        self.assertEqual(next_action_for_status("unknown"), "await_human")
+
+    def test_halted_research_run_accepts_infrastructure_correction(self) -> None:
+        self.assertTrue(
+            halted_run_accepts_corrected_evidence(
+                {"mode": "research"},
+                [{"kind": "autonomous_infrastructure_block"}],
+            )
+        )
+
+    def test_quality_review_halt_accepts_corrected_evidence(self) -> None:
+        self.assertTrue(
+            halted_run_accepts_corrected_evidence(
+                {"mode": "autonomous"},
+                [
+                    {
+                        "kind": "autonomous_pause_to_dcr",
+                        "reason": "Quality reviewer rejected autonomous-mode complete: missing evidence",
+                    }
+                ],
+            )
+        )
+
+    def test_later_reviewer_halt_blocks_corrected_evidence(self) -> None:
+        self.assertFalse(
+            halted_run_accepts_corrected_evidence(
+                {"mode": "autonomous", "infrastructure_blocker": {"kind": "model"}},
+                [{"kind": "reviewer_verdict", "decision": "halt"}],
+            )
+        )
+
+    def test_supervised_run_never_accepts_corrected_halt_evidence(self) -> None:
+        self.assertFalse(
+            halted_run_accepts_corrected_evidence(
+                {"mode": "supervised", "infrastructure_blocker": {"kind": "model"}},
+                [{"kind": "autonomous_infrastructure_block"}],
+            )
+        )
+
+    def test_model_review_unavailable_pause_uses_policy_flag(self) -> None:
+        review = mock.Mock(policy_flags=[MODEL_REVIEW_UNAVAILABLE_FLAG])
+
+        self.assertTrue(is_model_review_unavailable_pause(review))
 
 
 class ResearchModeLedgerGuardTests(unittest.TestCase):

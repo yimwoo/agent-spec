@@ -4,7 +4,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from agentspec import review as review_module
 from agentspec.cli import main
 
 
@@ -77,6 +79,36 @@ class DocumentReviewCLITests(unittest.TestCase):
             stored = json.loads(review_path.read_text(encoding="utf-8"))
             self.assertEqual(stored["id"], payload["id"])
             self.assertEqual(stored["normalized_artifact_digest"], payload["normalized_artifact_digest"])
+
+    def test_review_doc_retries_when_allocated_id_collides(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            artifact = root / "docs" / "change-requests" / "DCR-0099-test.md"
+            _write_dcr(artifact)
+            original_write = review_module._write_data_exclusive
+            collided = False
+
+            def collide_once(path: Path, data: object) -> None:
+                nonlocal collided
+                if not collided:
+                    collided = True
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text('{"schema": "collision"}\n', encoding="utf-8")
+                    raise FileExistsError(path)
+                original_write(path, data)
+
+            with mock.patch.object(review_module, "_write_data_exclusive", side_effect=collide_once):
+                code, stdout, _ = _run_cli(
+                    root,
+                    ["review", "doc", "docs/change-requests/DCR-0099-test.md", "--mode", "deterministic", "--json"],
+                )
+
+            self.assertEqual(code, 0)
+            payload = json.loads(stdout)
+            self.assertEqual(payload["id"], "DOCREVIEW-0002")
+            self.assertTrue((root / "agent" / "doc-reviews" / "DOCREVIEW-0001.yml").exists())
+            stored = json.loads((root / "agent" / "doc-reviews" / "DOCREVIEW-0002.yml").read_text(encoding="utf-8"))
+            self.assertEqual(stored["id"], "DOCREVIEW-0002")
 
     def test_manual_ready_verdict_and_check_current(self) -> None:
         with tempfile.TemporaryDirectory() as td:

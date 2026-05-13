@@ -348,6 +348,43 @@ Type: `implementation`
             self.assertNotIn("aspec", json.dumps(action["agent_display"]).lower())
             self.assertEqual(summary["current_artifact"]["session_preflight"]["status"], "missing")
 
+    def test_status_exposes_ready_task_workflow_plan_state(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_ready_task_only(root)
+            workflow = root / "agent" / "workflows" / "W-003-ready.md"
+            workflow.parent.mkdir(parents=True, exist_ok=True)
+            workflow.write_text(
+                """---
+workflow_id: W-003
+task_pack: agent/context-packs/T-003-ready.md
+status: planned
+current_stage: planning
+branch: codex/t-003-ready
+---
+
+# Workflow W-003: Ready Task
+""",
+                encoding="utf-8",
+            )
+            pack = root / "agent" / "context-packs" / "T-003-ready.md"
+            pack.write_text(
+                pack.read_text(encoding="utf-8").replace(
+                    "Type: `implementation`",
+                    "Type: `implementation`\nWorkflow: `agent/workflows/W-003-ready.md`",
+                ),
+                encoding="utf-8",
+            )
+
+            status = build_project_status(root)
+
+            workflow_plan = status["lifecycle_summary"]["current_artifact"]["workflow_plan"]
+            self.assertEqual(workflow_plan["path"], "agent/workflows/W-003-ready.md")
+            self.assertEqual(workflow_plan["status"], "planned")
+            self.assertEqual(workflow_plan["current_stage"], "planning")
+            self.assertEqual(workflow_plan["branch"], "codex/t-003-ready")
+            self.assertIn("Workflow plan: agent/workflows/W-003-ready.md", format_project_status(status))
+
     def test_status_active_session_satisfies_ready_task_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
