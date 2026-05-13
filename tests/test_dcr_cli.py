@@ -7,6 +7,7 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -101,6 +102,23 @@ class DCRCLICreateTests(unittest.TestCase):
             self.assertEqual(guidance["state"], "review_missing")
             self.assertIn("aspec review doc", guidance["next_actions"][0]["commands"][0])
             self.assertFalse(guidance["agent_display"]["show_terminal_commands"])
+
+    def test_create_warns_when_dcr_artifact_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/docs/change-requests/\n", encoding="utf-8")
+            output = io.StringIO()
+
+            with pushd(root), contextlib.redirect_stdout(output):
+                rc = main(["dcr", "create", "--title", "Test idea", "--classification", "spike"])
+
+            self.assertEqual(rc, 0)
+            text = output.getvalue()
+            self.assertIn("Warning: Git ignores durable AgentSpec artifact", text)
+            self.assertIn("Preserve: git add -f -- docs/change-requests/DCR-0001-test-idea.md", text)
+            self.assertIn("agent/sessions", text)
 
     def test_create_auto_numbers_id(self) -> None:
         with tempfile.TemporaryDirectory() as td:

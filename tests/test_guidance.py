@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import subprocess
 from pathlib import Path
 
 from agentspec.guidance import build_post_artifact_guidance
@@ -60,6 +61,22 @@ class PostArtifactGuidanceTests(unittest.TestCase):
             self.assertEqual(guidance["state"], "review_stale")
             self.assertEqual(guidance["review"]["readiness"], "stale")
             self.assertEqual(guidance["next_actions"][0]["id"], "review_document")
+
+    def test_dcr_guidance_warns_when_durable_artifact_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _init_git_with_ignore(root, "/docs/change-requests/\n")
+            _write_dcr(root, status="classified")
+
+            guidance = build_post_artifact_guidance(root, "docs/change-requests/DCR-0001-test.md")
+
+            preservation = guidance["preservation"]
+            self.assertEqual(preservation["ignored_artifacts"], ["docs/change-requests/DCR-0001-test.md"])
+            self.assertEqual(
+                preservation["preserve_command"],
+                "git add -f -- docs/change-requests/DCR-0001-test.md",
+            )
+            self.assertIn("agent/runs", preservation["agent_display"]["guidance"])
 
     def test_design_guidance_requires_review_before_promotion(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -217,6 +234,11 @@ verification_commands:
         encoding="utf-8",
     )
     return path
+
+
+def _init_git_with_ignore(root: Path, ignore_text: str) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    (root / ".gitignore").write_text(ignore_text, encoding="utf-8")
 
 
 if __name__ == "__main__":

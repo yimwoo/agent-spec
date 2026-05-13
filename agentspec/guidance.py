@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import shlex
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +17,7 @@ from .workflow import workflow_lifecycle_for_context_pack
 
 
 POST_ARTIFACT_GUIDANCE_SCHEMA = "agentspec.post_artifact_guidance.v0"
+ARTIFACT_PRESERVATION_SCHEMA = "agentspec.artifact_preservation.v0"
 
 
 def build_post_artifact_guidance(root: Path, artifact_path: str | Path) -> dict[str, Any]:
@@ -37,12 +40,60 @@ def build_post_artifact_guidance(root: Path, artifact_path: str | Path) -> dict[
     path = _resolve_artifact_path(root, artifact_path)
     rel_path = _relative(root, path)
     if _is_dcr_path(rel_path, path):
-        return _dcr_guidance(root, path, rel_path)
+        return _with_preservation_guidance(root, _dcr_guidance(root, path, rel_path), [rel_path])
     if _is_design_path(rel_path, path):
-        return _design_guidance(root, path, rel_path)
+        return _with_preservation_guidance(root, _design_guidance(root, path, rel_path), [rel_path])
     if _is_task_context_pack_path(rel_path, path):
-        return _task_context_pack_guidance(root, path, rel_path)
+        return _with_preservation_guidance(root, _task_context_pack_guidance(root, path, rel_path), [rel_path])
     return _unsupported_guidance(rel_path)
+
+
+def build_artifact_preservation_guidance(
+    root: Path,
+    artifact_paths: list[str | Path],
+) -> dict[str, Any] | None:
+    """Return git preservation guidance when durable artifacts are ignored.
+
+    Args:
+        root: AgentSpec project root.
+        artifact_paths: Absolute or project-relative durable artifact paths to
+            check. Runtime directories should not be passed here.
+
+    Returns:
+        A structured warning payload when any supplied artifact is ignored by
+        git; otherwise None.
+    """
+
+    root = root.resolve()
+    ignored: list[str] = []
+    for artifact_path in artifact_paths:
+        rel_path = _normalize_artifact_relpath(root, artifact_path)
+        if rel_path is not None and _git_ignores_path(root, rel_path):
+            ignored.append(rel_path)
+
+    if not ignored:
+        return None
+
+    quoted_paths = " ".join(shlex.quote(path) for path in ignored)
+    plural = "s" if len(ignored) != 1 else ""
+    command = f"git add -f -- {quoted_paths}"
+    return {
+        "schema": ARTIFACT_PRESERVATION_SCHEMA,
+        "ignored": True,
+        "ignored_artifacts": ignored,
+        "summary": f"Git ignores durable AgentSpec artifact{plural}: {', '.join(ignored)}.",
+        "preserve_command": command,
+        "agent_display": {
+            "warning": f"Git ignores durable AgentSpec artifact{plural}: {', '.join(ignored)}.",
+            "guidance": (
+                "Force-add only the listed durable artifact"
+                f"{plural}; keep runtime/generated output such as agent/runs, "
+                "agent/sessions, reports, dist, and node_modules ignored."
+            ),
+            "command": command,
+            "show_terminal_command": True,
+        },
+    }
 
 
 def format_post_artifact_guidance(guidance: dict[str, Any]) -> str:
@@ -64,6 +115,29 @@ def format_post_artifact_guidance(guidance: dict[str, Any]) -> str:
     prompt = str(display.get("prompt") or "").strip()
     if prompt:
         lines.append(f"Prompt: {prompt}")
+    preservation = format_artifact_preservation_guidance(guidance.get("preservation"))
+    if preservation:
+        lines.append(preservation)
+    return "\n".join(lines)
+
+
+def format_artifact_preservation_guidance(preservation: object) -> str:
+    """Format ignored durable-artifact guidance for human CLI output."""
+
+    payload = _dict_or_empty(preservation)
+    if not payload:
+        return ""
+    display = _dict_or_empty(payload.get("agent_display"))
+    warning = str(display.get("warning") or payload.get("summary") or "").strip()
+    command = str(display.get("command") or payload.get("preserve_command") or "").strip()
+    guidance = str(display.get("guidance") or "").strip()
+    lines: list[str] = []
+    if warning:
+        lines.append(f"Warning: {warning}")
+    if command:
+        lines.append(f"Preserve: {command}")
+    if guidance:
+        lines.append(f"Scope: {guidance}")
     return "\n".join(lines)
 
 
@@ -391,6 +465,18 @@ def _guidance_payload(
     }
 
 
+def _with_preservation_guidance(
+    root: Path,
+    payload: dict[str, Any],
+    artifact_paths: list[str | Path],
+) -> dict[str, Any]:
+    preservation = build_artifact_preservation_guidance(root, artifact_paths)
+    if preservation:
+        payload = dict(payload)
+        payload["preservation"] = preservation
+    return payload
+
+
 def _task_context_pack_record(root: Path, rel_path: str) -> dict[str, Any] | None:
     for record in list_task_context_packs(root):
         if record.get("path") == rel_path:
@@ -443,6 +529,30 @@ def _resolve_artifact_path(root: Path, artifact_path: str | Path) -> Path:
     if not resolved.is_file():
         raise FileNotFoundError(f"Artifact not found: {artifact_path}")
     return resolved
+
+
+def _normalize_artifact_relpath(root: Path, artifact_path: str | Path) -> str | None:
+    path = Path(artifact_path)
+    candidate = path if path.is_absolute() else root / path
+    try:
+        resolved = candidate.resolve()
+        rel_path = _relative(root, resolved)
+    except ValueError:
+        return None
+    return rel_path
+
+
+def _git_ignores_path(root: Path, rel_path: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "check-ignore", "-q", "--no-index", "--", rel_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
 
 
 def _is_dcr_path(rel_path: str, path: Path) -> bool:

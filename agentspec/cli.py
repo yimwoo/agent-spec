@@ -27,7 +27,12 @@ from .errors import (
     RunStateNotFoundError,
     RunnerResultInvalidError,
 )
-from .guidance import build_post_artifact_guidance, format_post_artifact_guidance
+from .guidance import (
+    build_artifact_preservation_guidance,
+    build_post_artifact_guidance,
+    format_artifact_preservation_guidance,
+    format_post_artifact_guidance,
+)
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .lifecycle import build_lifecycle_contract, format_lifecycle_contract
@@ -854,6 +859,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     print(json.dumps(record, indent=2))
                 else:
                     print(f"Recorded code review {record['id']} ({record['verdict']}).")
+                    _print_artifact_preservation(
+                        build_artifact_preservation_guidance(
+                            root,
+                            [Path("agent") / "reviews" / f"{record['id']}.yml"],
+                        )
+                    )
                 return 0
             if args.review_command == "doc":
                 selected_doc_review_actions = sum(
@@ -882,6 +893,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     print(json.dumps(record, indent=2))
                 else:
                     print(f"Recorded document review {record['id']} ({record['verdict']}).")
+                    _print_artifact_preservation(
+                        build_artifact_preservation_guidance(
+                            root,
+                            [Path("agent") / "doc-reviews" / f"{record['id']}.yml"],
+                        )
+                    )
                 return 0
             parser.print_help()
             return 0
@@ -898,6 +915,9 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             else:
                 path = create_task_context_pack(root, requirement_id=args.requirement, task_type=args.type, title=args.title)
             print(f"Created task context pack: {path.relative_to(root)}")
+            _print_artifact_preservation(
+                build_artifact_preservation_guidance(root, [path.relative_to(root)])
+            )
             return 0
 
         if args.command == "task" and args.task_command == "list":
@@ -1225,6 +1245,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(f"Next: {display['guidance']}")
                 if display.get("prompt"):
                     print(f"Prompt: {display['prompt']}")
+                _print_artifact_preservation(guidance.get("preservation"))
                 return 0
             if args.dcr_command == "classify":
                 path = set_classification(root, args.dcr_id, args.classification)
@@ -1441,6 +1462,12 @@ def _print_finish_result(result: dict[str, Any]) -> None:
         repair = finding.get("repair") or finding.get("recommendation")
         if repair:
             print(f"Repair: {repair}")
+
+
+def _print_artifact_preservation(preservation: object) -> None:
+    text = format_artifact_preservation_guidance(preservation)
+    if text:
+        print(text)
 
 
 def _print_session_preflight_summary(preflight: Any) -> None:

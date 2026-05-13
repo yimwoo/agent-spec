@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -130,6 +131,33 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIn("- `agent/handoff.yml`", text)
             self.assertIn("| `agent/reviews/*.yml` | pattern; verification support |", text)
             self.assertIn("every non-verification allowed path is inferred", text)
+
+    def test_task_create_warns_when_context_pack_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_for_create(root)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "create",
+                        "--requirement",
+                        "R-010",
+                        "--title",
+                        "Ignored task",
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            text = output.getvalue()
+            self.assertIn("Created task context pack: agent/context-packs/T-001-ignored-task.md", text)
+            self.assertIn("Preserve: git add -f -- agent/context-packs/T-001-ignored-task.md", text)
 
     def test_cli_task_next_warns_about_orphan_workflow_when_no_ready_pack(self) -> None:
         with tempfile.TemporaryDirectory() as td:

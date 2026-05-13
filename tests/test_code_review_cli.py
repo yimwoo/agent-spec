@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -52,6 +53,35 @@ class CodeReviewCLITests(unittest.TestCase):
 
             artifact = load_data(root / "agent" / "reviews" / "REVIEW-0001.yml")
             self.assertEqual(artifact, payload)
+
+    def test_review_code_warns_when_review_artifact_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "review",
+                        "code",
+                        "--task",
+                        "T-013",
+                        "--verdict",
+                        "ready",
+                        "--summary",
+                        "No blocking findings.",
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            text = output.getvalue()
+            self.assertIn("Recorded code review REVIEW-0001 (ready).", text)
+            self.assertIn("Preserve: git add -f -- agent/reviews/REVIEW-0001.yml", text)
 
     def test_review_code_retries_when_allocated_id_collides(self) -> None:
         with tempfile.TemporaryDirectory() as td:
