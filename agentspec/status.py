@@ -29,6 +29,7 @@ LIFECYCLE_SUMMARY_SCHEMA = "agentspec.lifecycle_summary.v0"
 IMPLEMENTATION_READINESS_GATE = 60
 ACTIVE_RUN_STATUSES = {"started", "running"}
 ATTENTION_RUN_STATUSES = {"paused", "halted"}
+DCR_READY_FOR_TASKING_STATUSES = {"accepted", "classified"}
 LIFECYCLE_BREADCRUMB = [
     "draft_source",
     "ingest_source",
@@ -71,6 +72,8 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     covered_requirement_ids = _task_requirement_ids(tasks)
+    covered_dcr_ids = _task_originating_dcr_ids(tasks)
+    dcr_tasking_counts = _dcr_tasking_counts(dcrs, covered_dcr_ids)
     requirements_counts = {
         "total": len(requirements),
         "by_status": _counts(record.get("status") for record in requirements),
@@ -86,6 +89,8 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "total": len(dcrs),
         "by_status": _counts(record.get("status") for record in dcrs),
         "by_classification": _counts(record.get("classification") for record in dcrs),
+        "ready_for_tasking": dcr_tasking_counts["ready_for_tasking"],
+        "covered_by_task": dcr_tasking_counts["covered_by_task"],
     }
     task_counts = {
         "total": len(tasks),
@@ -962,6 +967,14 @@ def _no_ready_task_summary(
     total_tasks = int(tasks.get("total", 0) or 0)
     classified_dcrs = _status_count(dcrs, "classified")
     accepted_dcrs = _status_count(dcrs, "accepted")
+    raw_ready_for_tasking = dcrs.get("ready_for_tasking")
+    raw_covered_by_task = dcrs.get("covered_by_task")
+    dcrs_ready_for_tasking = (
+        raw_ready_for_tasking
+        if isinstance(raw_ready_for_tasking, int)
+        else classified_dcrs + accepted_dcrs
+    )
+    dcrs_covered_by_task = raw_covered_by_task if isinstance(raw_covered_by_task, int) else 0
     raw_outcome_counts = outcomes.get("counts")
     outcome_counts = raw_outcome_counts if isinstance(raw_outcome_counts, dict) else {}
     outcomes_ready = (
@@ -1139,7 +1152,8 @@ def _no_ready_task_summary(
             "message": main_point,
             "accepted_requirements": accepted_requirements,
             "tasks_total": total_tasks,
-            "dcrs_ready_for_tasking": classified_dcrs + accepted_dcrs,
+            "dcrs_ready_for_tasking": dcrs_ready_for_tasking,
+            "dcrs_covered_by_task": dcrs_covered_by_task,
         }
     ]
     action = {
@@ -1218,6 +1232,30 @@ def _task_requirement_ids(tasks: list[dict[str, Any]]) -> set[str]:
             if isinstance(requirement_id, str) and requirement_id:
                 ids.add(requirement_id)
     return ids
+
+
+def _task_originating_dcr_ids(tasks: list[dict[str, Any]]) -> set[str]:
+    ids: set[str] = set()
+    for task in tasks:
+        originating_dcr = task.get("originating_dcr")
+        if isinstance(originating_dcr, str) and originating_dcr:
+            ids.add(originating_dcr)
+    return ids
+
+
+def _dcr_tasking_counts(dcrs: list[dict[str, Any]], covered_dcr_ids: set[str]) -> dict[str, int]:
+    counts = {"ready_for_tasking": 0, "covered_by_task": 0}
+    for dcr in dcrs:
+        dcr_id = dcr.get("id")
+        if not isinstance(dcr_id, str) or not dcr_id:
+            continue
+        if str(dcr.get("status") or "") not in DCR_READY_FOR_TASKING_STATUSES:
+            continue
+        if dcr_id in covered_dcr_ids:
+            counts["covered_by_task"] += 1
+        else:
+            counts["ready_for_tasking"] += 1
+    return counts
 
 
 def _shell_title(value: str) -> str:

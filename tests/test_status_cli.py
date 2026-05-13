@@ -331,6 +331,101 @@ Type: `implementation`
             text = format_project_status(status)
             self.assertNotIn("aspec task create --requirement R-209", text)
 
+    def test_status_no_ready_task_excludes_dcrs_with_task_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir(parents=True)
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [
+                    {"id": "R-201", "status": "accepted", "priority": "P1", "originating_dcr": "DCR-0001"},
+                    {"id": "R-202", "status": "accepted", "priority": "P1", "originating_dcr": "DCR-0002"},
+                    {"id": "R-203", "status": "accepted", "priority": "P1", "originating_dcr": "DCR-0003"},
+                ],
+            )
+            _write_dcr(root, "DCR-0001", status="accepted")
+            _write_dcr(root, "DCR-0002", status="classified")
+            _write_dcr(root, "DCR-0003", status="accepted")
+            (root / "agent" / "context-packs" / "T-001-complete-first-dcr.md").write_text(
+                """# T-001: Complete first DCR
+
+Type: `implementation`
+Originating DCR: `DCR-0001`
+
+## Requirements
+
+- `R-201` Complete
+""",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-002-complete-second-dcr.md").write_text(
+                """# T-002: Complete second DCR
+
+Type: `implementation`
+Originating DCR: `DCR-0002`
+
+## Requirements
+
+- `R-202` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {"context_pack": "agent/context-packs/T-001-complete-first-dcr.md"},
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0002.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0002",
+                    "task": {"context_pack": "agent/context-packs/T-002-complete-second-dcr.md"},
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete-first-dcr.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                        },
+                        "agent/context-packs/T-002-complete-second-dcr.md": {
+                            "status": "complete",
+                            "run_id": "run-002",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0002"},
+                        },
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+            blocker = status["lifecycle_summary"]["blocked_by"][0]
+
+            self.assertEqual(status["dcrs"]["by_status"], {"accepted": 2, "classified": 1})
+            self.assertEqual(status["dcrs"]["covered_by_task"], 2)
+            self.assertEqual(status["dcrs"]["ready_for_tasking"], 1)
+            self.assertEqual(blocker["dcrs_covered_by_task"], 2)
+            self.assertEqual(blocker["dcrs_ready_for_tasking"], 1)
+
     def test_status_recommends_session_before_ready_task_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -1236,6 +1331,30 @@ Type: `implementation`
             "updated_at": "2026-04-29T00:00:30Z",
             "terminal": True,
         },
+    )
+
+
+def _write_dcr(
+    root: Path,
+    dcr_id: str,
+    *,
+    status: str = "accepted",
+    classification: str = "implement-now",
+) -> None:
+    (root / "docs" / "change-requests" / f"{dcr_id}-test.md").write_text(
+        f"""# {dcr_id}: Test
+
+| Field | Value |
+|---|---|
+| Status | {status} |
+| Classification | {classification} |
+| Submitted | 2026-05-12 |
+| Submitted by | user |
+| Decided by | user |
+| Decided on | 2026-05-12 |
+| Confidence | medium |
+""",
+        encoding="utf-8",
     )
 
 
