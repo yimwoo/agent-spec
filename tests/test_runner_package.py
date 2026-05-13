@@ -670,6 +670,69 @@ class RunnerPackageTests(unittest.TestCase):
 
             self.assertEqual(load_data(state_path), before)
 
+    def test_research_result_accepts_artifacts_matching_active_run_allowed_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research-tasking")
+            state_path = root / "agent" / "runs" / "pkg-research-tasking" / "state.yml"
+            state = load_data(state_path)
+            state["allowed_paths"] = [
+                *state["allowed_paths"],
+                "docs/traceability/**",
+                "agent/context-packs/**",
+            ]
+            state["target_write_requirements"] = list(state["allowed_paths"])
+            write_data(state_path, state)
+            evidence = _valid_research_evidence()
+            evidence["durable_artifacts"] = [
+                "docs/change-requests/DCR-0099-research.md",
+                "docs/traceability/requirements.yml",
+                "agent/context-packs/T-099-research-task.md",
+            ]
+
+            package = submit_runner_result(
+                root,
+                "pkg-research-tasking",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": list(evidence["durable_artifacts"]),
+                    "test_status": "passed",
+                    "acceptance_evidence": evidence,
+                    "reviewer_mode": "deterministic",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "complete")
+            executor_event = next(
+                event for event in _events(root, "pkg-research-tasking") if event["kind"] == "executor_output"
+            )
+            self.assertEqual(executor_event["acceptance_evidence"]["durable_artifacts"], evidence["durable_artifacts"])
+
+    def test_research_result_rejection_names_artifacts_outside_active_allowed_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research-disallowed")
+            evidence = _valid_research_evidence()
+            evidence["durable_artifacts"] = ["docs/spec/disallowed.md"]
+
+            with self.assertRaisesRegex(RunnerResultInvalidError, "docs/spec/disallowed.md"):
+                submit_runner_result(
+                    root,
+                    "pkg-research-disallowed",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done.",
+                        "touched_paths": ["docs/spec/disallowed.md"],
+                        "test_status": "passed",
+                        "acceptance_evidence": evidence,
+                    },
+                    runner="generic",
+                )
+
     def test_runner_result_recovers_halted_research_run_with_acceptance_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
