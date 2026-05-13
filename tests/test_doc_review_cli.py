@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -79,6 +80,23 @@ class DocumentReviewCLITests(unittest.TestCase):
             stored = json.loads(review_path.read_text(encoding="utf-8"))
             self.assertEqual(stored["id"], payload["id"])
             self.assertEqual(stored["normalized_artifact_digest"], payload["normalized_artifact_digest"])
+
+    def test_review_doc_warns_when_review_artifact_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            artifact = root / "docs" / "change-requests" / "DCR-0099-test.md"
+            _write_dcr(artifact)
+
+            code, stdout, _ = _run_cli(
+                root,
+                ["review", "doc", "docs/change-requests/DCR-0099-test.md", "--mode", "deterministic"],
+            )
+
+            self.assertEqual(code, 0)
+            self.assertIn("Recorded document review DOCREVIEW-0001 (ready).", stdout)
+            self.assertIn("Preserve: git add -f -- agent/doc-reviews/DOCREVIEW-0001.yml", stdout)
 
     def test_review_doc_retries_when_allocated_id_collides(self) -> None:
         with tempfile.TemporaryDirectory() as td:

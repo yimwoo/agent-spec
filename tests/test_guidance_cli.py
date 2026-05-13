@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,6 +50,23 @@ class GuidanceCLITests(unittest.TestCase):
             self.assertIn("Next: Document review is missing", text)
             self.assertIn("Prompt: Review the design", text)
             self.assertNotIn("aspec review doc", text)
+
+    def test_guidance_human_output_warns_when_artifact_is_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/docs/designs/\n", encoding="utf-8")
+            _write_design(root)
+            output = io.StringIO()
+
+            with contextlib.redirect_stdout(output):
+                code = main(["--root", td, "guidance", "docs/designs/test-design.md"])
+
+            self.assertEqual(code, 0)
+            text = output.getvalue()
+            self.assertIn("Warning: Git ignores durable AgentSpec artifact", text)
+            self.assertIn("Preserve: git add -f -- docs/designs/test-design.md", text)
+            self.assertIn("Scope: Force-add only the listed durable artifact", text)
 
 
 def _write_design(root: Path) -> Path:
