@@ -203,6 +203,61 @@ current_stage: planning
             self.assertEqual(status["overall"], "idle")
             self.assertEqual(status["runs"]["attention"], [])
 
+    def test_task_complete_refreshes_existing_run_session_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_paused_run(root, "t-013-paused", "agent/context-packs/T-013-task.md")
+            state_path = root / "agent" / "runs" / "t-013-paused" / "state.yml"
+            state = load_data(state_path)
+            state["session_preflight"] = {
+                "schema": "agentspec.session_preflight.v0",
+                "status": "missing",
+                "required": True,
+            }
+            write_data(state_path, state)
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-013",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/completion-preflight",
+                    "--worktree",
+                    str(root),
+                    "--session-id",
+                    "S-completion-preflight",
+                    "--json",
+                ],
+            )
+
+            payload = _run_json(
+                root,
+                [
+                    "task",
+                    "complete",
+                    "T-013",
+                    "--run-id",
+                    "t-013-paused",
+                    "--test-status",
+                    "passed",
+                    "--json",
+                ],
+            )
+
+            self.assertEqual(payload["session_preflight"]["status"], "satisfied")
+            self.assertEqual(payload["session_preflight"]["active_session"]["session_id"], "S-completion-preflight")
+            stored_state = load_data(state_path)
+            self.assertEqual(stored_state["session_preflight"]["status"], "satisfied")
+            self.assertEqual(
+                stored_state["session_preflight"]["active_session"]["session_id"],
+                "S-completion-preflight",
+            )
+
     def test_finish_replacement_run_supersedes_older_paused_run_in_status_and_handoff(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

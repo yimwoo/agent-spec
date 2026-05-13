@@ -14,6 +14,7 @@ from typing import Any
 
 from .io import load_data, utc_now_iso
 from .model_review import classify_severity, request_model_review, request_quality_review
+from .paths import path_matches_pattern
 from .policy import PolicyVerdict
 from .task import list_task_context_packs
 
@@ -483,12 +484,10 @@ def _has_scoped_completion_evidence(text: str) -> bool:
 
 
 RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA = "agentspec.research_acceptance_evidence.v0"
-_RESEARCH_EVIDENCE_PATH_PREFIXES: tuple[str, ...] = (
-    "reports/dogfood/",
-    "docs/change-requests/",
-)
-_RESEARCH_EVIDENCE_EXACT_PATHS: frozenset[str] = frozenset(
-    {"docs/discovery/open-questions.yml"}
+_RESEARCH_EVIDENCE_DEFAULT_ALLOWED_PATHS: tuple[str, ...] = (
+    "reports/dogfood/**",
+    "docs/discovery/open-questions.yml",
+    "docs/change-requests/**",
 )
 
 
@@ -510,11 +509,18 @@ def research_acceptance_evidence_template() -> dict[str, Any]:
     }
 
 
-def validate_research_acceptance_evidence(evidence: Any) -> dict[str, Any]:
+def validate_research_acceptance_evidence(
+    evidence: Any,
+    *,
+    allowed_paths: list[str] | None = None,
+) -> dict[str, Any]:
     """Validate and normalize research-mode acceptance evidence.
 
     Args:
         evidence: Untrusted runner or CLI evidence payload.
+        allowed_paths: Optional active research run allowed path patterns. When
+            present, durable artifacts are validated against this run-specific
+            write surface instead of the default research findings surface.
 
     Returns:
         A normalized evidence dictionary safe to persist in run state.
@@ -532,11 +538,15 @@ def validate_research_acceptance_evidence(evidence: Any) -> dict[str, Any]:
     durable_artifacts = _string_list(evidence.get("durable_artifacts"))
     if not durable_artifacts:
         raise ValueError("acceptance_evidence.durable_artifacts must be a non-empty list of paths.")
-    disallowed = [path for path in durable_artifacts if not _is_research_evidence_path(path)]
+    allowed_surface = _research_evidence_allowed_paths(allowed_paths)
+    disallowed = [path for path in durable_artifacts if not _is_research_evidence_path(path, allowed_surface)]
     if disallowed:
+        surface_label = "active research run allowed paths" if allowed_paths is not None else "research write surface"
         raise ValueError(
-            "acceptance_evidence.durable_artifacts must stay inside the research write surface: "
+            f"acceptance_evidence.durable_artifacts contain path(s) outside the {surface_label}: "
             + ", ".join(disallowed)
+            + ". Allowed research artifact paths: "
+            + ", ".join(allowed_surface)
         )
 
     if evidence.get("allowed_path_confirmation") is not True:
@@ -583,8 +593,14 @@ def _string_list(value: Any) -> list[str]:
     return list(value)
 
 
-def _is_research_evidence_path(path: str) -> bool:
-    return path in _RESEARCH_EVIDENCE_EXACT_PATHS or path.startswith(_RESEARCH_EVIDENCE_PATH_PREFIXES)
+def _research_evidence_allowed_paths(allowed_paths: list[str] | None) -> list[str]:
+    if allowed_paths is None:
+        return list(_RESEARCH_EVIDENCE_DEFAULT_ALLOWED_PATHS)
+    return [path for path in allowed_paths if isinstance(path, str) and path.strip()]
+
+
+def _is_research_evidence_path(path: str, allowed_paths: list[str]) -> bool:
+    return any(path_matches_pattern(path, allowed_path) for allowed_path in allowed_paths)
 
 
 DOC_REVIEW_SCHEMA = "agentspec.doc_review.v0"

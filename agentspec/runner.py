@@ -120,13 +120,22 @@ def submit_runner_result(
 
     root = root.resolve()
     validate_run_id(run_id)
+    state: dict[str, Any] | None = None
     try:
-        parsed = parse_runner_result(result)
+        state = load_run_state(root, run_id, run_dir=run_dir)
+    except FileNotFoundError:
+        state = None
+    try:
+        parsed = parse_runner_result(
+            result,
+            acceptance_allowed_paths=_acceptance_allowed_paths_for_state(state),
+        )
     except ValueError as exc:
-        try:
-            state = load_run_state(root, run_id, run_dir=run_dir)
-        except FileNotFoundError as file_exc:
-            raise exc from file_exc
+        if state is None:
+            try:
+                state = load_run_state(root, run_id, run_dir=run_dir)
+            except FileNotFoundError as file_exc:
+                raise exc from file_exc
         raise _record_runner_result_rejected(
             root,
             run_id,
@@ -135,7 +144,8 @@ def submit_runner_result(
             state=state,
             run_dir=run_dir,
         ) from exc
-    state = load_run_state(root, run_id, run_dir=run_dir)
+    if state is None:
+        state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("mode") == "research" and parsed["test_status"] == "passed" and parsed.get("acceptance_evidence") is None:
         error = ValueError("Research-mode passed runner results require acceptance_evidence.")
         raise _record_runner_result_rejected(
@@ -166,6 +176,15 @@ def submit_runner_result(
         evidence=parsed.get("evidence"),
         run_dir=run_dir,
     )
+
+
+def _acceptance_allowed_paths_for_state(state: dict[str, Any] | None) -> list[str] | None:
+    if not isinstance(state, dict) or state.get("mode") != "research":
+        return None
+    allowed_paths = state.get("allowed_paths")
+    if not isinstance(allowed_paths, list):
+        return []
+    return [path for path in allowed_paths if isinstance(path, str)]
 
 
 def run_demo(
@@ -448,7 +467,11 @@ def _execution_event_summary(execution: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
-def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
+def parse_runner_result(
+    result: dict[str, Any],
+    *,
+    acceptance_allowed_paths: list[str] | None = None,
+) -> dict[str, Any]:
     """Validate and normalize a runner result payload.
 
     Raises:
@@ -480,7 +503,10 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
 
     acceptance_evidence = result.get("acceptance_evidence")
     if acceptance_evidence is not None:
-        acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
+        acceptance_evidence = validate_research_acceptance_evidence(
+            acceptance_evidence,
+            allowed_paths=acceptance_allowed_paths,
+        )
 
     evidence = result.get("evidence")
     if evidence is not None:

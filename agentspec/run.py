@@ -275,7 +275,16 @@ def resume_run(
     max_iterations = int(state.get("max_iterations", 1))
     mode = state.get("mode", "supervised")
     if acceptance_evidence is not None:
-        acceptance_evidence = validate_research_acceptance_evidence(acceptance_evidence)
+        raw_allowed_paths = state.get("allowed_paths", [])
+        allowed_paths = (
+            [path for path in raw_allowed_paths if isinstance(path, str)]
+            if mode == "research" and isinstance(raw_allowed_paths, list)
+            else None
+        )
+        acceptance_evidence = validate_research_acceptance_evidence(
+            acceptance_evidence,
+            allowed_paths=allowed_paths,
+        )
         if mode != "research":
             acceptance_evidence = None
 
@@ -926,6 +935,7 @@ def complete_context_pack_run(
         }
     if code_review is not None:
         state["code_review"] = code_review
+    state["session_preflight"] = _session_preflight_for_state(root, state)
     # R-146 / DCR-0024: ledger-first ordering. If the ledger write fails
     # the state file is never written, and a retry with the same run_id
     # naturally converges (ledger writes are idempotent inserts and the
