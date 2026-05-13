@@ -1,3 +1,5 @@
+"""Source registry storage, drift checks, and human formatting helpers."""
+
 from __future__ import annotations
 
 import hashlib
@@ -25,11 +27,15 @@ _RETRYABLE_EXCEPTIONS: tuple[type[BaseException], ...] = (TimeoutError, Connecti
 
 @dataclass(frozen=True)
 class RegistryIssue:
+    """Validation issue emitted for a source registry record."""
+
     path: str
     code: str
     message: str
 
     def to_dict(self) -> dict[str, str]:
+        """Serialize the registry issue for JSON output."""
+
         return {
             "path": self.path,
             "code": self.code,
@@ -38,11 +44,15 @@ class RegistryIssue:
 
 
 class SourceRegistryValidationError(ValueError):
+    """Raised when the source registry cannot be parsed or validated."""
+
     def __init__(self, issues: list[RegistryIssue]):
         self.issues = issues
         super().__init__("; ".join(issue.message for issue in issues))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize validation issues into the registry validation schema."""
+
         return _validation_report(self.issues)
 
 
@@ -56,6 +66,24 @@ def add_source_record(
     storage_mode: str,
     poll_cadence: str | None = None,
 ) -> dict[str, Any]:
+    """Create or update a registered external source record.
+
+    Args:
+        root: AgentSpec project root.
+        source_key: Stable key for the external source.
+        remote_uri: Source URI or connector locator.
+        kind: Source kind.
+        classification: Data classification for storage policy.
+        storage_mode: Storage mode allowed for the classification.
+        poll_cadence: Optional polling cadence metadata.
+
+    Returns:
+        A source-add payload with the created or updated record.
+
+    Raises:
+        SourceRegistryValidationError: If the record violates registry policy.
+    """
+
     registry = load_source_registry(root)
     existing_record = _find_registry_record(registry["sources"], source_key)
     accepted_source = _accepted_source_for(root, source_key)
@@ -107,6 +135,8 @@ def add_source_record(
 
 
 def list_source_records(root: Path) -> dict[str, Any]:
+    """Return all registered sources in structured output form."""
+
     registry = load_source_registry(root)
     return {
         "schema": SOURCE_LIST_SCHEMA,
@@ -121,6 +151,21 @@ def check_registered_sources(
     all_sources: bool = False,
     as_candidate: bool = False,
 ) -> dict[str, Any]:
+    """Fetch and compare registered sources against accepted snapshots.
+
+    Args:
+        root: AgentSpec project root.
+        source_key: Optional source key to check.
+        all_sources: Whether to check all registered sources.
+        as_candidate: Whether changed content should be imported as a candidate.
+
+    Returns:
+        Source-check summary and per-source results.
+
+    Raises:
+        ValueError: If no source is selected or a selected key is missing.
+    """
+
     registry = load_source_registry(root)
     if all_sources:
         selected = registry["sources"]
@@ -152,6 +197,8 @@ def check_registered_sources(
 
 
 def source_check_exit_code(result: Mapping[str, Any]) -> int:
+    """Return the CLI exit code implied by a source-check result."""
+
     summary = result.get("summary", {})
     if not isinstance(summary, Mapping):
         return 1
@@ -159,6 +206,8 @@ def source_check_exit_code(result: Mapping[str, Any]) -> int:
 
 
 def format_source_list(payload: Mapping[str, Any]) -> str:
+    """Format registered sources for human CLI output."""
+
     sources = payload.get("sources", [])
     if not sources:
         return "No registered sources."
@@ -176,6 +225,8 @@ def format_source_list(payload: Mapping[str, Any]) -> str:
 
 
 def format_source_check(payload: Mapping[str, Any]) -> str:
+    """Format source-check results for human CLI output."""
+
     lines = ["Source check:"]
     for result in payload.get("results", []):
         if not isinstance(result, Mapping):
@@ -192,6 +243,19 @@ def format_source_check(payload: Mapping[str, Any]) -> str:
 
 
 def load_source_registry(root: Path) -> dict[str, Any]:
+    """Load and validate the repo-local source registry.
+
+    Args:
+        root: AgentSpec project root.
+
+    Returns:
+        A normalized registry object with a `sources` list.
+
+    Raises:
+        SourceRegistryValidationError: If the registry shape or records are
+            invalid.
+    """
+
     raw = load_data(_registry_path(root), {"schema": SOURCE_REGISTRY_SCHEMA, "sources": []})
     if raw is None:
         raw = {"schema": SOURCE_REGISTRY_SCHEMA, "sources": []}

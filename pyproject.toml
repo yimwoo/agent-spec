@@ -18,3 +18,41 @@ agentspec = "agentspec.cli:main"
 [tool.setuptools.packages.find]
 include = ["agentspec*"]
 exclude = ["tests*"]
+
+[tool.mypy]
+python_version = "3.11"
+files = [
+    "agentspec/config.py",
+    "agentspec/guidance.py",
+    "agentspec/review.py",
+    "agentspec/run.py",
+    "agentspec/runner.py",
+    "agentspec/session.py",
+    "agentspec/source_registry.py",
+    "agentspec/status.py",
+    "agentspec/task.py",
+    "agentspec/workflow.py",
+]
+follow_imports = "skip"
+show_error_codes = true
+warn_unused_ignores = true
+
+[tool.pylint.format]
+max-line-length = 180
+
+[tool.pylint.messages_control]
+disable = [
+    "broad-exception-caught",
+    "cyclic-import",
+    "duplicate-code",
+    "import-outside-toplevel",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "too-many-return-statements",
+    "too-many-statements",
+    "unused-argument",
+]

@@ -1,3 +1,5 @@
+"""External runner package, result, and evidence helpers for AgentSpec runs."""
+
 from __future__ import annotations
 
 import os
@@ -59,6 +61,30 @@ def package_run(
     max_iterations: int | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Build a runner package from the current AgentSpec run step.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Optional context-pack selector for a new run.
+        runner: Runner adapter name.
+        run_id: Optional run id to start or resume.
+        executor_output: Optional executor output to submit first.
+        touched_paths: Paths reported by the executor.
+        reported_touched_paths: Paths reported before controller observation.
+        test_status: Verification status for submitted output.
+        reviewer_mode: Optional reviewer mode override.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+        task_type: Optional task-type filter.
+        order: Ready-task ordering strategy.
+        max_iterations: Optional iteration cap.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        A runner package containing execution instructions and report-back
+        schema.
+    """
+
     if runner not in ALLOWED_RUNNERS:
         raise ValueError(f"Unknown runner: {runner}. Expected one of {sorted(ALLOWED_RUNNERS)}.")
 
@@ -90,6 +116,8 @@ def submit_runner_result(
     reviewer_mode: str | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Validate and submit a runner result back into the AgentSpec loop."""
+
     root = root.resolve()
     validate_run_id(run_id)
     try:
@@ -97,8 +125,8 @@ def submit_runner_result(
     except ValueError as exc:
         try:
             state = load_run_state(root, run_id, run_dir=run_dir)
-        except FileNotFoundError:
-            raise exc
+        except FileNotFoundError as file_exc:
+            raise exc from file_exc
         raise _record_runner_result_rejected(
             root,
             run_id,
@@ -109,15 +137,15 @@ def submit_runner_result(
         ) from exc
     state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("mode") == "research" and parsed["test_status"] == "passed" and parsed.get("acceptance_evidence") is None:
-        exc = ValueError("Research-mode passed runner results require acceptance_evidence.")
+        error = ValueError("Research-mode passed runner results require acceptance_evidence.")
         raise _record_runner_result_rejected(
             root,
             run_id,
-            exc,
+            error,
             runner=runner,
             state=state,
             run_dir=run_dir,
-        ) from exc
+        ) from error
     mode = reviewer_mode or parsed.get("reviewer_mode")
     runner_reported_paths = list(parsed["touched_paths"])
     observed_available, observed_paths = controller_observed_touched_paths(
@@ -155,6 +183,8 @@ def run_demo(
     max_iterations: int | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Run the package/result loop in-process for demos and smoke tests."""
+
     initial_package = package_run(
         root,
         context_pack,
@@ -217,6 +247,28 @@ def execute_runner(
     timeout_seconds: float | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Execute a local runner command and submit its captured result.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Optional context-pack selector for a new run.
+        runner: Runner adapter name.
+        command: Command arguments for the runner process.
+        run_id: Optional run id to start or resume.
+        touched_paths: Paths to report when controller observation is
+            unavailable.
+        test_status: Verification status to attach to successful execution.
+        reviewer_mode: Optional reviewer mode override.
+        task_type: Optional task-type filter.
+        order: Ready-task ordering strategy.
+        max_iterations: Optional iteration cap.
+        timeout_seconds: Optional subprocess timeout.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        Runner execution transcript and final package.
+    """
+
     root = root.resolve()
     if command is not None and not command:
         raise ValueError("Runner command must not be empty.")
@@ -397,6 +449,13 @@ def _execution_event_summary(execution: dict[str, Any]) -> dict[str, Any]:
 
 
 def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Validate and normalize a runner result payload.
+
+    Raises:
+        ValueError: If the result schema, status, touched paths, or optional
+            evidence payload is invalid.
+    """
+
     if not isinstance(result, dict):
         raise ValueError("Runner result must be a JSON object.")
     schema = result.get("schema")
@@ -439,6 +498,8 @@ def parse_runner_result(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def runner_evidence_template() -> dict[str, Any]:
+    """Return the expected runner evidence payload template."""
+
     return {
         "schema": RUNNER_EVIDENCE_SCHEMA,
         "artifact_kinds": sorted(ALLOWED_EVIDENCE_ARTIFACT_KINDS),
@@ -460,6 +521,8 @@ def runner_evidence_template() -> dict[str, Any]:
 
 
 def validate_runner_evidence(evidence: Any) -> dict[str, Any]:
+    """Validate and normalize runner evidence artifacts and commands."""
+
     if not isinstance(evidence, dict):
         raise ValueError("evidence must be a JSON object.")
     if evidence.get("schema") != RUNNER_EVIDENCE_SCHEMA:
@@ -542,6 +605,8 @@ def _validate_relative_evidence_path(path: str) -> None:
 
 
 def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_dir: str | None = None) -> dict[str, Any]:
+    """Build the external runner contract from a harness step."""
+
     if runner not in ALLOWED_RUNNERS:
         raise ValueError(f"Unknown runner: {runner}. Expected one of {sorted(ALLOWED_RUNNERS)}.")
 
@@ -551,7 +616,7 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
     mode = step.get("state", {}).get("mode") if isinstance(step.get("state"), dict) else None
     run_id = str(step.get("run_id"))
     run_dir_flags = ["--run-dir", run_dir] if run_dir else []
-    package = {
+    package: dict[str, Any] = {
         "schema": RUNNER_PACKAGE_SCHEMA,
         "runner": runner,
         "run_id": run_id,

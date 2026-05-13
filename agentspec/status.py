@@ -1,3 +1,5 @@
+"""Project status, lifecycle summary, and human formatting projections."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -40,6 +42,17 @@ LIFECYCLE_BREADCRUMB = [
 
 
 def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]:
+    """Build the complete AgentSpec project status payload.
+
+    Args:
+        root: AgentSpec project root.
+        recent_limit: Maximum number of recent runs to include.
+
+    Returns:
+        Structured status covering requirements, DCRs, tasks, runs, sessions,
+        workflows, outcome gates, maturity, and lifecycle summary.
+    """
+
     root = root.resolve()
     recent_limit = max(0, recent_limit)
     requirements = _list_or_empty(load_data(root / "docs" / "traceability" / "requirements.yml", []))
@@ -285,8 +298,8 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
     elif workflow_warnings:
         stage = "workflow_backfill_needed"
         main_point = "A workflow exists without a ready task context pack."
-        command = _first_workflow_backfill_command(workflows)
-        commands = [command] if command else ["aspec task create --from-workflow <workflow>"]
+        backfill_command = _first_workflow_backfill_command(workflows)
+        commands = [backfill_command] if backfill_command else ["aspec task create --from-workflow <workflow>"]
         commands.append("aspec status --json")
         blocked_by = [{"kind": "workflow_without_task_pack", "message": workflow_warnings[0]}]
         action = {
@@ -329,6 +342,8 @@ def load_run_records(root: Path) -> list[dict[str, Any]]:
 
 
 def format_project_status(status: dict[str, Any]) -> str:
+    """Format project status for human CLI output."""
+
     summary = status.get("lifecycle_summary")
     readiness = status.get("readiness", {})
     requirements = status.get("requirements", {})
@@ -366,7 +381,8 @@ def format_project_status(status: dict[str, Any]) -> str:
 
     handoff = status.get("handoff")
     if isinstance(handoff, dict):
-        next_action = handoff.get("next_action") if isinstance(handoff.get("next_action"), dict) else {}
+        raw_next_action = handoff.get("next_action")
+        next_action = raw_next_action if isinstance(raw_next_action, dict) else {}
         lines.append(
             f"Handoff: {handoff.get('path', 'agent/handoff.yml')} "
             f"({next_action.get('kind', 'unknown')}) -> {next_action.get('command', '-')}"
@@ -831,7 +847,8 @@ def _recommendation(
 def _lifecycle_recommendation(lifecycle: dict[str, Any] | None) -> str | None:
     if not isinstance(lifecycle, dict):
         return None
-    warnings = lifecycle.get("warnings") if isinstance(lifecycle.get("warnings"), list) else []
+    raw_warnings = lifecycle.get("warnings")
+    warnings = raw_warnings if isinstance(raw_warnings, list) else []
     for warning in warnings:
         if not isinstance(warning, dict):
             continue
@@ -891,7 +908,7 @@ def _implementation_gate_text(readiness: dict[str, Any]) -> str:
     score = readiness.get("score")
     gate = readiness.get("implementation_gate", IMPLEMENTATION_READINESS_GATE)
     if not isinstance(score, int):
-        return f"Implementation gate: readiness is unknown; compile accepted source before creating implementation tasks."
+        return "Implementation gate: readiness is unknown; compile accepted source before creating implementation tasks."
     relation = "meets" if score >= gate else "is below"
     consequence = (
         "implementation tasks are allowed when a ready task pack exists"
@@ -945,7 +962,8 @@ def _no_ready_task_summary(
     total_tasks = int(tasks.get("total", 0) or 0)
     classified_dcrs = _status_count(dcrs, "classified")
     accepted_dcrs = _status_count(dcrs, "accepted")
-    outcome_counts = outcomes.get("counts") if isinstance(outcomes.get("counts"), dict) else {}
+    raw_outcome_counts = outcomes.get("counts")
+    outcome_counts = raw_outcome_counts if isinstance(raw_outcome_counts, dict) else {}
     outcomes_ready = (
         outcomes.get("readiness") == "ready"
         and int(outcome_counts.get("required_gates", 0) or 0) > 0
@@ -1339,7 +1357,8 @@ def _agent_profiles_text(agent_profiles: Any) -> str:
 def _lifecycle_text(lifecycle: Any) -> str:
     if not isinstance(lifecycle, dict):
         return "unknown"
-    counts = lifecycle.get("counts") if isinstance(lifecycle.get("counts"), dict) else {}
+    raw_counts = lifecycle.get("counts")
+    counts = raw_counts if isinstance(raw_counts, dict) else {}
     return f"{lifecycle.get('readiness', 'unknown')} ({counts.get('warnings', 0)} warning(s))"
 
 

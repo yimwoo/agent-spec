@@ -1,3 +1,5 @@
+"""Native workflow discovery, parsing, planning, and lifecycle projections."""
+
 from __future__ import annotations
 
 import json
@@ -18,6 +20,8 @@ WORKFLOW_PLAN_RESULT_SCHEMA = "agentspec.workflow_plan_result.v0"
 
 @dataclass(frozen=True)
 class WorkflowArtifact:
+    """Workflow or legacy state artifact discovered in the repository."""
+
     kind: str
     path: str
     title: str
@@ -26,6 +30,8 @@ class WorkflowArtifact:
 
 
 def build_workflow_contract_status(root: Path) -> dict[str, Any]:
+    """Build status for workflow artifacts and task-pack linkage."""
+
     root = root.resolve()
     context_pack_texts = _context_pack_texts(root)
     artifacts = list_workflow_artifacts(root)
@@ -61,6 +67,8 @@ def build_workflow_contract_status(root: Path) -> dict[str, Any]:
 
 
 def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
+    """Discover native and legacy workflow artifacts in the project."""
+
     root = root.resolve()
     artifacts: list[WorkflowArtifact] = []
     seen: set[str] = set()
@@ -127,6 +135,8 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
 
 
 def parse_workflow_file(root: Path, workflow_file: Path) -> dict[str, Any]:
+    """Parse a workflow markdown file or legacy JSON state artifact."""
+
     root = root.resolve()
     path = _resolve_under_root(root, workflow_file)
     rel = _relative(root, path)
@@ -256,7 +266,10 @@ def _native_workflow_path(root: Path, workflow_path: str) -> Path | None:
 
 
 def workflow_warning_lines(status: dict[str, Any]) -> list[str]:
-    orphans = status.get("orphans") if isinstance(status.get("orphans"), list) else []
+    """Format workflow contract warnings for status output."""
+
+    raw_orphans = status.get("orphans")
+    orphans = raw_orphans if isinstance(raw_orphans, list) else []
     lines: list[str] = []
     for orphan in orphans:
         if not isinstance(orphan, dict):
@@ -270,6 +283,8 @@ def workflow_warning_lines(status: dict[str, Any]) -> list[str]:
 
 
 def create_or_link_native_workflow(root: Path, task_selector: str | Path) -> dict[str, Any]:
+    """Create or link a native workflow for a task context pack."""
+
     root = root.resolve()
     task_path = _resolve_context_pack(root, task_selector)
     task_rel = _relative(root, task_path)

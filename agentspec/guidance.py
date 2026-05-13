@@ -1,3 +1,5 @@
+"""Post-artifact lifecycle guidance for human and adapter-facing responses."""
+
 from __future__ import annotations
 
 import re

@@ -1,3 +1,5 @@
+"""Supervised, autonomous, and research run control for AgentSpec tasks."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -79,6 +81,24 @@ def start_run(
     mode: str = "supervised",
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Create a supervised or autonomous run bound to a task context pack.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Task context pack path or selector.
+        run_id: Optional explicit run id.
+        max_iterations: Optional iteration cap overriding configuration.
+        mode: Run mode, either `supervised` or `autonomous`.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        The initial persisted run state.
+
+    Raises:
+        FileExistsError: If the run id already has state.
+        ValueError: If mode or autonomous eligibility checks fail.
+    """
+
     root = root.resolve()
     context_path = _resolve_context_pack(root, context_pack)
     context = _parse_context_pack(context_path)
@@ -207,6 +227,25 @@ def resume_run(
     evidence: dict[str, Any] | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Resume a run with executor output and reviewer evidence.
+
+    Args:
+        root: AgentSpec project root.
+        run_id: Existing run id.
+        executor_output: Executor report to review.
+        touched_paths: Paths reported by the executor.
+        reported_touched_paths: Paths explicitly reported before controller
+            observation reconciliation.
+        test_status: Verification status for the iteration.
+        reviewer_mode: Optional reviewer mode override.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        A dictionary containing updated run state and review verdict.
+    """
+
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
     status = str(state.get("status"))
@@ -558,6 +597,31 @@ def loop_run(
     mode: str = "supervised",
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Start or resume the next execution loop for a context pack.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Optional explicit context pack; otherwise the next ready
+            task is selected.
+        run_id: Optional run id to start or reuse.
+        executor_output: Optional executor output to submit immediately.
+        touched_paths: Paths reported by the executor.
+        reported_touched_paths: Paths reported before controller observation.
+        test_status: Verification status for submitted output.
+        reviewer_mode: Optional reviewer mode override.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+        task_type: Optional task-type filter when selecting the next task.
+        order: Ready-task ordering strategy.
+        max_iterations: Optional iteration cap.
+        mode: Run mode for newly created runs.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        Loop state including selected task, run state, review, and session
+        preflight projection.
+    """
+
     root = root.resolve()
     selected_task: dict[str, Any] | None = None
     started = False
@@ -688,6 +752,29 @@ def step_run(
     max_iterations: int | None = None,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
+    """Return one harness step for an AgentSpec run loop.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Optional context pack selector.
+        run_id: Optional run id to start or resume.
+        executor_output: Optional executor output to submit before building the
+            next step.
+        touched_paths: Paths reported by the executor.
+        reported_touched_paths: Paths reported before controller observation.
+        test_status: Verification status for submitted output.
+        reviewer_mode: Optional reviewer mode override.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+        task_type: Optional task-type filter.
+        order: Ready-task ordering strategy.
+        max_iterations: Optional iteration cap.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        Harness step payload containing next action, prompt, state, and review.
+    """
+
     root = root.resolve()
     loop = loop_run(
         root,
@@ -749,6 +836,21 @@ def complete_context_pack_run(
     review_id: str | None = None,
     allow_existing_run: bool = False,
 ) -> dict[str, Any]:
+    """Mark a context-pack run complete and update task lifecycle artifacts.
+
+    Args:
+        root: AgentSpec project root.
+        selector: Task id or context-pack path.
+        run_id: Optional completion run id.
+        reason: Completion reason stored with the run and task ledger.
+        test_status: Verification status to record.
+        review_id: Optional code-review evidence id to validate and link.
+        allow_existing_run: Whether an existing completion run may be reused.
+
+    Returns:
+        The completion run state.
+    """
+
     root = root.resolve()
     context_path = _resolve_context_pack_selector(root, selector)
     context = _parse_context_pack(context_path)
@@ -910,6 +1012,20 @@ def _write_completion_handoff(root: Path, state: dict[str, Any]) -> None:
 
 
 def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
+    """Build the next executor prompt for a non-terminal run.
+
+    Args:
+        root: AgentSpec project root.
+        run_id: Existing run id.
+        run_dir: Optional alternate run-state directory.
+
+    Returns:
+        Prompt metadata, session preflight, and the rendered executor prompt.
+
+    Raises:
+        ValueError: If the run is terminal or paused.
+    """
+
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
     status = str(state.get("status"))
@@ -956,6 +1072,8 @@ def build_next_executor_prompt(root: Path, run_id: str, *, run_dir: Path | None 
 
 
 def inspect_run(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
+    """Return a compact status projection for a run."""
+
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
     return {
@@ -969,6 +1087,8 @@ def inspect_run(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict
 
 
 def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.", run_dir: Path | None = None) -> dict[str, Any]:
+    """Abort a run and refresh handoff state when using default run storage."""
+
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
     if state.get("status") == "aborted":
@@ -992,6 +1112,12 @@ def append_run_event(root: Path, run_id: str, event: dict[str, Any], *, run_dir:
 
 
 def load_run_state(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict[str, Any]:
+    """Load persisted run state.
+
+    Raises:
+        FileNotFoundError: If the run state file is missing or invalid.
+    """
+
     root = root.resolve()
     state = load_data(_run_dir(root, run_id, run_dir=run_dir) / "state.yml")
     if not isinstance(state, dict):
@@ -1335,6 +1461,8 @@ def _run_dir(root: Path, run_id: str, *, run_dir: Path | None = None) -> Path:
 
 
 def validate_run_id(run_id: str) -> str:
+    """Validate a run id as a single safe filesystem segment."""
+
     if not isinstance(run_id, str) or not run_id:
         raise ValueError("Invalid run_id: expected a non-empty identifier.")
     if ".." in run_id or not _RUN_ID_RE.fullmatch(run_id):
@@ -1346,6 +1474,8 @@ def validate_run_id(run_id: str) -> str:
 
 
 def capture_controller_path_baseline(root: Path) -> dict[str, Any]:
+    """Capture git working-tree path signatures before executor work starts."""
+
     available, signatures = _git_changed_path_signatures(root)
     return {
         "schema": CONTROLLER_PATH_BASELINE_SCHEMA,
@@ -1358,6 +1488,17 @@ def controller_observed_touched_paths(
     root: Path,
     baseline: Any,
 ) -> tuple[bool, list[str]]:
+    """Compare current git path signatures with a controller baseline.
+
+    Args:
+        root: AgentSpec project root.
+        baseline: Baseline payload previously produced by
+            :func:`capture_controller_path_baseline`.
+
+    Returns:
+        A tuple of whether observation was available and the changed paths.
+    """
+
     available, current = _git_changed_path_signatures(root)
     if not available:
         return False, []

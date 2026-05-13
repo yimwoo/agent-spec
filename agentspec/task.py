@@ -1,3 +1,5 @@
+"""Task context-pack creation, selection, and ledger helpers."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -37,6 +39,22 @@ def create_task_context_pack(
     title: str | None = None,
     originating_dcr: str | None = None,
 ) -> Path:
+    """Create a task context pack from an accepted requirement.
+
+    Args:
+        root: AgentSpec project root.
+        requirement_id: Optional requirement id to include.
+        task_type: Task type recorded in the pack.
+        title: Optional task title override.
+        originating_dcr: Optional explicit DCR id for DCR-backed work.
+
+    Returns:
+        Path to the created context pack.
+
+    Raises:
+        ValueError: If readiness or DCR eligibility gates fail.
+    """
+
     requirements = load_data(root / "docs" / "traceability" / "requirements.yml", [])
     sections = load_data(root / "docs" / "source" / "sections.yml", [])
     sources = load_data(root / "docs" / "source" / "sources.yml", [])
@@ -76,6 +94,8 @@ def create_task_context_pack_from_workflow(
     task_type: str = "implementation",
     title: str | None = None,
 ) -> Path:
+    """Backfill a task context pack from an existing workflow artifact."""
+
     root = root.resolve()
     workflow = parse_workflow_file(root, workflow_file)
     requirements = load_data(root / "docs" / "traceability" / "requirements.yml", [])
@@ -102,11 +122,15 @@ def list_task_context_packs(
     task_type: str | None = None,
     status: str | None = None,
 ) -> list[dict[str, Any]]:
-    requirements = {
-        requirement.get("id"): requirement
-        for requirement in load_data(root / "docs" / "traceability" / "requirements.yml", [])
-        if isinstance(requirement, dict)
-    }
+    """List task context packs with derived status and requirement metadata."""
+
+    requirements: dict[str, dict[str, Any]] = {}
+    for requirement in load_data(root / "docs" / "traceability" / "requirements.yml", []):
+        if not isinstance(requirement, dict):
+            continue
+        requirement_id = requirement.get("id")
+        if isinstance(requirement_id, str):
+            requirements[requirement_id] = requirement
     run_status_by_pack = _run_status_by_context_pack(root)
     ledger_status_by_pack = _ledger_status_by_context_pack(root)
     records: list[dict[str, Any]] = []
@@ -126,10 +150,12 @@ def next_task_context_pack(
     task_type: str | None = None,
     order: str = "newest",
 ) -> dict[str, Any] | None:
+    """Return the next ready task context pack, if one exists."""
+
     if order not in {"oldest", "newest"}:
         raise ValueError("order must be 'oldest' or 'newest'.")
     ready = list_task_context_packs(root, task_type=task_type, status="ready")
-    ready.sort(key=lambda record: record["sort_key"], reverse=(order == "newest"))
+    ready.sort(key=lambda record: record["sort_key"], reverse=order == "newest")
     return ready[0] if ready else None
 
 
@@ -144,6 +170,22 @@ def record_task_ledger_status(
     updated_at: str | None = None,
     code_review: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Record task status and verification metadata in the task ledger.
+
+    Args:
+        root: AgentSpec project root.
+        context_pack: Context-pack path or selector.
+        status: Task lifecycle status to persist.
+        run_id: Optional associated run id.
+        reason: Optional status reason.
+        test_status: Optional verification status.
+        updated_at: Optional timestamp override.
+        code_review: Optional linked code-review summary.
+
+    Returns:
+        The updated ledger entry for the context pack.
+    """
+
     root = root.resolve()
     ledger = load_task_ledger(root)
     tasks = ledger.setdefault("tasks", {})
@@ -166,6 +208,8 @@ def record_task_ledger_status(
 
 
 def load_task_ledger(root: Path) -> dict[str, Any]:
+    """Load and normalize the task ledger artifact."""
+
     data = load_data(_task_ledger_path(root), {})
     if not isinstance(data, dict):
         raise ValueError("agent/task-ledger.yml must contain a JSON/YAML object.")

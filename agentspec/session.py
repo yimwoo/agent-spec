@@ -1,3 +1,5 @@
+"""Branch, worktree, and session lease management for AgentSpec execution."""
+
 from __future__ import annotations
 
 import json
@@ -42,6 +44,28 @@ def start_session(
     run_id: str | None = None,
     note: str | None = None,
 ) -> dict[str, Any]:
+    """Create an active AgentSpec session lease for a task.
+
+    Args:
+        root: AgentSpec project root.
+        task_selector: Task id or context-pack path.
+        owner: Human, agent, or tool claiming the lease.
+        mode: Session mode, such as `owner`, `patcher`, or `observer`.
+        branch: Associated git branch.
+        worktree: Associated git worktree path.
+        allow_shared: Whether to allow overlapping writer leases.
+        session_id: Optional explicit session id.
+        run_id: Optional associated run id.
+        note: Optional session note.
+
+    Returns:
+        The persisted active session lease.
+
+    Raises:
+        ValueError: If branch/worktree isolation or session metadata is invalid.
+        FileExistsError: If the session id already exists.
+    """
+
     root = root.resolve()
     if mode not in ALLOWED_SESSION_MODES:
         raise ValueError(f"mode must be one of: {', '.join(sorted(ALLOWED_SESSION_MODES))}.")
@@ -116,10 +140,14 @@ def start_session(
 
 
 def list_sessions(root: Path) -> dict[str, Any]:
+    """Return all active and archived session leases."""
+
     return build_session_status(root)
 
 
 def build_session_status(root: Path) -> dict[str, Any]:
+    """Build a status projection for active, archived, and cleanup-ready sessions."""
+
     root = root.resolve()
     active_records = _records_in(_active_dir(root))
     archived_records = _records_in(_archived_dir(root))
@@ -268,6 +296,8 @@ def build_session_preflight(
 
 
 def inspect_session(root: Path, session_id: str) -> dict[str, Any]:
+    """Load a session lease by id and include its repo-relative path."""
+
     root = root.resolve()
     _validate_session_id(session_id)
     path = _find_session_path(root, session_id)
@@ -284,6 +314,8 @@ def finish_session(
     test_status: str = "not_run",
     note: str | None = None,
 ) -> dict[str, Any]:
+    """Finish an active session lease with an explicit delivery disposition."""
+
     root = root.resolve()
     _validate_session_id(session_id)
     if disposition not in ALLOWED_FINISH_DISPOSITIONS:
@@ -317,6 +349,8 @@ def release_session(
     *,
     reason: str | None = None,
 ) -> dict[str, Any]:
+    """Release an active session lease without closing delivery."""
+
     root = root.resolve()
     _validate_session_id(session_id)
     active_path = _active_path(root, session_id)
@@ -337,7 +371,10 @@ def release_session(
 
 
 def format_session_list(payload: dict[str, Any]) -> str:
-    counts = payload.get("counts") if isinstance(payload.get("counts"), dict) else {}
+    """Format session-list status for human CLI output."""
+
+    raw_counts = payload.get("counts")
+    counts = raw_counts if isinstance(raw_counts, dict) else {}
     lines = [
         "AgentSpec Sessions",
         f"Active: {counts.get('active', 0)}",
@@ -355,6 +392,8 @@ def format_session_list(payload: dict[str, Any]) -> str:
 
 
 def format_session_record(record: dict[str, Any]) -> str:
+    """Format a single session lease for human CLI output."""
+
     lines = [
         f"Session: {record.get('session_id')}",
         f"Status: {record.get('status')}",

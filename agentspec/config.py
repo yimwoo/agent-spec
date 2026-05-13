@@ -1,3 +1,5 @@
+"""Runtime configuration defaults and merge helpers for AgentSpec projects."""
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -40,6 +42,8 @@ def default_agent_profiles() -> dict[str, dict[str, Any]]:
 
 
 def default_supervised_run_config() -> dict[str, Any]:
+    """Return default supervised-run executor, reviewer, and iteration settings."""
+
     return {
         "executor_profile": "main_executor",
         "continuation_reviewer_profile": "continuation_reviewer",
@@ -69,6 +73,8 @@ def default_autonomous_mode_config() -> dict[str, Any]:
 
 
 def default_quality_gc_config() -> dict[str, Any]:
+    """Return default quality-garbage-collection scheduling settings."""
+
     return {
         "run_on_task_complete": False,
         "task_interval": 3,
@@ -77,12 +83,16 @@ def default_quality_gc_config() -> dict[str, Any]:
 
 
 def default_roadmap_config() -> dict[str, Any]:
+    """Return default roadmap write-back configuration."""
+
     return {
         "mode": "full-file",
     }
 
 
 def default_lifecycle_config() -> dict[str, Any]:
+    """Return default lifecycle enforcement and skill-gate configuration."""
+
     return {
         "enforcement": "warn",
         "skill_gates": {
@@ -93,6 +103,8 @@ def default_lifecycle_config() -> dict[str, Any]:
 
 
 def default_runtime_config() -> dict[str, Any]:
+    """Return the complete runtime configuration with built-in defaults."""
+
     return {
         "agent_profiles": default_agent_profiles(),
         "supervised_runs": default_supervised_run_config(),
@@ -104,6 +116,19 @@ def default_runtime_config() -> dict[str, Any]:
 
 
 def load_project_config(root: Path) -> dict[str, Any]:
+    """Load the repo-local AgentSpec configuration file.
+
+    Args:
+        root: AgentSpec project root.
+
+    Returns:
+        The parsed configuration object. Missing configuration returns an empty
+        object so callers can merge defaults.
+
+    Raises:
+        ValueError: If `.agentspec/config.yml` does not contain a mapping.
+    """
+
     config = load_data(root / ".agentspec" / "config.yml", {})
     if not isinstance(config, dict):
         raise ValueError(".agentspec/config.yml must contain a JSON/YAML object.")
@@ -111,6 +136,16 @@ def load_project_config(root: Path) -> dict[str, Any]:
 
 
 def merged_runtime_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Merge user configuration over AgentSpec runtime defaults.
+
+    Args:
+        config: User-provided project configuration.
+
+    Returns:
+        A deep-copied configuration object with all expected top-level runtime
+        sections populated.
+    """
+
     merged = deepcopy(config)
     defaults = default_runtime_config()
     profiles = merged.setdefault("agent_profiles", {})
@@ -152,6 +187,19 @@ def _merge_nested_defaults(target: dict[str, Any], defaults: dict[str, Any]) -> 
 
 
 def resolve_agent_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]:
+    """Resolve an agent profile from merged runtime configuration.
+
+    Args:
+        config: User-provided project configuration.
+        profile_name: Name of the profile to resolve.
+
+    Returns:
+        The profile mapping after default profile merging.
+
+    Raises:
+        ValueError: If the requested profile is not configured.
+    """
+
     merged = merged_runtime_config(config)
     profiles = merged.get("agent_profiles", {})
     profile = profiles.get(profile_name)

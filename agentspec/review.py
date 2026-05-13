@@ -1,3 +1,5 @@
+"""Review verdicts and evidence recording for AgentSpec lifecycle gates."""
+
 from __future__ import annotations
 
 import hashlib
@@ -22,6 +24,21 @@ SEVERITIES = {"minor", "high"}
 
 @dataclass(frozen=True)
 class ReviewVerdict:
+    """Structured continuation-review verdict for supervised run execution.
+
+    Attributes:
+        decision: Controller decision such as `auto_continue`, `pause_for_human`,
+            `halt`, or `complete`.
+        confidence: Reviewer confidence label.
+        reason: Human-readable explanation for the decision.
+        message_to_executor: Optional continuation prompt for the executor.
+        requires_human: Whether the controller should stop for human input.
+        policy_flags: Policy or infrastructure flags attached to the verdict.
+        evidence_refs: Context-pack or artifact references supporting the verdict.
+        severity: Optional pause severity used by autonomous/research modes.
+        proposed_default: Optional default assumption for minor pauses.
+    """
+
     decision: str
     confidence: str
     reason: str
@@ -38,6 +55,8 @@ class ReviewVerdict:
     proposed_default: str | None = None
 
     def to_dict(self) -> dict[str, object]:
+        """Serialize the verdict to the run-event artifact shape."""
+
         return {
             "decision": self.decision,
             "confidence": self.confidence,
@@ -60,6 +79,21 @@ def classify_executor_output(
     acceptance_evidence: dict[str, Any] | None = None,
     evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
+    """Classify executor output using deterministic continuation rules.
+
+    Args:
+        executor_output: Text reported by the executor.
+        active_context_pack: Context pack currently governing execution.
+        policy_verdict: Policy evaluation for touched paths and risk.
+        test_status: Verification status reported by the executor or runner.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+
+    Returns:
+        A deterministic review verdict. Unknown or ambiguous output pauses for
+        human review instead of advancing the run.
+    """
+
     if policy_verdict.decision == "halt":
         return ReviewVerdict(
             decision="halt",
@@ -169,6 +203,22 @@ def review_executor_output(
     acceptance_evidence: dict[str, Any] | None = None,
     evidence: dict[str, Any] | None = None,
 ) -> ReviewVerdict:
+    """Review executor output with deterministic or model-backed escalation.
+
+    Args:
+        executor_output: Text reported by the executor.
+        active_context_pack: Context pack currently governing execution.
+        policy_verdict: Policy evaluation for the attempted work.
+        test_status: Verification status reported by the executor or runner.
+        reviewer_mode: `deterministic`, `model`, or `auto`.
+        reviewer_profile: Optional model reviewer configuration.
+        acceptance_evidence: Optional research-mode acceptance evidence.
+        evidence: Optional runner evidence payload.
+
+    Returns:
+        The review verdict used by the run controller.
+    """
+
     deterministic = classify_executor_output(
         executor_output=executor_output,
         active_context_pack=active_context_pack,
@@ -443,6 +493,8 @@ _RESEARCH_EVIDENCE_EXACT_PATHS: frozenset[str] = frozenset(
 
 
 def research_acceptance_evidence_template() -> dict[str, Any]:
+    """Return the required research-mode acceptance evidence template."""
+
     return {
         "schema": RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA,
         "durable_artifacts": [],
@@ -459,6 +511,19 @@ def research_acceptance_evidence_template() -> dict[str, Any]:
 
 
 def validate_research_acceptance_evidence(evidence: Any) -> dict[str, Any]:
+    """Validate and normalize research-mode acceptance evidence.
+
+    Args:
+        evidence: Untrusted runner or CLI evidence payload.
+
+    Returns:
+        A normalized evidence dictionary safe to persist in run state.
+
+    Raises:
+        ValueError: If required evidence fields are missing or outside the
+            research-mode write surface.
+    """
+
     if not isinstance(evidence, dict):
         raise ValueError("acceptance_evidence must be a JSON object.")
     if evidence.get("schema") != RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA:
@@ -544,6 +609,26 @@ def record_doc_review(
     reviewer: str | None = None,
     summary: str | None = None,
 ) -> dict[str, Any]:
+    """Record document-review evidence for a DCR, workflow, design, or source.
+
+    Args:
+        root: AgentSpec project root.
+        artifact_selector: Project-relative or absolute document path.
+        mode: Deterministic/model review mode. Exactly one of `mode` or
+            `verdict` must be supplied.
+        verdict: Manual review verdict.
+        reviewer: Manual reviewer identity.
+        summary: Manual review summary.
+
+    Returns:
+        The persisted document-review record with allocated id.
+
+    Raises:
+        ValueError: If review options are invalid or deterministic review finds
+            unsupported mode choices.
+        FileNotFoundError: If the reviewed artifact does not exist.
+    """
+
     root = root.resolve()
     if sum(value is not None for value in (mode, verdict)) != 1:
         raise ValueError("Document review requires exactly one of --mode, --verdict, or --check.")
@@ -609,6 +694,17 @@ def record_doc_review(
 
 
 def check_doc_review(root: Path, *, artifact_selector: str) -> dict[str, Any]:
+    """Check whether the latest ready document review matches an artifact.
+
+    Args:
+        root: AgentSpec project root.
+        artifact_selector: Project-relative or absolute artifact path.
+
+    Returns:
+        A readiness payload describing missing, stale, or current review
+        evidence and the artifact digests used for comparison.
+    """
+
     root = root.resolve()
     artifact_path = _resolve_doc_review_artifact(root, artifact_selector)
     artifact_kind = _doc_artifact_kind(root, artifact_path)
@@ -814,6 +910,23 @@ def record_code_review(
     reviewer: str = "human",
     range_ref: str = "worktree",
 ) -> dict[str, Any]:
+    """Record code-review evidence for an implementation task.
+
+    Args:
+        root: AgentSpec project root.
+        task_selector: Task id or context-pack path.
+        verdict: Review verdict to persist.
+        summary: Reviewer summary.
+        reviewer: Reviewer identifier.
+        range_ref: Reviewed git range or `worktree`.
+
+    Returns:
+        The persisted code-review record with allocated id.
+
+    Raises:
+        ValueError: If the verdict, summary, or task selector is invalid.
+    """
+
     root = root.resolve()
     if verdict not in ALLOWED_CODE_REVIEW_VERDICTS:
         allowed = ", ".join(sorted(ALLOWED_CODE_REVIEW_VERDICTS))
@@ -838,6 +951,20 @@ def record_code_review(
 
 
 def load_code_review(root: Path, review_id: str) -> dict[str, Any]:
+    """Load and validate a code-review evidence artifact.
+
+    Args:
+        root: AgentSpec project root.
+        review_id: Review id, filename, or path.
+
+    Returns:
+        The parsed code-review record.
+
+    Raises:
+        FileNotFoundError: If the review artifact cannot be loaded.
+        ValueError: If the artifact schema or verdict is invalid.
+    """
+
     path = _review_path(root.resolve(), review_id)
     record = load_data(path)
     if not isinstance(record, dict):
@@ -855,6 +982,20 @@ def validate_completion_review(
     *,
     context_pack: str,
 ) -> dict[str, Any]:
+    """Validate that a passing code review belongs to a completion target.
+
+    Args:
+        root: AgentSpec project root.
+        review_id: Code-review evidence id.
+        context_pack: Context pack being completed.
+
+    Returns:
+        A compact review summary suitable for task-ledger write-back.
+
+    Raises:
+        ValueError: If the review is not passing or belongs to another task.
+    """
+
     root = root.resolve()
     record = load_code_review(root, review_id)
     verdict = str(record.get("verdict"))
@@ -872,6 +1013,8 @@ def validate_completion_review(
 
 
 def code_review_summary(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+    """Project a persisted code-review record into task completion metadata."""
+
     review_id = str(record.get("id"))
     return {
         "id": review_id,
