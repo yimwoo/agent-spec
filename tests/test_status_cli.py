@@ -497,6 +497,65 @@ Originating DCRs: `DCR-0002-design-change-management`, `DCR-0003-compile-materia
             self.assertEqual(status["dcrs"]["covered_by_task"], 3)
             self.assertEqual(status["dcrs"]["ready_for_tasking"], 0)
 
+    def test_status_marks_readiness_dcr_summary_historical_when_covered(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {
+                    "score": 100,
+                    "mode": "normal-implementation",
+                    "summary": "DCR-0001 is accepted, implementation-ready, and ready for tasking.",
+                },
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-201", "status": "accepted", "priority": "P1", "originating_dcr": "DCR-0001"}],
+            )
+            _write_dcr(root, "DCR-0001", status="accepted")
+            (root / "agent" / "context-packs" / "T-001-add-local-run-comparison-summaries.md").write_text(
+                """# T-001: Add local run comparison summaries
+
+Type: `implementation`
+Originating DCR: `DCR-0001`
+
+## Requirements
+
+- `R-201` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-add-local-run-comparison-summaries.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "verification": {"status": "passed"},
+                        },
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["dcrs"]["covered_by_task"], 1)
+            self.assertEqual(status["dcrs"]["ready_for_tasking"], 0)
+            self.assertEqual(status["readiness"]["summary_status"], "historical_covered_dcr")
+            self.assertEqual(
+                status["readiness"]["source_summary"],
+                "DCR-0001 is accepted, implementation-ready, and ready for tasking.",
+            )
+            self.assertNotIn("implementation-ready", status["readiness"]["summary"])
+            self.assertIn("already covered by task context packs", status["readiness"]["summary"])
+            self.assertNotIn("implementation-ready", status["lifecycle_summary"]["readiness"]["summary"])
+
     def test_status_recommends_session_before_ready_task_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

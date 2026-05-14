@@ -74,6 +74,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     covered_requirement_ids = _task_requirement_ids(tasks)
     covered_dcr_ids = _task_originating_dcr_ids(root, tasks)
     dcr_tasking_counts = _dcr_tasking_counts(dcrs, covered_dcr_ids)
+    readiness_status = _readiness_status(readiness, covered_dcr_ids=covered_dcr_ids)
     requirements_counts = {
         "total": len(requirements),
         "by_status": _counts(record.get("status") for record in requirements),
@@ -138,11 +139,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             workflows=workflows,
             lifecycle=lifecycle,
         ),
-        "readiness": {
-            "score": readiness.get("score"),
-            "mode": readiness.get("mode"),
-            "summary": readiness.get("summary"),
-        },
+        "readiness": readiness_status,
         "outcomes": outcomes,
         "maturity": maturity,
         "requirements": requirements_counts,
@@ -939,7 +936,7 @@ def _readiness_summary(readiness: dict[str, Any]) -> dict[str, Any]:
             f"Readiness {score}/100 is below the {IMPLEMENTATION_READINESS_GATE}/100 implementation gate; "
             "AgentSpec should stay in discovery, spike, or scaffold work until blockers are resolved."
         )
-    return {
+    summary = {
         "score": score,
         "mode": mode,
         "summary": readiness.get("summary"),
@@ -947,6 +944,44 @@ def _readiness_summary(readiness: dict[str, Any]) -> dict[str, Any]:
         "implementation_allowed": allowed,
         "explanation": explanation,
     }
+    if "source_summary" in readiness:
+        summary["source_summary"] = readiness["source_summary"]
+    if "summary_status" in readiness:
+        summary["summary_status"] = readiness["summary_status"]
+    return summary
+
+
+def _readiness_status(readiness: dict[str, Any], *, covered_dcr_ids: set[str]) -> dict[str, Any]:
+    status = {
+        "score": readiness.get("score"),
+        "mode": readiness.get("mode"),
+        "summary": readiness.get("summary"),
+    }
+    summary = status.get("summary")
+    if not isinstance(summary, str) or not summary:
+        return status
+
+    summary_dcr_ids = set(_extract_dcr_ids(summary))
+    if not summary_dcr_ids or not summary_dcr_ids.issubset(covered_dcr_ids):
+        return status
+
+    score = status.get("score")
+    mode = status.get("mode") or "unknown"
+    ids = sorted(summary_dcr_ids)
+    id_list = ", ".join(ids)
+    verb = "is" if len(ids) == 1 else "are"
+    status["source_summary"] = summary
+    status["summary_status"] = "historical_covered_dcr"
+    if isinstance(score, int):
+        status["summary"] = (
+            f"Readiness is {score}/100 ({mode}). Last compiled DCR readiness summary is historical; "
+            f"{id_list} {verb} already covered by task context packs."
+        )
+    else:
+        status["summary"] = (
+            f"Last compiled DCR readiness summary is historical; {id_list} {verb} already covered by task context packs."
+        )
+    return status
 
 
 def _no_ready_task_summary(
