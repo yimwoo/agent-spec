@@ -72,7 +72,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     covered_requirement_ids = _task_requirement_ids(tasks)
-    covered_dcr_ids = _task_originating_dcr_ids(tasks)
+    covered_dcr_ids = _task_originating_dcr_ids(root, tasks)
     dcr_tasking_counts = _dcr_tasking_counts(dcrs, covered_dcr_ids)
     requirements_counts = {
         "total": len(requirements),
@@ -1234,13 +1234,35 @@ def _task_requirement_ids(tasks: list[dict[str, Any]]) -> set[str]:
     return ids
 
 
-def _task_originating_dcr_ids(tasks: list[dict[str, Any]]) -> set[str]:
+def _task_originating_dcr_ids(root: Path, tasks: list[dict[str, Any]]) -> set[str]:
     ids: set[str] = set()
     for task in tasks:
         originating_dcr = task.get("originating_dcr")
         if isinstance(originating_dcr, str) and originating_dcr:
-            ids.add(originating_dcr)
+            ids.update(_extract_dcr_ids(originating_dcr))
+        context_pack = task.get("path")
+        if not isinstance(context_pack, str) or not context_pack:
+            continue
+        try:
+            text = (root / context_pack).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        ids.update(_extract_originating_dcr_ids(text))
     return ids
+
+
+def _extract_originating_dcr_ids(text: str) -> list[str]:
+    head = "\n".join(text.splitlines()[:30])
+    ids: list[str] = []
+    for match in re.finditer(r"^Originating\s+DCRs?:[^\n]*", head, re.MULTILINE):
+        for dcr_id in _extract_dcr_ids(match.group(0)):
+            if dcr_id not in ids:
+                ids.append(dcr_id)
+    return ids
+
+
+def _extract_dcr_ids(text: str) -> list[str]:
+    return re.findall(r"\bDCR-\d{4}\b", text)
 
 
 def _dcr_tasking_counts(dcrs: list[dict[str, Any]], covered_dcr_ids: set[str]) -> dict[str, int]:
