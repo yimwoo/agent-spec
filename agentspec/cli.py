@@ -365,6 +365,10 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_resume.add_argument("--touched-path", action="append", default=[])
     run_resume.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
     run_resume.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
+    run_resume.add_argument(
+        "--acceptance-evidence-json",
+        help="Research-mode acceptance evidence JSON, or '-' to read stdin.",
+    )
 
     run_loop = run_subparsers.add_parser("loop", help="Select, start, or resume the next supervised run step.")
     run_loop.add_argument("context_pack", nargs="?")
@@ -1046,6 +1050,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     touched_paths=args.touched_path,
                     test_status=args.test_status,
                     reviewer_mode=args.reviewer_mode,
+                    acceptance_evidence=_json_arg_from_value(args.acceptance_evidence_json),
                     run_dir=_run_dir_from_args(args),
                 )
                 review = result["review"]
@@ -1601,6 +1606,16 @@ def _runner_command_from_args(command: str | None, command_json: str | None) -> 
     if command:
         return shlex.split(command)
     return None
+
+
+def _json_arg_from_value(value: str | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    raw = sys.stdin.read() if value == "-" else value
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise ValueError("JSON argument must decode to an object.")
+    return parsed
 
 
 def _run_dir_from_args(args: argparse.Namespace) -> Path | None:
