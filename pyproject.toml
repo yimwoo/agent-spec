@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentspec"
-version = "0.1.31"
+version = "0.1.32"
 description = "Design-to-agent workspace compiler and control plane for code agents."
 readme = "README.md"
 license = { text = "MIT" }
