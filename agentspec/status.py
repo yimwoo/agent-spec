@@ -72,7 +72,8 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
     covered_requirement_ids = _task_requirement_ids(tasks)
-    covered_dcr_ids = _task_originating_dcr_ids(root, tasks)
+    requirement_dcr_ids = _requirement_originating_dcr_ids(requirements)
+    covered_dcr_ids = _task_originating_dcr_ids(root, tasks, requirement_dcr_ids)
     dcr_tasking_counts = _dcr_tasking_counts(dcrs, covered_dcr_ids)
     readiness_status = _readiness_status(readiness, covered_dcr_ids=covered_dcr_ids)
     requirements_counts = {
@@ -1269,12 +1270,33 @@ def _task_requirement_ids(tasks: list[dict[str, Any]]) -> set[str]:
     return ids
 
 
-def _task_originating_dcr_ids(root: Path, tasks: list[dict[str, Any]]) -> set[str]:
+def _requirement_originating_dcr_ids(requirements: list[dict[str, Any]]) -> dict[str, list[str]]:
+    ids_by_requirement: dict[str, list[str]] = {}
+    for requirement in requirements:
+        requirement_id = requirement.get("id")
+        originating_dcr = requirement.get("originating_dcr")
+        if not isinstance(requirement_id, str) or not isinstance(originating_dcr, str):
+            continue
+        ids = _extract_dcr_ids(originating_dcr)
+        if ids:
+            ids_by_requirement[requirement_id] = ids
+    return ids_by_requirement
+
+
+def _task_originating_dcr_ids(
+    root: Path,
+    tasks: list[dict[str, Any]],
+    requirement_dcr_ids: dict[str, list[str]],
+) -> set[str]:
     ids: set[str] = set()
     for task in tasks:
         originating_dcr = task.get("originating_dcr")
         if isinstance(originating_dcr, str) and originating_dcr:
             ids.update(_extract_dcr_ids(originating_dcr))
+        for requirement in _list_or_empty(task.get("requirements")):
+            requirement_id = requirement.get("id")
+            if isinstance(requirement_id, str):
+                ids.update(requirement_dcr_ids.get(requirement_id, []))
         context_pack = task.get("path")
         if not isinstance(context_pack, str) or not context_pack:
             continue
