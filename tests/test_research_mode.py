@@ -1,11 +1,14 @@
 """Tests for R-142: research-mode fallback in autonomous runs."""
 
 import json
+import io
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
+from agentspec.cli import main
 from agentspec.dcr import accept_dcr, create_dcr_stub
 from agentspec.init import init_project
 from agentspec.io import load_data
@@ -310,6 +313,40 @@ class ResearchHardLimitsTests(unittest.TestCase):
 
 
 class ResearchAcceptanceEvidenceTests(unittest.TestCase):
+    def test_cli_resume_accepts_research_acceptance_evidence_json(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-cli-evidence")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "run",
+                        "resume",
+                        "r-cli-evidence",
+                        "--executor-output",
+                        "Created and accepted DCR-0042, then created ready task T-018.",
+                        "--touched-path",
+                        "docs/change-requests/DCR-0099-research.md",
+                        "--test-status",
+                        "passed",
+                        "--reviewer",
+                        "deterministic",
+                        "--acceptance-evidence-json",
+                        json.dumps(_valid_research_evidence()),
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            self.assertIn("complete", output.getvalue())
+            state = load_data(root / "agent" / "runs" / "r-cli-evidence" / "state.yml")
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+
     def test_halted_research_run_accepts_corrected_quality_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
