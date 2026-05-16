@@ -30,6 +30,7 @@ IMPLEMENTATION_READINESS_GATE = 60
 ACTIVE_RUN_STATUSES = {"started", "running"}
 ATTENTION_RUN_STATUSES = {"paused", "halted"}
 DCR_READY_FOR_TASKING_STATUSES = {"accepted", "classified"}
+DCR_READY_FOR_TASKING_CLASSIFICATIONS = {"implement-now"}
 LIFECYCLE_BREADCRUMB = [
     "draft_source",
     "ingest_source",
@@ -1332,8 +1333,10 @@ def _dcr_tasking_counts(dcrs: list[dict[str, Any]], covered_dcr_ids: set[str]) -
             continue
         if dcr_id in covered_dcr_ids:
             counts["covered_by_task"] += 1
-        else:
+        elif str(dcr.get("classification") or "") in DCR_READY_FOR_TASKING_CLASSIFICATIONS:
             counts["ready_for_tasking"] += 1
+        else:
+            continue
     return counts
 
 
