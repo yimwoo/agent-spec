@@ -225,6 +225,7 @@ def resume_run(
     reviewer_mode: str | None = None,
     acceptance_evidence: dict[str, Any] | None = None,
     evidence: dict[str, Any] | None = None,
+    observe_touched_paths: bool = True,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Resume a run with executor output and reviewer evidence.
@@ -240,6 +241,8 @@ def resume_run(
         reviewer_mode: Optional reviewer mode override.
         acceptance_evidence: Optional research-mode acceptance evidence.
         evidence: Optional runner evidence payload.
+        observe_touched_paths: Whether to reconcile reported paths against the
+            controller's git-diff observation.
         run_dir: Optional alternate run-state directory.
 
     Returns:
@@ -260,7 +263,8 @@ def resume_run(
     _ensure_run_state_writable(root, run_dir)
 
     touched_paths = touched_paths or []
-    if reported_touched_paths is None:
+    touched_paths_source = "executor_reported"
+    if observe_touched_paths and reported_touched_paths is None:
         observed_available, observed_paths = controller_observed_touched_paths(
             root,
             state.get("controller_path_baseline"),
@@ -268,6 +272,11 @@ def resume_run(
         if observed_available:
             reported_touched_paths = list(touched_paths)
             touched_paths = observed_paths
+            touched_paths_source = "controller_observed"
+    elif not observe_touched_paths and reported_touched_paths is None:
+        reported_touched_paths = list(touched_paths)
+    elif reported_touched_paths is not None:
+        touched_paths_source = "controller_observed"
     config = merged_runtime_config(load_project_config(root))
     configured_reviewer_mode = config.get("supervised_runs", {}).get("reviewer_mode", "deterministic")
     reviewer_mode = reviewer_mode or configured_reviewer_mode
@@ -347,7 +356,7 @@ def resume_run(
         executor_event["evidence"] = evidence
     if reported_touched_paths is not None:
         executor_event["reported_touched_paths"] = reported_touched_paths
-        executor_event["touched_paths_source"] = "controller_observed"
+        executor_event["touched_paths_source"] = touched_paths_source
     reviewer_event = {
         "kind": "reviewer_verdict",
         "iteration": iteration,
