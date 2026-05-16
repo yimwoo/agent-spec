@@ -366,6 +366,11 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     run_resume.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
     run_resume.add_argument("--reviewer", dest="reviewer_mode", choices=["deterministic", "model", "auto"])
     run_resume.add_argument(
+        "--explicit-touched-paths",
+        action="store_true",
+        help="Use exactly the --touched-path values instead of reconciling them with the current git diff.",
+    )
+    run_resume.add_argument(
         "--acceptance-evidence-json",
         help="Research-mode acceptance evidence JSON, or '-' to read stdin.",
     )
@@ -1051,6 +1056,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     test_status=args.test_status,
                     reviewer_mode=args.reviewer_mode,
                     acceptance_evidence=_json_arg_from_value(args.acceptance_evidence_json),
+                    observe_touched_paths=not args.explicit_touched_paths,
                     run_dir=_run_dir_from_args(args),
                 )
                 review = result["review"]

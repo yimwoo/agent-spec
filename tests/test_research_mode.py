@@ -347,6 +347,52 @@ class ResearchAcceptanceEvidenceTests(unittest.TestCase):
             self.assertEqual(state["status"], "complete")
             self.assertEqual(state["last_decision"], "complete")
 
+    def test_cli_resume_explicit_touched_paths_ignore_later_implementation_diff(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_git_dirty_research_workspace(root)
+            start_research_run(root, run_id="r-cli-explicit")
+            (root / "src" / "schema.ts").write_text("changed during implementation\n", encoding="utf-8")
+            research_path = root / "docs" / "change-requests" / "DCR-0099-research.md"
+            research_path.parent.mkdir(parents=True, exist_ok=True)
+            research_path.write_text("# Research\n", encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "run",
+                        "resume",
+                        "r-cli-explicit",
+                        "--executor-output",
+                        "Converted the research finding into an accepted DCR and completed task.",
+                        "--touched-path",
+                        "docs/change-requests/DCR-0099-research.md",
+                        "--explicit-touched-paths",
+                        "--test-status",
+                        "passed",
+                        "--reviewer",
+                        "deterministic",
+                        "--acceptance-evidence-json",
+                        json.dumps(_valid_research_evidence()),
+                    ]
+                )
+
+            self.assertEqual(code, 0)
+            self.assertIn("complete", output.getvalue())
+            state = load_data(root / "agent" / "runs" / "r-cli-explicit" / "state.yml")
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+            executor_event = _executor_event(root, "r-cli-explicit")
+            self.assertEqual(executor_event["touched_paths"], ["docs/change-requests/DCR-0099-research.md"])
+            self.assertEqual(
+                executor_event["reported_touched_paths"], ["docs/change-requests/DCR-0099-research.md"]
+            )
+            self.assertEqual(executor_event["touched_paths_source"], "executor_reported")
+            self.assertNotIn("src/schema.ts", executor_event["touched_paths"])
+
     def test_halted_research_run_accepts_corrected_quality_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
