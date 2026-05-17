@@ -17,6 +17,8 @@ from agentspec.run import (
     RESEARCH_ALLOWED_PATHS,
     RESEARCH_CONTEXT_PACK_SENTINEL,
     RESEARCH_TASK_PREPARATION_ALLOWED_PATHS,
+    build_next_executor_prompt,
+    inspect_run,
     loop_run,
     resume_run,
     start_research_run,
@@ -313,6 +315,44 @@ class ResearchHardLimitsTests(unittest.TestCase):
 
 
 class ResearchAcceptanceEvidenceTests(unittest.TestCase):
+    def test_research_prompt_includes_acceptance_evidence_template(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-prompt-evidence")
+
+            handoff = build_next_executor_prompt(root, "r-prompt-evidence")
+
+            self.assertIn("Research acceptance evidence:", handoff["prompt"])
+            self.assertIn("agentspec.research_acceptance_evidence.v0", handoff["prompt"])
+            self.assertIn("allowed_path_confirmation", handoff["prompt"])
+
+    def test_inspect_halted_research_evidence_rejection_includes_template(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-inspect-evidence")
+
+            first = resume_run(
+                root,
+                "r-inspect-evidence",
+                executor_output="Done.",
+                touched_paths=["docs/change-requests/DCR-0099-research.md"],
+                test_status="passed",
+            )
+            self.assertEqual(first["state"]["status"], "halted")
+
+            info = inspect_run(root, "r-inspect-evidence")
+
+            guidance = info["recovery_guidance"]
+            self.assertEqual(guidance["schema"], "agentspec.research_acceptance_recovery.v0")
+            self.assertIn("--acceptance-evidence-json", guidance["resume_command"])
+            self.assertEqual(
+                guidance["acceptance_evidence"]["schema"],
+                "agentspec.research_acceptance_evidence.v0",
+            )
+            self.assertIn("allowed_path_confirmation", guidance["acceptance_evidence"])
+
     def test_cli_resume_accepts_research_acceptance_evidence_json(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
