@@ -59,7 +59,7 @@ from .review import (
     record_code_review,
     record_doc_review,
 )
-from .roadmap import check_roadmap, write_roadmap
+from .roadmap import check_roadmap
 from .run import abort_run, build_next_executor_prompt, complete_context_pack_run, inspect_run, loop_run, resume_run, start_run, step_run
 from .runner import ALLOWED_RUNNERS, execute_runner, package_run, run_demo, submit_runner_result
 from .session import (
@@ -87,7 +87,7 @@ from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import agent_display_for_next_action, build_project_status, format_project_status
 from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
-from .writeback import finish_task
+from .writeback import finish_task, update_roadmap
 from .workflow import build_workflow_contract_status, create_or_link_native_workflow, workflow_warning_lines
 
 
@@ -693,7 +693,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 else:
                     print(result["summary"])
                 return 0 if result["current"] else 1
-            path = write_roadmap(root)
+            path = update_roadmap(root)
             if args.json:
                 print(json.dumps({"path": str(path.relative_to(root))}, indent=2))
             else:
