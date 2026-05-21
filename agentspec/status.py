@@ -17,7 +17,7 @@ from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
 from .paths import path_matches_pattern
-from .run import RESEARCH_ALLOWED_PATHS
+from .run import RESEARCH_ALLOWED_PATHS, RESEARCH_CONTEXT_PACK_SENTINEL
 from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_lifecycle_for_context_pack, workflow_warning_lines
@@ -485,6 +485,8 @@ def _classify_active_runs(
         if run.get("status") not in ACTIVE_RUN_STATUSES:
             continue
         stale = _superseded_by_completed_task_details(run, completed_by_pack)
+        if stale is None:
+            stale = _stale_active_research_details(run, completed_by_pack, runs)
         if stale:
             run["stale_active"] = stale
             stale_active.append(run)
@@ -575,6 +577,51 @@ def _superseded_by_completed_task_details(
         "reason": "Run is superseded by completed task ledger state.",
         "covered_by_task": completed.get("id"),
         "context_pack": context_pack,
+    }
+
+
+def _stale_active_research_details(
+    run: dict[str, Any],
+    completed_by_pack: dict[str, dict[str, Any]],
+    runs: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if run.get("mode") != "research":
+        return None
+    if run.get("context_pack") != RESEARCH_CONTEXT_PACK_SENTINEL:
+        return None
+    run_marker = str(run.get("updated_at") or run.get("created_at") or "")
+    if not run_marker:
+        return None
+
+    completed_after: list[dict[str, Any]] = [
+        task
+        for task in completed_by_pack.values()
+        if isinstance(task, dict)
+        and task.get("status") == "complete"
+        and str(task.get("updated_at") or "") > run_marker
+    ]
+    completed_after.extend(
+        {
+            "id": _task_id_from_context_pack(str(completed_run.get("context_pack") or "")),
+            "path": completed_run.get("context_pack"),
+            "updated_at": completed_run.get("updated_at"),
+        }
+        for completed_run in runs
+        if completed_run is not run
+        and completed_run.get("status") == "complete"
+        and completed_run.get("mode") != "research"
+        and str(completed_run.get("updated_at") or "") > run_marker
+    )
+    if not completed_after:
+        return None
+
+    completed_after.sort(key=lambda task: str(task.get("updated_at") or ""), reverse=True)
+    completed = completed_after[0]
+    return {
+        "reason": "Research run is superseded by later completed task ledger state.",
+        "covered_by_task": completed.get("id"),
+        "context_pack": completed.get("path"),
+        "completed_at": completed.get("updated_at"),
     }
 
 
