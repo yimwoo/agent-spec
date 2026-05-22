@@ -487,6 +487,46 @@ class LoopAutonomousFallbackTests(unittest.TestCase):
             self.assertEqual(state["mode"], "research")
             self.assertEqual(state["context_pack"], RESEARCH_CONTEXT_PACK_SENTINEL)
 
+    def test_loop_existing_research_run_completes_when_ready_task_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-converted")
+            pack = root / "agent" / "context-packs" / "T-001-prepared-task.md"
+            pack.write_text(
+                "\n".join(
+                    [
+                        "# T-001: Prepared task",
+                        "",
+                        "Type: `implementation`",
+                        "",
+                        "## Requirements",
+                        "",
+                        "- `R-142` Autonomous run supports a research fallback.",
+                        "",
+                        "## Allowed Paths",
+                        "",
+                        "- `agentspec/run.py`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            result = loop_run(root, mode="autonomous", run_id="r-converted")
+
+            state = result["state"]
+            self.assertFalse(result["started"])
+            self.assertEqual(result["selected_task"]["id"], "T-001")
+            self.assertEqual(state["status"], "complete")
+            self.assertEqual(state["last_decision"], "complete")
+            self.assertEqual(
+                state["completion_reason"],
+                "Research conversion completed because a ready task context pack exists.",
+            )
+            self.assertEqual(state["converted_task"]["context_pack"], "agent/context-packs/T-001-prepared-task.md")
+            events = _events(root, "r-converted")
+            self.assertTrue(any(event["kind"] == "research_conversion_completed" for event in events))
+
 
 if __name__ == "__main__":
     unittest.main()
