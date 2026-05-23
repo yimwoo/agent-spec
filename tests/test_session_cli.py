@@ -602,6 +602,86 @@ class SessionCliTests(unittest.TestCase):
             self.assertEqual(satisfied["active_session"]["session_id"], "S-owner-preflight")
             self.assertEqual(satisfied["active_session"]["branch"], "feature/preflight-owner")
 
+    def test_session_preflight_refreshes_changed_context_pack_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            pack = _write_pack(root, "T-010-refresh.md")
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-010",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/refresh",
+                    "--worktree",
+                    str(root / "refresh-worktree"),
+                    "--session-id",
+                    "S-refresh",
+                    "--json",
+                ],
+            )
+            original = load_data(root / "agent" / "sessions" / "active" / "S-refresh.yml")
+
+            _append_allowed_path(pack, "docs/traceability/requirements.yml")
+            refreshed = build_session_preflight(root, task_selector="T-010")
+
+            active = refreshed["active_session"]
+            self.assertEqual(refreshed["status"], "satisfied")
+            self.assertIn("docs/traceability/requirements.yml", active["allowed_paths"])
+            self.assertNotEqual(original["context_pack_sha256"], active["context_pack_sha256"])
+            self.assertEqual(active["context_pack_original_sha256"], original["context_pack_sha256"])
+            self.assertEqual(active["allowed_paths_original"], original["allowed_paths"])
+            self.assertEqual(active["history"][-1]["action"], "context_pack_refreshed")
+
+            persisted = load_data(root / "agent" / "sessions" / "active" / "S-refresh.yml")
+            self.assertEqual(persisted["allowed_paths"], active["allowed_paths"])
+
+    def test_session_finish_refreshes_changed_context_pack_metadata_before_archiving(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            pack = _write_pack(root, "T-010-finish-refresh.md")
+            _run_json(
+                root,
+                [
+                    "session",
+                    "start",
+                    "--task",
+                    "T-010",
+                    "--owner",
+                    "codex",
+                    "--branch",
+                    "feature/finish-refresh",
+                    "--worktree",
+                    str(root / "finish-refresh-worktree"),
+                    "--session-id",
+                    "S-finish-refresh",
+                    "--json",
+                ],
+            )
+            original = load_data(root / "agent" / "sessions" / "active" / "S-finish-refresh.yml")
+            _append_allowed_path(pack, "docs/traceability/requirements.yml")
+
+            finished = _run_json(
+                root,
+                [
+                    "session",
+                    "finish",
+                    "S-finish-refresh",
+                    "--disposition",
+                    "keep",
+                    "--json",
+                ],
+            )
+
+            self.assertIn("docs/traceability/requirements.yml", finished["allowed_paths"])
+            self.assertEqual(finished["context_pack_original_sha256"], original["context_pack_sha256"])
+            self.assertEqual(finished["allowed_paths_original"], original["allowed_paths"])
+            self.assertEqual(finished["history"][-2]["action"], "context_pack_refreshed")
+
     def test_session_preflight_blocks_protected_implementation_branch(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -928,6 +1008,17 @@ Originating DCR: `DCR-0001`
         encoding="utf-8",
     )
     return path
+
+
+def _append_allowed_path(path: Path, allowed_path: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    path.write_text(
+        text.replace(
+            "- `tests/test_session_cli.py`\n",
+            f"- `tests/test_session_cli.py`\n- `{allowed_path}`\n",
+        ),
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":

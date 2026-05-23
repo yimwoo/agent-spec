@@ -325,6 +325,7 @@ def finish_session(
 
     active_path = _active_path(root, session_id)
     record = _load_active_session(active_path, session_id)
+    _refresh_session_context(root, record)
     now = utc_now_iso()
     record.update(
         {
@@ -355,6 +356,7 @@ def release_session(
     _validate_session_id(session_id)
     active_path = _active_path(root, session_id)
     record = _load_active_session(active_path, session_id)
+    _refresh_session_context(root, record)
     now = utc_now_iso()
     record.update(
         {
@@ -772,9 +774,11 @@ def _active_write_session_for_context(
         if not record.get("branch") or not record.get("worktree"):
             continue
         if context_pack and record.get("context_pack") == context_pack:
-            return _summary(root, path, record)
+            record = _refresh_active_session_context(root, path, record)
+            return _with_dynamic_path(root, path, record)
         if task_id and record.get("task_id") == task_id:
-            return _summary(root, path, record)
+            record = _refresh_active_session_context(root, path, record)
+            return _with_dynamic_path(root, path, record)
     return None
 
 
@@ -851,6 +855,13 @@ def _load_active_session(path: Path, session_id: str) -> dict[str, Any]:
     return record
 
 
+def _write_session(path: Path, record: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(record, handle, indent=2, sort_keys=False)
+        handle.write("\n")
+
+
 def _write_new_session(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf-8") as handle:
@@ -875,6 +886,54 @@ def _archive_record(root: Path, active_path: Path, session_id: str, record: dict
     _write_new_session(archived_path, record)
     active_path.unlink(missing_ok=True)
     return archived_path
+
+
+def _refresh_active_session_context(root: Path, path: Path, record: dict[str, Any]) -> dict[str, Any]:
+    if _refresh_session_context(root, record):
+        _write_session(path, record)
+    return record
+
+
+def _refresh_session_context(root: Path, record: dict[str, Any]) -> bool:
+    context_pack = record.get("context_pack")
+    if not isinstance(context_pack, str) or not context_pack.strip():
+        return False
+    path = root / context_pack
+    if not path.is_file():
+        return False
+
+    context = _parse_context_pack(root, path.resolve())
+    current = {
+        "context_pack_title": context["title"],
+        "context_pack_sha256": context["sha256"],
+        "task_id": context.get("task_id"),
+        "task_type": context.get("task_type"),
+        "originating_dcr": context.get("originating_dcr"),
+        "requirements": context.get("requirements", []),
+        "allowed_paths": context.get("allowed_paths", []),
+    }
+    changed = any(record.get(key) != value for key, value in current.items())
+    if not changed:
+        return False
+
+    now = utc_now_iso()
+    record.setdefault("context_pack_original_sha256", record.get("context_pack_sha256"))
+    record.setdefault("allowed_paths_original", record.get("allowed_paths", []))
+    previous_sha = record.get("context_pack_sha256")
+    previous_allowed_paths = record.get("allowed_paths", [])
+    record.update(current)
+    record["context_pack_refreshed_at"] = now
+    record["updated_at"] = now
+    _append_history(
+        record,
+        at=now,
+        action="context_pack_refreshed",
+        previous_sha256=previous_sha,
+        current_sha256=context["sha256"],
+        previous_allowed_paths=previous_allowed_paths,
+        current_allowed_paths=current["allowed_paths"],
+    )
+    return True
 
 
 def _append_history(record: dict[str, Any], **event: Any) -> None:
