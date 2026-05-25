@@ -25,6 +25,10 @@ STANDARD_VERIFICATION_SUPPORT_PATHS: tuple[str, ...] = (
     "agent/task-ledger.yml",
     "agent/handoff.yml",
 )
+STANDARD_LIFECYCLE_SUPPORT_PATHS: tuple[str, ...] = (
+    "agent/doc-reviews/*.yml",
+    "docs/ROADMAP.md",
+)
 _SUPPORT_TARGET_FIELDS: tuple[tuple[str, str], ...] = (
     ("verification_targets", "verification support"),
     ("example_targets", "example artifact"),
@@ -448,7 +452,15 @@ def _pack_text(
     scope_requirements = _repository_aware_scope_requirements(root, requirements)
     test_targets = _paths_from_requirements(scope_requirements, "test_targets")
     tests_to_update = test_targets or ["tests/"]
-    allowed_paths, allowed_path_sources = _allowed_path_scope(scope_requirements, tests_to_update)
+    context_pack_rel = _context_pack_relative_path(task_id, title)
+    allowed_paths, allowed_path_sources = _allowed_path_scope(
+        root,
+        scope_requirements,
+        tests_to_update,
+        context_pack_rel=context_pack_rel,
+        originating_dcr=originating_dcr,
+        expected_workflow_rel=_expected_native_workflow_path(task_id, title),
+    )
 
     out = [
         f"# {task_id}: {title}",
@@ -501,7 +513,11 @@ def _pack_text(
         out.append(
             f"| `{path}` | {_format_allowed_path_provenance(provenance[path], allowed_path_sources[path])} |"
         )
-    substantive_paths = [path for path in allowed_paths if path not in STANDARD_VERIFICATION_SUPPORT_PATHS]
+    substantive_paths = [
+        path
+        for path in allowed_paths
+        if _is_substantive_allowed_path(allowed_path_sources.get(path, []))
+    ]
     if substantive_paths and all(provenance[path] == "inferred" for path in substantive_paths):
         out.extend([
             "",
@@ -728,8 +744,13 @@ def _dedupe_paths(paths: list[str]) -> list[str]:
 
 
 def _allowed_path_scope(
+    root: Path,
     requirements: list[dict[str, Any]],
     tests_to_update: list[str],
+    *,
+    context_pack_rel: str,
+    originating_dcr: str | None,
+    expected_workflow_rel: str,
 ) -> tuple[list[str], dict[str, list[str]]]:
     sources_by_path: dict[str, list[str]] = {}
     allowed_paths: list[str] = []
@@ -747,9 +768,28 @@ def _allowed_path_scope(
         add(_paths_from_requirements(requirements, field), source)
     if not allowed_paths:
         add(["docs/**"], "fallback scope")
+    add([context_pack_rel], "lifecycle write-back")
+    add([expected_workflow_rel, *STANDARD_LIFECYCLE_SUPPORT_PATHS], "lifecycle write-back")
+    if requirements:
+        add(["docs/traceability/requirements.yml"], "lifecycle write-back")
+        add(["docs/traceability/design-to-code-map.md"], "lifecycle write-back")
+    if originating_dcr:
+        dcr_path = find_dcr_by_id(root, originating_dcr)
+        if dcr_path is not None:
+            add([str(dcr_path.relative_to(root))], "originating DCR")
     add(list(STANDARD_VERIFICATION_SUPPORT_PATHS), "verification support")
     add(tests_to_update, "task verification")
     return allowed_paths, sources_by_path
+
+
+def _context_pack_relative_path(task_id: str, title: str) -> str:
+    return f"agent/context-packs/{task_id}-{slugify(title)}.md"
+
+
+def _expected_native_workflow_path(task_id: str, title: str) -> str:
+    match = re.fullmatch(r"T-(\d{3,})", task_id)
+    number = int(match.group(1)) if match else 0
+    return f"agent/workflows/W-{number:03d}-{slugify(title)}.md"
 
 
 def _repository_aware_scope_requirements(root: Path, requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -849,3 +889,7 @@ def _format_allowed_path_provenance(provenance: str, sources: list[str]) -> str:
     if not sources:
         return provenance
     return f"{provenance}; {', '.join(sources)}"
+
+
+def _is_substantive_allowed_path(sources: list[str]) -> bool:
+    return any(source in {"code target", "fallback scope"} for source in sources)
