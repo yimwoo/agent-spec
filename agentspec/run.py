@@ -17,7 +17,12 @@ from .dcr import is_implementation_eligible, list_dcrs
 from .io import ensure_writable_dir, load_data, write_data, write_text
 from .paths import slugify
 from .policy import evaluate_policy, redact_sensitive_text
-from .review import quality_reviewer_signoff, review_executor_output, validate_research_acceptance_evidence
+from .review import (
+    quality_reviewer_signoff,
+    research_acceptance_evidence_template,
+    review_executor_output,
+    validate_research_acceptance_evidence,
+)
 from .run_transitions import (
     MODEL_REVIEW_UNAVAILABLE_FLAG as _MODEL_REVIEW_UNAVAILABLE_FLAG,
     REUSABLE_RUN_STATUSES,
@@ -1095,7 +1100,8 @@ def inspect_run(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict
 
     root = root.resolve()
     state = load_run_state(root, run_id, run_dir=run_dir)
-    return {
+    events = _load_events(root, run_id, run_dir=run_dir)
+    info = {
         "run_id": state.get("run_id"),
         "status": state.get("status"),
         "context_pack": state.get("context_pack"),
@@ -1103,6 +1109,10 @@ def inspect_run(root: Path, run_id: str, *, run_dir: Path | None = None) -> dict
         "last_decision": state.get("last_decision"),
         "max_iterations": state.get("max_iterations"),
     }
+    recovery_guidance = _research_acceptance_recovery_guidance(state, events, run_id)
+    if recovery_guidance is not None:
+        info["recovery_guidance"] = recovery_guidance
+    return info
 
 
 def abort_run(root: Path, run_id: str, *, reason: str = "Aborted by user.", run_dir: Path | None = None) -> dict[str, Any]:
@@ -1692,6 +1702,38 @@ def _last_event(events: list[dict[str, Any]], kind: str) -> dict[str, Any] | Non
     return None
 
 
+def _research_acceptance_recovery_guidance(
+    state: dict[str, Any],
+    events: list[dict[str, Any]],
+    run_id: str,
+) -> dict[str, Any] | None:
+    if state.get("mode") != "research" or state.get("status") != "halted":
+        return None
+    reason_blob = "\n".join(
+        str(event.get(key) or "")
+        for event in events
+        for key in ("reason", "quality_reason")
+    ).lower()
+    if "acceptance-criteria evidence" not in reason_blob and "acceptance_evidence" not in reason_blob:
+        return None
+    return {
+        "schema": "agentspec.research_acceptance_recovery.v0",
+        "message": "Research-mode completion with passed verification requires structured acceptance_evidence.",
+        "resume_command": f"aspec run resume {run_id} --acceptance-evidence-json '<json>'",
+        "acceptance_evidence": research_acceptance_evidence_template(),
+    }
+
+
+def _render_research_acceptance_evidence_prompt() -> list[str]:
+    template = json.dumps(research_acceptance_evidence_template(), indent=2)
+    return [
+        "Research acceptance evidence:",
+        "When reporting passed completion for a research-only proposal, include `acceptance_evidence` with this JSON shape:",
+        template,
+        "",
+    ]
+
+
 def _render_next_executor_prompt(
     *,
     run_id: str,
@@ -1725,6 +1767,9 @@ def _render_next_executor_prompt(
                 "",
             ]
         )
+
+    if state.get("mode") == "research":
+        lines.extend(_render_research_acceptance_evidence_prompt())
 
     if session_preflight.get("status") in {"blocked", "missing"}:
         lines.extend(
