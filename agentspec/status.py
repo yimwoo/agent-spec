@@ -75,7 +75,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     covered_requirement_ids = _task_requirement_ids(tasks)
     requirement_dcr_ids = _requirement_originating_dcr_ids(requirements)
     covered_dcr_ids = _task_originating_dcr_ids(root, tasks, requirement_dcr_ids)
-    dcr_tasking_counts = _dcr_tasking_counts(dcrs, covered_dcr_ids)
+    dcr_tasking = _dcr_tasking_status(dcrs, covered_dcr_ids)
     readiness_status = _readiness_status(readiness, covered_dcr_ids=covered_dcr_ids)
     requirements_counts = {
         "total": len(requirements),
@@ -92,8 +92,9 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "total": len(dcrs),
         "by_status": _counts(record.get("status") for record in dcrs),
         "by_classification": _counts(record.get("classification") for record in dcrs),
-        "ready_for_tasking": dcr_tasking_counts["ready_for_tasking"],
-        "covered_by_task": dcr_tasking_counts["covered_by_task"],
+        "ready_for_tasking": dcr_tasking["ready_for_tasking"],
+        "covered_by_task": dcr_tasking["covered_by_task"],
+        "ready_for_tasking_items": dcr_tasking["ready_for_tasking_items"],
     }
     task_counts = {
         "total": len(tasks),
@@ -1016,6 +1017,7 @@ def _no_ready_task_summary(
         else classified_dcrs + accepted_dcrs
     )
     dcrs_covered_by_task = raw_covered_by_task if isinstance(raw_covered_by_task, int) else 0
+    dcrs_ready_for_tasking_items = _list_or_empty(dcrs.get("ready_for_tasking_items"))
     raw_outcome_counts = outcomes.get("counts")
     outcome_counts = raw_outcome_counts if isinstance(raw_outcome_counts, dict) else {}
     outcomes_ready = (
@@ -1195,6 +1197,7 @@ def _no_ready_task_summary(
             "tasks_total": total_tasks,
             "dcrs_ready_for_tasking": dcrs_ready_for_tasking,
             "dcrs_covered_by_task": dcrs_covered_by_task,
+            "dcrs_ready_for_tasking_items": dcrs_ready_for_tasking_items,
         }
     ]
     action = {
@@ -1327,21 +1330,41 @@ def _extract_dcr_ids(text: str) -> list[str]:
     return re.findall(r"\bDCR-\d{4}\b", text)
 
 
-def _dcr_tasking_counts(dcrs: list[dict[str, Any]], covered_dcr_ids: set[str]) -> dict[str, int]:
-    counts = {"ready_for_tasking": 0, "covered_by_task": 0}
+def _dcr_tasking_status(dcrs: list[dict[str, Any]], covered_dcr_ids: set[str]) -> dict[str, Any]:
+    status: dict[str, Any] = {
+        "ready_for_tasking": 0,
+        "covered_by_task": 0,
+        "ready_for_tasking_items": [],
+    }
+    ready_items: list[dict[str, str]] = []
     for dcr in dcrs:
         dcr_id = dcr.get("id")
         if not isinstance(dcr_id, str) or not dcr_id:
             continue
-        if str(dcr.get("status") or "") not in DCR_READY_FOR_TASKING_STATUSES:
+        dcr_status = str(dcr.get("status") or "")
+        if dcr_status not in DCR_READY_FOR_TASKING_STATUSES:
             continue
+        classification = str(dcr.get("classification") or "")
         if dcr_id in covered_dcr_ids:
-            counts["covered_by_task"] += 1
-        elif str(dcr.get("classification") or "") in DCR_READY_FOR_TASKING_CLASSIFICATIONS:
-            counts["ready_for_tasking"] += 1
+            status["covered_by_task"] += 1
+        elif classification in DCR_READY_FOR_TASKING_CLASSIFICATIONS:
+            status["ready_for_tasking"] += 1
+            ready_items.append(
+                {
+                    "id": dcr_id,
+                    "path": str(dcr.get("path") or ""),
+                    "status": dcr_status,
+                    "classification": classification,
+                    "reason": (
+                        "DCR is implementation-ready and is not covered by any "
+                        "task context pack."
+                    ),
+                }
+            )
         else:
             continue
-    return counts
+    status["ready_for_tasking_items"] = ready_items
+    return status
 
 
 def _shell_title(value: str) -> str:
@@ -1439,7 +1462,18 @@ def _count_text(section: Any) -> str:
     if not isinstance(by_status, dict) or not by_status:
         return f"{total} total"
     status_text = ", ".join(f"{key}={value}" for key, value in by_status.items())
+    detail_text = _ready_dcr_items_text(section.get("ready_for_tasking_items"))
+    if detail_text:
+        status_text = f"{status_text}; ready_for_tasking={detail_text}"
     return f"{total} total ({status_text})"
+
+
+def _ready_dcr_items_text(value: Any) -> str:
+    items = _list_or_empty(value)
+    if not items:
+        return ""
+    ids = [str(item.get("id")) for item in items if item.get("id")]
+    return ", ".join(ids[:5])
 
 
 def _outcomes_text(outcomes: Any) -> str:

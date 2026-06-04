@@ -424,8 +424,28 @@ Originating DCR: `DCR-0002`
             self.assertEqual(status["dcrs"]["by_status"], {"accepted": 2, "classified": 1})
             self.assertEqual(status["dcrs"]["covered_by_task"], 2)
             self.assertEqual(status["dcrs"]["ready_for_tasking"], 1)
+            self.assertEqual(
+                status["dcrs"]["ready_for_tasking_items"],
+                [
+                    {
+                        "id": "DCR-0003",
+                        "path": str((root / "docs" / "change-requests" / "DCR-0003-test.md").resolve()),
+                        "status": "accepted",
+                        "classification": "implement-now",
+                        "reason": (
+                            "DCR is implementation-ready and is not covered by any "
+                            "task context pack."
+                        ),
+                    }
+                ],
+            )
             self.assertEqual(blocker["dcrs_covered_by_task"], 2)
             self.assertEqual(blocker["dcrs_ready_for_tasking"], 1)
+            self.assertEqual(
+                blocker["dcrs_ready_for_tasking_items"],
+                status["dcrs"]["ready_for_tasking_items"],
+            )
+            self.assertIn("ready_for_tasking=DCR-0003", format_project_status(status))
 
     def test_status_ignores_untracked_gitignored_agent_artifact_residue(self) -> None:
         with tempfile.TemporaryDirectory() as td:
