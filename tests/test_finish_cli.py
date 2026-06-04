@@ -294,6 +294,58 @@ current_stage: planning
             self.assertEqual(handoff["current_state"]["overall"], "idle")
             self.assertNotIn("t-013-paused", handoff["current_state"]["recommendation"])
 
+    def test_finish_deprioritizes_older_active_research_run_in_status_and_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0004", "agent/context-packs/T-013-task.md", "ready")
+            write_data(
+                root / "agent" / "runs" / "research-active" / "state.yml",
+                {
+                    "schema": "agentspec.supervised_run.state.v0",
+                    "run_id": "research-active",
+                    "status": "started",
+                    "mode": "research",
+                    "context_pack": "<research-mode>",
+                    "context_pack_title": "Research mode (no pack)",
+                    "task_type": "research",
+                    "allowed_paths": ["docs/change-requests/**"],
+                    "iteration": 0,
+                    "max_iterations": 3,
+                    "last_decision": None,
+                    "created_at": "2026-05-12T00:00:00Z",
+                    "updated_at": "2026-05-12T00:00:00Z",
+                },
+            )
+
+            payload = _run_json(
+                root,
+                [
+                    "finish",
+                    "T-013",
+                    "--run-id",
+                    "complete-t-013",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0004",
+                    "--json",
+                ],
+            )
+
+            self.assertTrue(payload["completed"])
+            status = build_project_status(root)
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["runs"]["active"], [])
+            self.assertEqual(status["runs"]["stale_active"][0]["run_id"], "research-active")
+            self.assertEqual(
+                status["runs"]["stale_active"][0]["stale_active"]["covered_by_task"],
+                "T-013",
+            )
+            handoff = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff["current_state"]["overall"], "idle")
+            self.assertNotIn("research-active", handoff["current_state"]["recommendation"])
+
     def test_finish_dry_run_reports_findings_without_mutating_state(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

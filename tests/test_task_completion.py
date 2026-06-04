@@ -335,6 +335,31 @@ class TaskCompletionTests(unittest.TestCase):
             self.assertEqual(second["run_id"], "research-active")
             self.assertEqual(len(list((root / "agent" / "runs").glob("*/state.yml"))), 1)
 
+    def test_autonomous_empty_queue_ignores_research_run_superseded_by_completed_task(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            first = loop_run(root, mode="autonomous", run_id="research-active")
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-013-task.md": {
+                            "status": "complete",
+                            "run_id": "complete-t013",
+                            "updated_at": "9999-01-01T00:00:00Z",
+                        }
+                    },
+                },
+            )
+            second = loop_run(root, mode="autonomous", run_id="research-next")
+
+            self.assertTrue(first["started"])
+            self.assertTrue(second["started"])
+            self.assertEqual(second["run_id"], "research-next")
+            self.assertEqual(len(list((root / "agent" / "runs").glob("*/state.yml"))), 2)
+
     def test_task_complete_runs_quality_gc_when_enabled_and_due(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

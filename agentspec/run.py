@@ -1464,6 +1464,8 @@ def _find_reusable_run_state(
             continue
         record = dict(state)
         record.setdefault("run_id", state_path.parent.name)
+        if _research_run_superseded_by_completed_task(root, record):
+            continue
         matches.append(record)
 
     if not matches:
@@ -1473,6 +1475,32 @@ def _find_reusable_run_state(
         key=lambda state: str(state.get("updated_at") or state.get("created_at") or ""),
         reverse=True,
     )[0]
+
+
+def _research_run_superseded_by_completed_task(root: Path, state: dict[str, Any]) -> bool:
+    if state.get("mode") != "research":
+        return False
+    if state.get("context_pack") != RESEARCH_CONTEXT_PACK_SENTINEL:
+        return False
+    run_marker = str(state.get("updated_at") or state.get("created_at") or "")
+    if not run_marker:
+        return False
+
+    from .task import load_task_ledger
+
+    try:
+        ledger = load_task_ledger(root)
+    except ValueError:
+        return False
+    tasks = ledger.get("tasks", {})
+    if not isinstance(tasks, dict):
+        return False
+    return any(
+        isinstance(entry, dict)
+        and entry.get("status") == "complete"
+        and str(entry.get("updated_at") or "") > run_marker
+        for entry in tasks.values()
+    )
 
 
 def _run_root(root: Path, run_dir: Path | None = None) -> Path:
