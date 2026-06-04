@@ -659,6 +659,22 @@ def loop_run(
                     f"Run {run_id} is already bound to {state.get('context_pack')}, "
                     f"not {expected}."
                 )
+        elif (
+            executor_output is None
+            and state.get("mode") == "research"
+            and state.get("status") in {"started", "running"}
+        ):
+            from .task import next_task_context_pack
+
+            selected_task = next_task_context_pack(root, task_type=task_type, order=order)
+            if selected_task is not None:
+                state = _complete_research_conversion(
+                    root,
+                    str(run_id),
+                    state,
+                    selected_task,
+                    run_dir=run_dir,
+                )
     else:
         if context_pack is None:
             from .task import next_task_context_pack
@@ -1501,6 +1517,45 @@ def _research_run_superseded_by_completed_task(root: Path, state: dict[str, Any]
         and str(entry.get("updated_at") or "") > run_marker
         for entry in tasks.values()
     )
+
+
+def _complete_research_conversion(
+    root: Path,
+    run_id: str,
+    state: dict[str, Any],
+    selected_task: dict[str, Any],
+    *,
+    run_dir: Path | None = None,
+) -> dict[str, Any]:
+    completed = dict(state)
+    converted_task = {
+        "id": selected_task.get("id"),
+        "title": selected_task.get("title"),
+        "context_pack": selected_task.get("path"),
+        "requirements": selected_task.get("requirements", []),
+    }
+    completed.update(
+        {
+            "status": "complete",
+            "updated_at": _now(),
+            "last_decision": "complete",
+            "completion_reason": "Research conversion completed because a ready task context pack exists.",
+            "converted_task": converted_task,
+        }
+    )
+    _write_state(root, run_id, completed, run_dir=run_dir)
+    _append_event(
+        root,
+        run_id,
+        {
+            "kind": "research_conversion_completed",
+            "state": completed,
+            "converted_task": converted_task,
+        },
+        run_dir=run_dir,
+    )
+    _maybe_write_run_summary(root, run_id, completed, run_dir=run_dir)
+    return completed
 
 
 def _run_root(root: Path, run_dir: Path | None = None) -> Path:
