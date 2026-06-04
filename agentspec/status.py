@@ -72,7 +72,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
-    covered_requirement_ids = _task_requirement_ids(tasks)
+    covered_requirement_ids = _task_requirement_ids(root, tasks)
     requirement_dcr_ids = _requirement_originating_dcr_ids(requirements)
     covered_dcr_ids = _task_originating_dcr_ids(root, tasks, requirement_dcr_ids)
     dcr_tasking = _dcr_tasking_status(dcrs, covered_dcr_ids)
@@ -1315,13 +1315,21 @@ def _requirement_examples(
     return examples
 
 
-def _task_requirement_ids(tasks: list[dict[str, Any]]) -> set[str]:
+def _task_requirement_ids(root: Path, tasks: list[dict[str, Any]]) -> set[str]:
     ids: set[str] = set()
     for task in tasks:
         for requirement in _list_or_empty(task.get("requirements")):
             requirement_id = requirement.get("id")
             if isinstance(requirement_id, str) and requirement_id:
                 ids.add(requirement_id)
+        context_pack = task.get("path")
+        if not isinstance(context_pack, str) or not context_pack:
+            continue
+        try:
+            text = (root / context_pack).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        ids.update(_extract_context_pack_requirement_ids(text))
     return ids
 
 
@@ -1359,8 +1367,36 @@ def _task_originating_dcr_ids(
             text = (root / context_pack).read_text(encoding="utf-8")
         except OSError:
             continue
+        for requirement_id in _extract_context_pack_requirement_ids(text):
+            ids.update(requirement_dcr_ids.get(requirement_id, []))
         ids.update(_extract_originating_dcr_ids(text))
     return ids
+
+
+def _extract_context_pack_requirement_ids(text: str) -> list[str]:
+    section = _section_text(text, "Requirements")
+    ids: list[str] = []
+    for match in re.finditer(r"\bR-\d{3,}\b", section):
+        requirement_id = match.group(0)
+        if requirement_id not in ids:
+            ids.append(requirement_id)
+    return ids
+
+
+def _section_text(text: str, heading: str) -> str:
+    lines = text.splitlines()
+    out: list[str] = []
+    in_section = False
+    heading_re = re.compile(rf"^##\s+{re.escape(heading)}\s*$", flags=re.IGNORECASE)
+    for line in lines:
+        if heading_re.match(line.strip()):
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section:
+            out.append(line)
+    return "\n".join(out)
 
 
 def _extract_originating_dcr_ids(text: str) -> list[str]:
