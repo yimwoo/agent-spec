@@ -129,6 +129,39 @@ class TaskCompletionTests(unittest.TestCase):
             self.assertEqual(payload["code_review"]["id"], "REVIEW-0001")
             self.assertEqual(payload["code_review"]["verdict"], "ready-with-warnings")
 
+    def test_roadmap_refresh_updates_handoff_current_state_after_task_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0001", "agent/context-packs/T-013-task.md", "ready")
+            (root / "docs" / "ROADMAP.md").write_text("# stale\n", encoding="utf-8")
+
+            _run_json(
+                root,
+                [
+                    "task",
+                    "complete",
+                    "T-013",
+                    "--run-id",
+                    "complete-t013",
+                    "--test-status",
+                    "passed",
+                    "--review",
+                    "REVIEW-0001",
+                    "--json",
+                ],
+            )
+            handoff_before = load_data(root / "agent" / "handoff.yml")
+            self.assertEqual(handoff_before["current_state"]["overall"], "attention_needed")
+
+            _run_json(root, ["roadmap", "--json"])
+
+            status = _run_json(root, ["status", "--json"])
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["lifecycle"]["warnings"], [])
+            self.assertEqual(status["handoff"]["current_state"]["overall"], status["overall"])
+            self.assertEqual(status["handoff"]["current_state"]["recommendation"], status["recommendation"])
+
     def test_complete_rejects_not_ready_code_review_before_state_write(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -430,6 +463,15 @@ def _load_events(path: Path) -> list[dict]:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def _run_json(root: Path, argv: list[str]) -> dict:
+    output = io.StringIO()
+    with redirect_stdout(output):
+        code = main(["--root", str(root), *argv])
+    if code != 0:
+        raise AssertionError(output.getvalue())
+    return json.loads(output.getvalue())
 
 
 if __name__ == "__main__":

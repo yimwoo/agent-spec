@@ -145,9 +145,19 @@ def update_handoff(
 def update_roadmap(root: Path) -> Path:
     """Regenerate the canonical roadmap projection."""
 
+    root = root.resolve()
     from .roadmap import write_roadmap
 
-    return write_roadmap(root.resolve())
+    path = write_roadmap(root)
+
+    from .handoff import refresh_project_handoff
+    from .status import build_project_status
+
+    refreshed = refresh_project_handoff(root, project_status=build_project_status(root))
+    if refreshed is not None:
+        path = write_roadmap(root)
+        refresh_project_handoff(root, project_status=build_project_status(root))
+    return path
 
 
 def verify_writeback(root: Path, completion: dict[str, Any] | str | Path) -> dict[str, Any]:
