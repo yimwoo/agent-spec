@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import load_data, write_data
+from .paths import is_untracked_git_ignored
 
 
 HANDOFF_SCHEMA = "agentspec.project_handoff.v0"
@@ -12,6 +13,8 @@ HANDOFF_PATH = Path("agent/handoff.yml")
 
 
 def load_project_handoff(root: Path) -> dict[str, Any] | None:
+    if is_untracked_git_ignored(root, root / HANDOFF_PATH):
+        return None
     data = load_data(root / HANDOFF_PATH)
     if not isinstance(data, dict):
         return None

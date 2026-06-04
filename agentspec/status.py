@@ -16,7 +16,7 @@ from .io import load_data
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
-from .paths import path_matches_pattern
+from .paths import is_untracked_git_ignored, path_matches_pattern
 from .run import RESEARCH_ALLOWED_PATHS
 from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
@@ -59,10 +59,10 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     recent_limit = max(0, recent_limit)
     requirements = _list_or_empty(load_data(root / "docs" / "traceability" / "requirements.yml", []))
     readiness = _dict_or_empty(load_data(root / "docs" / "discovery" / "readiness.yml", {}))
-    dcrs = list_dcrs(root)
-    tasks = list_task_context_packs(root)
+    dcrs = list_dcrs(root, include_untracked_gitignored=False)
+    tasks = list_task_context_packs(root, include_untracked_gitignored=False)
     runs = _load_runs(root)
-    next_task = next_task_context_pack(root)
+    next_task = next_task_context_pack(root, include_untracked_gitignored=False)
     outcomes = build_outcome_status(root)
     maturity = build_maturity_status(root)
     sessions = build_session_status(root)
@@ -438,8 +438,10 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
 
     records: list[dict[str, Any]] = []
     for run_dir in sorted(path for path in runs_dir.iterdir() if path.is_dir()):
-        state = _load_optional_dict(run_dir / "state.yml")
-        summary = _load_optional_dict(run_dir / "summary.yml")
+        state_path = run_dir / "state.yml"
+        summary_path = run_dir / "summary.yml"
+        state = {} if is_untracked_git_ignored(root, state_path) else _load_optional_dict(state_path)
+        summary = {} if is_untracked_git_ignored(root, summary_path) else _load_optional_dict(summary_path)
         source = "state" if state else "summary" if summary else None
         data = state or summary
         if not data:
@@ -530,6 +532,8 @@ def _completed_task_by_context_pack(tasks: list[dict[str, Any]]) -> dict[str, di
 
 
 def _completed_task_by_ledger(root: Path) -> dict[str, dict[str, Any]]:
+    if is_untracked_git_ignored(root, root / "agent" / "task-ledger.yml"):
+        return {}
     try:
         ledger = load_task_ledger(root)
     except ValueError:

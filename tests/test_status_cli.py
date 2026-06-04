@@ -1,6 +1,7 @@
 import io
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -425,6 +426,92 @@ Originating DCR: `DCR-0002`
             self.assertEqual(status["dcrs"]["ready_for_tasking"], 1)
             self.assertEqual(blocker["dcrs_covered_by_task"], 2)
             self.assertEqual(blocker["dcrs_ready_for_tasking"], 1)
+
+    def test_status_ignores_untracked_gitignored_agent_artifact_residue(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text(
+                "\n".join(
+                    [
+                        "/docs/change-requests/",
+                        "/agent/context-packs/",
+                        "/agent/runs/",
+                        "/agent/task-ledger.yml",
+                        "/agent/handoff.yml",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "runs" / "local-residue").mkdir(parents=True)
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-201", "status": "accepted", "priority": "P1"}],
+            )
+            tracked_pack = root / "agent" / "context-packs" / "T-001-tracked.md"
+            tracked_pack.write_text(
+                """# T-001: Tracked
+
+Type: `implementation`
+
+## Requirements
+
+- `R-201` Tracked source
+""",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", "-f", "agent/context-packs/T-001-tracked.md"], cwd=root, check=True)
+            _write_dcr(root, "DCR-9999", status="accepted")
+            (root / "agent" / "context-packs" / "T-999-ignored.md").write_text(
+                "# T-999: Ignored residue\n\nType: `implementation`\n",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "runs" / "local-residue" / "state.yml",
+                {
+                    "run_id": "local-residue",
+                    "status": "halted",
+                    "mode": "supervised",
+                    "context_pack": "agent/context-packs/T-999-ignored.md",
+                    "updated_at": "2026-05-18T00:00:00Z",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-999-ignored.md": {
+                            "status": "complete",
+                            "run_id": "local-residue",
+                        }
+                    },
+                },
+            )
+            write_data(
+                root / "agent" / "handoff.yml",
+                {
+                    "schema": "agentspec.project_handoff.v0",
+                    "current_state": {"dcrs": {"total": 64}, "tasks": {"total": 43}},
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["dcrs"]["total"], 0)
+            self.assertEqual(status["tasks"]["total"], 1)
+            self.assertEqual(status["tasks"]["ready"][0]["id"], "T-001")
+            self.assertEqual(status["runs"]["total"], 0)
+            self.assertNotIn("handoff", status)
 
     def test_status_normalizes_context_pack_originating_dcr_headers(self) -> None:
         with tempfile.TemporaryDirectory() as td:

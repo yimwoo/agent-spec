@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+import subprocess
 
 
 ROLE_NAMES = [
@@ -57,6 +58,30 @@ def slugify(value: str, fallback: str = "item") -> str:
 def ensure_dirs(root: Path) -> None:
     for directory in ARTIFACT_DIRS:
         (root / directory).mkdir(parents=True, exist_ok=True)
+
+
+def is_untracked_git_ignored(root: Path, path: Path) -> bool:
+    """Return True when Git ignores an untracked project-local path.
+
+    Tracked files are intentionally preserved: `git check-ignore` does not
+    report tracked paths unless `--no-index` is used.
+    """
+
+    root = root.resolve()
+    try:
+        rel_path = path.resolve().relative_to(root).as_posix()
+    except ValueError:
+        return False
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "check-ignore", "-q", "--", rel_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
 
 
 def next_numbered_id(prefix: str, existing_ids: list[str]) -> str:

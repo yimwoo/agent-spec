@@ -14,7 +14,7 @@ from .archetype import (
 )
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
-from .paths import slugify, truncate_on_word_boundary
+from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary
 from .policy import can_emit_source_body, source_body_redaction
 from .workflow import parse_workflow_file
 
@@ -121,6 +121,7 @@ def list_task_context_packs(
     *,
     task_type: str | None = None,
     status: str | None = None,
+    include_untracked_gitignored: bool = True,
 ) -> list[dict[str, Any]]:
     """List task context packs with derived status and requirement metadata."""
 
@@ -131,10 +132,18 @@ def list_task_context_packs(
         requirement_id = requirement.get("id")
         if isinstance(requirement_id, str):
             requirements[requirement_id] = requirement
-    run_status_by_pack = _run_status_by_context_pack(root)
-    ledger_status_by_pack = _ledger_status_by_context_pack(root)
+    run_status_by_pack = _run_status_by_context_pack(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
+    ledger_status_by_pack = _ledger_status_by_context_pack(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
     records: list[dict[str, Any]] = []
     for path in sorted((root / "agent" / "context-packs").glob("T-*.md")):
+        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+            continue
         record = _parse_context_pack_record(root, path, requirements, run_status_by_pack, ledger_status_by_pack)
         if task_type and record.get("type") != task_type:
             continue
@@ -149,12 +158,18 @@ def next_task_context_pack(
     *,
     task_type: str | None = None,
     order: str = "newest",
+    include_untracked_gitignored: bool = True,
 ) -> dict[str, Any] | None:
     """Return the next ready task context pack, if one exists."""
 
     if order not in {"oldest", "newest"}:
         raise ValueError("order must be 'oldest' or 'newest'.")
-    ready = list_task_context_packs(root, task_type=task_type, status="ready")
+    ready = list_task_context_packs(
+        root,
+        task_type=task_type,
+        status="ready",
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
     ready.sort(key=lambda record: record["sort_key"], reverse=order == "newest")
     return ready[0] if ready else None
 
@@ -355,12 +370,18 @@ def _section_text(text: str, heading: str) -> str:
     return "\n".join(out)
 
 
-def _run_status_by_context_pack(root: Path) -> dict[str, dict[str, Any]]:
+def _run_status_by_context_pack(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = True,
+) -> dict[str, dict[str, Any]]:
     statuses: dict[str, dict[str, Any]] = {}
     runs_dir = root / "agent" / "runs"
     if not runs_dir.is_dir():
         return statuses
     for state_path in sorted(runs_dir.glob("*/state.yml")):
+        if not include_untracked_gitignored and is_untracked_git_ignored(root, state_path):
+            continue
         state = load_data(state_path)
         if not isinstance(state, dict):
             continue
@@ -380,7 +401,13 @@ def _run_status_by_context_pack(root: Path) -> dict[str, dict[str, Any]]:
     return statuses
 
 
-def _ledger_status_by_context_pack(root: Path) -> dict[str, dict[str, Any]]:
+def _ledger_status_by_context_pack(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = True,
+) -> dict[str, dict[str, Any]]:
+    if not include_untracked_gitignored and is_untracked_git_ignored(root, _task_ledger_path(root)):
+        return {}
     ledger = load_task_ledger(root)
     tasks = ledger.get("tasks", {})
     if not isinstance(tasks, dict):

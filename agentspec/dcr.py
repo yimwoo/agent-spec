@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import load_data, write_data, write_text
-from .paths import slugify
+from .paths import is_untracked_git_ignored, slugify
 
 
 ALLOWED_CLASSIFICATIONS: frozenset[str] = frozenset(
@@ -274,12 +274,14 @@ def accept_dcr(root: Path, dcr_id: str) -> dict[str, Any]:
     return {"dcr_id": dcr_id, "path": str(path)}
 
 
-def list_dcrs(root: Path) -> list[dict[str, Any]]:
+def list_dcrs(root: Path, *, include_untracked_gitignored: bool = True) -> list[dict[str, Any]]:
     directory = Path(root) / "docs" / "change-requests"
     if not directory.is_dir():
         return []
     records: list[dict[str, Any]] = []
     for path in sorted(directory.glob("DCR-*.md")):
+        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+            continue
         try:
             dcr = parse_dcr(path)
         except DCRSchemaError:
