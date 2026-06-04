@@ -132,6 +132,52 @@ class TaskQueueTests(unittest.TestCase):
             self.assertIn("| `agent/reviews/*.yml` | pattern; verification support |", text)
             self.assertIn("every non-verification allowed path is inferred", text)
 
+    def test_dcr_backed_task_pack_includes_lifecycle_writeback_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_for_create(root)
+            requirements = json.loads((root / "docs" / "traceability" / "requirements.yml").read_text())
+            requirements[0]["originating_dcr"] = "DCR-0099"
+            write_data(root / "docs" / "traceability" / "requirements.yml", requirements)
+            (root / "docs" / "traceability" / "design-to-code-map.md").write_text(
+                "# Design to Code Map\n", encoding="utf-8"
+            )
+            (root / "docs" / "ROADMAP.md").write_text("# Roadmap\n", encoding="utf-8")
+            (root / "package.json").write_text('{"name":"fixture"}', encoding="utf-8")
+            (root / "src" / "index.ts").parent.mkdir(parents=True, exist_ok=True)
+            (root / "src" / "index.ts").write_text("export const value = 1;\n", encoding="utf-8")
+            (root / "tests" / "index.test.ts").parent.mkdir(parents=True, exist_ok=True)
+            (root / "tests" / "index.test.ts").write_text("test('value', () => {});\n", encoding="utf-8")
+            _write_dcr(
+                root / "docs" / "change-requests" / "DCR-0099-generated-pack-scope.md"
+            )
+
+            path = create_task_context_pack(root, requirement_id="R-010", title="Scoped task")
+            text = path.read_text(encoding="utf-8")
+
+            expected_paths = [
+                "agent/context-packs/T-001-scoped-task.md",
+                "docs/change-requests/DCR-0099-generated-pack-scope.md",
+                "docs/traceability/requirements.yml",
+                "docs/traceability/design-to-code-map.md",
+                "docs/ROADMAP.md",
+                "agent/doc-reviews/*.yml",
+                "agent/reviews/*.yml",
+                "agent/task-ledger.yml",
+                "agent/handoff.yml",
+                "agent/workflows/W-001-scoped-task.md",
+                "src/**/*.ts",
+                "tests/**/*.ts",
+            ]
+            allowed_paths = _markdown_list_after_heading(text, "Allowed Paths")
+            for expected_path in expected_paths:
+                self.assertIn(expected_path, allowed_paths)
+            self.assertNotIn("agentspec/task.py", allowed_paths)
+            self.assertIn(
+                "| `agent/workflows/W-001-scoped-task.md` | inferred; lifecycle write-back |",
+                text,
+            )
+
     def test_task_create_warns_when_context_pack_is_gitignored(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -339,6 +385,43 @@ def _seed_for_create(root: Path) -> None:
     write_data(root / "docs" / "source" / "sources.yml", [])
     write_data(root / "docs" / "discovery" / "assumptions.yml", [])
     write_data(root / "docs" / "discovery" / "readiness.yml", {"score": 100})
+
+
+def _write_dcr(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        """# DCR-0099: Generated pack scope
+
+| Field | Value |
+|---|---|
+| Status | accepted |
+| Classification | implement-now |
+| Submitted | 2026-05-25 |
+| Submitted by | tester |
+| Decided by | tester |
+| Decided on | 2026-05-25 |
+| Confidence | high |
+
+## Summary
+Generated DCR-backed task packs must include lifecycle write-back scope.
+""",
+        encoding="utf-8",
+    )
+
+
+def _markdown_list_after_heading(text: str, heading: str) -> list[str]:
+    lines = text.splitlines()
+    items: list[str] = []
+    in_section = False
+    for line in lines:
+        if line.strip() == f"## {heading}":
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section and line.strip().startswith("- `") and line.strip().endswith("`"):
+            items.append(line.strip()[3:-1])
+    return items
 
 
 def _seed_no_ready_task_with_ready_outcomes(root: Path) -> None:
