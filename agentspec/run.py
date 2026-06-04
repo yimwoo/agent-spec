@@ -58,6 +58,7 @@ RESEARCH_TASK_PREPARATION_ALLOWED_PATHS: list[str] = [
     "docs/traceability/**",
     "docs/discovery/readiness.yml",
     "agent/context-packs/**",
+    "agent/doc-reviews/**",
 ]
 RESEARCH_TARGET_WRITE_REQUIREMENTS: list[str] = list(RESEARCH_ALLOWED_PATHS)
 RESEARCH_CONTEXT_PACK_SENTINEL = "<research-mode>"

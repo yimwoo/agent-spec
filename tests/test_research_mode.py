@@ -78,9 +78,11 @@ class StartResearchRunTests(unittest.TestCase):
                 set(state["allowed_paths"]),
                 set(RESEARCH_ALLOWED_PATHS + RESEARCH_TASK_PREPARATION_ALLOWED_PATHS),
             )
+            self.assertIn("agent/doc-reviews/**", state["allowed_paths"])
             self.assertEqual(state["target_write_requirements"], state["allowed_paths"])
             self.assertEqual(state["task_preparation"]["status"], "available")
             self.assertEqual(state["task_preparation"]["dcrs"], ["DCR-0099"])
+            self.assertIn("agent/doc-reviews/**", state["task_preparation"]["allowed_paths"])
 
 
 class ResearchPolicyEnforcementTests(unittest.TestCase):
@@ -197,6 +199,7 @@ class ResearchPolicyEnforcementTests(unittest.TestCase):
                 "r-tasking-paths",
                 executor_output="Prepared requirement and context-pack artifacts.",
                 touched_paths=[
+                    "agent/doc-reviews/DOCREVIEW-0001.yml",
                     "docs/traceability/requirements.yml",
                     "agent/context-packs/T-001-prepared-task.md",
                 ],
