@@ -15,6 +15,7 @@ from .errors import (
 from .review import research_acceptance_evidence_template, validate_research_acceptance_evidence
 from .policy import redact_sensitive_text
 from .run import (
+    RESEARCH_TASK_PREPARATION_ALLOWED_PATHS,
     append_run_event,
     controller_observed_touched_paths,
     load_run_state,
@@ -503,9 +504,12 @@ def parse_runner_result(
 
     acceptance_evidence = result.get("acceptance_evidence")
     if acceptance_evidence is not None:
+        allowed_paths = acceptance_allowed_paths
+        if _acceptance_evidence_declares_task_pack(acceptance_evidence) and allowed_paths is not None:
+            allowed_paths = _merge_unique_paths(allowed_paths, RESEARCH_TASK_PREPARATION_ALLOWED_PATHS)
         acceptance_evidence = validate_research_acceptance_evidence(
             acceptance_evidence,
-            allowed_paths=acceptance_allowed_paths,
+            allowed_paths=allowed_paths,
         )
 
     evidence = result.get("evidence")
@@ -521,6 +525,21 @@ def parse_runner_result(
         "acceptance_evidence": acceptance_evidence,
         "evidence": evidence,
     }
+
+
+def _acceptance_evidence_declares_task_pack(evidence: dict[str, Any] | None) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    created = evidence.get("created_task_context_pack")
+    return isinstance(created, str) and bool(created.strip())
+
+
+def _merge_unique_paths(existing: list[str], additions: list[str]) -> list[str]:
+    merged: list[str] = []
+    for path in [*existing, *additions]:
+        if path not in merged:
+            merged.append(path)
+    return merged
 
 
 def runner_evidence_template() -> dict[str, Any]:

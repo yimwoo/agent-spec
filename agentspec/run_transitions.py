@@ -121,6 +121,8 @@ def halted_run_accepts_corrected_evidence(
             return True
         if kind == "autonomous_pause_to_dcr" and is_quality_review_halt_event(event):
             return True
+        if kind == "research_acceptance_evidence_rejected":
+            return True
         if kind == "reviewer_verdict" and event.get("decision") == "halt":
             return False
     return isinstance(state.get("infrastructure_blocker"), dict)

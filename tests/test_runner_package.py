@@ -570,6 +570,7 @@ class RunnerPackageTests(unittest.TestCase):
             self.assertIn("allowed_path_confirmation", evidence)
             self.assertIn("verification_commands", evidence)
             self.assertIn("no_task_context_pack_reason", evidence)
+            self.assertIn("created_task_context_pack", evidence)
 
     def test_passed_research_result_requires_acceptance_evidence_before_state_changes(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -710,6 +711,43 @@ class RunnerPackageTests(unittest.TestCase):
                 event for event in _events(root, "pkg-research-tasking") if event["kind"] == "executor_output"
             )
             self.assertEqual(executor_event["acceptance_evidence"]["durable_artifacts"], evidence["durable_artifacts"])
+
+    def test_research_result_accepts_created_task_context_pack_without_prior_tasking_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            start_research_run(root, run_id="pkg-research-created-task")
+            evidence = _valid_research_evidence()
+            evidence.pop("no_task_context_pack_reason")
+            evidence["durable_artifacts"] = [
+                "docs/change-requests/DCR-0099-research.md",
+                "docs/traceability/requirements.yml",
+                "agent/context-packs/T-099-research-task.md",
+            ]
+            evidence["created_task_context_pack"] = "agent/context-packs/T-099-research-task.md"
+
+            package = submit_runner_result(
+                root,
+                "pkg-research-created-task",
+                {
+                    "schema": RUNNER_RESULT_SCHEMA,
+                    "executor_output": "Done.",
+                    "touched_paths": list(evidence["durable_artifacts"]),
+                    "test_status": "passed",
+                    "acceptance_evidence": evidence,
+                    "reviewer_mode": "deterministic",
+                },
+                runner="generic",
+            )
+
+            self.assertEqual(package["next_action"], "complete")
+            executor_event = next(
+                event for event in _events(root, "pkg-research-created-task") if event["kind"] == "executor_output"
+            )
+            self.assertEqual(
+                executor_event["acceptance_evidence"]["created_task_context_pack"],
+                "agent/context-packs/T-099-research-task.md",
+            )
 
     def test_research_result_rejection_names_artifacts_outside_active_allowed_paths(self) -> None:
         with tempfile.TemporaryDirectory() as td:

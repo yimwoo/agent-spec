@@ -355,6 +355,7 @@ class ResearchAcceptanceEvidenceTests(unittest.TestCase):
                 "agentspec.research_acceptance_evidence.v0",
             )
             self.assertIn("allowed_path_confirmation", guidance["acceptance_evidence"])
+            self.assertIn("created_task_context_pack", guidance["acceptance_evidence"])
 
     def test_cli_resume_accepts_research_acceptance_evidence_json(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -451,6 +452,9 @@ class ResearchAcceptanceEvidenceTests(unittest.TestCase):
             )
             self.assertEqual(first["state"]["status"], "halted")
             self.assertEqual(first["review"]["decision"], "pause_for_human")
+            self.assertIn("research_acceptance_evidence_rejection", first["state"])
+            self.assertNotIn("autonomous_dcr", first["state"])
+            self.assertFalse(list((root / "docs" / "change-requests").glob("DCR-*.md")))
 
             corrected = resume_run(
                 root,
@@ -464,8 +468,55 @@ class ResearchAcceptanceEvidenceTests(unittest.TestCase):
             self.assertEqual(corrected["review"]["decision"], "complete")
 
             events = _events(root, "r-corrected-evidence")
-            self.assertTrue(any(event["kind"] == "autonomous_pause_to_dcr" for event in events))
+            self.assertTrue(any(event["kind"] == "research_acceptance_evidence_rejected" for event in events))
+            self.assertFalse(any(event["kind"] == "autonomous_pause_to_dcr" for event in events))
             self.assertTrue(any(event["kind"] == "halted_run_reopened" for event in events))
+
+    def test_research_evidence_accepts_created_task_context_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_workspace(root)
+            start_research_run(root, run_id="r-created-task")
+            create_dcr_stub(
+                root,
+                "Convert research into task",
+                "implement-now",
+                dcr_id="DCR-0099",
+            )
+            accept_dcr(root, "DCR-0099")
+            (root / "docs" / "traceability" / "requirements.yml").write_text(
+                "- id: R-999\n  status: accepted\n",
+                encoding="utf-8",
+            )
+            pack = root / "agent" / "context-packs" / "T-001-converted-research.md"
+            pack.write_text("# T-001: Converted research\n", encoding="utf-8")
+            evidence = _valid_research_evidence()
+            evidence.pop("no_task_context_pack_reason")
+            evidence["durable_artifacts"] = [
+                "docs/change-requests/DCR-0099-convert-research-into-task.md",
+                "docs/traceability/requirements.yml",
+                "agent/context-packs/T-001-converted-research.md",
+            ]
+            evidence["covered_requirements"] = ["R-999"]
+            evidence["created_task_context_pack"] = "agent/context-packs/T-001-converted-research.md"
+
+            result = resume_run(
+                root,
+                "r-created-task",
+                executor_output="Created an accepted DCR and ready task context pack.",
+                touched_paths=list(evidence["durable_artifacts"]),
+                test_status="passed",
+                acceptance_evidence=evidence,
+            )
+
+            self.assertEqual(result["state"]["status"], "complete")
+            self.assertEqual(result["state"]["task_preparation"]["dcrs"], ["DCR-0099"])
+            self.assertIn("agent/context-packs/**", result["state"]["allowed_paths"])
+            executor_event = _executor_event(root, "r-created-task")
+            self.assertEqual(
+                executor_event["acceptance_evidence"]["created_task_context_pack"],
+                "agent/context-packs/T-001-converted-research.md",
+            )
 
     def test_valid_research_evidence_completes_with_terse_output(self) -> None:
         with tempfile.TemporaryDirectory() as td:

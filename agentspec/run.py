@@ -289,8 +289,12 @@ def resume_run(
     iteration = int(state.get("iteration", 0)) + 1
     max_iterations = int(state.get("max_iterations", 1))
     mode = state.get("mode", "supervised")
+    effective_allowed_paths = list(state.get("allowed_paths", []))
+    if mode == "research" and _acceptance_evidence_declares_task_pack(acceptance_evidence):
+        _refresh_research_task_preparation(root, state)
+        effective_allowed_paths = list(state.get("allowed_paths", []))
     if acceptance_evidence is not None:
-        raw_allowed_paths = state.get("allowed_paths", [])
+        raw_allowed_paths = effective_allowed_paths
         allowed_paths = (
             [path for path in raw_allowed_paths if isinstance(path, str)]
             if mode == "research" and isinstance(raw_allowed_paths, list)
@@ -316,7 +320,7 @@ def resume_run(
             )
 
     policy_verdict = evaluate_policy(
-        allowed_paths=list(state.get("allowed_paths", [])),
+        allowed_paths=effective_allowed_paths,
         touched_paths=touched_paths,
         # Supervised resumes may use an extra report-only turn to provide
         # completion evidence; keep other policy gates active for that turn.
@@ -500,23 +504,43 @@ def resume_run(
     elif review.decision == "pause_for_human" and mode in {"autonomous", "research"}:
         severity = review.severity
         if severity == "high":
-            dcr_id = _record_high_pause_dcr_stub(root, run_id, state, review)
             state["status"] = "halted"
-            state["autonomous_dcr"] = dcr_id
-            _append_event(
-                root,
-                run_id,
-                {
-                    "kind": "autonomous_pause_to_dcr",
-                    "iteration": iteration,
-                    "dcr": dcr_id,
-                    "severity": "high",
-                    "original_decision": "pause_for_human",
-                    "applied_decision": "halt",
+            if mode == "research" and _is_research_acceptance_evidence_pause(review):
+                state["research_acceptance_evidence_rejection"] = {
                     "reason": review.reason,
-                },
-                run_dir=run_dir,
-            )
+                    "recovery": "Resume the run with --acceptance-evidence-json after adding structured research evidence.",
+                }
+                _append_event(
+                    root,
+                    run_id,
+                    {
+                        "kind": "research_acceptance_evidence_rejected",
+                        "iteration": iteration,
+                        "severity": "high",
+                        "original_decision": "pause_for_human",
+                        "applied_decision": "halt",
+                        "reason": review.reason,
+                        "recovery": state["research_acceptance_evidence_rejection"]["recovery"],
+                    },
+                    run_dir=run_dir,
+                )
+            else:
+                dcr_id = _record_high_pause_dcr_stub(root, run_id, state, review)
+                state["autonomous_dcr"] = dcr_id
+                _append_event(
+                    root,
+                    run_id,
+                    {
+                        "kind": "autonomous_pause_to_dcr",
+                        "iteration": iteration,
+                        "dcr": dcr_id,
+                        "severity": "high",
+                        "original_decision": "pause_for_human",
+                        "applied_decision": "halt",
+                        "reason": review.reason,
+                    },
+                    run_dir=run_dir,
+                )
         elif severity == "minor":
             finding_id = _record_minor_pause_finding(root, run_id, state, review)
             # Demote decision to auto_continue so the loop keeps moving.
@@ -1388,6 +1412,40 @@ def _is_research_findings_path(path: str) -> bool:
                for prefix in _RESEARCH_PATH_PREFIXES)
 
 
+def _acceptance_evidence_declares_task_pack(evidence: dict[str, Any] | None) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    created = evidence.get("created_task_context_pack")
+    return isinstance(created, str) and bool(created.strip())
+
+
+def _refresh_research_task_preparation(root: Path, state: dict[str, Any]) -> None:
+    tasking_dcrs = _implementation_eligible_dcrs(root)
+    state["allowed_paths"] = _merge_unique_paths(
+        list(state.get("allowed_paths", [])),
+        RESEARCH_TASK_PREPARATION_ALLOWED_PATHS,
+    )
+    state["target_write_requirements"] = list(state["allowed_paths"])
+    state["task_preparation"] = {
+        "status": "available",
+        "dcrs": [str(dcr.get("id")) for dcr in tasking_dcrs],
+        "allowed_paths": list(RESEARCH_TASK_PREPARATION_ALLOWED_PATHS),
+    }
+
+
+def _merge_unique_paths(existing: list[Any], additions: list[str]) -> list[str]:
+    merged: list[str] = []
+    for path in [*existing, *additions]:
+        if isinstance(path, str) and path not in merged:
+            merged.append(path)
+    return merged
+
+
+def _is_research_acceptance_evidence_pause(review: Any) -> bool:
+    reason = str(getattr(review, "reason", "") or "").lower()
+    return "acceptance-criteria evidence" in reason or "acceptance_evidence" in reason
+
+
 def _implementation_eligible_dcrs(root: Path) -> list[dict[str, Any]]:
     return [dcr for dcr in list_dcrs(root) if is_implementation_eligible(dcr)]
 
@@ -1724,13 +1782,14 @@ def _run_summary(root: Path, run_id: str, state: dict[str, Any], *, run_dir: Pat
             "autonomous_pause_to_finding",
             "research_pause_to_finding",
             "autonomous_pause_to_dcr",
+            "research_acceptance_evidence_rejected",
         }:
-            finding_id = event.get("finding") or event.get("dcr")
+            finding_id = event.get("finding") or event.get("dcr") or "acceptance_evidence"
             if finding_id:
                 blocked_findings.append(
                     {
                         "id": finding_id,
-                        "kind": "dcr" if event.get("dcr") else "open-question",
+                        "kind": _blocked_finding_kind(kind, event),
                         "event": kind,
                         "iteration": event.get("iteration"),
                         "severity": event.get("severity"),
@@ -1755,6 +1814,14 @@ def _run_summary(root: Path, run_id: str, state: dict[str, Any], *, run_dir: Pat
         "created_at": state.get("created_at"),
         "updated_at": state.get("updated_at"),
     }
+
+
+def _blocked_finding_kind(kind: str, event: dict[str, Any]) -> str:
+    if event.get("dcr"):
+        return "dcr"
+    if kind == "research_acceptance_evidence_rejected":
+        return "diagnostic"
+    return "open-question"
 
 
 def _append_event(root: Path, run_id: str, event: dict[str, Any], *, run_dir: Path | None = None) -> None:

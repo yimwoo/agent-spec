@@ -506,6 +506,7 @@ def research_acceptance_evidence_template() -> dict[str, Any]:
         "covered_questions": [],
         "source_checks": [],
         "no_task_context_pack_reason": "<required for research-only proposals>",
+        "created_task_context_pack": "<required instead of no_task_context_pack_reason when research creates a ready task pack>",
     }
 
 
@@ -572,10 +573,27 @@ def validate_research_acceptance_evidence(
         )
 
     no_task_reason = evidence.get("no_task_context_pack_reason")
-    if not isinstance(no_task_reason, str) or not no_task_reason.strip():
-        raise ValueError("acceptance_evidence.no_task_context_pack_reason is required.")
+    created_task_context_pack = evidence.get("created_task_context_pack")
+    has_no_task_reason = isinstance(no_task_reason, str) and bool(no_task_reason.strip())
+    has_created_task_context_pack = isinstance(created_task_context_pack, str) and bool(
+        created_task_context_pack.strip()
+    )
+    if not has_no_task_reason and not has_created_task_context_pack:
+        raise ValueError(
+            "acceptance_evidence requires no_task_context_pack_reason or created_task_context_pack."
+        )
+    if has_created_task_context_pack:
+        created_task_context_pack = str(created_task_context_pack).strip()
+        if not _is_research_evidence_path(created_task_context_pack, ["agent/context-packs/**"]):
+            raise ValueError(
+                "acceptance_evidence.created_task_context_pack must be under agent/context-packs/."
+            )
+        if created_task_context_pack not in durable_artifacts:
+            raise ValueError(
+                "acceptance_evidence.created_task_context_pack must also appear in durable_artifacts."
+            )
 
-    return {
+    normalized = {
         "schema": RESEARCH_ACCEPTANCE_EVIDENCE_SCHEMA,
         "durable_artifacts": durable_artifacts,
         "allowed_path_confirmation": True,
@@ -583,8 +601,12 @@ def validate_research_acceptance_evidence(
         "covered_requirements": covered_requirements,
         "covered_questions": covered_questions,
         "source_checks": source_checks,
-        "no_task_context_pack_reason": no_task_reason,
     }
+    if has_no_task_reason:
+        normalized["no_task_context_pack_reason"] = str(no_task_reason).strip()
+    if has_created_task_context_pack:
+        normalized["created_task_context_pack"] = created_task_context_pack
+    return normalized
 
 
 def _string_list(value: Any) -> list[str]:
