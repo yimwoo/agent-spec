@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -196,6 +197,30 @@ Workflow: `agent/workflows/W-001-phase-five.md`
             self.assertEqual(status["orphan_count"], 0)
             self.assertEqual(status["broken_link_count"], 1)
             self.assertEqual(status["broken_links"][0]["type"], "missing_workflow_task_pack_reference")
+
+    def test_ignores_untracked_gitignored_context_packs_for_workflow_links(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            _seed_minimal(root)
+            (root / ".gitignore").write_text("/agent/context-packs/\n", encoding="utf-8")
+            (root / "agent" / "context-packs" / "T-999-local-residue.md").write_text(
+                """# T-999: Local Residue
+
+Type: `implementation`
+Workflow: `agent/workflows/W-999-stale.md`
+
+## Requirements
+
+- No accepted requirement attached.
+""",
+                encoding="utf-8",
+            )
+
+            status = build_workflow_contract_status(root)
+
+            self.assertEqual(status["broken_link_count"], 0)
+            self.assertEqual(status["broken_links"], [])
 
     def test_task_create_from_workflow_scaffolds_context_pack(self) -> None:
         with tempfile.TemporaryDirectory() as td:

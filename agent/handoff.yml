@@ -1,0 +1,65 @@
+{
+  "schema": "agentspec.project_handoff.v0",
+  "updated_at": "2026-06-06T20:12:55Z",
+  "root": ".",
+  "last_completed_task": {
+    "id": "T-163",
+    "context_pack": "agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md",
+    "title": "T-163: Ignore ignored untracked context packs in workflow status",
+    "run_id": "complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116",
+    "reason": "Marked complete by user.",
+    "updated_at": "2026-06-06T20:12:55Z",
+    "verification": {
+      "status": "passed"
+    },
+    "code_review": {
+      "id": "REVIEW-0120",
+      "verdict": "ready",
+      "reviewer": "human",
+      "range": "worktree",
+      "path": "agent/reviews/REVIEW-0120.yml"
+    }
+  },
+  "current_state": {
+    "overall": "idle",
+    "recommendation": "No ready task context pack found; create or classify the next DCR/task, or run autonomous research mode.",
+    "readiness": {
+      "score": 100,
+      "mode": "normal-implementation",
+      "summary": "Readiness is 100/100 (normal-implementation)."
+    },
+    "requirements": {
+      "total": 215,
+      "by_status": {
+        "accepted": 215
+      }
+    },
+    "dcrs": {
+      "total": 0,
+      "by_status": {}
+    },
+    "tasks": {
+      "total": 1,
+      "by_status": {
+        "complete": 1
+      },
+      "by_type": {
+        "implementation": 1
+      }
+    }
+  },
+  "next_action": {
+    "kind": "idle",
+    "command": "aspec status --json"
+  },
+  "commands": {
+    "status": "aspec status --json",
+    "next_action": "aspec continue",
+    "task_next": "aspec task next"
+  },
+  "artifacts": {
+    "task_ledger": "agent/task-ledger.yml",
+    "handoff": "agent/handoff.yml",
+    "last_code_review": "agent/reviews/REVIEW-0120.yml"
+  }
+}

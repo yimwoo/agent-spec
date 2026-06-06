@@ -1,0 +1,13 @@
+{
+  "schema": "agentspec.code_review.v0",
+  "task": {
+    "selector": "T-163",
+    "context_pack": "agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md"
+  },
+  "verdict": "ready",
+  "summary": "No blocking findings. Regression verifies workflow status ignores untracked gitignored context-pack residue while preserving tracked workflow-pack validation.",
+  "reviewer": "human",
+  "range": "worktree",
+  "created_at": "2026-06-06T20:07:42Z",
+  "id": "REVIEW-0120"
+}

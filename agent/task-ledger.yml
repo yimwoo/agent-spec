@@ -1,0 +1,2231 @@
+{
+  "schema": "agentspec.task_ledger.v0",
+  "tasks": {
+    "agent/context-packs/T-001-convert-a-markdown-design-document-into-canonical-source-sections-with-stable-ids-and-content-ha.md": {
+      "status": "complete",
+      "run_id": "ledger-T-001",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:11Z"
+    },
+    "agent/context-packs/T-002-promote-drift-checker-to-semantic-diff-review.md": {
+      "status": "complete",
+      "run_id": "ledger-T-002",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:11Z"
+    },
+    "agent/context-packs/T-003-design-change-management-schema.md": {
+      "status": "complete",
+      "run_id": "ledger-T-003",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-004-spike-supervised-runs.md": {
+      "status": "complete",
+      "run_id": "ledger-T-004",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-005-dcr-cli.md": {
+      "status": "complete",
+      "run_id": "ledger-T-005",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-008-dcr-accept-cascade-fix.md": {
+      "status": "complete",
+      "run_id": "ledger-T-008",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:12Z"
+    },
+    "agent/context-packs/T-009-draft-adr-0003-supervised-run-protocol.md": {
+      "status": "complete",
+      "run_id": "ledger-T-009",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-010-add-aspec-cli-alias.md": {
+      "status": "complete",
+      "run_id": "ledger-T-010",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-011-add-agent-model-profile-config.md": {
+      "status": "complete",
+      "run_id": "ledger-T-011",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-012-supervised-run-local-protocol-mvp.md": {
+      "status": "complete",
+      "run_id": "ledger-T-012",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-013-add-task-queue-and-next-task-selection.md": {
+      "status": "complete",
+      "run_id": "ledger-T-013",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:13Z"
+    },
+    "agent/context-packs/T-014-supervised-run-loop-mvp.md": {
+      "status": "complete",
+      "run_id": "ledger-T-014",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:14Z"
+    },
+    "agent/context-packs/T-015-task-completion-backfill-command.md": {
+      "status": "complete",
+      "run_id": "ledger-T-015",
+      "reason": "Committed task ledger backfill after full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:14Z"
+    },
+    "agent/context-packs/T-016-committed-task-ledger.md": {
+      "status": "complete",
+      "run_id": "dogfood-t016-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T20:57:57Z"
+    },
+    "agent/context-packs/T-017-review-findings-and-status-hygiene.md": {
+      "status": "complete",
+      "run_id": "dogfood-t017-final-2",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:28:13Z"
+    },
+    "agent/context-packs/T-018-model-backed-continuation-reviewer-mvp.md": {
+      "status": "complete",
+      "run_id": "dogfood-t018-final-2",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:40:09Z"
+    },
+    "agent/context-packs/T-019-next-executor-prompt-handoff.md": {
+      "status": "complete",
+      "run_id": "dogfood-t019-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:45:23Z"
+    },
+    "agent/context-packs/T-020-harness-step-command.md": {
+      "status": "complete",
+      "run_id": "dogfood-t020-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:56:03Z"
+    },
+    "agent/context-packs/T-021-runner-package-adapter.md": {
+      "status": "complete",
+      "run_id": "dogfood-t021-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T21:59:58Z"
+    },
+    "agent/context-packs/T-022-runner-result-ingestion.md": {
+      "status": "complete",
+      "run_id": "dogfood-t022-final",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:03:56Z"
+    },
+    "agent/context-packs/T-023-local-runner-demo-e2e.md": {
+      "status": "complete",
+      "run_id": "dogfood-t023-e2e",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:13:30Z"
+    },
+    "agent/context-packs/T-024-local-subprocess-runner.md": {
+      "status": "complete",
+      "run_id": "dogfood-t024-exec",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T22:18:40Z"
+    },
+    "agent/context-packs/T-025-aspec-console-script-verification.md": {
+      "status": "complete",
+      "reason": "pyproject entry points verified; pip install -e . exposes aspec/agentspec on PATH; tests pass.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T23:06:35Z"
+    },
+    "agent/context-packs/T-026-archetype-aware-target-inference-and-validation.md": {
+      "status": "complete",
+      "reason": "Archetype-aware inference + path provenance shipped; tests cover Python/TypeScript/Go/undetermined; compile on Python self-host preserves agentspec/*.py targets.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-28T23:58:27Z"
+    },
+    "agent/context-packs/T-027-dcr-0019-polish-bundle.md": {
+      "status": "complete",
+      "reason": "R-139/R-140/R-141 shipped: dogfood/ in artifact layout + record CLI; .gitignore writer (idempotent); word-boundary title truncation in pack creation.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T00:08:05Z"
+    },
+    "agent/context-packs/T-028-basic-autonomous-mode.md": {
+      "status": "complete",
+      "reason": "Basic autonomous mode shipped: --mode flag, eligibility refusal, pause-to-finding transform, hard-limit gates (destructive git, remote push, credential pattern, auto-acceptance). Tests cover all ADR-0004 hard limits.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T00:20:06Z"
+    },
+    "agent/context-packs/T-029-r127-r130-acceptance-review.md": {
+      "status": "complete",
+      "reason": "Audit report at reports/dogfood/2026-04-28-supervised-run-acceptance-review.md maps each acceptance criterion to specific modules + tests; all four requirements meet (R-130 stricter than literal text; Q-025 captures the optional approve-and-continue extension).",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:34:42Z"
+    },
+    "agent/context-packs/T-030-autonomous-mode-severity-gating.md": {
+      "status": "complete",
+      "reason": "Severity gating shipped per ADR-0005: classify_severity in model_review.py with HIGH-wins-ties keyword rules; review.ReviewVerdict carries severity + proposed_default; run.py autonomous transform branches into minor (open-question + auto_continue), high (DCR stub + halt), or T-028 fallback (open-question + halt) for unclassified.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:45:20Z"
+    },
+    "agent/context-packs/T-031-autonomous-mode-dual-reviewer-signoff.md": {
+      "status": "complete",
+      "reason": "Dual-reviewer signoff shipped per ADR-0005: quality_reviewer_signoff in review.py with stricter deterministic rule (test_status=passed AND acceptance evidence); run.py invokes it on autonomous-mode complete and degrades to pause_for_human severity=high on reject; the existing R-143 high path drops DCR + halts.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T01:49:43Z"
+    },
+    "agent/context-packs/T-032-autonomous-mode-research-fallback.md": {
+      "status": "complete",
+      "reason": "Research-mode fallback shipped per ADR-0005: start_research_run creates state with research findings dirs as allowed_paths; loop_run auto-enters research on autonomous + empty queue; findings counter caps the run; hard limits + dual-signoff also fire on mode=research; unclassified pauses log + continue (research permissive) instead of halt (autonomous conservative).",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:00:12Z"
+    },
+    "agent/context-packs/T-033-drift-dcr-axis.md": {
+      "status": "complete",
+      "reason": "Drift reports now carry a DCRs column derived from each context pack's Originating DCR(s) header line. Last DCR-0002 deliverable shipped; R-126 flipped.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:11:51Z"
+    },
+    "agent/context-packs/T-034-document-cross-repo-agentspec-workflow.md": {
+      "status": "complete",
+      "run_id": "complete-t-034-document-cross-repo-agentspec-workflow-20260429021710",
+      "reason": "Updated README with cross-repo AgentSpec workflow for code agents; verified unittest suite and CLI help. Covers R-003, R-006, R-023.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:17:10Z"
+    },
+    "agent/context-packs/T-035-commit-autonomous-run-summary-projection.md": {
+      "status": "complete",
+      "run_id": "complete-t-035-commit-autonomous-run-summary-projection-20260429024522",
+      "reason": "ADR-0004 summary projection shipped: autonomous/research runs now write agent/runs/<run-id>/summary.yml; init and .gitignore keep summaries tracked while raw state remains local.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T02:45:22Z"
+    },
+    "agent/context-packs/T-036-readme-dual-audience-framing.md": {
+      "status": "complete",
+      "reason": "README restructured into a 'Who This Is For' header plus four explicit sections: Quick Start (single-repo dogfood), For Humans: Bootstrap A Project, For Code Agents: Bootstrap A New Project, For Code Agents: Continue Work On An Existing Project. Autonomous Mode and What To Commit promoted to top-level (apply to both audiences). Hard rules for code agents (allowed paths, requirement-ID citation, untrusted source content, no auto-acceptance, DCR for design changes) spelled out. Covers R-003, R-006, R-023.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T03:45:00Z"
+    },
+    "agent/context-packs/T-037-cross-repo-report-dir.md": {
+      "status": "complete",
+      "reason": "DCR-0020 spike implementation: aspec doctor and aspec drift accept --report-dir <path>; reports redirect to <path>/<command>/ instead of <root>/reports/<command>/. Shared ensure_writable_dir helper in io.py raises PermissionError before analysis runs when the destination is not writable. Default behavior unchanged. 6 new tests in test_report_dir.py cover default, redirect, and read-only paths for both commands. Covers R-005, R-010, R-034, R-035.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T04:30:00Z"
+    },
+    "agent/context-packs/T-038-dcr-0020-acceptance-and-quality-reviewer-question.md": {
+      "status": "complete",
+      "reason": "DCR-0020 flipped to accepted now that T-037 spike shipped with green tests + live smoke. Q-026 filed in open-questions.yml so the model-backed quality_reviewer gap (deterministic-only quality_reviewer_signoff vs. ADR-0003's 'should use a stronger model' guidance) leaves code-comment land and joins the discovery surface. No code changes; full test suite green; aspec compile idempotent.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T05:00:00Z"
+    },
+    "agent/context-packs/T-039-dcr-0005-0018-traceability-audit.md": {
+      "status": "complete",
+      "reason": "Traceability audit of DCR-0005..DCR-0018 (14 DCRs) confirms zero backfills needed. Each DCR's Impact Assessment already names the existing R-IDs it strengthens (R-003/R-006/R-007/R-127/R-129); none introduces fresh product surface that lacks an R-ID home. Decision and per-DCR rationale captured at reports/dogfood/2026-04-28-dcr-0005-0018-traceability-audit.md (per R-139). No code or schema changes; full test suite green; aspec compile idempotent. Covers R-126, R-139.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T05:30:00Z"
+    },
+    "agent/context-packs/T-040-project-status-surface.md": {
+      "status": "complete",
+      "run_id": "dogfood-t040-status",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T04:01:55Z"
+    },
+    "agent/context-packs/T-041-status-active-and-recent-test-coverage.md": {
+      "status": "complete",
+      "reason": "Closes the T-040 review NOTE 1 test-coverage gap: new test_human_status_includes_active_and_recent_blocks method asserts the 'Active Runs:' and 'Recent Runs:' headers plus run-active and run-summary-only run ids appear in the human output. Existing test_human_status_mentions_next_and_attention_runs unchanged. No production change. 5/5 status tests pass; full suite green. Covers R-007, R-128.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T06:00:00Z"
+    },
+    "agent/context-packs/T-042-cli-json-error-envelope.md": {
+      "status": "complete",
+      "reason": "Closes the only P1 finding from the T-040 code review: structured JSON error envelope on the top-level CLI exception handler. New agentspec.cli_error.v0 schema with type/message/retryable/command fields emits to stdout when args.json is truthy; plain stderr text remains for non-JSON callers. Retryability heuristic covers TimeoutError + ConnectionError; everything else defaults to non-retryable. 8 new tests in test_cli_json_errors.py (5 unit, 1 envelope-shape, 2 end-to-end). Live smoke confirms both paths. Full suite 178 \u2192 186. Covers R-007, R-128.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T06:30:00Z"
+    },
+    "agent/context-packs/T-043-fix-globstar-path-matching-semantics.md": {
+      "status": "complete",
+      "run_id": "complete-t-043-fix-globstar-path-matching-semantics-20260429203843",
+      "reason": "Globstar matcher semantics shipped for policy and drift: shared path_matches_pattern helper treats ** as zero-or-more segments and * as single-segment only; policy and drift delegate to the shared helper; tests cover generated src/**/*.py behavior.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T20:38:43Z"
+    },
+    "agent/context-packs/T-044-atomic-completion-research-mode-ledger-guard.md": {
+      "status": "complete",
+      "run_id": "complete-t-044-atomic-completion-research-mode-ledger-guard-20260429213355",
+      "reason": "R-146 / DCR-0024: research-mode complete now skips the implementation task ledger and non-research completion writes the ledger before finalizing the state file. Both completion sites (resume_run and complete_context_pack_run) updated. tests/test_run_completion_atomicity.py covers research-mode no-write, implementation-mode regression, and ledger-first ordering via mocked-failure. Full suite 192 -> 195.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-04-29T21:33:55Z"
+    },
+    "agent/context-packs/T-045-specdocument-schema-validators.md": {
+      "status": "complete",
+      "run_id": "t045-specdocument-schema-validators",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:20:50Z"
+    },
+    "agent/context-packs/T-046-markdown-candidate-import.md": {
+      "status": "complete",
+      "run_id": "t046-markdown-candidate-import",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:25:50Z"
+    },
+    "agent/context-packs/T-047-candidate-baseline-diff.md": {
+      "status": "complete",
+      "run_id": "t047-candidate-baseline-diff",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T15:50:27Z"
+    },
+    "agent/context-packs/T-048-candidate-promotion-requires-human-approval.md": {
+      "status": "complete",
+      "run_id": "t048-candidate-promotion-requires-human-approval",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:08:05Z"
+    },
+    "agent/context-packs/T-049-promotion-preserves-source-snapshot-lineage.md": {
+      "status": "complete",
+      "run_id": "t049-promotion-preserves-source-snapshot-lineage",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:11:01Z"
+    },
+    "agent/context-packs/T-050-intake-enforces-source-storage-modes.md": {
+      "status": "complete",
+      "run_id": "t050-intake-enforces-source-storage-modes",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:13:28Z"
+    },
+    "agent/context-packs/T-051-structured-api-sources-produce-contract-diffs.md": {
+      "status": "complete",
+      "run_id": "t051-structured-api-sources-produce-contract-diffs",
+      "reason": "Executor reports R-153 OpenAPI contract intake/diff implementation complete and full verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:17:14Z"
+    },
+    "agent/context-packs/T-052-enterprise-connectors-are-adapters-over-candidate-snapshots.md": {
+      "status": "complete",
+      "run_id": "t052-enterprise-connectors-are-adapters-over-candidate-snapshots",
+      "reason": "Executor reports R-154 connector adapter implementation complete and full verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:20:27Z"
+    },
+    "agent/context-packs/T-053-document-external-intake-and-source-of-truth-workflows.md": {
+      "status": "complete",
+      "run_id": "t053-document-external-intake-and-source-of-truth-workflows",
+      "reason": "Executor reports README intake/autonomous usage docs and DCR-0027 proposal complete; verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:28:25Z"
+    },
+    "agent/context-packs/T-054-include-verification-targets-in-allowed-paths.md": {
+      "status": "complete",
+      "run_id": "issue-4-allowed-test-targets",
+      "reason": "R-136/R-137 issue #4 fix: generated context packs include verification/test targets in Allowed Paths; full unittest suite and diff check passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T16:39:13Z"
+    },
+    "agent/context-packs/T-055-source-registry-and-scheduled-source-drift-checks.md": {
+      "status": "complete",
+      "run_id": "t055-source-registry-and-scheduled-source-drift-checks",
+      "reason": "DCR-0027 shipped: source registry add/list/check, explicit candidate evidence, scheduled audit docs; full unittest passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T17:29:12Z"
+    },
+    "agent/context-packs/T-056-redirected-run-state-spike.md": {
+      "status": "complete",
+      "run_id": "complete-t-056-redirected-run-state-spike-20260501185206",
+      "reason": "DCR-0025 spike resolved: report written, R-159..R-162 registered as PPA, and T-057 implementation pack created.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T18:52:06Z"
+    },
+    "agent/context-packs/T-057-redirected-run-state-for-run-commands.md": {
+      "status": "complete",
+      "run_id": "complete-t-057-redirected-run-state-for-run-commands-20260501185736",
+      "reason": "DCR-0025 implementation verified: redirected run state, consistent run subcommands, JSON error envelope, and research target-write reporting covered by tests.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T18:57:36Z"
+    },
+    "agent/context-packs/T-058-run-status-recovery-context.md": {
+      "status": "complete",
+      "run_id": "complete-t-058-run-status-recovery-context-20260501191427",
+      "reason": "DCR-0028 shipped: status run records now include reviewer reason, policy flags, test status, event refs, and recovery commands; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T19:14:27Z"
+    },
+    "agent/context-packs/T-059-codex-plugin-manual-source-intake-alpha.md": {
+      "status": "complete",
+      "run_id": "complete-t-059-codex-plugin-manual-source-intake-alpha-20260501195146",
+      "reason": "DCR-0029 shipped: Codex plugin alpha packages status, compile, task, drift, and manual source-intake skills; source intake remains CLI-backed and human-gated; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T19:51:46Z"
+    },
+    "agent/context-packs/T-060-codex-plugin-onboarding-and-continuation-usage.md": {
+      "status": "complete",
+      "run_id": "complete-t-060-codex-plugin-onboarding-and-continuation-usage-20260501201009",
+      "reason": "DCR-0030 shipped: Codex plugin README and skills now document CLI and plugin paths for repo initialization and continuation; installed plugin refreshed to 0.1.1; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T20:10:09Z"
+    },
+    "agent/context-packs/T-061-codex-plugin-skill-surface-cleanup.md": {
+      "status": "complete",
+      "run_id": "complete-t-061-codex-plugin-skill-surface-cleanup-20260501203916",
+      "reason": "DCR-0031 shipped: Codex emit no longer creates repo-local AgentSpec skills; this repo now relies on the installed agentspec-codex-plugin skill surface for dogfooding; prompt discovery and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T20:39:16Z"
+    },
+    "agent/context-packs/T-062-short-aspec-plugin-skill-prefix.md": {
+      "status": "complete",
+      "run_id": "complete-t-062-short-aspec-plugin-skill-prefix-20260501211746",
+      "reason": "DCR-0032 shipped: Codex plugin identity now uses aspec, public docs and skills use aspec:* calls, local plugin install/cache/marketplace refreshed, old agentspec-codex-plugin identity removed, prompt discovery and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T21:17:46Z"
+    },
+    "agent/context-packs/T-063-plugin-dogfood-recovery-guidance.md": {
+      "status": "complete",
+      "run_id": "complete-t-063-plugin-dogfood-recovery-guidance-20260501225458",
+      "reason": "DCR-0033 shipped: plugin dogfood validated aspec init, continue, and manual-source-intake flows; init guidance now covers readiness below 60; manual source intake guidance now covers source_key selection after aspec ingest; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T22:54:58Z"
+    },
+    "agent/context-packs/T-064-recovery-oriented-cli-aliases.md": {
+      "status": "complete",
+      "run_id": "complete-t-064-recovery-oriented-cli-aliases-20260501230434",
+      "reason": "DCR-0034 shipped: DCR-0022 Item 4 promoted and implemented as top-level next-action/continue aliases; aliases dispatch to inspect, prompt, run loop, or no-action recommendation; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-05-01T23:04:34Z"
+    },
+    "agent/context-packs/T-065-pre-commit-code-review-gate.md": {
+      "status": "complete",
+      "run_id": "complete-t-065-pre-commit-code-review-gate-20260503032154",
+      "reason": "DCR-0036 shipped: code review artifacts, review CLI, task completion review linkage, and agent-facing pre-commit review guidance implemented; full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0001",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0036 implementation: review artifact schema, CLI parser, task completion review linkage, not-ready and context-mismatch guards, AGENTS guidance, and tests. No blocking findings.",
+        "reviewer": "codex",
+        "range": "origin/main...HEAD",
+        "path": "agent/reviews/REVIEW-0001.yml"
+      },
+      "updated_at": "2026-05-03T03:21:54Z"
+    },
+    "agent/context-packs/T-066-research-mode-review-evidence-contract-spike.md": {
+      "status": "complete",
+      "run_id": "complete-t-066-research-mode-review-evidence-contract-spike-20260503032533",
+      "reason": "DCR-0035 spike completed: research-mode acceptance evidence contract, runtime contract, test plan, hard-limit preservation, and implementation slices documented; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0002",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0035 spike deliverables: R-171/T-066 bookkeeping, accepted DCR metadata, and research-mode review evidence contract report. The report defines the evidence schema, runtime contract, test plan, hard-limit preservation, and follow-up implementation slices. No blocking findings.",
+        "reviewer": "codex",
+        "range": "HEAD~1...HEAD",
+        "path": "agent/reviews/REVIEW-0002.yml"
+      },
+      "updated_at": "2026-05-03T03:25:33Z"
+    },
+    "agent/context-packs/T-067-research-mode-acceptance-evidence-contract.md": {
+      "status": "complete",
+      "run_id": "complete-t-067-research-mode-acceptance-evidence-contract-20260503033952",
+      "reason": "DCR-0037 shipped: research-mode runner results now support structured acceptance evidence, research packages advertise the evidence template, passed research results require valid evidence before state mutation, reviewers consume evidence for deterministic completion, and hard limits remain intact; full suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0003",
+        "verdict": "ready",
+        "summary": "Reviewed DCR-0037 implementation: research acceptance evidence schema validation, research runner package template, passed-result guard before state mutation, reviewer/quality signoff evidence threading, hard-limit preservation, and focused tests. No blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0003.yml"
+      },
+      "updated_at": "2026-05-03T03:39:52Z"
+    },
+    "agent/context-packs/T-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so.md": {
+      "status": "complete",
+      "run_id": "complete-t-068-agentspec-emits-codex-custom-agent-role-files-with-the-current-developer-instructions-field-so-20260504023117",
+      "reason": "R-173 compatibility fix verified: Codex emitter writes developer_instructions and regression tests plus target-project TOML parse checks pass.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0004",
+        "verdict": "ready",
+        "summary": "R-173: emitter now writes developer_instructions for Codex role TOML; tests parse emitted roles and reject obsolete instructions key. Verification: python -m unittest discover -s tests; target project TOML parse check passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0004.yml"
+      },
+      "updated_at": "2026-05-04T02:31:17Z"
+    },
+    "agent/context-packs/T-069-agent-knowledge-freshness-lint.md": {
+      "status": "complete",
+      "run_id": "complete-t-069-agent-knowledge-freshness-lint-20260505204339",
+      "reason": "R-174 shipped: doctor now reports missing/stale generated agent context and points to aspec emit --target claude,codex; tests cover missing, stale, and fresh cases.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0005",
+        "verdict": "ready",
+        "summary": "Reviewed R-174/DCR-0039 implementation: doctor agent_context freshness scan, recovery command reporting, markdown report output, and missing/stale/fresh workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0005.yml"
+      },
+      "updated_at": "2026-05-05T20:43:39Z"
+    },
+    "agent/context-packs/T-070-runner-evidence-artifacts-for-ui-validation.md": {
+      "status": "complete",
+      "run_id": "complete-t-070-runner-evidence-artifacts-for-ui-validation-20260505204942",
+      "reason": "R-175 shipped: runner results now support structured UI/browser evidence artifacts, validation before state mutation, and event persistence.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0006",
+        "verdict": "ready",
+        "summary": "Reviewed R-175/DCR-0040 implementation: runner_result evidence schema/template, UI artifact kinds, validation before state mutation, evidence threading into executor events, and package/result tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0006.yml"
+      },
+      "updated_at": "2026-05-05T20:49:42Z"
+    },
+    "agent/context-packs/T-071-project-invariant-checks-in-doctor.md": {
+      "status": "complete",
+      "run_id": "complete-t-071-project-invariant-checks-in-doctor-20260505205404",
+      "reason": "R-176 shipped: doctor now evaluates repo-local required_path and forbidden_path invariants and reports structured results.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0007",
+        "verdict": "ready",
+        "summary": "Reviewed R-176/DCR-0041 implementation: doctor project_invariants output, policy invariant evaluator for required_path and forbidden_path, markdown report section, and missing/passing/failing workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0007.yml"
+      },
+      "updated_at": "2026-05-05T20:54:04Z"
+    },
+    "agent/context-packs/T-072-harden-doctor-diagnostics-for-agent-context-and-invariants.md": {
+      "status": "complete",
+      "run_id": "complete-t-072-harden-doctor-diagnostics-for-agent-context-and-invariants-20260505205949",
+      "reason": "R-177 shipped: doctor now reports missing generated Codex agent TOML output and keeps project invariant diagnostics non-fatal, including invalid top-level config and invalid individual entries.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0008",
+        "verdict": "ready",
+        "summary": "Reviewed R-177/DCR-0042 implementation: generated Codex agent TOML missing detection, non-fatal project invariant invalid_config diagnostics, per-entry invalid invariant handling, and focused/full workflow tests. Full test discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0008.yml"
+      },
+      "updated_at": "2026-05-05T20:59:49Z"
+    },
+    "agent/context-packs/T-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile.md": {
+      "status": "complete",
+      "run_id": "complete-t-073-add-app-build-planner-evaluator-harness-and-test-eval-reviewer-profile-20260505211348",
+      "reason": "R-178 shipped: app-build planner/evaluator workflow and roles are emitted, test_eval_reviewer is a configurable evaluator model profile, and model-backed autonomous quality signoff uses the configured evaluator profile.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0009",
+        "verdict": "ready",
+        "summary": "Reviewed R-178/DCR-0043 implementation: app-build planner/evaluator roles and workflow, test_eval_reviewer profile defaults and override path, quality-review model schema, model-backed autonomous signoff through configured evaluator profile, and focused/full tests. Full unittest discovery passed; no blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0009.yml"
+      },
+      "updated_at": "2026-05-05T21:13:48Z"
+    },
+    "agent/context-packs/T-074-activate-test-eval-reviewer-profile-in-dogfood-config.md": {
+      "status": "complete",
+      "run_id": "complete-t-074-activate-test-eval-reviewer-profile-in-dogfood-config-20260505212647",
+      "reason": "R-179 shipped: dogfood config now routes terminal quality review to test_eval_reviewer using model oca/gpt5.3-codex while preserving quality_reviewer.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0011",
+        "verdict": "ready",
+        "summary": "Reviewed R-179/DCR-0044 fix for REVIEW-0010: dogfood .agentspec/config.yml now defines test_eval_reviewer with model oca/gpt5.3-codex, routes supervised quality review to that profile, and preserves the existing quality_reviewer profile. Targeted config verification and full unittest discovery passed; no blocking findings.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0011.yml"
+      },
+      "updated_at": "2026-05-05T21:26:47Z"
+    },
+    "agent/context-packs/T-075-close-stale-answered-open-questions.md": {
+      "status": "complete",
+      "run_id": "complete-t-075-close-stale-answered-open-questions-20260505213610",
+      "reason": "R-180 open-question cleanup completed; six stale questions now cite accepted decision evidence and unittest discovery passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0012",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-180 open-question cleanup is metadata-only, preserves existing fields, and verification passed with python -m unittest discover tests.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0012.yml"
+      },
+      "updated_at": "2026-05-05T21:36:10Z"
+    },
+    "agent/context-packs/T-076-ignore-local-codex-runtime-config.md": {
+      "status": "complete",
+      "run_id": "complete-t-076-ignore-local-codex-runtime-config-20260505214007",
+      "reason": "R-181 completed: .codex/config.toml is ignored, generated .codex/agents remain tracked, and unittest discovery passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0013",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-181 adds a narrow .codex/config.toml ignore rule, keeps .codex/agents tracked, and verification passed with python -m unittest discover tests.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0013.yml"
+      },
+      "updated_at": "2026-05-05T21:40:07Z"
+    },
+    "agent/context-packs/T-077-first-class-verification-scope-and-session-handoff.md": {
+      "status": "complete",
+      "run_id": "complete-t-077-session-handoff-final-20260505",
+      "reason": "R-182 completed: generated task packs include verification support scope, completion writes portable agent/handoff.yml, status surfaces continuation state, Q-011 is answered, and focused/full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0014",
+        "verdict": "ready",
+        "summary": "No blocking findings after final review. R-182 adds standard verification support scope, committed session handoff state, status surfacing, and portable repo-relative handoff root; focused tests and full unittest discovery passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0014.yml"
+      },
+      "updated_at": "2026-05-05T22:37:11Z"
+    },
+    "agent/context-packs/T-078-recurring-quality-gc-scan.md": {
+      "status": "complete",
+      "run_id": "complete-t-078-quality-gc-final-20260505",
+      "reason": "R-183 completed: final quality GC scan supports JSON/report-dir/cadence CLI options, writes trackable latest quality reports, surfaces stale agent context and missing golden-principle config, emits quality-gc reviewer roles, and focused/full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0016",
+        "verdict": "ready",
+        "summary": "No blocking findings after final review. R-183 adds a read-only quality GC scan, CLI/report-dir/json/cadence options, trackable latest quality reports, stale agent-context findings, quality-gc reviewer role surfacing, and focused/full unittest coverage.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0016.yml"
+      },
+      "updated_at": "2026-05-05T22:51:47Z"
+    },
+    "agent/context-packs/T-079-quality-gc-task-completion-cadence.md": {
+      "status": "complete",
+      "run_id": "complete-t-079-quality-gc-task-completion-cadence-20260505230457",
+      "reason": "R-184 completed: task completion now records opt-in Quality GC ran/skipped/error outcomes, this repo enables the cadence at interval 3, and focused/full verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0017",
+        "verdict": "ready",
+        "summary": "R-184 implementation reviewed: quality_gc runtime defaults are safe, task completion records ran/skipped/error outcomes, cadence checks avoid report writes when not due, and focused plus full unittest verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0017.yml"
+      },
+      "updated_at": "2026-05-05T23:04:57Z"
+    },
+    "agent/context-packs/T-080-close-next-stale-answered-open-questions.md": {
+      "status": "complete",
+      "run_id": "complete-t-080-close-next-stale-answered-open-questions-20260505231327",
+      "reason": "R-185 completed: Q-009 and Q-015 now cite accepted decision evidence while unresolved strategic questions remain open; ledgers parse and full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0018",
+        "verdict": "ready",
+        "summary": "R-185 metadata cleanup reviewed: only Q-009 and Q-015 changed, both cite accepted decision evidence, unresolved strategic questions remain open, ledgers parse, and full unittest verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0018.yml"
+      },
+      "updated_at": "2026-05-05T23:13:27Z"
+    },
+    "agent/context-packs/T-081-refresh-generated-agent-context-and-configure-quality-invariants.md": {
+      "status": "complete",
+      "run_id": "complete-t-081-refresh-generated-agent-context-and-configure-quality-invariants-20260505232414",
+      "reason": "R-186 completed: generated AGENTS.md keeps review/status/handoff context, Claude/Codex agent context is refreshed, project invariants pass, and Quality GC warnings are cleared.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0019",
+        "verdict": "ready",
+        "summary": "R-186 implementation reviewed: AGENTS.md emission now preserves working rules plus status/handoff cues, generated context and Quality GC reviewer roles are refreshed, invariants are configured and passing, Quality GC is grade A, and focused/full verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0019.yml"
+      },
+      "updated_at": "2026-05-05T23:24:14Z"
+    },
+    "agent/context-packs/T-082-project-metrics-surface-for-feedback-loops.md": {
+      "status": "complete",
+      "run_id": "complete-t-082-project-metrics-surface-for-feedback-loops-20260505233218",
+      "reason": "R-187 completed: aspec metrics now exposes a read-only feedback-loop metrics schema and human summary over status, run, task, DCR, verification, policy-flag, cycle-time, and Quality GC data; DCR-0022 Item 3 is promoted/resolved; focused and full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0020",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-187 adds a read-only metrics surface over existing status/run/task/DCR/Quality GC data, handles empty denominators deterministically, updates DCR-0022 promotion evidence, and focused/full unittest verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0020.yml"
+      },
+      "updated_at": "2026-05-05T23:32:18Z"
+    },
+    "agent/context-packs/T-083-close-first-implementation-language-question.md": {
+      "status": "complete",
+      "run_id": "complete-t-083-close-first-implementation-language-question-20260505233840",
+      "reason": "R-188 completed: Q-002 is answered by DCR-0053/R-188, preserving existing question metadata and documenting Python as AgentSpec V1 core's first implementation language while keeping non-Python target support separate; full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0022",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-188 closes only Q-002 with accepted decision evidence, preserves the question metadata, keeps ledgers parseable, and full unittest verification passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0022.yml"
+      },
+      "updated_at": "2026-05-05T23:38:40Z"
+    },
+    "agent/context-packs/T-084-add-claude-code-plugin-package.md": {
+      "status": "complete",
+      "run_id": "complete-t-084-add-claude-code-plugin-package-20260506180114",
+      "reason": "R-189 completed: added the Claude Code plugin package with CLI-backed AgentSpec skills, local validation guidance, thin-adapter boundaries, Claude plugin validation, focused tests, and full unittest verification.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0023",
+        "verdict": "ready",
+        "summary": "R-189 implementation is ready: Claude Code plugin package layout, CLI-backed skill guidance, README paths, Claude plugin validation, and full unittest discovery all passed.",
+        "reviewer": "test_eval_reviewer",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0023.yml"
+      },
+      "updated_at": "2026-05-06T18:01:14Z"
+    },
+    "agent/context-packs/T-085-add-outcome-gates-and-unified-lifecycle-skills.md": {
+      "status": "complete",
+      "run_id": "complete-t-085-add-outcome-gates-and-unified-lifecycle-skills-20260510192131",
+      "reason": "R-190 completed in final state: product outcome gates, unified lifecycle skills, DCR/task traceability, and full pytest verification are in place.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0025",
+        "verdict": "ready",
+        "summary": "R-190 final state ready: outcome CLI/status/quality integration, lifecycle plugin skills, DCR/task traceability, completion evidence, and full pytest verification pass.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0025.yml"
+      },
+      "updated_at": "2026-05-10T19:21:31Z"
+    },
+    "agent/context-packs/T-086-add-session-worktree-lease-governance.md": {
+      "status": "complete",
+      "run_id": "complete-t-086-add-session-worktree-lease-governance-20260510232554",
+      "reason": "R-191 post-review hardening complete: session leases use collision-resistant IDs and exclusive creation; verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0028",
+        "verdict": "ready",
+        "summary": "Post-review fix verified: session leases now use collision-resistant default IDs and exclusive record creation; focused and full pytest verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0028.yml"
+      },
+      "updated_at": "2026-05-10T23:25:54Z"
+    },
+    "agent/context-packs/T-087-add-progressive-maturity-profiles.md": {
+      "status": "complete",
+      "run_id": "complete-t-087-add-progressive-maturity-profiles-20260510232554",
+      "reason": "R-192 post-review hardening complete: production-readiness maturity checks require concrete evidence; verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0029",
+        "verdict": "ready",
+        "summary": "Post-review fix verified: production-readiness maturity checks now require concrete security and CI/E2E evidence; focused and full pytest verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0029.yml"
+      },
+      "updated_at": "2026-05-10T23:25:54Z"
+    },
+    "agent/context-packs/T-088-enforce-workflow-pack-contract-and-roadmap-generation.md": {
+      "status": "complete",
+      "run_id": "complete-t-088-enforce-workflow-pack-contract-and-roadmap-generation-20260511013131",
+      "reason": "Post-review fixes complete: workflow backfill no longer attaches implicit requirements, finish-work roadmap order is corrected, regression and full test suite passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0032",
+        "verdict": "ready",
+        "summary": "Re-verified REVIEW-0031 findings; both were accepted and fixed. Workflow backfill no longer attaches an implicit requirement, finish-work regenerates roadmap after completion, regression coverage added, and full unittest discovery passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0032.yml"
+      },
+      "updated_at": "2026-05-11T01:31:31Z"
+    },
+    "agent/context-packs/T-089-expose-lifecycle-projection-and-write-back-readiness.md": {
+      "status": "complete",
+      "run_id": "complete-t-089-expose-lifecycle-projection-and-write-back-readiness-20260511022812",
+      "reason": "Implemented lifecycle projection and write-back readiness for status, including distinct workflow broken-link diagnostics, review/verification/handoff/roadmap warnings, and regression coverage. Verification passed: python -m pytest; aspec compile; aspec roadmap --check --json; aspec status --json.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0034",
+        "verdict": "ready",
+        "summary": "No blocking findings. Lifecycle projection is read-only over existing artifacts, workflow broken links are distinct from orphan workflows, legacy review noise is suppressed after the review-contract cutover, and verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0034.yml"
+      },
+      "updated_at": "2026-05-11T02:28:12Z"
+    },
+    "agent/context-packs/T-090-backfill-historical-agentspec-mvp-workflow.md": {
+      "status": "complete",
+      "run_id": "complete-t-090-backfill-historical-agentspec-mvp-workflow-20260511023050",
+      "reason": "Backfilled the historical AgentSpec MVP workflow into a migration context pack so lifecycle projection no longer reports it as orphan workflow drift. Verification passed: python -m unittest discover -s tests -v; python -m agentspec.cli --help.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0035",
+        "verdict": "ready",
+        "summary": "No blocking findings. This is a historical workflow backfill only; the old workflow is now represented by a migration context pack, and the declared verification commands passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0035.yml"
+      },
+      "updated_at": "2026-05-11T02:30:50Z"
+    },
+    "agent/context-packs/T-091-use-agentspec-native-naming-for-legacy-workflow-surfaces.md": {
+      "status": "complete",
+      "run_id": "complete-t-091-use-agentspec-native-naming-for-legacy-workflow-surfaces-20260511030042",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0036",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verification passed: python -m unittest tests/test_workflow_contract.py tests/test_task_queue.py tests/test_status_cli.py -v; python -m unittest discover -s tests -v; python -m agentspec.cli task create --help.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0036.yml"
+      },
+      "updated_at": "2026-05-11T03:00:42Z"
+    },
+    "agent/context-packs/T-092-create-and-link-native-workflow-artifacts.md": {
+      "status": "complete",
+      "run_id": "t-092-create-and-link-native-workflow-artifacts-20260511032252",
+      "reason": "Executor reports completion and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0037",
+        "verdict": "ready",
+        "summary": "No blocking findings. Implemented native aspec plan workflow creation/linking with bidirectional task/workflow references, conflict handling, native wording, and backfill compatibility. Verification passed: python -m unittest tests/test_workflow_contract.py tests/test_task_queue.py tests/test_cli_workflow.py -v; python -m unittest discover -s tests -v; python -m agentspec.cli plan --help; git diff --check.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0037.yml"
+      },
+      "updated_at": "2026-05-11T03:29:04Z"
+    },
+    "agent/context-packs/T-093-add-shared-write-back-module.md": {
+      "status": "complete",
+      "run_id": "complete-t-093-add-shared-write-back-module-20260511040155",
+      "reason": "Implemented Phase 2 shared write-back module with reusable completion projection, ledger/handoff/roadmap helpers, write-back verification diagnostics, and completion-path refactoring. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0038",
+        "verdict": "ready",
+        "summary": "No blocking findings. Added shared write-back helpers for completion projection, ledger update, handoff update, roadmap update, and write-back verification; routed task and supervised completion ledger/handoff writes through those helpers while preserving existing completion behavior. Verification passed: python -m unittest tests/test_writeback.py tests/test_task_completion.py tests/test_status_cli.py -v; python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0038.yml"
+      },
+      "updated_at": "2026-05-11T04:01:55Z"
+    },
+    "agent/context-packs/T-094-add-finish-orchestrator.md": {
+      "status": "complete",
+      "run_id": "complete-t-094-add-finish-orchestrator-20260511041211",
+      "reason": "Implemented Phase 3 finish orchestrator with aspec finish selector/current/dry-run support, warning diagnostics, config-backed strict blocking, roadmap update after finish, and CLI coverage. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0039",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified finish CLI dry-run diagnostics, config-backed strict blocking, and completion write-back reuse. Tests passed: python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0039.yml"
+      },
+      "updated_at": "2026-05-11T04:12:11Z"
+    },
+    "agent/context-packs/T-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file.md": {
+      "status": "complete",
+      "run_id": "complete-t-095-add-opt-in-generated-block-roadmap-preservation-mode-while-preserving-the-existing-full-file-20260511042722",
+      "reason": "Reconfirmed Phase 5 completion after closing the earlier starter run. T-095 is complete with REVIEW-0040, full-suite verification, roadmap refresh, and lifecycle-ready status.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0040",
+        "verdict": "ready",
+        "summary": "Phase 5 roadmap preservation implementation is ready. Full-file mode remains default; generated-block mode is config-gated, preserves manual content outside AgentSpec markers, and check/write behavior is covered by focused, config, workflow, CLI, lifecycle, and full-suite verification.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0040.yml"
+      },
+      "updated_at": "2026-05-11T04:27:22Z"
+    },
+    "agent/context-packs/T-096-add-strict-lifecycle-enforcement.md": {
+      "status": "complete",
+      "run_id": "complete-t-096-add-strict-lifecycle-enforcement-20260511043725",
+      "reason": "Implemented Phase 6 strict lifecycle enforcement for R-200/DCR-0065. Added lifecycle.enforcement warn default, strict lifecycle blocking findings with repair guidance, finish integration for lifecycle strict mode, and focused strict enforcement coverage. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0041",
+        "verdict": "ready",
+        "summary": "Phase 6 strict lifecycle enforcement implementation is ready. Warn mode remains default, lifecycle.enforcement strict mode reports blocking lifecycle findings with repair guidance, finish reads lifecycle strict mode while preserving finish.enforcement compatibility, and coverage includes strict lifecycle, finish, config, status, write-back, and full-suite verification.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0041.yml"
+      },
+      "updated_at": "2026-05-11T04:37:25Z"
+    },
+    "agent/context-packs/T-097-add-legacy-execution-migration-tools.md": {
+      "status": "complete",
+      "run_id": "complete-t-097-add-legacy-execution-migration-tools-20260511044649",
+      "reason": "Refreshed Phase 7 completion after closing the initial started run. Migration tooling for R-201/DCR-0066 is implemented and verified with python -m unittest discover -s tests -v and git diff --check.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0042",
+        "verdict": "ready",
+        "summary": "No blocking findings. Phase 7 adds a dry-run-by-default legacy execution migration command, scanner-backed idempotent write mode, rollback guidance, and focused CLI tests. Verification passed: python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0042.yml"
+      },
+      "updated_at": "2026-05-11T04:46:49Z"
+    },
+    "agent/context-packs/T-098-add-lifecycle-skill-gate-projection.md": {
+      "status": "complete",
+      "run_id": "complete-t-098-add-lifecycle-skill-gate-projection-20260511051348",
+      "reason": "Phase 8 skill gates are implemented for R-202/DCR-0067. Verification passed with python -m unittest discover -s tests -v, related lifecycle/config/status tests, python -m json.tool docs/traceability/requirements.yml, and git diff --check.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0043",
+        "verdict": "ready",
+        "summary": "Phase 8 lifecycle skill gate projection is additive, disabled by default, derives findings from existing AgentSpec artifacts, and is covered by focused lifecycle/config/status tests plus the full unittest suite.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0043.yml"
+      },
+      "updated_at": "2026-05-11T05:13:48Z"
+    },
+    "agent/context-packs/T-099-run-agentspec-lifecycle-e2e-smoke-test.md": {
+      "status": "complete",
+      "run_id": "complete-t-099-run-agentspec-lifecycle-e2e-smoke-test-20260511052652",
+      "reason": "AgentSpec-only lifecycle E2E smoke completed for R-203/DCR-0068. Verified task pack creation, native workflow creation, branch commit, targeted tests, review evidence, completion write-back, and roadmap/handoff update path without HOTL or Superpowers plugins.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0044",
+        "verdict": "ready",
+        "summary": "AgentSpec-only lifecycle E2E smoke evidence is scoped to R-203/DCR-0068. Task pack, native workflow, branch commit, and verification commands were exercised without HOTL or Superpowers plugins.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0044.yml"
+      },
+      "updated_at": "2026-05-11T05:26:52Z"
+    },
+    "agent/context-packs/T-100-make-handoff-status-portable-across-clean-checkouts.md": {
+      "status": "complete",
+      "run_id": "complete-t-100-make-handoff-status-portable-across-clean-checkouts-20260511053453",
+      "reason": "Portable handoff freshness fix completed for R-204/DCR-0069. New handoff writes omit local-only run counts, lifecycle stale handoff detection ignores legacy run-count mismatches, and verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0045",
+        "verdict": "ready",
+        "summary": "R-204/DCR-0069 implementation is scoped to portable handoff freshness. New handoff writes omit local-only run counts, stale handoff detection ignores legacy run-count mismatches while preserving portable count checks, and targeted/full verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0045.yml"
+      },
+      "updated_at": "2026-05-11T05:34:53Z"
+    },
+    "agent/context-packs/T-101-add-native-lifecycle-operating-contract-surface.md": {
+      "status": "complete",
+      "run_id": "complete-t-101-add-native-lifecycle-operating-contract-surface-20260511055404",
+      "reason": "Completed R-205/DCR-0070: added native lifecycle operating contract CLI, lifecycle schema/formatter tests, and Codex/Claude lifecycle adapter skills inspired by broader agent lifecycle practices without plugin-owned durable state.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0046",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified lifecycle contract CLI, Codex and Claude lifecycle skill adapters, and plugin discovery tests for R-205/DCR-0070.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0046.yml"
+      },
+      "updated_at": "2026-05-11T05:54:04Z"
+    },
+    "agent/context-packs/T-102-align-emitted-repo-local-skills-with-lifecycle-contract.md": {
+      "status": "complete",
+      "run_id": "complete-t-102-align-emitted-repo-local-skills-with-lifecycle-contract-20260511060217",
+      "reason": "Completed R-206/DCR-0071: generated Claude repo-local skills now follow lifecycle-aligned skill-authoring guidance, generated Codex agent instructions point to aspec lifecycle and packaged aspec:* skills, and tests cover generated skill quality and no-local-Codex-skill boundaries.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0047",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified lifecycle-aligned generated Claude skills, Codex packaged-skill guidance, emitter workflow smoke coverage, and full test suite for R-206/DCR-0071.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0047.yml"
+      },
+      "updated_at": "2026-05-11T06:02:17Z"
+    },
+    "agent/context-packs/T-103-refresh-human-facing-readme-and-guide-docs.md": {
+      "status": "complete",
+      "run_id": "complete-t-103-refresh-human-facing-readme-and-guide-docs-20260511061408",
+      "reason": "Completed R-207 documentation refresh: README front door, human getting-started guide, documentation/design registry, DCR/requirement/task/workflow evidence, and roadmap freshness.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0048",
+        "verdict": "ready",
+        "summary": "Docs-only review for R-207 found no blocking issues. README is concise and links to the human guide; docs/GETTING_STARTED.md covers bootstrap, task, DCR, verification, review, finish, and commit guidance; docs/designs/README.md satisfies the maturity-recognized documentation registry path; verification passed with requirements JSON validation, git diff --check, maturity ready, status check, and roadmap freshness.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0048.yml"
+      },
+      "updated_at": "2026-05-11T06:14:08Z"
+    },
+    "agent/context-packs/T-104-document-prompt-first-code-agent-agentspec-workflow.md": {
+      "status": "complete",
+      "run_id": "complete-t-104-document-prompt-first-code-agent-agentspec-workflow-20260511062629",
+      "reason": "Completed R-208 prompt-first code-agent workflow docs: README, human guide, and Codex/Claude plugin READMEs now show prompt-driven new-project, existing-project, design-change, and lifecycle usage with AgentSpec evidence expectations.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0049",
+        "verdict": "ready",
+        "summary": "Docs-only review for R-208 found no blocking issues. README now leads with prompt-first code-agent usage for new projects, existing projects, and design changes; docs/GETTING_STARTED.md includes copyable prompts and expected evidence; Codex and Claude plugin READMEs describe installed-plugin prompt usage. Verification passed with JSON checks, git diff --check, AgentSpec status, roadmap regeneration, and roadmap freshness.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0049.yml"
+      },
+      "updated_at": "2026-05-11T06:26:29Z"
+    },
+    "agent/context-packs/T-105-harden-runner-control-plane-trust-boundaries.md": {
+      "status": "complete",
+      "run_id": "complete-t-105-harden-runner-control-plane-trust-boundaries-20260511153132",
+      "reason": "Completed DCR-0074 P1 trust-boundary fixes for R-127, R-135, R-160, and R-175: safe run IDs, controller-observed runner paths, advisory runner path evidence, and credential-output redaction.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0050",
+        "verdict": "ready",
+        "summary": "T-105 is ready: R-127/R-160 runner result ingestion now uses controller-observed git paths when available, run IDs are validated before run-state path access, and R-135/R-175 credential-shaped executor output is redacted before durable events or runner transcripts.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0050.yml"
+      },
+      "updated_at": "2026-05-11T15:31:32Z"
+    },
+    "agent/context-packs/T-106-design-external-runner-completion-evidence-and-result-idempotency.md": {
+      "status": "complete",
+      "run_id": "complete-t-106-design-external-runner-completion-evidence-and-result-idempotency-20260511153909",
+      "reason": "Completed DCR-0074 T-106 spike for R-129, R-144, R-146, R-175, and R-178: external-runner completion evidence gate, quality/test-eval signoff requirement, direct resume compatibility, submission identity schema, per-run serialization, idempotent replay/conflict behavior, --run-dir interaction, and follow-up implementation task scope.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0051",
+        "verdict": "ready",
+        "summary": "T-106 spike artifact resolves DCR-0074 external-runner completion evidence, evaluator signoff, submission identity, per-run serialization, idempotent replay, conflict behavior, run-dir interaction, and follow-up implementation task scope. Verification passed: python -m json.tool docs/traceability/requirements.yml >/dev/null; git diff --check.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0051.yml"
+      },
+      "updated_at": "2026-05-11T15:39:09Z"
+    },
+    "agent/context-packs/T-107-clarify-lifecycle-summaries-and-next-actions.md": {
+      "status": "complete",
+      "run_id": "complete-t-107-clarify-lifecycle-summaries-and-next-actions-20260511161404",
+      "reason": "Release gate update for R-209/DCR-0075 and v0.1.8: lifecycle_summary status output, human main-point/next-action sections, readiness gate explanation, expanded outcome gate detail, no-ready-task guidance including filtered task types, docs lifecycle example, and release verification all passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0054",
+        "verdict": "ready",
+        "summary": "Release gate review for R-209/v0.1.8: no blocking findings after fixing filtered task-next summary; focused tests, full unittest suite, packaging checks, e2e CLI lifecycle flow, roadmap check, status JSON validation, and diff hygiene passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0054.yml"
+      },
+      "updated_at": "2026-05-11T16:14:04Z"
+    },
+    "agent/context-packs/T-108-align-runtime-package-version-with-release-metadata.md": {
+      "status": "complete",
+      "run_id": "complete-t-108-align-runtime-package-version-with-release-metadata-20260511162011",
+      "reason": "Release metadata hotfix for v0.1.8: aligned agentspec.__version__ with pyproject metadata, added a version consistency regression test, and verified focused tests, full unittest suite, package build, installed-wheel CLI e2e, outcome/status/roadmap checks, and diff hygiene.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0055",
+        "verdict": "ready",
+        "summary": "Release hotfix review: agentspec.__version__ now matches pyproject 0.1.8, regression coverage added, focused tests, full unittest suite, package build, installed-wheel CLI e2e, outcome/status/roadmap checks, and diff hygiene passed; no blocking findings.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0055.yml"
+      },
+      "updated_at": "2026-05-11T16:20:11Z"
+    },
+    "agent/context-packs/T-109-make-status-and-outcome-next-actions-concrete-for-humans.md": {
+      "status": "complete",
+      "run_id": "complete-t-109-make-status-and-outcome-next-actions-concrete-for-humans-20260511203808",
+      "reason": "Implemented concrete next-action output for R-209: no-ready status and task-next paths now include copy-paste commands and next_options; next-action reuses the same structured no-ready summary; ready outcome output now points users back to aspec status; focused tests, full pytest, and diff hygiene passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0056",
+        "verdict": "ready",
+        "summary": "R-209 follow-up review: status, task-next, next-action, and outcome outputs now include concrete human next options and copy-paste commands; JSON includes next_options for no-ready task paths; focused status/outcome/task tests and the full pytest suite passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0056.yml"
+      },
+      "updated_at": "2026-05-11T20:38:08Z"
+    },
+    "agent/context-packs/T-110-separate-terminal-commands-from-agent-facing-next-actions.md": {
+      "status": "complete",
+      "run_id": "complete-t-110-separate-terminal-commands-from-agent-facing-next-actions-20260511204811",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0057",
+        "verdict": "ready",
+        "summary": "No blocking findings. T-110 keeps terminal commands available in CLI/JSON command fields while adding command-free agent_display and agent_next_action surfaces for Codex/Claude-style replies; focused and full pytest passed, and git diff hygiene is clean.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0057.yml"
+      },
+      "updated_at": "2026-05-11T20:48:11Z"
+    },
+    "agent/context-packs/T-111-implement-document-review-schema-and-cli-foundation.md": {
+      "status": "complete",
+      "run_id": "complete-t-111-implement-document-review-schema-and-cli-foundation-20260511211438",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0058",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified R-210 with tests/test_doc_review_cli.py, the full unittest suite, DCR-0079 document review freshness, outcome readiness, and diff hygiene.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0058.yml"
+      },
+      "updated_at": "2026-05-11T21:14:38Z"
+    },
+    "agent/context-packs/T-112-enforce-dcr-eligibility-for-requirement-task-creation.md": {
+      "status": "complete",
+      "run_id": "complete-t-112-enforce-dcr-eligibility-for-requirement-task-creation-20260511213729",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0059",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-123 verified: task creation now infers selected requirement originating_dcr, enforces DCR implementation eligibility before writing packs, and persists the DCR citation. Verified with focused suites and full unittest discovery (402 tests).",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0059.yml"
+      },
+      "updated_at": "2026-05-11T21:37:29Z"
+    },
+    "agent/context-packs/T-113-fix-run-result-path-governance-for-dirty-research-worktrees.md": {
+      "status": "complete",
+      "run_id": "complete-t-113-fix-run-result-path-governance-for-dirty-research-worktrees-20260511233414",
+      "reason": "Fix runner result path governance for dirty research worktrees.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0063",
+        "verdict": "ready",
+        "summary": "Runner result path governance now compares controller-observed dirty paths against the run-start baseline, preserving unchanged pre-existing dirty paths while flagging paths changed during the run; focused runner/research tests and the full suite passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0063.yml"
+      },
+      "updated_at": "2026-05-11T23:34:14Z"
+    },
+    "agent/context-packs/T-114-harden-workflow-backfill-path-extraction.md": {
+      "status": "complete",
+      "run_id": "complete-t-114-harden-workflow-backfill-path-extraction-20260511233422",
+      "reason": "Harden workflow backfill path extraction.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0064",
+        "verdict": "ready",
+        "summary": "Workflow backfill extraction now normalizes path candidates, ignores historical output and non-path tokens, records extraction warnings/evidence, and keeps workflow-derived allowed paths focused; focused workflow/status tests and the full suite passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0064.yml"
+      },
+      "updated_at": "2026-05-11T23:34:22Z"
+    },
+    "agent/context-packs/T-115-hide-raw-agentspec-cli-checks-from-agent-facing-verification-summaries.md": {
+      "status": "complete",
+      "run_id": "complete-t-115-hide-raw-agentspec-cli-checks-from-agent-facing-verification-summaries-20260511230818",
+      "reason": "Hide raw AgentSpec CLI checks from Codex and Claude human-facing verification summaries.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0060",
+        "verdict": "ready",
+        "summary": "Plugin guidance now keeps AgentSpec CLI checks internal in Codex/Claude human-facing replies; focused plugin tests passed and the patch passed the full suite in a clean temporary worktree.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0060.yml"
+      },
+      "updated_at": "2026-05-11T23:08:18Z"
+    },
+    "agent/context-packs/T-116-prevent-parallel-sessions-from-sharing-branch-worktrees.md": {
+      "status": "complete",
+      "run_id": "complete-t-116-prevent-parallel-sessions-from-sharing-branch-worktrees-20260511234827",
+      "reason": "R-191 follow-up complete: AgentSpec session leases now infer git context, block concurrent owner/patcher reuse of active branch/worktree leases unless explicitly shared, and packaged Codex/Claude guidance directs concurrent write sessions to dedicated branch/worktree leases.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0066",
+        "verdict": "ready",
+        "summary": "R-191 follow-up reviewed: session start now infers git branch/worktree metadata, rejects concurrent owner/patcher leases on the same branch or worktree unless explicitly shared, preserves observer sessions, and packaged Codex/Claude skills direct concurrent write sessions to dedicated branch/worktree leases. Verification passed: focused session/plugin tests, full unittest discovery, diff hygiene, outcome/status/roadmap checks.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0066.yml"
+      },
+      "updated_at": "2026-05-11T23:48:27Z"
+    },
+    "agent/context-packs/T-117-make-session-lease-claims-atomic.md": {
+      "status": "complete",
+      "run_id": "complete-t-117-make-session-lease-claims-atomic-20260512005652",
+      "reason": "R-191 release review complete: atomic session lease claims, stale PID lock recovery, release metadata alignment, full verification and installed-wheel smoke passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0068",
+        "verdict": "ready",
+        "summary": "R-191 release review complete: session start serializes branch/worktree write-lease conflict detection and lease creation with a repo-local PID lock, clears stale PID locks from dead processes, preserves observer and explicit shared-session behavior, and v0.1.16 release metadata is aligned across runtime, package, README, and plugin manifests. Verification passed: focused session/plugin/version tests, full unittest discovery, clean build, installed-wheel CLI smoke, 25-attempt two-process race E2E, diff hygiene, outcome readiness, roadmap freshness, and project status checks.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0068.yml"
+      },
+      "updated_at": "2026-05-12T00:56:52Z"
+    },
+    "agent/context-packs/T-118-add-portable-reviewer-profile-resolution-and-diagnostics.md": {
+      "status": "complete",
+      "run_id": "complete-t-118-add-portable-reviewer-profile-resolution-and-diagnostics-20260512015639",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0069",
+        "verdict": "ready",
+        "summary": "DCR-0080 slice reviewed: profile diagnostics are non-secret, status and doctor expose active bindings, auto reviewer fallback records diagnostics, strict model quality review rejects unavailable models, and focused verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0069.yml"
+      },
+      "updated_at": "2026-05-12T01:56:39Z"
+    },
+    "agent/context-packs/T-119-add-structured-error-model-and-cli-envelope-fields.md": {
+      "status": "complete",
+      "run_id": "complete-t-119-add-structured-error-model-and-cli-envelope-fields-20260512022315",
+      "reason": "Refresh handoff after DCR-0084 lifecycle-gate intake.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0070",
+        "verdict": "ready",
+        "summary": "Reviewed T-119 scoped changes against R-128, R-161, R-163 and DCR-0083. Structured error model and CLI envelope enrichment preserve agentspec.cli_error.v0 fields, keep JSON stdout clean, add recovery guidance, and preserve legacy built-in error.type for wrapped failures. Verification passed for tests/test_cli_json_errors.py, tests/test_run_dir.py plus git diff --check and current design/DCR doc review checks. No blocking findings in allowed-path changes; active run halt is due unrelated dirty plugin README paths outside T-119 scope.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0070.yml"
+      },
+      "updated_at": "2026-05-12T02:23:15Z"
+    },
+    "agent/context-packs/T-120-add-dcr-0083-phase-2-execution-layer-structured-error-events-for-runner-result-failures-and.md": {
+      "status": "complete",
+      "run_id": "complete-t-120-add-dcr-0083-phase-2-execution-layer-structured-error-events-for-runner-result-failures-and-20260512023007",
+      "reason": "Implemented DCR-0083 Phase 2 execution-layer structured error events and status recovery context.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0071",
+        "verdict": "ready",
+        "summary": "Reviewed T-120 scoped changes against DCR-0083 and R-128/R-161/R-163/R-175. Runner result validation now records durable structured rejection events without mutating run state; runner timeout/start failure events use agentspec.error.v1 and bounded redacted execution summaries; status exposes latest structured run error context. Verification passed for runner package/exec/status, CLI JSON/run-dir regressions, py_compile, and git diff --check. No blocking findings.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0071.yml"
+      },
+      "updated_at": "2026-05-12T02:30:07Z"
+    },
+    "agent/context-packs/T-121-add-dcr-0083-phase-3-opt-in-diagnostic-logging-controls-without-corrupting-json-stdout-or.md": {
+      "status": "complete",
+      "run_id": "complete-t-121-add-dcr-0083-phase-3-opt-in-diagnostic-logging-controls-without-corrupting-json-stdout-or-20260512024211",
+      "reason": "Implemented DCR-0083 Phase 3 opt-in diagnostic logging controls and redaction.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0072",
+        "verdict": "ready",
+        "summary": "T-121 diagnostics implementation is ready: opt-in package logging is disabled by default, supports text/json stderr or explicit file output, redacts credential-shaped text before emission, and preserves parseable --json stdout. Verification passed for diagnostics, CLI JSON errors, runner package/exec/status, run-dir regressions, and diff hygiene.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0072.yml"
+      },
+      "updated_at": "2026-05-12T02:42:11Z"
+    },
+    "agent/context-packs/T-122-add-dcr-0084-phase-1-branch-session-preflight-guidance-before-implementation-execution.md": {
+      "status": "complete",
+      "run_id": "complete-t-122-add-dcr-0084-phase-1-branch-session-preflight-guidance-before-implementation-execution-20260512035605",
+      "reason": "Implemented DCR-0084 Phase 1 branch/session preflight guidance before implementation execution.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0073",
+        "verdict": "ready",
+        "summary": "Ready. R-191/R-196/R-208/R-209 scope verified: branch/session preflight is exposed for status, task-next JSON, and run prompt continuation; focused and runner regression verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0073.yml"
+      },
+      "updated_at": "2026-05-12T03:56:05Z"
+    },
+    "agent/context-packs/T-123-add-dcr-0084-phase-2-execution-session-preflight-gate.md": {
+      "status": "complete",
+      "run_id": "complete-t-123-add-dcr-0084-phase-2-execution-session-preflight-gate-20260512041336",
+      "reason": "Resolved W-123 task-pack link warning after DCR-0084 Phase 2 implementation.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0074",
+        "verdict": "ready",
+        "summary": "Ready. R-191/R-196/R-208/R-209 scope verified: execution package/step handoff now gates implementation work on an active write session or explicit host-worktree metadata; focused and adjacent regression verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0074.yml"
+      },
+      "updated_at": "2026-05-12T04:13:36Z"
+    },
+    "agent/context-packs/T-124-add-dcr-0084-phase-3-branch-session-guidance.md": {
+      "status": "complete",
+      "run_id": "complete-t-124-add-dcr-0084-phase-3-branch-session-guidance-20260512042325",
+      "reason": "Implemented DCR-0084 Phase 3 branch/session lifecycle guidance for emitted and packaged code-agent workflow surfaces.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0075",
+        "verdict": "ready",
+        "summary": "Ready. R-191/R-196/R-208/R-209 scope verified: emitted AGENTS/CLAUDE/Codex guidance and packaged Codex/Claude plugin docs now require branch/worktree/session setup before implementation execution, preserve explicit host-worktree as auditable escape hatch, and focused verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0075.yml"
+      },
+      "updated_at": "2026-05-12T04:23:25Z"
+    },
+    "agent/context-packs/T-125-supervised-run-result-ignores-preexisting-dirty-paths.md": {
+      "status": "complete",
+      "run_id": "complete-t-125-supervised-run-result-ignores-preexisting-dirty-paths-20260512045701",
+      "reason": "Closed issue #14 for R-127 by adding supervised runner-result regression coverage for pre-existing dirty path baseline handling.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0077",
+        "verdict": "ready",
+        "summary": "R-127 / issue #14: added supervised runner-result regression coverage proving pre-existing dirty and untracked files captured at run start are excluded from controller-observed touched paths while the actual in-scope runner change completes. Focused, package, adjacent run-mode, full unittest discovery, and diff whitespace checks passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0077.yml"
+      },
+      "updated_at": "2026-05-12T04:57:01Z"
+    },
+    "agent/context-packs/T-126-avoid-stale-task-next-follow-up-when-outcomes-are-ready.md": {
+      "status": "complete",
+      "run_id": "complete-t-126-avoid-stale-task-next-follow-up-when-outcomes-are-ready-20260512050909",
+      "reason": "Fixed issue #15 for R-209 by suppressing stale requirement follow-up recommendations when all required outcome gates are ready.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0078",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-209 / issue #15. The task-next no-ready lifecycle summary now suppresses stale requirement follow-up commands when all required outcome gates are ready, while preserving the existing follow-up path when outcomes are not fully ready. Verification passed: python -m unittest tests.test_task_queue tests.test_status_cli tests.test_outcome_cli; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0078.yml"
+      },
+      "updated_at": "2026-05-12T05:09:09Z"
+    },
+    "agent/context-packs/T-127-ignore-pre-existing-dirty-paths-in-research-mode-resumes.md": {
+      "status": "complete",
+      "run_id": "complete-t-127-ignore-pre-existing-dirty-paths-in-research-mode-resumes-20260512051417",
+      "reason": "Fixed issue #16 for R-172 by filtering direct research-mode resume touched paths through the controller dirty-path baseline.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0079",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-172 / issue #16. Direct research-mode resumes now apply the controller path baseline before policy evaluation, so pre-existing dirty implementation paths are preserved as reported evidence but not treated as touched. Regression coverage verifies unchanged dirty paths are ignored and post-baseline changes still halt. Verification passed: python -m unittest tests.test_research_mode tests.test_runner_package; python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0079.yml"
+      },
+      "updated_at": "2026-05-12T05:14:17Z"
+    },
+    "agent/context-packs/T-128-deprioritize-stale-research-attention-covered-by-completed-tasks.md": {
+      "status": "complete",
+      "run_id": "complete-t-128-deprioritize-stale-research-attention-covered-by-completed-tasks-20260512051909",
+      "reason": "Fixed issue #17 for R-209 by deprioritizing stale research attention runs when completed task allowed paths explain the reported implementation touches.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0080",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-209 / issue #17. Status now keeps research-mode forbidden-path runs visible as stale_attention when their touched implementation paths are fully covered by a completed task context pack, while excluding them from the blocking attention set and next-action recommendation. Verification passed: python -m unittest tests.test_status_cli; python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0080.yml"
+      },
+      "updated_at": "2026-05-12T05:19:09Z"
+    },
+    "agent/context-packs/T-129-supersede-stale-runs-during-finish-write-back.md": {
+      "status": "complete",
+      "run_id": "complete-t-129-supersede-stale-runs-during-finish-write-back-20260512052349",
+      "reason": "Fixed issue #19 for R-198 by completing existing finish run ids in place and treating superseded paused runs as stale status state after task completion.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0081",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-198 / issue #19. Finish now completes an existing selected run id in place when invoked through aspec finish, while preserving aspec task complete duplicate-run behavior. Project status also treats active or attention runs for a completed context pack as stale audit state so handoff and roadmap next actions do not point back to superseded paused runs. Verification passed: python -m unittest tests.test_finish_cli tests.test_status_cli tests.test_task_ledger plus duplicate task-complete regression; python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0081.yml"
+      },
+      "updated_at": "2026-05-12T05:23:49Z"
+    },
+    "agent/context-packs/T-130-hide-raw-cli-checks-in-design-and-source-intake-replies.md": {
+      "status": "complete",
+      "run_id": "complete-t-130-hide-raw-cli-checks-in-design-and-source-intake-replies-20260512164823",
+      "reason": "R-190/DCR-0082 follow-up: design-work and manual-source-intake skills now keep raw AgentSpec CLI checks out of final human-facing replies, report source/projection checks by purpose, and require a plain-language Next block for valid follow-up actions.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0082",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-190 plugin skill guidance now covers design and manual source-intake final replies: raw AgentSpec CLI checks stay internal, source/projection checks are reported by purpose, and a plain-language Next block is required; focused plugin verification and diff hygiene passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0082.yml"
+      },
+      "updated_at": "2026-05-12T16:48:23Z"
+    },
+    "agent/context-packs/T-131-implement-dcr-0085-public-and-internal-skill-exposure-taxonomy.md": {
+      "status": "complete",
+      "run_id": "complete-t-131-implement-dcr-0085-public-and-internal-skill-exposure-taxonomy-20260512175525",
+      "reason": "Completed follow-up code review and E2E testing for R-166/R-189/R-190/R-205/R-206: generated Claude repo-local skills now match the Tier 1 public exposure taxonomy, plugin packages retain the public/internal split, and focused/full/E2E verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0085",
+        "verdict": "ready",
+        "summary": "Ready after follow-up review for R-166/R-189/R-190/R-205/R-206: fixed generated Claude repo-local skill exposure so emit now produces only Tier 1 public entries, kept controller procedures reachable through public entrypoint guidance/CLI fallbacks, and added E2E regression coverage for emitted and packaged skill discovery.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0085.yml"
+      },
+      "updated_at": "2026-05-12T17:55:25Z"
+    },
+    "agent/context-packs/T-132-fix-autonomous-auto-reviewer-fallback-handling.md": {
+      "status": "complete",
+      "run_id": "complete-t-132-fix-autonomous-auto-reviewer-fallback-handling-20260512173411",
+      "reason": "Fixed issue #28 for R-144 by treating autonomous auto-reviewer unavailability as an infrastructure blocker instead of a product open question.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0083",
+        "verdict": "ready",
+        "summary": "R-144 issue #28: autonomous auto reviewer infrastructure failures now halt with recovery metadata instead of creating product open questions; focused run/status tests passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0083.yml"
+      },
+      "updated_at": "2026-05-12T17:34:11Z"
+    },
+    "agent/context-packs/T-133-recognize-deterministic-autonomous-verification-completion.md": {
+      "status": "complete",
+      "run_id": "complete-t-133-recognize-deterministic-autonomous-verification-completion-20260512203341071512",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0086",
+        "verdict": "ready",
+        "summary": "No blocking findings. Deterministic autonomous completion now recognizes scoped requirement/task completion plus passed verification; focused regression, related reviewer suites, agentracing reproduction check, git diff --check, and full unittest discovery passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0086.yml"
+      },
+      "updated_at": "2026-05-12T20:33:41Z"
+    },
+    "agent/context-packs/T-134-agentspec-provides-a-shared-write-back-module-that-consolidates-completion-projection-task.md": {
+      "status": "complete",
+      "run_id": "complete-t-134-agentspec-provides-a-shared-write-back-module-that-consolidates-completion-projection-task-20260512220346311195",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0087",
+        "verdict": "ready",
+        "summary": "R-197 scoped review: abort_run now refreshes handoff next_action when it referenced the aborted default-store run, preserving shared handoff write-back behavior; regression and full suite passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0087.yml"
+      },
+      "updated_at": "2026-05-12T22:03:46Z"
+    },
+    "agent/context-packs/T-135-use-unambiguous-session-preflight-task-selectors.md": {
+      "status": "complete",
+      "run_id": "complete-t-135-use-unambiguous-session-preflight-task-selectors-20260512222156573391",
+      "reason": "Fixed issue #52 by using the resolved context-pack path when session preflight task IDs are ambiguous.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0088",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-191 issue #52 regression is covered by a duplicate-context-pack preflight test; focused and full unittest verification passed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0088.yml"
+      },
+      "updated_at": "2026-05-12T22:21:56Z"
+    },
+    "agent/context-packs/T-136-add-branch-worktree-finish-disposition-guidance-and-cleanup-eligibility.md": {
+      "status": "complete",
+      "run_id": "complete-t-136-add-branch-worktree-finish-disposition-guidance-and-cleanup-eligibility-20260512225154038183",
+      "reason": "Implemented DCR-0086 branch/worktree finish disposition guidance and advisory cleanup eligibility for R-191/R-198/R-209.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0089",
+        "verdict": "ready",
+        "summary": "DCR-0086 adds advisory branch/worktree cleanup eligibility with task, delivery, and local-resource closure checks; focused and full verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0089.yml"
+      },
+      "updated_at": "2026-05-12T22:51:54Z"
+    },
+    "agent/context-packs/T-137-extract-supervised-run-transition-core.md": {
+      "status": "complete",
+      "run_id": "complete-t-137-extract-supervised-run-transition-core-20260512232403616234",
+      "reason": "Extracted supervised run transition/status helpers for DCR-0087 Slice 1 while preserving R-146 run completion behavior.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0091",
+        "verdict": "ready",
+        "summary": "Ready. Behavior-preserving extraction of run transition/status helpers into agentspec/run_transitions.py; focused and full pytest suites pass.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0091.yml"
+      },
+      "updated_at": "2026-05-12T23:24:03Z"
+    },
+    "agent/context-packs/T-138-document-supervised-run-transition-boundary.md": {
+      "status": "complete",
+      "run_id": "complete-t-138-document-supervised-run-transition-boundary-20260512233311140445",
+      "reason": "Documented the supervised run transition boundary with standard-library typed contracts and Google-style docstrings, added focused helper coverage, and preserved R-146 run completion behavior.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0092",
+        "verdict": "ready",
+        "summary": "No blocking findings. Transition boundary documentation and focused helper tests satisfy R-146/DCR-0087 scope; Pydantic remains intentionally out of scope because the package has no runtime dependencies.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0092.yml"
+      },
+      "updated_at": "2026-05-12T23:33:11Z"
+    },
+    "agent/context-packs/T-139-enforce-implementation-lifecycle-branch-and-workflow-gates.md": {
+      "status": "complete",
+      "run_id": "complete-t-139-enforce-implementation-lifecycle-branch-and-workflow-gates-20260512234901842488",
+      "reason": "Implemented R-211 lifecycle governance gates for DCR-0088: protected implementation branches are blocked without explicit host-worktree escape, workflow plans expose and update lifecycle state, and status reports workflow plan metadata.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0093",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-211 lifecycle branch/worktree enforcement, workflow status write-back, and status workflow-plan visibility are covered by focused tests and full-suite verification.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0093.yml"
+      },
+      "updated_at": "2026-05-12T23:49:01Z"
+    },
+    "agent/context-packs/T-140-make-review-evidence-id-allocation-atomic.md": {
+      "status": "complete",
+      "run_id": "complete-t-140-review-evidence-id-allocation-atomic-202605130001",
+      "reason": "Implemented R-212 for DCR-0089: review evidence IDs are allocated under a filesystem lock and written with exclusive-create semantics, covering document and code review artifacts.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0095",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-212 review evidence allocation now uses a per-directory filesystem lock plus exclusive-create writes, with deterministic collision tests for document and code review artifacts and full-suite verification passing.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0095.yml"
+      },
+      "updated_at": "2026-05-13T00:01:29Z"
+    },
+    "agent/context-packs/T-141-provide-post-artifact-guidance-for-dcr-artifacts.md": {
+      "status": "complete",
+      "run_id": "complete-t-141-post-artifact-guidance-202605130008",
+      "reason": "Implemented R-213 for DCR-0082: DCR creation now emits state-aware post-artifact next-step guidance, with structured JSON commands and document-review readiness tests.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0096",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-213 adds a DCR post-artifact guidance helper, human-facing dcr create next-step output, structured JSON guidance commands, and tests for missing/current/stale document review states.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0096.yml"
+      },
+      "updated_at": "2026-05-13T00:08:06Z"
+    },
+    "agent/context-packs/T-142-provide-reusable-post-artifact-guidance-projections.md": {
+      "status": "complete",
+      "run_id": "complete-t-142-reusable-post-artifact-guidance-202605130020",
+      "reason": "Implemented R-214 for DCR-0082: reusable post-artifact guidance now covers reviewed design documents and task context packs, exposes aspec guidance JSON/human output, and lifecycle output advertises the projection.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0097",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-214 adds reusable post-artifact guidance for design and task context pack artifacts, exposes aspec guidance for structured JSON and command-free human output, advertises the projection from lifecycle output, and covers DCR, design, task, CLI, and lifecycle behavior with passing tests.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0097.yml"
+      },
+      "updated_at": "2026-05-13T00:19:36Z"
+    },
+    "agent/context-packs/T-143-add-google-style-python-docstrings-and-typed-maintainability-checks.md": {
+      "status": "complete",
+      "run_id": "complete-t-143-add-google-style-python-docstrings-and-typed-maintainability-checks-20260513015423219118",
+      "reason": "Implemented R-215 for DCR-0090: configured reproducible mypy/pylint gates, added Google-style docstrings to the high-value AgentSpec Python slice, fixed scoped typing/lint issues, and verified the targeted and full test suites.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0098",
+        "verdict": "ready",
+        "summary": "Implemented R-215 for DCR-0090: added Google-style docstrings to the high-value Python module slice, configured reproducible mypy/pylint gates, fixed small typing/lint issues, and verified py_compile, targeted pytest, full pytest, mypy, and pylint.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0098.yml"
+      },
+      "updated_at": "2026-05-13T01:54:23Z"
+    },
+    "agent/context-packs/T-144-exclude-completed-dcr-backed-tasks-from-ready-for-tasking-counts.md": {
+      "status": "complete",
+      "run_id": "complete-t-144-exclude-completed-dcr-backed-tasks-from-ready-for-tasking-counts-20260513023604902326",
+      "reason": "Implemented R-209 issue #53 by deriving DCR ready-for-tasking counts from task-pack Originating DCR coverage and verifying with status regression coverage plus the full test suite.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0100",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-209 issue #53: status now separates accepted/classified DCRs covered by task packs from DCRs still ready for tasking; focused and full test suites pass.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0100.yml"
+      },
+      "updated_at": "2026-05-13T02:36:04Z"
+    },
+    "agent/context-packs/T-145-accept-research-runner-artifacts-from-active-allowed-paths.md": {
+      "status": "complete",
+      "run_id": "complete-t-145-accept-research-runner-artifacts-from-active-allowed-paths-20260513152948069320",
+      "reason": "Implemented R-172 for issue #54: research runner result durable artifacts are validated against active run allowed paths, with offending paths named on rejection.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0101",
+        "verdict": "ready",
+        "summary": "R-172: Research runner-result acceptance evidence now validates durable artifacts against the active research run allowed paths and reports offending artifacts when rejected. Verification passed: focused regressions, related runner/research/session tests, full unittest discovery, mypy, diff check, aspec doctor, and aspec drift.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0101.yml"
+      },
+      "updated_at": "2026-05-13T15:32:35Z"
+    },
+    "agent/context-packs/T-146-refresh-session-preflight-in-task-completion-output.md": {
+      "status": "complete",
+      "run_id": "complete-t-146-refresh-session-preflight-in-task-completion-output-20260513152948069326",
+      "reason": "Implemented R-211 for issue #55: task completion refreshes session_preflight from the active session registry before returning terminal completion state.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0102",
+        "verdict": "ready",
+        "summary": "R-211: Task completion now refreshes session_preflight from the active session registry before serializing terminal completion state. Verification passed: focused regression, related finish/session tests, full unittest discovery, mypy, diff check, aspec doctor, and aspec drift.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0102.yml"
+      },
+      "updated_at": "2026-05-13T15:32:48Z"
+    },
+    "agent/context-packs/T-147-warn-when-generated-durable-artifacts-are-gitignored.md": {
+      "status": "complete",
+      "run_id": "complete-t-147-warn-when-generated-durable-artifacts-are-gitignored-20260513183623308164",
+      "reason": "Implemented R-214 for issue #57: AgentSpec now warns when durable DCR, design/task context pack, doc-review, and code-review artifacts are gitignored and prints exact git add -f preservation guidance while keeping runtime/generated output ignored.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0103",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-214 / issue #57. Reviewed preservation-guidance implementation and regression coverage for ignored DCR, task context pack, doc-review, and code-review durable artifacts.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0103.yml"
+      },
+      "updated_at": "2026-05-13T18:36:23Z"
+    },
+    "agent/context-packs/T-148-normalize-status-dcr-coverage-ids.md": {
+      "status": "complete",
+      "run_id": "complete-t-148-normalize-status-dcr-coverage-ids-20260514040455766195",
+      "reason": "Implemented R-209 for issue #59: status DCR coverage now normalizes slugged and plural Originating DCR context-pack headers before computing ready_for_tasking and covered_by_task counts; focused status regression and full unittest verification passed.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0104",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-209 issue #59 status DCR coverage now normalizes slugged and plural Originating DCR headers before computing ready_for_tasking/covered_by_task counts; focused status regression and full unittest verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0104.yml"
+      },
+      "updated_at": "2026-05-14T04:04:55Z"
+    },
+    "agent/context-packs/T-149-suppress-readiness-dcr-summary-for-covered-tasks.md": {
+      "status": "complete",
+      "run_id": "complete-t-149-suppress-readiness-dcr-summary-for-covered-tasks-20260514160559847161",
+      "reason": "Fixed issue #61 for R-209 by marking DCR-specific readiness summaries historical when all referenced DCRs are already covered by task context packs, preserving the original source_summary while preventing stale implementation-ready guidance.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0105",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-209 issue #61: status readiness summaries that mention only DCRs already covered by task context packs are now marked historical, preserve the original source_summary, and no longer present covered DCRs as implementation-ready. Verification passed: python -m unittest tests.test_status_cli -v; python -m unittest discover -s tests -v; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0105.yml"
+      },
+      "updated_at": "2026-05-14T16:05:59Z"
+    },
+    "agent/context-packs/T-150-expose-research-acceptance-evidence-on-run-resume.md": {
+      "status": "complete",
+      "run_id": "complete-t-150-expose-research-acceptance-evidence-on-run-resume-20260515040708789397",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0106",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-172 CLI resume now accepts structured research acceptance evidence so evidence-backed research conversions can complete without abort semantics; focused, runner, full unittest, and diff checks passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0106.yml"
+      },
+      "updated_at": "2026-05-15T04:07:08Z"
+    },
+    "agent/context-packs/T-151-clear-stale-dcr-ready-tasking-after-completed-tasks.md": {
+      "status": "complete",
+      "run_id": "complete-t-151-clear-stale-dcr-ready-tasking-after-completed-tasks-20260515160600033535",
+      "reason": "Fixed issue #65 stale DCR ready_for_tasking coverage for R-209.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0107",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-209 issue #65 status DCR coverage now infers covered DCRs from task requirements when a completed context pack lacks an Originating DCR header; focused status regressions and full unittest verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0107.yml"
+      },
+      "updated_at": "2026-05-15T16:06:00Z"
+    },
+    "agent/context-packs/T-152-expose-explicit-research-resume-touched-path-scope.md": {
+      "status": "complete",
+      "run_id": "complete-t-152-expose-explicit-research-resume-touched-path-scope-20260516042902242053",
+      "reason": "Fixed issue #67 for R-172 by exposing explicit touched-path scope on research run resume.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0108",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-172 CLI resume now supports explicit touched-path scope for evidence-backed research completion; focused, related, full unittest, mypy, and diff checks passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0108.yml"
+      },
+      "updated_at": "2026-05-16T04:29:02Z"
+    },
+    "agent/context-packs/T-153-clarify-dcr-ready-tasking-classification.md": {
+      "status": "complete",
+      "run_id": "complete-t-153-clarify-dcr-ready-tasking-classification-20260516160723694195",
+      "reason": "Fixed issue #69 for R-209 by keeping DCR coverage reconciliation separate from implement-now ready tasking counts.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0109",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-209 status tasking counts now keep accepted/classified DCR coverage while only implement-now uncovered DCRs remain ready for tasking; focused and full pytest verification passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0109.yml"
+      },
+      "updated_at": "2026-05-16T16:07:23Z"
+    },
+    "agent/context-packs/T-154-expose-research-evidence-schema-in-recovery-prompts.md": {
+      "status": "complete",
+      "run_id": "complete-t-154-expose-research-evidence-schema-in-recovery-prompts-20260517160541313601",
+      "reason": "Fixed issue #73 for R-172 by surfacing structured research acceptance evidence in research prompts and halted-run recovery inspection.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0110",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-172 / issue #73 now surfaces the structured research acceptance evidence schema in research-mode prompts and halted-run recovery inspection; focused and full unittest suites passed.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0110.yml"
+      },
+      "updated_at": "2026-05-17T16:05:41Z"
+    },
+    "agent/context-packs/T-155-identify-ready-dcr-tasking-records.md": {
+      "status": "complete",
+      "run_id": "complete-t-155-identify-ready-dcr-tasking-records-20260518041614645187",
+      "reason": "Fixed issue #75 for R-209 by surfacing exact ready DCR tasking records in status output.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0111",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified status exposes exact ready DCR tasking records for R-209 and issue #75.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0111.yml"
+      },
+      "updated_at": "2026-05-18T04:16:14Z"
+    },
+    "agent/context-packs/T-156-include-document-review-artifacts-in-research-tasking-scope.md": {
+      "status": "complete",
+      "run_id": "complete-t-156-include-document-review-artifacts-in-research-tasking-scope-20260520040620582288",
+      "reason": "Fixed issue #79 for R-172 by adding document review evidence artifacts to research task-preparation allowed paths.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0112",
+        "verdict": "ready",
+        "summary": "No blocking findings for R-172; research task-preparation scope now permits document review evidence artifacts and regression coverage passes.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0112.yml"
+      },
+      "updated_at": "2026-05-20T04:06:20Z"
+    },
+    "agent/context-packs/T-157-refresh-handoff-state-after-roadmap-write-back.md": {
+      "status": "complete",
+      "run_id": "complete-t-157-handoff-roadmap-refresh",
+      "reason": "Fixed issue #80 for R-197 by refreshing handoff current_state after roadmap write-back.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0113",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified R-197 roadmap write-back refresh keeps handoff current_state aligned after task completion and roadmap regeneration.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0113.yml"
+      },
+      "updated_at": "2026-05-20T16:07:31Z"
+    },
+    "agent/context-packs/T-158-supersede-converted-research-runs-after-task-completion.md": {
+      "status": "complete",
+      "run_id": "complete-t-158-research-run-supersede",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0115",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified research runs superseded by later completed task state are excluded from active status and autonomous reuse.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0115.yml"
+      },
+      "updated_at": "2026-05-21T04:11:14Z"
+    },
+    "agent/context-packs/T-159-fix-dcr-coverage-count-after-task-completion.md": {
+      "status": "complete",
+      "run_id": "complete-t-159-fix-dcr-coverage-count-after-task-completion-20260521160602608175",
+      "reason": "Fixes issue #82 DCR coverage count after task completion.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0116",
+        "verdict": "ready",
+        "summary": "No blocking findings. Regression covers bare requirement links so DCR coverage no longer stays ready after task completion. Verification: python -m pytest tests/test_status_cli.py -q; python -m pytest -q; git diff --check.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0116.yml"
+      },
+      "updated_at": "2026-05-21T16:06:02Z"
+    },
+    "agent/context-packs/T-160-complete-research-conversion-when-ready-task-exists.md": {
+      "status": "complete",
+      "run_id": "complete-t-160-complete-research-conversion-when-ready-task-exists-20260522160622660040",
+      "reason": "Fixes issue #88 by completing active research conversion when a ready task exists (R-172).",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0117",
+        "verdict": "ready",
+        "summary": "No blocking findings. Verified issue #88 regression for completing an active research run once a ready task context pack exists; focused and full tests pass for R-172.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0117.yml"
+      },
+      "updated_at": "2026-05-22T16:06:22Z"
+    },
+    "agent/context-packs/T-161-refresh-session-lease-metadata-after-context-pack-changes.md": {
+      "status": "complete",
+      "run_id": "complete-t-161-refresh-session-lease-metadata-after-context-pack-changes-20260523040645655913",
+      "reason": "Fixes issue #90 by refreshing active session lease metadata when its context pack changes (R-191).",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0118",
+        "verdict": "ready",
+        "summary": "No blocking findings.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0118.yml"
+      },
+      "updated_at": "2026-05-23T04:06:45Z"
+    },
+    "agent/context-packs/T-162-include-write-back-paths-in-generated-context-packs.md": {
+      "status": "complete",
+      "run_id": "complete-t-162-include-write-back-paths-in-generated-context-packs-20260525160716825427",
+      "reason": "Finished by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0119",
+        "verdict": "ready",
+        "summary": "No blocking findings. Generated context packs now include deterministic lifecycle write-back scope for DCR-backed task creation while preserving repository-aware code/test target inference. Verification passed with focused task-pack suites and full pytest.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0119.yml"
+      },
+      "updated_at": "2026-05-25T16:07:16Z"
+    },
+    "agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md": {
+      "status": "complete",
+      "run_id": "complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0120",
+        "verdict": "ready",
+        "summary": "No blocking findings. Regression verifies workflow status ignores untracked gitignored context-pack residue while preserving tracked workflow-pack validation.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0120.yml"
+      },
+      "updated_at": "2026-06-06T20:12:55Z"
+    }
+  }
+}
