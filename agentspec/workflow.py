@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import utc_now_iso
-from .paths import slugify, truncate_on_word_boundary
+from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary
 
 
 WORKFLOW_CONTRACT_SCHEMA = "agentspec.workflow_contract.v0"
@@ -29,12 +29,22 @@ class WorkflowArtifact:
     task_pack: str | None = None
 
 
-def build_workflow_contract_status(root: Path) -> dict[str, Any]:
+def build_workflow_contract_status(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = False,
+) -> dict[str, Any]:
     """Build status for workflow artifacts and task-pack linkage."""
 
     root = root.resolve()
-    context_pack_texts = _context_pack_texts(root)
-    artifacts = list_workflow_artifacts(root)
+    context_pack_texts = _context_pack_texts(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
+    artifacts = list_workflow_artifacts(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
     records: list[dict[str, Any]] = []
     for artifact in artifacts:
         referenced_by = _referenced_by(context_pack_texts, artifact)
@@ -66,7 +76,11 @@ def build_workflow_contract_status(root: Path) -> dict[str, Any]:
     }
 
 
-def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
+def list_workflow_artifacts(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = True,
+) -> list[WorkflowArtifact]:
     """Discover native and legacy workflow artifacts in the project."""
 
     root = root.resolve()
@@ -75,6 +89,8 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
 
     for path in sorted(root.glob("docs/**/plans/**/*.md")):
         if not path.is_file() or not path.name.endswith("workflow.md"):
+            continue
+        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
             continue
         rel = _relative(root, path)
         seen.add(rel)
@@ -91,6 +107,8 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
 
     for path in sorted((root / "agent" / "workflows").glob("W-*.md")):
         if not path.is_file():
+            continue
+        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
             continue
         rel = _relative(root, path)
         if rel in seen:
@@ -111,6 +129,8 @@ def list_workflow_artifacts(root: Path) -> list[WorkflowArtifact]:
     if state_root.is_dir():
         for path in sorted(state_root.rglob("*.json")):
             if not path.is_file():
+                continue
+            if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
                 continue
             rel = _relative(root, path)
             parsed = parse_workflow_file(root, Path(rel))
@@ -588,7 +608,11 @@ def _paths_from_commands(root: Path, commands: list[str], warnings: list[str]) -
     return _dedupe(paths)
 
 
-def _context_pack_texts(root: Path) -> dict[str, str]:
+def _context_pack_texts(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = True,
+) -> dict[str, str]:
     context_dir = root / "agent" / "context-packs"
     if not context_dir.is_dir():
         return {}
@@ -596,6 +620,7 @@ def _context_pack_texts(root: Path) -> dict[str, str]:
         _relative(root, path): path.read_text(encoding="utf-8")
         for path in sorted(context_dir.glob("T-*.md"))
         if path.is_file()
+        and (include_untracked_gitignored or not is_untracked_git_ignored(root, path))
     }
 
 
