@@ -5,6 +5,7 @@ from typing import Any
 
 from .config import merged_runtime_config
 from .io import load_data, utc_now_iso
+from .paths import is_untracked_git_ignored
 from .roadmap import ROADMAP_PATH, check_roadmap
 
 
@@ -446,6 +447,8 @@ def _completion_warnings(root: Path) -> list[dict[str, Any]]:
     for context_pack, entry in sorted(tasks.items()):
         if not isinstance(context_pack, str) or not isinstance(entry, dict):
             continue
+        if _is_ignored_context_pack_residue(root, context_pack):
+            continue
         if entry.get("status") != "complete":
             continue
         verification = entry.get("verification") if isinstance(entry.get("verification"), dict) else {}
@@ -813,9 +816,18 @@ def _completed_task_entries(root: Path) -> list[tuple[str, dict[str, Any]]]:
         return []
     entries: list[tuple[str, dict[str, Any]]] = []
     for context_pack, entry in sorted(tasks.items()):
+        if _is_ignored_context_pack_residue(root, context_pack):
+            continue
         if isinstance(context_pack, str) and isinstance(entry, dict) and entry.get("status") == "complete":
             entries.append((context_pack, entry))
     return entries
+
+
+def _is_ignored_context_pack_residue(root: Path, context_pack: str) -> bool:
+    if not isinstance(context_pack, str) or not context_pack:
+        return False
+    path = root / context_pack
+    return is_untracked_git_ignored(root, path)
 
 
 def _dict(value: Any) -> dict[str, Any]:

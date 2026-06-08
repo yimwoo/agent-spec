@@ -532,6 +532,45 @@ Type: `implementation`
             self.assertEqual(status["tasks"]["ready"][0]["id"], "T-001")
             self.assertEqual(status["runs"]["total"], 0)
             self.assertNotIn("handoff", status)
+            self.assertFalse(
+                any(
+                    warning.get("context_pack") == "agent/context-packs/T-999-ignored.md"
+                    for warning in status["lifecycle"]["warnings"]
+                )
+            )
+
+    def test_status_ignores_tracked_ledger_entries_for_ignored_missing_context_packs(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent").mkdir()
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-999-ignored.md": {
+                            "status": "complete",
+                            "verification": {"status": "passed"},
+                            "code_review": {
+                                "id": "REVIEW-9999",
+                                "path": "agent/reviews/REVIEW-9999.yml",
+                            },
+                        }
+                    },
+                },
+            )
+            subprocess.run(["git", "add", "-f", "agent/task-ledger.yml"], cwd=root, check=True)
+
+            status = build_project_status(root)
+
+            self.assertFalse(
+                any(
+                    warning.get("context_pack") == "agent/context-packs/T-999-ignored.md"
+                    for warning in status["lifecycle"]["warnings"]
+                )
+            )
 
     def test_status_normalizes_context_pack_originating_dcr_headers(self) -> None:
         with tempfile.TemporaryDirectory() as td:
