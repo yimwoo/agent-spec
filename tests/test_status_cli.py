@@ -572,6 +572,69 @@ Type: `implementation`
                 )
             )
 
+    def test_status_counts_completed_tracked_ledger_requirement_from_ignored_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "change-requests").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {
+                    "score": 100,
+                    "mode": "normal-implementation",
+                    "summary": "DCR-0001 is accepted, implementation-ready, and taskable.",
+                },
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [
+                    {
+                        "id": "R-201",
+                        "status": "accepted",
+                        "priority": "P1",
+                        "originating_dcr": "DCR-0001",
+                    },
+                ],
+            )
+            _write_dcr(root, "DCR-0001", status="accepted")
+            (root / "agent" / "context-packs" / "T-001-force-add-pending.md").write_text(
+                """# T-001: Force Add Pending
+
+Type: `implementation`
+Originating DCR: `DCR-0001`
+
+## Requirements
+
+- `R-201` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-001-force-add-pending.md": {
+                            "status": "complete",
+                            "run_id": "run-001",
+                            "verification": {"status": "passed"},
+                        },
+                    },
+                },
+            )
+            subprocess.run(["git", "add", "-f", "agent/task-ledger.yml"], cwd=root, check=True)
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["tasks"]["total"], 0)
+            self.assertEqual(status["requirements"]["uncovered_accepted_examples"], [])
+            self.assertEqual(status["dcrs"]["covered_by_task"], 1)
+            self.assertEqual(status["dcrs"]["ready_for_tasking"], 0)
+
     def test_status_normalizes_context_pack_originating_dcr_headers(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

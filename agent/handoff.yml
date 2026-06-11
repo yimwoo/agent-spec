@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-06-06T20:12:55Z",
+  "updated_at": "2026-06-11T14:07:53Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-163",
-    "context_pack": "agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md",
-    "title": "T-163: Ignore ignored untracked context packs in workflow status",
-    "run_id": "complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116",
+    "id": "T-164",
+    "context_pack": "agent/context-packs/T-164-count-completed-ledger-task-requirements-in-status-coverage.md",
+    "title": "T-164: Count completed ledger task requirements in status coverage",
+    "run_id": "complete-t-164-count-completed-ledger-task-requirements-in-status-coverage-20260611140753742566",
     "reason": "Marked complete by user.",
-    "updated_at": "2026-06-06T20:12:55Z",
+    "updated_at": "2026-06-11T14:07:53Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0120",
+      "id": "REVIEW-0121",
       "verdict": "ready",
       "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0120.yml"
+      "path": "agent/reviews/REVIEW-0121.yml"
     }
   },
   "current_state": {
@@ -60,6 +60,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0120.yml"
+    "last_code_review": "agent/reviews/REVIEW-0121.yml"
   }
 }
