@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-06-06T20:12:55Z
-- Last completed task: `T-163` agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md
-- Last run: `complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116`
+- Updated: 2026-06-11T14:07:53Z
+- Last completed task: `T-164` agent/context-packs/T-164-count-completed-ledger-task-requirements-in-status-coverage.md
+- Last run: `complete-t-164-count-completed-ledger-task-requirements-in-status-coverage-20260611140753742566`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -176,6 +176,7 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-161-refresh-session-lease-metadata-after-context-pack-changes.md` | complete | `complete-t-161-refresh-session-lease-metadata-after-context-pack-changes-20260523040645655913` | passed | REVIEW-0118 | 2026-05-23T04:06:45Z |
 | `agent/context-packs/T-162-include-write-back-paths-in-generated-context-packs.md` | complete | `complete-t-162-include-write-back-paths-in-generated-context-packs-20260525160716825427` | passed | REVIEW-0119 | 2026-05-25T16:07:16Z |
 | `agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md` | complete | `complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116` | passed | REVIEW-0120 | 2026-06-06T20:12:55Z |
+| `agent/context-packs/T-164-count-completed-ledger-task-requirements-in-status-coverage.md` | complete | `complete-t-164-count-completed-ledger-task-requirements-in-status-coverage-20260611140753742566` | passed | REVIEW-0121 | 2026-06-11T14:07:53Z |
 
 ## Requirement Traceability
 

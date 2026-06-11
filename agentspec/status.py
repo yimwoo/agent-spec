@@ -72,9 +72,11 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
-    covered_requirement_ids = _task_requirement_ids(root, tasks)
+    completed_ledger_tasks = list(_completed_task_by_ledger(root).values())
+    coverage_tasks = [*tasks, *completed_ledger_tasks]
+    covered_requirement_ids = _task_requirement_ids(root, coverage_tasks)
     requirement_dcr_ids = _requirement_originating_dcr_ids(requirements)
-    covered_dcr_ids = _task_originating_dcr_ids(root, tasks, requirement_dcr_ids)
+    covered_dcr_ids = _task_originating_dcr_ids(root, coverage_tasks, requirement_dcr_ids)
     dcr_tasking = _dcr_tasking_status(dcrs, covered_dcr_ids)
     readiness_status = _readiness_status(readiness, covered_dcr_ids=covered_dcr_ids)
     requirements_counts = {
