@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-06-11T14:07:53Z",
+  "updated_at": "2026-06-12T20:07:55Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-164",
-    "context_pack": "agent/context-packs/T-164-count-completed-ledger-task-requirements-in-status-coverage.md",
-    "title": "T-164: Count completed ledger task requirements in status coverage",
-    "run_id": "complete-t-164-count-completed-ledger-task-requirements-in-status-coverage-20260611140753742566",
+    "id": "T-165",
+    "context_pack": "agent/context-packs/T-165-report-broken-workflow-link-source-paths.md",
+    "title": "T-165: Report broken workflow link source paths",
+    "run_id": "complete-t-165-report-broken-workflow-link-source-paths-20260612200755152887",
     "reason": "Marked complete by user.",
-    "updated_at": "2026-06-11T14:07:53Z",
+    "updated_at": "2026-06-12T20:07:55Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0121",
+      "id": "REVIEW-0122",
       "verdict": "ready",
       "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0121.yml"
+      "path": "agent/reviews/REVIEW-0122.yml"
     }
   },
   "current_state": {
@@ -39,12 +39,12 @@
       "by_status": {}
     },
     "tasks": {
-      "total": 1,
+      "total": 2,
       "by_status": {
-        "complete": 1
+        "complete": 2
       },
       "by_type": {
-        "implementation": 1
+        "implementation": 2
       }
     }
   },
@@ -60,6 +60,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0121.yml"
+    "last_code_review": "agent/reviews/REVIEW-0122.yml"
   }
 }

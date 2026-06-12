@@ -423,14 +423,18 @@ def _workflow_warnings(root: Path, workflows: dict[str, Any]) -> list[dict[str, 
         context_pack = broken.get("context_pack") or broken.get("task_pack")
         if isinstance(context_pack, str) and context_pack in completed_context_packs:
             continue
+        repair = f"aspec plan {context_pack}" if context_pack else None
         warnings.append(
             {
                 "type": "broken_workflow_link",
                 "severity": "warning",
+                "path": broken.get("path") or context_pack or broken.get("workflow"),
                 "workflow": broken.get("workflow"),
                 "context_pack": context_pack,
+                "reference_value": broken.get("reference_value"),
                 "message": broken.get("message") or "Workflow/task link is broken.",
-                "repair": f"aspec plan {context_pack}" if context_pack else None,
+                "repair": repair,
+                "recommendation": repair,
             }
         )
     return warnings

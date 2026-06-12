@@ -10,7 +10,7 @@ from pathlib import Path
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
 from agentspec.run import abort_run
-from agentspec.status import PROJECT_STATUS_SCHEMA, build_project_status, format_project_status
+from agentspec.status import PROJECT_STATUS_SCHEMA, build_lifecycle_summary, build_project_status, format_project_status
 
 
 class StatusCLITests(unittest.TestCase):
@@ -1419,6 +1419,72 @@ Workflow: `AgentSpec autonomous cycle`
             )
             self.assertEqual(status["overall"], "idle")
             self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+
+    def test_status_reports_broken_workflow_link_path_and_repair(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [{"id": "R-001", "status": "accepted"}])
+            (root / "agent" / "context-packs" / "T-001-active.md").write_text(
+                """# T-001: Active
+
+Type: `implementation`
+Workflow: `AgentSpec autonomous cycle`
+
+## Requirements
+
+- `R-001` Active
+""",
+                encoding="utf-8",
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["workflows"]["broken_link_count"], 1)
+            broken = status["workflows"]["broken_links"][0]
+            self.assertEqual(broken["path"], "agent/context-packs/T-001-active.md")
+            self.assertEqual(broken["context_pack"], "agent/context-packs/T-001-active.md")
+            self.assertEqual(broken["workflow"], "AgentSpec autonomous cycle")
+            self.assertEqual(broken["reference_value"], "AgentSpec autonomous cycle")
+
+            lifecycle_warning = next(
+                warning
+                for warning in status["lifecycle"]["warnings"]
+                if warning["type"] == "broken_workflow_link"
+            )
+            self.assertEqual(lifecycle_warning["path"], "agent/context-packs/T-001-active.md")
+            self.assertEqual(lifecycle_warning["reference_value"], "AgentSpec autonomous cycle")
+            self.assertEqual(lifecycle_warning["recommendation"], "aspec plan agent/context-packs/T-001-active.md")
+            summary = build_lifecycle_summary(
+                {
+                    "root": str(root),
+                    "readiness": status["readiness"],
+                    "requirements": status["requirements"],
+                    "tasks": {"next": None},
+                    "runs": {"attention": [], "active": []},
+                    "workflows": status["workflows"],
+                    "lifecycle": {
+                        "readiness": "needs_attention",
+                        "warnings": [lifecycle_warning],
+                        "blocking": [],
+                    },
+                    "outcomes": {},
+                }
+            )
+            self.assertEqual(
+                summary["blocked_by"][0]["path"],
+                "agent/context-packs/T-001-active.md",
+            )
+            self.assertIn(
+                "aspec plan agent/context-packs/T-001-active.md",
+                summary["recommended_next_action"]["commands"],
+            )
 
     def test_status_lifecycle_reports_writeback_readiness_warnings(self) -> None:
         with tempfile.TemporaryDirectory() as td:
