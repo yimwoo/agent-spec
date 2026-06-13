@@ -651,8 +651,10 @@ def _broken_links(
             broken.append(
                 {
                     "type": "missing_workflow",
+                    "path": context_pack,
                     "context_pack": context_pack,
                     "workflow": workflow,
+                    "reference_value": workflow,
                     "message": f"Task context pack references missing workflow {workflow}.",
                 }
             )
@@ -664,8 +666,10 @@ def _broken_links(
             broken.append(
                 {
                     "type": "missing_workflow_task_pack_reference",
+                    "path": context_pack,
                     "context_pack": context_pack,
                     "workflow": workflow,
+                    "reference_value": workflow,
                     "message": f"Task context pack references {workflow}, but the workflow does not link back.",
                 }
             )
@@ -674,9 +678,11 @@ def _broken_links(
             broken.append(
                 {
                     "type": "workflow_task_mismatch",
+                    "path": context_pack,
                     "context_pack": context_pack,
                     "workflow": workflow,
                     "task_pack": artifact.task_pack,
+                    "reference_value": workflow,
                     "message": f"Task context pack references {workflow}, but the workflow links to {artifact.task_pack}.",
                 }
             )
@@ -689,8 +695,10 @@ def _broken_links(
             broken.append(
                 {
                     "type": "missing_task_pack",
+                    "path": artifact.path,
                     "workflow": artifact.path,
                     "task_pack": artifact.task_pack,
+                    "reference_value": artifact.task_pack,
                     "message": f"Workflow references missing task context pack {artifact.task_pack}.",
                 }
             )
@@ -699,8 +707,10 @@ def _broken_links(
             broken.append(
                 {
                     "type": "missing_task_workflow_reference",
+                    "path": artifact.path,
                     "workflow": artifact.path,
                     "task_pack": artifact.task_pack,
+                    "reference_value": artifact.task_pack,
                     "message": f"Workflow references {artifact.task_pack}, but the task does not link back.",
                 }
             )
