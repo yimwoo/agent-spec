@@ -367,7 +367,7 @@ def build_lifecycle_projection(
 
     root = root.resolve()
     warnings: list[dict[str, Any]] = []
-    warnings.extend(_workflow_warnings(root, workflows))
+    warnings.extend(_workflow_warnings(root, workflows, project_counts=project_counts))
     warnings.extend(_completion_warnings(root))
     warnings.extend(_handoff_warnings(handoff, project_counts))
     warnings.extend(_roadmap_warnings(root))
@@ -405,9 +405,15 @@ def lifecycle_warning_lines(lifecycle: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _workflow_warnings(root: Path, workflows: dict[str, Any]) -> list[dict[str, Any]]:
+def _workflow_warnings(
+    root: Path,
+    workflows: dict[str, Any],
+    *,
+    project_counts: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     warnings: list[dict[str, Any]] = []
     completed_context_packs = {context_pack for context_pack, _ in _completed_task_entries(root)}
+    current_context_packs = _current_workflow_context_packs(project_counts)
     for orphan in _list(workflows.get("orphans")):
         path = orphan.get("path")
         warnings.append(
@@ -422,6 +428,8 @@ def _workflow_warnings(root: Path, workflows: dict[str, Any]) -> list[dict[str, 
     for broken in _list(workflows.get("broken_links")):
         context_pack = broken.get("context_pack") or broken.get("task_pack")
         if isinstance(context_pack, str) and context_pack in completed_context_packs:
+            continue
+        if broken.get("context_pack") and not _is_current_workflow_context_pack(context_pack, current_context_packs):
             continue
         repair = f"aspec plan {context_pack}" if context_pack else None
         warnings.append(
@@ -438,6 +446,32 @@ def _workflow_warnings(root: Path, workflows: dict[str, Any]) -> list[dict[str, 
             }
         )
     return warnings
+
+
+def _current_workflow_context_packs(project_counts: dict[str, dict[str, Any]]) -> set[str]:
+    current: set[str] = set()
+    tasks = _dict(project_counts.get("tasks"))
+    next_task = _dict(tasks.get("next"))
+    _add_context_pack(current, next_task.get("path"))
+    for task in _list(tasks.get("ready")):
+        _add_context_pack(current, _dict(task).get("path"))
+
+    runs = _dict(project_counts.get("runs"))
+    for key in ("active", "attention"):
+        for run in _list(runs.get(key)):
+            _add_context_pack(current, _dict(run).get("context_pack"))
+    return current
+
+
+def _is_current_workflow_context_pack(context_pack: Any, current_context_packs: set[str]) -> bool:
+    if not isinstance(context_pack, str) or not context_pack:
+        return True
+    return context_pack in current_context_packs
+
+
+def _add_context_pack(current: set[str], context_pack: Any) -> None:
+    if isinstance(context_pack, str) and context_pack:
+        current.add(context_pack)
 
 
 def _completion_warnings(root: Path) -> list[dict[str, Any]]:
