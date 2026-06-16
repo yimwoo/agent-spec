@@ -1420,6 +1420,87 @@ Workflow: `AgentSpec autonomous cycle`
             self.assertEqual(status["overall"], "idle")
             self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
 
+    def test_status_ignores_stale_non_current_context_pack_missing_workflow_for_lifecycle(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "agent" / "reviews").mkdir(parents=True)
+            (root / "agent" / "runs" / "run-old").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Readiness is 100/100."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [{"id": "R-001", "status": "accepted"}])
+            (root / "agent" / "context-packs" / "T-001-old.md").write_text(
+                """# T-001: Old Duplicate
+
+Type: `implementation`
+Workflow: `AgentSpec autonomous cycle`
+
+## Requirements
+
+- `R-001` Old duplicate
+""",
+                encoding="utf-8",
+            )
+            (root / "agent" / "context-packs" / "T-002-complete.md").write_text(
+                """# T-002: Complete
+
+Type: `implementation`
+
+## Requirements
+
+- `R-001` Complete
+""",
+                encoding="utf-8",
+            )
+            write_data(
+                root / "agent" / "runs" / "run-old" / "state.yml",
+                {
+                    "run_id": "run-old",
+                    "status": "aborted",
+                    "context_pack": "agent/context-packs/T-001-old.md",
+                    "updated_at": "2026-05-01T00:00:00Z",
+                },
+            )
+            write_data(
+                root / "agent" / "reviews" / "REVIEW-0001.yml",
+                {
+                    "schema": "agentspec.code_review.v0",
+                    "id": "REVIEW-0001",
+                    "task": {"context_pack": "agent/context-packs/T-002-complete.md"},
+                    "verdict": "ready",
+                },
+            )
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        "agent/context-packs/T-002-complete.md": {
+                            "status": "complete",
+                            "run_id": "run-002",
+                            "updated_at": "2026-06-15T00:00:00Z",
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001"},
+                        }
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["tasks"]["next"], None)
+            self.assertEqual(status["workflows"]["broken_link_count"], 1)
+            self.assertEqual(status["workflows"]["broken_links"][0]["context_pack"], "agent/context-packs/T-001-old.md")
+            self.assertFalse(
+                any(warning["type"] == "broken_workflow_link" for warning in status["lifecycle"]["warnings"])
+            )
+            self.assertEqual(status["overall"], "idle")
+            self.assertEqual(status["lifecycle_summary"]["current_stage"], "idle_no_ready_task")
+
     def test_status_reports_broken_workflow_link_path_and_repair(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

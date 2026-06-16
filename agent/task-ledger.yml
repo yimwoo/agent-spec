@@ -2260,6 +2260,23 @@
         "path": "agent/reviews/REVIEW-0122.yml"
       },
       "updated_at": "2026-06-12T20:07:55Z"
+    },
+    "agent/context-packs/T-166-suppress-stale-historical-workflow-link-lifecycle-warnings.md": {
+      "status": "complete",
+      "run_id": "complete-t-166-suppress-stale-historical-workflow-link-lifecycle-warnings-20260615081408291190",
+      "reason": "Marked complete by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0123",
+        "verdict": "ready",
+        "summary": "No blocking findings. R-193 lifecycle warning filtering preserves actionable workflow warnings while suppressing stale non-current task-pack residue.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0123.yml"
+      },
+      "updated_at": "2026-06-15T08:14:08Z"
     }
   }
 }

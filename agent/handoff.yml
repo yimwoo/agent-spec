@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-06-12T20:07:55Z",
+  "updated_at": "2026-06-15T08:14:08Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-165",
-    "context_pack": "agent/context-packs/T-165-report-broken-workflow-link-source-paths.md",
-    "title": "T-165: Report broken workflow link source paths",
-    "run_id": "complete-t-165-report-broken-workflow-link-source-paths-20260612200755152887",
+    "id": "T-166",
+    "context_pack": "agent/context-packs/T-166-suppress-stale-historical-workflow-link-lifecycle-warnings.md",
+    "title": "T-166: Suppress stale historical workflow-link lifecycle warnings",
+    "run_id": "complete-t-166-suppress-stale-historical-workflow-link-lifecycle-warnings-20260615081408291190",
     "reason": "Marked complete by user.",
-    "updated_at": "2026-06-12T20:07:55Z",
+    "updated_at": "2026-06-15T08:14:08Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0122",
+      "id": "REVIEW-0123",
       "verdict": "ready",
       "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0122.yml"
+      "path": "agent/reviews/REVIEW-0123.yml"
     }
   },
   "current_state": {
@@ -39,12 +39,12 @@
       "by_status": {}
     },
     "tasks": {
-      "total": 2,
+      "total": 4,
       "by_status": {
-        "complete": 2
+        "complete": 4
       },
       "by_type": {
-        "implementation": 2
+        "implementation": 4
       }
     }
   },
@@ -60,6 +60,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0122.yml"
+    "last_code_review": "agent/reviews/REVIEW-0123.yml"
   }
 }

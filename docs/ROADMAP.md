@@ -6,9 +6,9 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 
 ## Current Handoff
 
-- Updated: 2026-06-12T20:07:55Z
-- Last completed task: `T-165` agent/context-packs/T-165-report-broken-workflow-link-source-paths.md
-- Last run: `complete-t-165-report-broken-workflow-link-source-paths-20260612200755152887`
+- Updated: 2026-06-15T08:14:08Z
+- Last completed task: `T-166` agent/context-packs/T-166-suppress-stale-historical-workflow-link-lifecycle-warnings.md
+- Last run: `complete-t-166-suppress-stale-historical-workflow-link-lifecycle-warnings-20260615081408291190`
 - Next action: idle -> `aspec status --json`
 
 ## Task Ledger
@@ -178,6 +178,7 @@ Generated from: `agent/handoff.yml`, `agent/task-ledger.yml`, `docs/traceability
 | `agent/context-packs/T-163-ignore-ignored-untracked-context-packs-in-workflow-status.md` | complete | `complete-t-163-ignore-ignored-untracked-context-packs-in-workflow-status-20260606201255737116` | passed | REVIEW-0120 | 2026-06-06T20:12:55Z |
 | `agent/context-packs/T-164-count-completed-ledger-task-requirements-in-status-coverage.md` | complete | `complete-t-164-count-completed-ledger-task-requirements-in-status-coverage-20260611140753742566` | passed | REVIEW-0121 | 2026-06-11T14:07:53Z |
 | `agent/context-packs/T-165-report-broken-workflow-link-source-paths.md` | complete | `complete-t-165-report-broken-workflow-link-source-paths-20260612200755152887` | passed | REVIEW-0122 | 2026-06-12T20:07:55Z |
+| `agent/context-packs/T-166-suppress-stale-historical-workflow-link-lifecycle-warnings.md` | complete | `complete-t-166-suppress-stale-historical-workflow-link-lifecycle-warnings-20260615081408291190` | passed | REVIEW-0123 | 2026-06-15T08:14:08Z |
 
 ## Requirement Traceability
 
