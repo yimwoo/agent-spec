@@ -29,6 +29,7 @@ DELIVERY_CLOSED_DISPOSITIONS = {"discard", "merge", "pr"}
 PROTECTED_BRANCHES = {"main", "master"}
 SESSION_START_LOCK_TIMEOUT_SECONDS = 10.0
 SESSION_START_LOCK_POLL_SECONDS = 0.02
+SESSION_GIT_TIMEOUT_SECONDS = 2.0
 
 
 def start_session(
@@ -153,12 +154,13 @@ def build_session_status(root: Path) -> dict[str, Any]:
     archived_records = _records_in(_archived_dir(root))
     active = [_summary(root, path, record) for path, record in active_records]
     active_write_leases = _active_write_leases(root, active)
+    worktree_status_cache: dict[Path, str | None] = {}
     archived = [
         _summary(
             root,
             path,
             record,
-            cleanup_eligibility=_cleanup_eligibility(root, record, active_write_leases),
+            cleanup_eligibility=_cleanup_eligibility(root, record, active_write_leases, worktree_status_cache),
         )
         for path, record in archived_records
     ]
@@ -598,8 +600,9 @@ def _git_stdout(root: Path, *args: str) -> str | None:
             stderr=subprocess.PIPE,
             text=True,
             check=True,
+            timeout=SESSION_GIT_TIMEOUT_SECONDS,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
     value = result.stdout.strip()
     return value or None
@@ -1057,10 +1060,11 @@ def _cleanup_eligibility(
     root: Path,
     record: dict[str, Any],
     active_write_leases: list[dict[str, Any]],
+    worktree_status_cache: dict[Path, str | None],
 ) -> dict[str, Any]:
     resources = {
         "branch": _branch_cleanup_eligibility(root, record),
-        "worktree": _worktree_cleanup_eligibility(root, record),
+        "worktree": _worktree_cleanup_eligibility(root, record, worktree_status_cache),
     }
     task_closure = _task_closure(root, record)
     delivery_closure = _delivery_closure(record)
@@ -1070,7 +1074,7 @@ def _cleanup_eligibility(
         "delivery": delivery_closure,
         "local_resources": local_resource_closure,
     }
-    reasons = _cleanup_blocking_reasons(root, record, active_write_leases)
+    reasons = _cleanup_blocking_reasons(root, record, active_write_leases, worktree_status_cache)
     for closure in closures.values():
         reasons.extend(str(reason) for reason in closure.get("reasons", []))
 
@@ -1197,13 +1201,14 @@ def _cleanup_blocking_reasons(
     root: Path,
     record: dict[str, Any],
     active_write_leases: list[dict[str, Any]],
+    worktree_status_cache: dict[Path, str | None],
 ) -> list[str]:
     reasons: list[str] = []
     if record.get("mode") not in WRITE_SESSION_MODES:
         reasons.append("not_write_session")
     if not record.get("terminal"):
         reasons.append("session_not_terminal")
-    if _record_worktree_has_changes(root, record):
+    if _record_worktree_has_changes(root, record, worktree_status_cache):
         reasons.append("worktree_dirty")
     branch = record.get("branch")
     worktree_key = _worktree_key(root, record.get("worktree"))
@@ -1244,7 +1249,11 @@ def _branch_cleanup_eligibility(root: Path, record: dict[str, Any]) -> dict[str,
     return _resource_status("eligible", True, reasons)
 
 
-def _worktree_cleanup_eligibility(root: Path, record: dict[str, Any]) -> dict[str, Any]:
+def _worktree_cleanup_eligibility(
+    root: Path,
+    record: dict[str, Any],
+    worktree_status_cache: dict[Path, str | None],
+) -> dict[str, Any]:
     worktree = record.get("worktree")
     if not isinstance(worktree, str) or not worktree.strip():
         return _resource_status("blocked", False, ["missing_worktree_metadata"])
@@ -1256,7 +1265,7 @@ def _worktree_cleanup_eligibility(root: Path, record: dict[str, Any]) -> dict[st
         return _resource_status("blocked", False, ["host_worktree_not_removed"])
     if not path.exists():
         return _resource_status("already_removed", False, ["worktree_missing"])
-    status = _git_status_porcelain(path)
+    status = _cached_git_status_porcelain(path, worktree_status_cache)
     if status is None:
         return _resource_status("blocked", False, ["worktree_status_unavailable"])
     if status.strip():
@@ -1350,13 +1359,21 @@ def _git_status_porcelain(root: Path) -> str | None:
             stderr=subprocess.PIPE,
             text=True,
             check=True,
+            timeout=SESSION_GIT_TIMEOUT_SECONDS,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
     return result.stdout
 
 
-def _record_worktree_has_changes(root: Path, record: dict[str, Any]) -> bool:
+def _cached_git_status_porcelain(root: Path, cache: dict[Path, str | None]) -> str | None:
+    root = root.resolve()
+    if root not in cache:
+        cache[root] = _git_status_porcelain(root)
+    return cache[root]
+
+
+def _record_worktree_has_changes(root: Path, record: dict[str, Any], worktree_status_cache: dict[Path, str | None]) -> bool:
     worktree = record.get("worktree")
     if not isinstance(worktree, str) or not worktree.strip():
         return False
@@ -1364,7 +1381,8 @@ def _record_worktree_has_changes(root: Path, record: dict[str, Any]) -> bool:
     if not path.is_absolute():
         path = root / path
     path = path.resolve()
-    return path.exists() and _worktree_has_changes(path)
+    status = _cached_git_status_porcelain(path, worktree_status_cache) if path.exists() else None
+    return bool(status and status.strip())
 
 
 def _git_success(root: Path, *args: str) -> bool:
@@ -1375,8 +1393,9 @@ def _git_success(root: Path, *args: str) -> bool:
             stderr=subprocess.PIPE,
             text=True,
             check=True,
+            timeout=SESSION_GIT_TIMEOUT_SECONDS,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
     return True
 

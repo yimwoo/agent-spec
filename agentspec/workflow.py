@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import utc_now_iso
-from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary
+from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary, untracked_git_ignored_paths
 
 
 WORKFLOW_CONTRACT_SCHEMA = "agentspec.workflow_contract.v0"
@@ -87,10 +87,12 @@ def list_workflow_artifacts(
     artifacts: list[WorkflowArtifact] = []
     seen: set[str] = set()
 
-    for path in sorted(root.glob("docs/**/plans/**/*.md")):
+    plan_paths = sorted(root.glob("docs/**/plans/**/*.md"))
+    ignored_plan_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, plan_paths)
+    for path in plan_paths:
         if not path.is_file() or not path.name.endswith("workflow.md"):
             continue
-        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+        if path.resolve() in ignored_plan_paths:
             continue
         rel = _relative(root, path)
         seen.add(rel)
@@ -105,10 +107,12 @@ def list_workflow_artifacts(
             )
         )
 
-    for path in sorted((root / "agent" / "workflows").glob("W-*.md")):
+    workflow_paths = sorted((root / "agent" / "workflows").glob("W-*.md"))
+    ignored_workflow_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, workflow_paths)
+    for path in workflow_paths:
         if not path.is_file():
             continue
-        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+        if path.resolve() in ignored_workflow_paths:
             continue
         rel = _relative(root, path)
         if rel in seen:
@@ -127,10 +131,12 @@ def list_workflow_artifacts(
 
     state_root = root / ".hotl" / "state"
     if state_root.is_dir():
-        for path in sorted(state_root.rglob("*.json")):
+        state_paths = sorted(state_root.rglob("*.json"))
+        ignored_state_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, state_paths)
+        for path in state_paths:
             if not path.is_file():
                 continue
-            if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+            if path.resolve() in ignored_state_paths:
                 continue
             rel = _relative(root, path)
             parsed = parse_workflow_file(root, Path(rel))
@@ -616,11 +622,12 @@ def _context_pack_texts(
     context_dir = root / "agent" / "context-packs"
     if not context_dir.is_dir():
         return {}
+    context_pack_paths = sorted(context_dir.glob("T-*.md"))
+    ignored_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, context_pack_paths)
     return {
         _relative(root, path): path.read_text(encoding="utf-8")
-        for path in sorted(context_dir.glob("T-*.md"))
-        if path.is_file()
-        and (include_untracked_gitignored or not is_untracked_git_ignored(root, path))
+        for path in context_pack_paths
+        if path.is_file() and path.resolve() not in ignored_paths
     }
 
 

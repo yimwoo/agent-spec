@@ -1,23 +1,23 @@
 {
   "schema": "agentspec.project_handoff.v0",
-  "updated_at": "2026-06-15T08:14:08Z",
+  "updated_at": "2026-06-23T03:20:44Z",
   "root": ".",
   "last_completed_task": {
-    "id": "T-166",
-    "context_pack": "agent/context-packs/T-166-suppress-stale-historical-workflow-link-lifecycle-warnings.md",
-    "title": "T-166: Suppress stale historical workflow-link lifecycle warnings",
-    "run_id": "complete-t-166-suppress-stale-historical-workflow-link-lifecycle-warnings-20260615081408291190",
-    "reason": "Marked complete by user.",
-    "updated_at": "2026-06-15T08:14:08Z",
+    "id": "T-167",
+    "context_pack": "agent/context-packs/T-167-bound-ignored-path-checks-during-finish-status-refresh.md",
+    "title": "T-167: Bound ignored path checks during finish status refresh",
+    "run_id": "complete-t-167-bound-ignored-path-checks-during-finish-status-refresh-20260623032044066618",
+    "reason": "Finished by user.",
+    "updated_at": "2026-06-23T03:20:44Z",
     "verification": {
       "status": "passed"
     },
     "code_review": {
-      "id": "REVIEW-0123",
+      "id": "REVIEW-0126",
       "verdict": "ready",
       "reviewer": "human",
       "range": "worktree",
-      "path": "agent/reviews/REVIEW-0123.yml"
+      "path": "agent/reviews/REVIEW-0126.yml"
     }
   },
   "current_state": {
@@ -60,6 +60,6 @@
   "artifacts": {
     "task_ledger": "agent/task-ledger.yml",
     "handoff": "agent/handoff.yml",
-    "last_code_review": "agent/reviews/REVIEW-0123.yml"
+    "last_code_review": "agent/reviews/REVIEW-0126.yml"
   }
 }

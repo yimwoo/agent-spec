@@ -1,9 +1,11 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
@@ -439,6 +441,40 @@ current_stage: planning
             self.assertEqual(roadmap_blocker["repair"], "aspec roadmap")
             self.assertFalse((root / "agent" / "task-ledger.yml").exists())
             self.assertFalse((root / "agent" / "runs" / "finish-t013" / "state.yml").exists())
+
+    def test_finish_completes_when_git_ignore_check_times_out(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            _write_review(root, "REVIEW-0005", "agent/context-packs/T-013-task.md", "ready")
+
+            original_run = subprocess.run
+
+            def check_ignore_timeout(command: list[str], *args: object, **kwargs: object) -> subprocess.CompletedProcess:
+                if command[:4] == ["git", "-C", str(root), "check-ignore"]:
+                    raise subprocess.TimeoutExpired(command, timeout=kwargs.get("timeout"))
+                return original_run(command, *args, **kwargs)
+
+            with patch("agentspec.paths.subprocess.run") as run:
+                run.side_effect = check_ignore_timeout
+
+                payload = _run_json(
+                    root,
+                    [
+                        "finish",
+                        "T-013",
+                        "--run-id",
+                        "finish-t013-timeout",
+                        "--test-status",
+                        "passed",
+                        "--review",
+                        "REVIEW-0005",
+                        "--json",
+                    ],
+                )
+
+            self.assertTrue(payload["completed"])
+            self.assertEqual(payload["run_id"], "finish-t013-timeout")
 
 
 def _run_json(root: Path, argv: list[str]) -> dict:

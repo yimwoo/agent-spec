@@ -5,7 +5,7 @@ from typing import Any
 
 from .config import merged_runtime_config
 from .io import load_data, utc_now_iso
-from .paths import is_untracked_git_ignored
+from .paths import is_untracked_git_ignored, untracked_git_ignored_paths
 from .roadmap import ROADMAP_PATH, check_roadmap
 
 
@@ -157,7 +157,6 @@ def update_roadmap(root: Path) -> Path:
     refreshed = refresh_project_handoff(root, project_status=build_project_status(root))
     if refreshed is not None:
         path = write_roadmap(root)
-        refresh_project_handoff(root, project_status=build_project_status(root))
     return path
 
 
@@ -308,14 +307,10 @@ def finish_task(
     from .workflow import mark_linked_workflow_complete
 
     workflow = mark_linked_workflow_complete(root, str(projection["context_pack"]))
-    roadmap_path = update_roadmap(root)
     from .status import build_project_status
 
-    # Completion writes handoff before roadmap. Refresh both projections until
-    # status can see the post-roadmap handoff rather than the stale preflight one.
-    for _ in range(2):
-        update_handoff(root, state, build_project_status(root))
-        roadmap_path = update_roadmap(root)
+    update_handoff(root, state, build_project_status(root))
+    roadmap_path = update_roadmap(root)
     verification = verify_writeback(root, state)
     return {
         "schema": FINISH_RESULT_SCHEMA,
@@ -852,19 +847,23 @@ def _completed_task_entries(root: Path) -> list[tuple[str, dict[str, Any]]]:
     tasks = ledger.get("tasks") if isinstance(ledger, dict) else {}
     if not isinstance(tasks, dict):
         return []
+    context_pack_paths = [root / context_pack for context_pack in tasks if isinstance(context_pack, str)]
+    ignored_paths = untracked_git_ignored_paths(root, context_pack_paths)
     entries: list[tuple[str, dict[str, Any]]] = []
     for context_pack, entry in sorted(tasks.items()):
-        if _is_ignored_context_pack_residue(root, context_pack):
+        if _is_ignored_context_pack_residue(root, context_pack, ignored_paths=ignored_paths):
             continue
         if isinstance(context_pack, str) and isinstance(entry, dict) and entry.get("status") == "complete":
             entries.append((context_pack, entry))
     return entries
 
 
-def _is_ignored_context_pack_residue(root: Path, context_pack: str) -> bool:
+def _is_ignored_context_pack_residue(root: Path, context_pack: str, *, ignored_paths: set[Path] | None = None) -> bool:
     if not isinstance(context_pack, str) or not context_pack:
         return False
     path = root / context_pack
+    if ignored_paths is not None:
+        return path.resolve() in ignored_paths
     return is_untracked_git_ignored(root, path)
 
 

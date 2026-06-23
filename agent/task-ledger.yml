@@ -2277,6 +2277,23 @@
         "path": "agent/reviews/REVIEW-0123.yml"
       },
       "updated_at": "2026-06-15T08:14:08Z"
+    },
+    "agent/context-packs/T-167-bound-ignored-path-checks-during-finish-status-refresh.md": {
+      "status": "complete",
+      "run_id": "complete-t-167-bound-ignored-path-checks-during-finish-status-refresh-20260623032044066618",
+      "reason": "Finished by user.",
+      "verification": {
+        "status": "passed"
+      },
+      "code_review": {
+        "id": "REVIEW-0126",
+        "verdict": "ready",
+        "summary": "No blocking findings. Bounded and batched Git probes used by finish status refresh, cached repeated session worktree status checks, removed redundant finish status rebuilds, and verified focused regression coverage.",
+        "reviewer": "human",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0126.yml"
+      },
+      "updated_at": "2026-06-23T03:20:44Z"
     }
   }
 }

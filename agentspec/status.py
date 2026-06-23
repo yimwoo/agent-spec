@@ -16,7 +16,7 @@ from .io import load_data
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
-from .paths import is_untracked_git_ignored, path_matches_pattern
+from .paths import is_untracked_git_ignored, path_matches_pattern, untracked_git_ignored_paths
 from .run import RESEARCH_ALLOWED_PATHS, RESEARCH_CONTEXT_PACK_SENTINEL
 from .session import build_session_preflight, build_session_status
 from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
@@ -439,12 +439,16 @@ def _load_runs(root: Path) -> list[dict[str, Any]]:
     if not runs_dir.is_dir():
         return []
 
+    run_dirs = sorted(path for path in runs_dir.iterdir() if path.is_dir())
+    run_record_paths = [run_dir / name for run_dir in run_dirs for name in ("state.yml", "summary.yml")]
+    ignored_paths = untracked_git_ignored_paths(root, run_record_paths)
+
     records: list[dict[str, Any]] = []
-    for run_dir in sorted(path for path in runs_dir.iterdir() if path.is_dir()):
+    for run_dir in run_dirs:
         state_path = run_dir / "state.yml"
         summary_path = run_dir / "summary.yml"
-        state = {} if is_untracked_git_ignored(root, state_path) else _load_optional_dict(state_path)
-        summary = {} if is_untracked_git_ignored(root, summary_path) else _load_optional_dict(summary_path)
+        state = {} if state_path.resolve() in ignored_paths else _load_optional_dict(state_path)
+        summary = {} if summary_path.resolve() in ignored_paths else _load_optional_dict(summary_path)
         source = "state" if state else "summary" if summary else None
         data = state or summary
         if not data:

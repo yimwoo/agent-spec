@@ -14,7 +14,7 @@ from .archetype import (
 )
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
-from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary
+from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary, untracked_git_ignored_paths
 from .policy import can_emit_source_body, source_body_redaction
 from .workflow import parse_workflow_file
 
@@ -144,9 +144,11 @@ def list_task_context_packs(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
+    pack_paths = sorted((root / "agent" / "context-packs").glob("T-*.md"))
+    ignored_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, pack_paths)
     records: list[dict[str, Any]] = []
-    for path in sorted((root / "agent" / "context-packs").glob("T-*.md")):
-        if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+    for path in pack_paths:
+        if path.resolve() in ignored_paths:
             continue
         record = _parse_context_pack_record(root, path, requirements, run_status_by_pack, ledger_status_by_pack)
         if task_type and record.get("type") != task_type:
@@ -383,8 +385,10 @@ def _run_status_by_context_pack(
     runs_dir = root / "agent" / "runs"
     if not runs_dir.is_dir():
         return statuses
-    for state_path in sorted(runs_dir.glob("*/state.yml")):
-        if not include_untracked_gitignored and is_untracked_git_ignored(root, state_path):
+    state_paths = sorted(runs_dir.glob("*/state.yml"))
+    ignored_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, state_paths)
+    for state_path in state_paths:
+        if state_path.resolve() in ignored_paths:
             continue
         state = load_data(state_path)
         if not isinstance(state, dict):

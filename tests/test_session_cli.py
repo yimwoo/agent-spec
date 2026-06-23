@@ -267,6 +267,30 @@ class SessionCliTests(unittest.TestCase):
                 ["worktree_status_unavailable"],
             )
 
+    def test_session_status_blocks_cleanup_when_worktree_status_times_out(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/timeout")
+            pack = _write_pack(root, "T-018-timeout.md")
+            _write_task_closure(root, pack, "REVIEW-0001")
+            _finish_cleanup_session(root, worktree, "S-timeout", task="T-018", disposition="merge")
+
+            original_run = subprocess.run
+            worktree_root = str(worktree.resolve())
+
+            def status_timeout(command: list[str], *args: object, **kwargs: object) -> subprocess.CompletedProcess:
+                if command == ["git", "-C", worktree_root, "status", "--porcelain"]:
+                    raise subprocess.TimeoutExpired(command, timeout=kwargs.get("timeout"))
+                return original_run(command, *args, **kwargs)
+
+            with patch.object(session_module.subprocess, "run", side_effect=status_timeout):
+                list_payload = _run_json(root, ["session", "list", "--json"])
+
+            eligibility = list_payload["archived"][0]["cleanup_eligibility"]
+
+            self.assertFalse(eligibility["eligible"])
+            self.assertEqual(eligibility["status"], "blocked")
+            self.assertIn("worktree:worktree_status_unavailable", eligibility["reasons"])
+
     def test_session_status_blocks_cleanup_for_released_session(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root, worktree = _seed_cleanup_git_repo(Path(temp_dir), "feature/release")

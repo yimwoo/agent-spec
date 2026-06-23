@@ -45,6 +45,8 @@ ARTIFACT_DIRS = [
     ".github/workflows",
 ]
 
+_GIT_CHECK_IGNORE_TIMEOUT_SECONDS = 2.0
+
 
 def project_root(path: str | Path = ".") -> Path:
     return Path(path).resolve()
@@ -67,21 +69,47 @@ def is_untracked_git_ignored(root: Path, path: Path) -> bool:
     report tracked paths unless `--no-index` is used.
     """
 
+    return path.resolve() in untracked_git_ignored_paths(root, [path])
+
+
+def untracked_git_ignored_paths(root: Path, paths: list[Path]) -> set[Path]:
+    """Return project-local paths that Git ignores and does not track."""
+
     root = root.resolve()
-    try:
-        rel_path = path.resolve().relative_to(root).as_posix()
-    except ValueError:
-        return False
+    rel_paths: list[str] = []
+    resolved_by_rel_path: dict[str, Path] = {}
+    for path in paths:
+        try:
+            resolved = path.resolve()
+            rel_path = resolved.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        rel_paths.append(rel_path)
+        resolved_by_rel_path[rel_path] = resolved
+    if not rel_paths:
+        return set()
+
     try:
         result = subprocess.run(
-            ["git", "-C", str(root), "check-ignore", "-q", "--", rel_path],
-            stdout=subprocess.DEVNULL,
+            ["git", "-C", str(root), "check-ignore", "--stdin"],
+            input="\n".join(rel_paths) + "\n",
+            stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=False,
+            text=True,
+            timeout=_GIT_CHECK_IGNORE_TIMEOUT_SECONDS,
         )
-    except OSError:
-        return False
-    return result.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return set()
+    if result.returncode not in {0, 1}:
+        return set()
+    ignored: set[Path] = set()
+    for line in result.stdout.splitlines():
+        rel_path = line.strip()
+        resolved = resolved_by_rel_path.get(rel_path)
+        if resolved is not None:
+            ignored.add(resolved)
+    return ignored
 
 
 def next_numbered_id(prefix: str, existing_ids: list[str]) -> str:
