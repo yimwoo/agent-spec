@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T22:19:06Z",
+  "updated_at": "2026-06-29T23:29:09Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -403,6 +403,43 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0141.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-181-update-public-readme-documentation-for-v0-1-42.md": {
+      "task_id": "T-181",
+      "context_pack": "agent/context-packs/T-181-update-public-readme-documentation-for-v0-1-42.md",
+      "status": "complete",
+      "run_id": "complete-t-181-update-public-readme-documentation-for-v0-1-42-20260629232909610395",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T23:29:09Z",
+      "requirements": [
+        "R-215",
+        "R-216",
+        "R-217",
+        "R-218",
+        "R-219",
+        "R-220"
+      ],
+      "completion_reason": "Updated all tracked README files for R-215 through R-220 and removed only ignored generated clutter.",
+      "code_review": {
+        "id": "REVIEW-0142",
+        "verdict": "ready",
+        "summary": "No blocking findings. All four tracked README files now pin stable installs, describe provider-native hooks and fallback enforcement accurately, distinguish task evidence from outcome readiness, document controlled evaluations and package-wide checks, and the cleanup removed only ignored generated artifacts.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0142.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0142",
+          "verdict": "ready",
+          "summary": "No blocking findings. All four tracked README files now pin stable installs, describe provider-native hooks and fallback enforcement accurately, distinguish task evidence from outcome readiness, document controlled evaluations and package-wide checks, and the cleanup removed only ignored generated artifacts.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0142.yml"
         }
       ]
     }

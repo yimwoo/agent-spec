@@ -1,6 +1,6 @@
 # AgentSpec
 
-> **A persistent, repo-local operating contract that guides AI coding agents — Codex, Claude Code, and more — across the whole software lifecycle: design → planning → governed execution → verification → review → handoff.**
+> **A persistent, repo-local operating contract that guides AI coding agents — Codex, Claude Code, and more — across the whole software lifecycle: design → planning → governed execution → verification → review → outcome evidence → handoff.**
 
 [![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-2563EB?style=flat-square)](pyproject.toml)
@@ -10,7 +10,9 @@ AgentSpec turns your design docs into a **governed, file-based operating
 contract** for AI coding agents. The contract lives in your repo — accepted
 requirements, scoped tasks, allowed file paths, iteration limits, verification
 commands, and review evidence — all version-controlled. **No external service
-or database is required.**
+or database is required for the AgentSpec core.** Optional adapters can submit
+facts from browsers, CI, observability, deployment, and release systems without
+giving those systems authority to declare an outcome ready.
 
 AgentSpec **actively governs every lifecycle boundary**: it supplies the task,
 allowed paths, verification expectations, review requirements, and durable
@@ -28,8 +30,8 @@ from chat history.
         Provider-native workflow  (AgentSpec task + policy + evidence boundary)
                                 │
                                 ▼
-                    Verify  →  Review  →  Handoff
-                    (all evidence written back to the repo)
+              Verify  →  Review  →  Finish  →  Outcome readiness
+              (policy and evidence written back to the repo)
 ```
 
 ---
@@ -42,6 +44,7 @@ AI coding agents are powerful, but the day-to-day pain is familiar:
 - **Scope creep** — the agent helpfully refactors a file you didn't ask it to.
 - **No paper trail** — you can't tell whether tests actually ran, what was reviewed, or what the next person should pick up.
 - **Drift** — the design doc says one thing, the code does another, and nobody notices until production.
+- **False finishes** — a task is marked complete even though the browser journey, API contract, deployment, or service objective is still broken.
 
 AgentSpec fixes this by keeping the operating contract — *what is canonical,
 what is in scope, what counts as verified, how many iterations remain* —
@@ -158,6 +161,18 @@ it supplies the governance contract while Codex Goal/workflow or Claude
 still honor the task pack, session lease, allowed paths, verification, review,
 and finish write-back.
 
+Enforcement is layered deliberately:
+
+1. **Trusted provider hooks** can evaluate session state, policy, scope
+   expansion, stop verification, and finish evidence before or after native
+   tool events. Hooks must be supported, enabled, and trusted in the host.
+2. **AgentSpec lifecycle commands** enforce session, verification, review, and
+   finish requirements regardless of which agent performed the implementation.
+3. **The generic runner fallback** validates structured package/result
+   boundaries when provider-native execution is unavailable.
+4. **The host sandbox and permissions** remain the hard process boundary;
+   AgentSpec never auto-approves a tool call or replaces OS isolation.
+
 When the host cannot provide that workflow, AgentSpec exposes a portable
 **generic fallback**:
 
@@ -187,10 +202,11 @@ What the agent receives in a **task context pack** is itself a contract:
 - **Tests to add or update** — verification targets.
 - **Acceptance criteria** — definition of done.
 
-The result: scope creep is caught at the next step boundary, not after the
-PR is filed. Iteration limits prevent runaway loops. Verification is
-required before finish. The contract survives session boundaries because
-it lives in the repo, not in the model's context window.
+The result: trusted hooks can reject an out-of-scope action before execution,
+while the generic fallback catches violations at its next result boundary.
+Iteration limits prevent runaway loops. Verification and review are required
+before finish. The contract survives session boundaries because it lives in
+the repo, not in the model's context window.
 
 ---
 
@@ -205,7 +221,8 @@ flowchart LR
   E --> F["Verify<br/>(tests + checks)"]
   F --> G["Review<br/>(evidence recorded)"]
   G --> H["Finish<br/>(ledger + handoff + roadmap)"]
-  H -.->|next task| C
+  H --> I["Outcome readiness<br/>(browser + SLO + API + deploy + release)"]
+  I -.->|next task| C
 ```
 
 AgentSpec defines **10 native lifecycle stages**: brainstorm, design, plan,
@@ -224,19 +241,71 @@ source/spec → planning → governed execution → governance — see
 
 Plugin install does **not** touch your project. Files appear only after
 `aspec init` + `aspec emit`, which create `AGENTS.md`, `CLAUDE.md`,
-`.agentspec/`, `agent/` (context packs, workflows, runs, reviews, ledger,
-handoff), `docs/` (source, spec, traceability, ADRs, DCRs, ROADMAP), and
-`reports/`. See the full tree in
+`.agentspec/`, `agent/` (context-pack and workflow templates, roles,
+session/run directories, outcome definitions, and maturity defaults), `docs/`
+(source, spec, traceability, ADR, DCR, and discovery scaffolding), and
+`reports/`. Planning and execution later add task packs, reviews, the task
+ledger, handoff, and `docs/ROADMAP.md`; hooks, outcome adapters, and controlled
+evaluations add `agent/hook-evidence/`, `agent/outcome-evidence/`,
+`agent/evals/`, and `reports/eval/`. See the full tree in
 [docs/GETTING_STARTED.md#files-added-to-target-repositories](docs/GETTING_STARTED.md#files-added-to-target-repositories).
 
 ---
 
 ## Core concepts
 
-The key terms — source snapshot, requirement, DCR, task context pack,
-workflow, execution strategy, runner fallback, handoff, review evidence — are
-defined in the glossary at
-[docs/GETTING_STARTED.md#mental-model](docs/GETTING_STARTED.md#mental-model).
+The core task terms — source snapshot, requirement, DCR, task context pack,
+workflow, execution strategy, runner fallback, handoff, and review evidence —
+are defined in the
+[mental model](docs/GETTING_STARTED.md#mental-model). Outcome gates,
+observations, verdicts, and controlled evaluations are introduced below and
+specified in their linked guide sections.
+
+---
+
+## Outcome verification: prove the product, not just the task
+
+Task completion proves that bounded implementation work passed its declared
+checks and review. It does not prove that a user journey works or a deployment
+is healthy. AgentSpec models those claims separately in `agent/outcomes.yml`
+with typed `command`, `browser_ui`, `slo`, `api_compatibility`, `deployment`,
+and `release` checks.
+
+External adapters submit timestamped observations with provenance; they cannot
+submit `passed`, `status`, or `verdict`. AgentSpec evaluates the policy and
+writes the current verdict projection:
+
+```bash
+aspec outcome observe --input-file ./browser-observation.json --json
+aspec outcome verify --json
+aspec outcome --json
+```
+
+Definitions, observations, and verdicts remain separate so a model self-report
+or completed task cannot silently become production-readiness evidence. See
+[Outcome Verification](docs/GETTING_STARTED.md#outcome-verification) for the
+evidence contract and examples.
+
+## Controlled evaluations: measure whether AgentSpec helps
+
+AgentSpec can compare the same fixed tasks with and without its governance
+across Codex and Claude. Versioned experiment manifests pin the task, oracle,
+model, environment, limits, and replicate. Immutable run evidence records
+completion, regressions, retries, human interventions, tokens, cost, duration,
+review findings, and escaped defects.
+
+```bash
+aspec eval validate agent/evals/EXP-lifecycle-001/manifest.yml --json
+aspec eval record agent/evals/EXP-lifecycle-001/manifest.yml \
+  --input-file ./run-evidence.json --json
+aspec eval report agent/evals/EXP-lifecycle-001/manifest.yml --json
+```
+
+AgentSpec does not launch the providers for these experiments. Each cell runs
+through the provider's normal workflow and security controls; AgentSpec records
+and compares only compatible evidence. Missing data is reported as limited,
+not converted into a favorable result. See
+[Controlled Agent Evaluations](docs/GETTING_STARTED.md#controlled-agent-evaluations).
 
 ---
 
@@ -246,7 +315,7 @@ AgentSpec is a contract and a harness, not a guarantee. Out of scope:
 
 - **It does not replace code review.** It records review evidence and gates finish on it; humans (or other agents) still judge correctness.
 - **It does not guarantee correctness.** Verification gates run the tests you define — they don't know what you forgot to test.
-- **It does not sandbox the agent at the OS level.** Allowed-path policies are *enforced at each step boundary* (touched paths are validated and a runaway agent will be halted), but AgentSpec cannot prevent the agent process from writing to a forbidden path between steps. Pair it with OS-level sandboxing if you need hard isolation.
+- **It does not sandbox the agent at the OS level.** Trusted native hooks can deny an out-of-scope request before a matching tool executes, and the fallback runner validates result boundaries, but AgentSpec does not control arbitrary agent processes. Pair it with host or OS sandboxing for hard isolation.
 - **It does not host project data.** All state lives in your repo's files. No external service, account, or database is required or used.
 
 ### Security and data handling
@@ -263,12 +332,14 @@ DCRs and external imports before promoting them to accepted source.
 
 - **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** — full human guide:
   exact CLI sequences, control-plane and execution architecture, importing
-  changing sources, provider-native workflows, fallback runners, recovery commands.
+  changing sources, provider-native workflows, fallback runners, native hooks,
+  outcome verification, controlled evaluations, and recovery commands.
 - **[docs/release/README.md](docs/release/README.md)** — public completion,
   verification, review evidence, private-state cleanup, and release checks.
-- **[agentspec/](agentspec/)** — CLI source: `run.py` (generic fallback loop),
-  `runner.py` (runner packages), `policy.py` (path + iteration gates),
-  `task.py` (context pack rendering), `lifecycle.py` (10 native stages).
+- **[agentspec/](agentspec/)** — CLI source: `run.py` and `runner.py` (generic
+  fallback), `policy.py` and `hooks.py` (lifecycle enforcement), `outcome.py`
+  (typed product evidence), `eval.py` (controlled comparisons), `task.py`
+  (context packs), and `lifecycle.py` (10 native stages).
 - **[agentspec-codex-plugin/](agentspec-codex-plugin/)** — Codex adapter.
 - **[agentspec-claude-plugin/](agentspec-claude-plugin/)** — Claude Code adapter.
 
@@ -280,7 +351,14 @@ DCRs and external imports before promoting them to accepted source.
 git clone https://github.com/yimwoo/agent-spec.git
 cd agent-spec
 pip install -e .
-python -m unittest discover -s tests -v
+python -m pip install "build>=1.2,<2" "mypy>=1.10,<2" \
+  "pylint>=3,<4" "pytest>=8,<9" "twine>=6,<7"
+python -m pytest -q
+python -m compileall -q agentspec tests
+python -m mypy
+python -m pylint agentspec
+python -m build
+python -m twine check dist/*
 ```
 
 Or run the CLI without installing console scripts:
@@ -298,4 +376,4 @@ full license text.
 
 ---
 
-**Keywords:** AI coding agent · spec-driven development · agent operating contract · agent execution harness · Codex plugin · Claude Code plugin · agent governance · repo-local memory · supervised AI agent · iteration-bounded agent · LLM development workflow · AI pair programming · agent control plane
+**Keywords:** AI coding agent · spec-driven development · agent operating contract · agent execution harness · Codex plugin · Claude Code plugin · agent governance · repo-local memory · lifecycle hooks · outcome verification · agent evaluation · supervised AI agent · iteration-bounded agent · LLM development workflow · AI pair programming · agent control plane

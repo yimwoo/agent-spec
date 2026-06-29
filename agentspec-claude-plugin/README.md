@@ -1,28 +1,38 @@
 # AgentSpec For Claude Code
 
-This plugin gives Claude Code the `/aspec:*` skills for initializing and
-continuing AgentSpec-governed repositories. The plugin is a thin adapter:
-Claude Code follows the packaged skills, but the `aspec` CLI remains the source
-of truth.
+This plugin gives Claude Code the `/aspec:*` skills for initializing,
+designing, planning, continuing, finishing, and auditing outcomes in
+AgentSpec-governed repositories. The plugin is a thin adapter: Claude Code
+follows the packaged skills, but the `aspec` CLI remains the source of truth.
 
-The plugin package contains only the Claude plugin manifest, this README,
-public `skills/`, and non-public controller/worker/reviewer guidance; it does
-not include the AgentSpec engine repository's private `agent/`, `reports/`,
-`.codex/`, `.claude/`, `.agentspec/`, or generated design/traceability docs.
+The plugin package contains the Claude plugin manifest, this README, public
+`skills/`, non-public controller/worker/reviewer guidance,
+`hooks/hooks.json`, and the packaged skill manifest. It does not include the
+AgentSpec engine repository's private `agent/`, `reports/`, `.codex/`,
+`.claude/`, `.agentspec/`, or generated design/traceability docs.
 
 ## Install First
 
-Marketplace install inside Claude Code:
+Install the matching stable CLI:
+
+```bash
+python3 -m pip install \
+  "git+https://github.com/yimwoo/agent-spec.git@v0.1.42"
+aspec --help
+```
+
+Then install the plugin inside Claude Code:
 
 ```text
 /plugin marketplace add yimwoo/agent-spec
 /plugin install aspec@agentspec
 ```
 
-Then make sure the CLI is available:
+For development against the current checkout, use an editable CLI explicitly
+instead of the stable pin:
 
 ```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
+python3 -m pip install -e .
 ```
 
 Claude Code exposes plugin skills with the plugin namespace, so
@@ -63,6 +73,16 @@ diff it against the accepted source, summarize the impact, and prepare the next
 task pack. Ask before promoting accepted source.
 ```
 
+To audit whether completed work is ready for users or production:
+
+```text
+/aspec:outcome-audit
+
+Inspect the configured product outcomes, required gates, observation freshness,
+policy verdicts, blockers, and repair actions. Do not treat task completion or
+a model self-report as outcome evidence.
+```
+
 Claude Code should report requirement IDs, task pack path, allowed paths,
 verification result, review ID, branch/worktree disposition, and
 handoff/roadmap status.
@@ -92,17 +112,31 @@ your-project/
 |-- .codex/agents/
 |-- .claude/agents/
 |-- .claude/skills/
-|-- agent/context-packs/
-|-- agent/roles/
-|-- agent/runs/
-|-- agent/workflows/
-|-- docs/source/
-|-- docs/traceability/
-`-- reports/
+|-- agent/
+|   |-- context-packs/
+|   |-- roles/
+|   |-- runs/
+|   |-- sessions/
+|   |-- workflows/
+|   |-- outcomes.yml
+|   `-- maturity.yml
+|-- docs/
+|   |-- source/
+|   |-- spec/
+|   |-- traceability/
+|   |-- discovery/
+|   |-- adr/
+|   `-- change-requests/
+`-- reports/{drift,doctor,traceability,eval,quality,dogfood}/
 ```
 
-Task ledgers, handoff records, review evidence, and `docs/ROADMAP.md` appear
-as AgentSpec plans, runs, reviews, and finishes work.
+Task ledgers, handoff records, review evidence under `agent/reviews/`, and
+`docs/ROADMAP.md` appear as AgentSpec plans, runs, reviews, and finishes work.
+Later lifecycle activity also creates evidence under `agent/hook-evidence/`,
+`agent/outcome-evidence/`, `agent/evals/`, and `reports/eval/`. Raw runtime
+state may be ignored according to the target repository's policy; durable
+contract and evidence artifacts should be committed when that policy requires
+them.
 
 ## Initialize a repository
 
@@ -212,9 +246,14 @@ The plugin bundles `hooks/hooks.json` for pre-tool policy and scope checks,
 stop verification, and finish-evidence capture. Each handler delegates to
 `python3 -m agentspec.cli hook evaluate`; no policy logic is duplicated in the
 plugin. Review and trust the hook definition through Claude Code's native hook
-and settings controls. An AgentSpec allow decision never auto-approves the
-tool call, so Claude sandbox, permissions, and managed policy remain
-authoritative. Evidence is written to `agent/hook-evidence/events.jsonl`.
+and settings controls after installing or upgrading the plugin. If bundled
+hooks are disabled or unavailable in the active Claude Code runtime, the
+skills and CLI still work, but pre-tool and Stop enforcement are not active
+until equivalent hooks are enabled.
+
+An AgentSpec allow decision never auto-approves the tool call, so Claude
+sandbox, permissions, and managed policy remain authoritative. Evidence is
+written to `agent/hook-evidence/events.jsonl`.
 
 ## Boundaries
 

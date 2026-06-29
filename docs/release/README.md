@@ -1,9 +1,15 @@
 # Release Evidence
 
 AgentSpec can keep task runtime state under `agent/` private while publishing a
-small, reviewable completion record in `docs/release/evidence.yml`. The public
-artifact preserves release, verification, and code-review evidence after local
-task ledgers, context packs, reviews, runs, and sessions are cleaned up.
+small, reviewable task-completion record in `docs/release/evidence.yml`. The
+public artifact preserves completion, verification, and code-review evidence
+used by release checks after local task ledgers, context packs, reviews, runs,
+and sessions are cleaned up.
+
+This projection does **not** by itself prove that a product or release is ready.
+It proves that scoped tasks completed with their recorded test and review
+status. Product outcome readiness is evaluated separately from typed,
+time-bounded evidence as described below.
 
 ## When Evidence Is Written
 
@@ -39,6 +45,22 @@ verification status is `passed`.
 The file is a projection, not an editable approval mechanism. Produce or update
 it through task completion and code-review commands so private and public
 evidence remain consistent.
+
+## Relationship To Outcome Readiness
+
+Task evidence and outcome evidence answer different questions:
+
+- `docs/release/evidence.yml` records whether bounded implementation tasks were
+  completed, verified, and reviewed.
+- `agent/outcomes.yml` defines user-visible and operational readiness gates.
+- `agent/outcome-evidence/observations/` stores timestamped facts submitted by
+  browser, SLO, API compatibility, deployment, release, or command adapters.
+- `agent/outcome-evidence/verdicts/latest.yml` stores the current AgentSpec
+  policy verdict projection produced by `aspec outcome verify`.
+
+External adapters cannot declare a gate passed, and task completion is not
+accepted as a substitute for product-outcome evidence. A release process may
+require both a passing public task projection and ready outcome gates.
 
 ## Private-State Cleanup
 
