@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:23:09Z",
+  "updated_at": "2026-06-29T21:36:10Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -241,6 +241,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0137.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-176-add-provider-native-lifecycle-hook-adapters.md": {
+      "task_id": "T-176",
+      "context_pack": "agent/context-packs/T-176-add-provider-native-lifecycle-hook-adapters.md",
+      "status": "complete",
+      "run_id": "complete-t-176-add-provider-native-lifecycle-hook-adapters-20260629213610826163",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:36:10Z",
+      "requirements": [
+        "R-218"
+      ],
+      "completion_reason": "Completed R-218 with provider-native pre-execution policy, scope-expansion decisions, stop verification, and finish evidence adapters.",
+      "code_review": {
+        "id": "REVIEW-0138",
+        "verdict": "ready",
+        "summary": "Native Codex and Claude lifecycle hook adapters share AgentSpec policy, preserve host permission authority, fail closed for malformed blocking input, and record auditable finish/stop evidence. Verified by 580 tests, mypy, compileall, and pylint 10.00/10.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0138.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0138",
+          "verdict": "ready",
+          "summary": "Native Codex and Claude lifecycle hook adapters share AgentSpec policy, preserve host permission authority, fail closed for malformed blocking input, and record auditable finish/stop evidence. Verified by 580 tests, mypy, compileall, and pylint 10.00/10.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0138.yml"
         }
       ]
     }

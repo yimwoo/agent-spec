@@ -376,6 +376,37 @@ aspec --root "$TARGET" run result <run-id> \
 
 `aspec run loop` and `aspec run exec` remain supported for compatibility.
 
+## Native Lifecycle Hooks
+
+The Codex and Claude plugins bundle thin native hooks that call one shared
+AgentSpec policy surface:
+
+```bash
+python3 -m agentspec.cli hook evaluate \
+  --provider codex \
+  --event pre-execution \
+  --native
+```
+
+Native hook JSON is read from stdin. The provider-neutral request, decision,
+and evidence schemas cover:
+
+- pre-execution session and policy checks;
+- scope-expansion decisions for paths outside the active task pack;
+- stop verification against task, test, review, and finish evidence; and
+- post-tool finish evidence with provider and native-session provenance.
+
+Every evaluation is appended to `agent/hook-evidence/events.jsonl`. Malformed
+blocking input fails closed. An AgentSpec `allow` result intentionally omits
+native auto-approval, so Codex/Claude sandbox, permission, hook trust, and
+managed policy remain authoritative. Review and trust installed hooks using
+the host's native hook controls before relying on them.
+
+Stop verification is advisory unless the native payload declares
+`completion_requested: true`. For automation that treats every Stop as a
+completion attempt, set `AGENTSPEC_HOOK_ENFORCE_STOP=1`; the recursion guard
+still allows a second Stop event to prevent an endless hook loop.
+
 The controller owns durable state. Plugin skills and external agents are thin
 adapters that read the task pack, do the bounded work, and report results back
 to AgentSpec.

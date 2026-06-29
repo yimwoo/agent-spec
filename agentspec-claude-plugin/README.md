@@ -206,10 +206,20 @@ roadmap, and handoff recovery live under `controller/` and are invoked by the
 public entrypoints or by the AgentSpec CLI fallback commands listed in
 `manifests/skill-manifest.json`.
 
+## Lifecycle hooks
+
+The plugin bundles `hooks/hooks.json` for pre-tool policy and scope checks,
+stop verification, and finish-evidence capture. Each handler delegates to
+`python3 -m agentspec.cli hook evaluate`; no policy logic is duplicated in the
+plugin. Review and trust the hook definition through Claude Code's native hook
+and settings controls. An AgentSpec allow decision never auto-approves the
+tool call, so Claude sandbox, permissions, and managed policy remain
+authoritative. Evidence is written to `agent/hook-evidence/events.jsonl`.
+
 ## Boundaries
 
 The plugin is a thin adapter. It does not fetch Confluence or Jira directly,
 store connector credentials, or replace AgentSpec CLI governance. It does not
-own source parsing, diffing, promotion, or accepted snapshots. It also does not
-ship MCP, hook, or agent configuration until those entries can call implemented
+own source parsing, diffing, promotion, or accepted snapshots. It does not ship
+an MCP server or independent policy engine; its hooks call implemented
 AgentSpec core surfaces.
