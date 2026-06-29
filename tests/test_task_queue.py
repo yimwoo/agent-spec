@@ -102,6 +102,123 @@ class TaskQueueTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(output.getvalue().strip(), "agent/context-packs/T-001-oldest-ready.md")
 
+    def test_cli_task_selection_excludes_ignored_local_residue_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [
+                    {"id": "R-001", "status": "accepted", "priority": "P0"},
+                    {"id": "R-999", "status": "accepted", "priority": "P0"},
+                ],
+            )
+            _write_pack(
+                root / "agent" / "context-packs" / "T-001-tracked.md",
+                "T-001",
+                "Tracked",
+                "implementation",
+                "R-001",
+            )
+            subprocess.run(
+                ["git", "add", "-f", "agent/context-packs/T-001-tracked.md"],
+                cwd=root,
+                check=True,
+            )
+            _write_pack(
+                root / "agent" / "context-packs" / "T-999-ignored.md",
+                "T-999",
+                "Ignored residue",
+                "implementation",
+                "R-999",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "list", "--json"])
+            self.assertEqual(code, 0)
+            self.assertEqual([record["id"] for record in json.loads(output.getvalue())], ["T-001"])
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--json"])
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads(output.getvalue())["id"], "T-001")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "next",
+                        "--include-ignored-local",
+                        "--json",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads(output.getvalue())["id"], "T-999")
+
+    def test_cli_task_selection_honors_public_completion_without_private_ledger(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-001", "status": "accepted", "priority": "P0"}],
+            )
+            _write_pack(
+                root / "agent" / "context-packs" / "T-001-tracked.md",
+                "T-001",
+                "Tracked",
+                "implementation",
+                "R-001",
+            )
+            subprocess.run(
+                ["git", "add", "-f", "agent/context-packs/T-001-tracked.md"],
+                cwd=root,
+                check=True,
+            )
+            write_data(
+                root / "docs" / "release" / "evidence.yml",
+                {
+                    "schema": "agentspec.release_evidence.v0",
+                    "updated_at": "2026-06-29T00:00:00Z",
+                    "tasks": {
+                        "agent/context-packs/T-001-tracked.md": {
+                            "task_id": "T-001",
+                            "context_pack": "agent/context-packs/T-001-tracked.md",
+                            "status": "complete",
+                            "run_id": "complete-t001",
+                            "requirements": ["R-001"],
+                            "verification": {"status": "passed"},
+                            "updated_at": "2026-06-29T00:00:00Z",
+                        }
+                    },
+                },
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "list", "--json"])
+            self.assertEqual(code, 0)
+            records = json.loads(output.getvalue())
+            self.assertEqual(records[0]["status"], "complete")
+            self.assertEqual(records[0]["status_source"], "evidence")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--json"])
+            self.assertEqual(code, 1)
+            self.assertIsNone(json.loads(output.getvalue())["task"])
+
     def test_cli_task_next_json_includes_session_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

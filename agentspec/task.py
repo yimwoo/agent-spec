@@ -13,8 +13,9 @@ from .archetype import (
     validate_path_provenance,
 )
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
+from .evidence import PRIVATE_TASK_LEDGER_PATH, load_task_evidence, task_evidence_sources
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
-from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary, untracked_git_ignored_paths
+from .paths import slugify, truncate_on_word_boundary, untracked_git_ignored_paths
 from .policy import can_emit_source_body, source_body_redaction
 from .workflow import parse_workflow_file
 
@@ -140,7 +141,7 @@ def list_task_context_packs(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
-    ledger_status_by_pack = _ledger_status_by_context_pack(
+    evidence_status_by_pack = _task_evidence_status_by_context_pack(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
@@ -150,7 +151,7 @@ def list_task_context_packs(
     for path in pack_paths:
         if path.resolve() in ignored_paths:
             continue
-        record = _parse_context_pack_record(root, path, requirements, run_status_by_pack, ledger_status_by_pack)
+        record = _parse_context_pack_record(root, path, requirements, run_status_by_pack, evidence_status_by_pack)
         if task_type and record.get("type") != task_type:
             continue
         if status and record.get("status") != status:
@@ -164,7 +165,7 @@ def next_task_context_pack(
     *,
     task_type: str | None = None,
     order: str = "newest",
-    include_untracked_gitignored: bool = True,
+    include_untracked_gitignored: bool = False,
 ) -> dict[str, Any] | None:
     """Return the next ready task context pack, if one exists."""
 
@@ -313,7 +314,7 @@ def _parse_context_pack_record(
     path: Path,
     requirements: dict[str, dict[str, Any]],
     run_status_by_pack: dict[str, dict[str, Any]],
-    ledger_status_by_pack: dict[str, dict[str, Any]],
+    evidence_status_by_pack: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     rel = str(path.relative_to(root))
@@ -333,7 +334,7 @@ def _parse_context_pack_record(
         }
         for requirement_id in requirement_ids
     ]
-    status_overlay = _select_status_overlay(run_status_by_pack.get(rel), ledger_status_by_pack.get(rel))
+    status_overlay = _select_status_overlay(run_status_by_pack.get(rel), evidence_status_by_pack.get(rel))
     status = status_overlay["status"] if status_overlay else "ready"
     return {
         "id": task_id,
@@ -409,50 +410,51 @@ def _run_status_by_context_pack(
     return statuses
 
 
-def _ledger_status_by_context_pack(
+def _task_evidence_status_by_context_pack(
     root: Path,
     *,
     include_untracked_gitignored: bool = True,
 ) -> dict[str, dict[str, Any]]:
-    if not include_untracked_gitignored and is_untracked_git_ignored(root, _task_ledger_path(root)):
-        return {}
-    ledger = load_task_ledger(root)
-    tasks = ledger.get("tasks", {})
-    if not isinstance(tasks, dict):
-        raise ValueError("agent/task-ledger.yml must contain a tasks object.")
-
     statuses: dict[str, dict[str, Any]] = {}
+    tasks = load_task_evidence(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
     for context_pack, entry in tasks.items():
-        if not isinstance(context_pack, str) or not isinstance(entry, dict):
-            continue
         status = entry.get("status", "unknown")
         run_id = entry.get("run_id")
         suffix = f" via run {run_id}" if run_id else ""
+        sources = task_evidence_sources(entry)
+        is_private = PRIVATE_TASK_LEDGER_PATH.as_posix() in sources
         statuses[context_pack] = {
             "status": status,
-            "reason": f"Task ledger marks {context_pack} {status}{suffix}.",
+            "reason": (
+                f"Task ledger marks {context_pack} {status}{suffix}."
+                if is_private
+                else f"Task evidence marks {context_pack} {status}{suffix}."
+            ),
             "updated_at": entry.get("updated_at", ""),
-            "source": "ledger",
+            "source": "ledger" if is_private else "evidence",
         }
     return statuses
 
 
 def _select_status_overlay(
     run_status: dict[str, Any] | None,
-    ledger_status: dict[str, Any] | None,
+    evidence_status: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
     if run_status is None:
-        return ledger_status
-    if ledger_status is None:
+        return evidence_status
+    if evidence_status is None:
         return run_status
     if (
-        ledger_status.get("status") == "complete"
+        evidence_status.get("status") == "complete"
         and run_status.get("status") == "aborted"
     ):
-        return ledger_status
-    if str(run_status.get("updated_at", "")) >= str(ledger_status.get("updated_at", "")):
+        return evidence_status
+    if str(run_status.get("updated_at", "")) >= str(evidence_status.get("updated_at", "")):
         return run_status
-    return ledger_status
+    return evidence_status
 
 
 def _normalize_context_pack_path(root: Path, context_pack: str) -> str:

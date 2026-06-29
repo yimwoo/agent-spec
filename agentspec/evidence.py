@@ -12,6 +12,7 @@ from .paths import is_untracked_git_ignored
 
 PUBLIC_RELEASE_EVIDENCE_SCHEMA = "agentspec.release_evidence.v0"
 PUBLIC_RELEASE_EVIDENCE_PATH = Path("docs/release/evidence.yml")
+PRIVATE_TASK_LEDGER_PATH = Path("agent/task-ledger.yml")
 ALLOWED_PUBLIC_VERIFICATION_STATUSES = frozenset({"failed", "not_run", "passed"})
 ALLOWED_PUBLIC_REVIEW_VERDICTS = frozenset({"not-ready", "ready", "ready-with-warnings"})
 PASSING_PUBLIC_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
@@ -60,7 +61,7 @@ def write_public_release_evidence(root: Path, completion: dict[str, Any]) -> dic
     path = root / PUBLIC_RELEASE_EVIDENCE_PATH
     tasks = load_public_release_tasks(root)
 
-    entry = _completion_entry(context_pack, completion)
+    entry = _completion_entry(root, context_pack, completion)
     entry = _merge_review_history(tasks.get(context_pack), entry)
     tasks[context_pack] = entry
     payload = {
@@ -91,6 +92,49 @@ def load_public_release_tasks(root: Path) -> dict[str, dict[str, Any]]:
         if _valid_public_task_entry(context_pack, entry):
             validated[context_pack] = entry
     return validated
+
+
+def load_task_evidence(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Load the authoritative merged task-evidence projection.
+
+    Args:
+        root: AgentSpec project root.
+        include_untracked_gitignored: Include private ledger residue that Git
+            ignores. This diagnostic-only option defaults to ``False`` so
+            clean-checkout and active-worktree projections agree.
+
+    Returns:
+        Task records keyed by context-pack path. Valid private ledger fields
+        take precedence over public release fields, except that a newer public
+        review remains authoritative for review metadata.
+    """
+
+    root = root.resolve()
+    public_tasks = {
+        context_pack: {
+            **entry,
+            "_evidence_sources": [PUBLIC_RELEASE_EVIDENCE_PATH.as_posix()],
+        }
+        for context_pack, entry in load_public_release_tasks(root).items()
+    }
+    private_tasks = _load_private_task_evidence(
+        root,
+        include_untracked_gitignored=include_untracked_gitignored,
+    )
+    return _merge_task_evidence(public_tasks, private_tasks)
+
+
+def task_evidence_sources(entry: dict[str, Any]) -> list[str]:
+    """Return stable repository paths that contributed to a task record."""
+
+    sources = entry.get("_evidence_sources")
+    if not isinstance(sources, list):
+        return []
+    return [source for source in sources if isinstance(source, str) and source]
 
 
 def write_public_release_review(root: Path, review: dict[str, Any]) -> dict[str, Any] | None:
@@ -148,7 +192,11 @@ def public_release_evidence_path() -> str:
     return PUBLIC_RELEASE_EVIDENCE_PATH.as_posix()
 
 
-def _completion_entry(context_pack: str, completion: dict[str, Any]) -> dict[str, Any]:
+def _completion_entry(
+    root: Path,
+    context_pack: str,
+    completion: dict[str, Any],
+) -> dict[str, Any]:
     raw_verification = completion.get("verification")
     verification: dict[str, Any] = raw_verification if isinstance(raw_verification, dict) else {}
     raw_code_review = completion.get("code_review")
@@ -161,6 +209,9 @@ def _completion_entry(context_pack: str, completion: dict[str, Any]) -> dict[str
         "verification": {"status": str(verification.get("status") or completion.get("test_status") or "not_run")},
         "updated_at": str(completion.get("updated_at") or utc_now_iso()),
     }
+    requirements = _completion_requirement_ids(root, context_pack, completion)
+    if requirements:
+        entry["requirements"] = requirements
     reason = completion.get("completion_reason") or completion.get("reason")
     if reason:
         entry["completion_reason"] = str(reason)
@@ -235,7 +286,120 @@ def _valid_public_task_entry(context_pack: Any, entry: Any) -> bool:
             return False
         if current is not None and (not reviews or reviews[-1].get("id") != current.get("id")):
             return False
+    requirements = entry.get("requirements")
+    if requirements is not None and (
+        not isinstance(requirements, list)
+        or not all(
+            isinstance(value, str) and re.fullmatch(r"R-\d{3,}", value)
+            for value in requirements
+        )
+    ):
+        return False
     return True
+
+
+def _load_private_task_evidence(
+    root: Path,
+    *,
+    include_untracked_gitignored: bool,
+) -> dict[str, dict[str, Any]]:
+    path = root / PRIVATE_TASK_LEDGER_PATH
+    if not include_untracked_gitignored and is_untracked_git_ignored(root, path):
+        return {}
+    data = load_data(path, {})
+    if not isinstance(data, dict):
+        return {}
+    tasks = data.get("tasks")
+    if not isinstance(tasks, dict):
+        return {}
+
+    validated: dict[str, dict[str, Any]] = {}
+    for context_pack, entry in tasks.items():
+        if not isinstance(context_pack, str) or not isinstance(entry, dict):
+            continue
+        status = entry.get("status")
+        if not isinstance(status, str) or not status:
+            continue
+        validated[context_pack] = {
+            **entry,
+            "task_id": _task_id_from_context_pack(context_pack),
+            "context_pack": context_pack,
+            "_evidence_sources": [PRIVATE_TASK_LEDGER_PATH.as_posix()],
+        }
+    return validated
+
+
+def _merge_task_evidence(
+    public_tasks: dict[str, dict[str, Any]],
+    private_tasks: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    merged = {context_pack: dict(entry) for context_pack, entry in public_tasks.items()}
+    for context_pack, private_entry in private_tasks.items():
+        public_entry = public_tasks.get(context_pack)
+        if public_entry is None:
+            merged[context_pack] = dict(private_entry)
+            continue
+        combined = {**public_entry, **private_entry}
+        if _public_review_is_newer(public_entry, private_entry):
+            for key in ("code_review", "reviews", "review_updated_at"):
+                if key in public_entry:
+                    combined[key] = public_entry[key]
+        combined["_evidence_sources"] = sorted(
+            set(task_evidence_sources(public_entry) + task_evidence_sources(private_entry))
+        )
+        merged[context_pack] = combined
+    return merged
+
+
+def _public_review_is_newer(
+    public_entry: dict[str, Any],
+    private_entry: dict[str, Any],
+) -> bool:
+    public_review = public_entry.get("code_review")
+    if not isinstance(public_review, dict):
+        return False
+    public_updated = str(public_entry.get("review_updated_at") or public_entry.get("updated_at") or "")
+    private_updated = str(private_entry.get("review_updated_at") or private_entry.get("updated_at") or "")
+    return bool(public_updated) and public_updated > private_updated
+
+
+def _completion_requirement_ids(
+    root: Path,
+    context_pack: str,
+    completion: dict[str, Any],
+) -> list[str]:
+    raw = completion.get("requirements")
+    identifiers: list[str] = []
+    if isinstance(raw, list):
+        for value in raw:
+            candidate = value.get("id") if isinstance(value, dict) else value
+            if isinstance(candidate, str) and re.fullmatch(r"R-\d{3,}", candidate):
+                identifiers.append(candidate)
+    if identifiers:
+        return sorted(set(identifiers))
+
+    path = root / context_pack
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    section = _markdown_section(text, "Requirements")
+    return sorted(set(re.findall(r"\bR-\d{3,}\b", section)))
+
+
+def _markdown_section(text: str, heading: str) -> str:
+    lines = text.splitlines()
+    collected: list[str] = []
+    in_section = False
+    for line in lines:
+        if line.strip().lower() == f"## {heading}".lower():
+            in_section = True
+            continue
+        if in_section and line.startswith("## "):
+            break
+        if in_section:
+            collected.append(line)
+    return "\n".join(collected)
 
 
 def _valid_review_summary(review: Any) -> bool:

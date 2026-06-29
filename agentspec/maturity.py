@@ -7,8 +7,8 @@ from typing import Any
 
 from .evidence import (
     PASSING_PUBLIC_REVIEW_VERDICTS,
-    load_public_release_tasks,
-    public_release_evidence_path,
+    load_task_evidence,
+    task_evidence_sources,
 )
 from .io import load_data, write_data
 
@@ -236,13 +236,10 @@ def _check_predicate(root: Path, check_id: str) -> tuple[bool, list[str]]:
     if check_id == "review_evidence":
         return _any_passed(
             _any_glob(root, "agent/reviews/REVIEW-*.yml"),
-            _public_release_tasks_have_code_review(root),
+            _task_evidence_has_code_review(root),
         )
     if check_id == "test_evidence":
-        return _any_passed(
-            _task_ledger_has_passed_verification(root),
-            _public_release_tasks_have_passed_verification(root),
-        )
+        return _task_evidence_has_passed_verification(root)
     if check_id == "drift_check":
         return _any_exists(root, ["reports/drift/latest.md", "docs/drift"])
     if check_id == "outcome_gates":
@@ -276,10 +273,7 @@ def _check_predicate(root: Path, check_id: str) -> tuple[bool, list[str]]:
             _any_context_pack_has(root, "Rollback"),
         )
     if check_id == "audit_record":
-        return _any_passed(
-            _exists(root, "agent/task-ledger.yml"),
-            _public_release_evidence_exists(root),
-        )
+        return _task_evidence_exists(root)
     if check_id == "ci_e2e_evidence":
         return _any_passed(
             _workflow_has_test_or_e2e_job(root),
@@ -373,45 +367,29 @@ def _any_context_pack_has(root: Path, marker: str) -> tuple[bool, list[str]]:
     return bool(evidence), evidence
 
 
-def _task_ledger_has_passed_verification(root: Path) -> tuple[bool, list[str]]:
-    path = root / "agent" / "task-ledger.yml"
-    data = load_data(path, {})
-    if not isinstance(data, dict):
-        return False, []
-    tasks = data.get("tasks")
-    if not isinstance(tasks, dict):
-        return False, []
-    for context_pack, entry in tasks.items():
-        if not isinstance(entry, dict):
-            continue
-        verification = entry.get("verification")
-        if isinstance(verification, dict) and verification.get("status") == "passed":
-            return True, ["agent/task-ledger.yml", str(context_pack)]
-    return False, []
-
-
-def _public_release_tasks_have_passed_verification(root: Path) -> tuple[bool, list[str]]:
-    evidence_path = public_release_evidence_path()
-    for context_pack, entry in load_public_release_tasks(root).items():
+def _task_evidence_has_passed_verification(root: Path) -> tuple[bool, list[str]]:
+    for context_pack, entry in load_task_evidence(root).items():
         raw_verification = entry.get("verification")
         verification: dict[str, Any] = raw_verification if isinstance(raw_verification, dict) else {}
         if verification.get("status") == "passed":
-            return True, [evidence_path, context_pack]
+            return True, [*task_evidence_sources(entry), context_pack]
     return False, []
 
 
-def _public_release_tasks_have_code_review(root: Path) -> tuple[bool, list[str]]:
-    evidence_path = public_release_evidence_path()
-    for context_pack, entry in load_public_release_tasks(root).items():
+def _task_evidence_has_code_review(root: Path) -> tuple[bool, list[str]]:
+    for context_pack, entry in load_task_evidence(root).items():
         review = entry.get("code_review")
         if isinstance(review, dict) and review.get("verdict") in PASSING_PUBLIC_REVIEW_VERDICTS:
-            return True, [evidence_path, context_pack]
+            return True, [*task_evidence_sources(entry), context_pack]
     return False, []
 
 
-def _public_release_evidence_exists(root: Path) -> tuple[bool, list[str]]:
-    exists = bool(load_public_release_tasks(root))
-    return exists, [public_release_evidence_path()] if exists else []
+def _task_evidence_exists(root: Path) -> tuple[bool, list[str]]:
+    tasks = load_task_evidence(root)
+    if not tasks:
+        return False, []
+    sources = sorted({source for entry in tasks.values() for source in task_evidence_sources(entry)})
+    return True, sources
 
 
 def _outcomes_configured(root: Path) -> tuple[bool, list[str]]:

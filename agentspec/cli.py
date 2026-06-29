@@ -322,10 +322,20 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     task_list = task_subparsers.add_parser("list", help="List task context packs.")
     task_list.add_argument("--type")
     task_list.add_argument("--status")
+    task_list.add_argument(
+        "--include-ignored-local",
+        action="store_true",
+        help="Include untracked task artifacts ignored by Git for diagnostics.",
+    )
     task_list.add_argument("--json", action="store_true")
     task_next = task_subparsers.add_parser("next", help="Print the next ready task context pack.")
     task_next.add_argument("--type")
     task_next.add_argument("--order", default="newest", choices=["oldest", "newest"])
+    task_next.add_argument(
+        "--include-ignored-local",
+        action="store_true",
+        help="Include untracked task artifacts ignored by Git for diagnostics.",
+    )
     task_next.add_argument("--json", action="store_true")
     task_complete = task_subparsers.add_parser("complete", help="Mark a context pack complete by writing run state.")
     task_complete.add_argument("selector", help="Task id (e.g. T-013) or context pack path.")
@@ -940,7 +950,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "task" and args.task_command == "list":
-            records = list_task_context_packs(root, task_type=args.type, status=args.status)
+            records = list_task_context_packs(
+                root,
+                task_type=args.type,
+                status=args.status,
+                include_untracked_gitignored=args.include_ignored_local,
+            )
             if args.json:
                 print(json.dumps(records, indent=2))
             else:
@@ -952,7 +967,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "task" and args.task_command == "next":
-            next_record = next_task_context_pack(root, task_type=args.type, order=args.order)
+            next_record = next_task_context_pack(
+                root,
+                task_type=args.type,
+                order=args.order,
+                include_untracked_gitignored=args.include_ignored_local,
+            )
             if next_record is None:
                 warnings = workflow_warning_lines(build_workflow_contract_status(root))
                 status_payload = build_project_status(root, recent_limit=0)

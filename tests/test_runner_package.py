@@ -23,6 +23,12 @@ class RunnerPackageTests(unittest.TestCase):
 
             self.assertEqual(package["schema"], "agentspec.runner_package.v0")
             self.assertEqual(package["runner"], "generic")
+            self.assertEqual(package["execution_strategy"]["mode"], "provider_neutral_bridge")
+            self.assertEqual(package["execution_strategy"]["fallback"], True)
+            self.assertEqual(
+                package["execution_strategy"]["stable_contract"],
+                ["aspec run package", "aspec run result"],
+            )
             self.assertEqual(package["next_action"], "continue_executor")
             self.assertTrue(package["should_execute"])
             self.assertEqual(package["execution"]["argv"], [])

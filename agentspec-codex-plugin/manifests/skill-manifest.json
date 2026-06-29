@@ -16,7 +16,7 @@
     {"id": "compile-spec", "public_entrypoint": "design-work", "fallback": "aspec compile"},
     {"id": "create-task", "public_entrypoint": "plan-workflow", "fallback": "aspec task create"},
     {"id": "start-branch", "public_entrypoint": "continue-work", "fallback": "aspec session start"},
-    {"id": "execute-workflow", "public_entrypoint": "continue-work", "fallback": "aspec run loop"},
+    {"id": "execute-workflow", "public_entrypoint": "continue-work", "fallback": "aspec run package --runner generic"},
     {"id": "delegate-work", "public_entrypoint": "continue-work", "fallback": "aspec run package"},
     {"id": "verify-work", "public_entrypoint": "finish-work", "fallback": "aspec outcome --json"},
     {"id": "review-code", "public_entrypoint": "finish-work", "fallback": "aspec review code"},
@@ -32,4 +32,3 @@
     {"id": "document-reviewer", "public_entrypoint": "review-doc", "delivery": "reviewer_profile", "path": "reviewers/profiles/document-reviewer.md"}
   ]
 }
-

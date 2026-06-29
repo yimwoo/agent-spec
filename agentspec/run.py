@@ -771,6 +771,11 @@ def loop_run(
 
     result: dict[str, Any] = {
         "run_id": run_id,
+        "execution_strategy": {
+            "mode": "agentspec_generic_fallback",
+            "preferred": False,
+            "compatibility": True,
+        },
         "selected_task": selected_task,
         "started": started,
         "state": state,

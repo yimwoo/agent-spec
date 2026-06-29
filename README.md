@@ -1,6 +1,6 @@
 # AgentSpec
 
-> **A persistent, repo-local operating contract that guides AI coding agents — Codex, Claude Code, and more — across the whole software lifecycle: design → planning → supervised execution → verification → review → handoff.**
+> **A persistent, repo-local operating contract that guides AI coding agents — Codex, Claude Code, and more — across the whole software lifecycle: design → planning → governed execution → verification → review → handoff.**
 
 [![Release](https://img.shields.io/github/v/release/yimwoo/agent-spec?color=2563EB&label=version&style=flat-square)](https://github.com/yimwoo/agent-spec/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-2563EB?style=flat-square)](pyproject.toml)
@@ -12,11 +12,12 @@ requirements, scoped tasks, allowed file paths, iteration limits, verification
 commands, and review evidence — all version-controlled. **No external service
 or database is required.**
 
-Unlike a passive control plane, AgentSpec **actively guides the agent at every
-step**: it packages the next instruction, the allowed paths, the iteration
-budget, and the verification expectations, hands them to Codex or Claude Code,
-then validates what came back before deciding what to do next. You can stop a
-project mid-flight, come back days later, and continue from the repo — not
+AgentSpec **actively governs every lifecycle boundary**: it supplies the task,
+allowed paths, verification expectations, review requirements, and durable
+finish evidence while Codex or Claude Code executes in its native workflow.
+For hosts without that capability, AgentSpec can package each instruction and
+validate structured results through its generic runner fallback. You can stop
+a project mid-flight, come back days later, and continue from the repo — not
 from chat history.
 
 ```text
@@ -24,7 +25,7 @@ from chat history.
                                                         │
                                 ┌───────────────────────┘
                                 ▼
-              Supervised run loop  (per step: prompt + allowed paths + budget)
+        Provider-native workflow  (AgentSpec task + policy + evidence boundary)
                                 │
                                 ▼
                     Verify  →  Review  →  Handoff
@@ -56,7 +57,7 @@ what is in scope, what counts as verified, how many iterations remain* —
 Stable release (recommended):
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.40"
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.41"
 ```
 
 Latest from main (dev):
@@ -82,12 +83,20 @@ turns natural-language requests into `aspec` invocations.
 <summary><b>Codex</b></summary>
 
 ```bash
-# Current installer. Clones/updates the Codex plugin source from main.
+# Stable installer. The script defaults to the release-pinned plugin v0.1.41.
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
-> Release-pinned plugin installation is planned; today the installer tracks
-> `main`. Pin the CLI separately with `@v0.1.40` (see step 1).
+The installer defaults to the release-pinned plugin `v0.1.41`, verifies it
+against an installed AgentSpec CLI, and stops with repair guidance if the
+versions differ. To test the development plugin intentionally, pass
+`--ref main`; use `--allow-version-mismatch` only for explicit compatibility
+testing.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh \
+  | bash -s -- --ref main
+```
 
 Then enable the plugin:
 
@@ -123,14 +132,14 @@ Open your repository, then prompt your agent.
 **Continue an existing project:**
 
 > Use AgentSpec to continue this repository. Read `AGENTS.md`, run project
-> status, pick the next ready task pack, run the supervised execution loop,
+> status, pick the next ready task pack, execute it in the host's native workflow,
 > record review evidence, finish the task, and refresh roadmap + handoff.
 
 Behind the scenes, the agent runs a CLI sequence like:
 
 ```text
 aspec init  →  aspec ingest  →  aspec compile  →  aspec task create
-            →  aspec plan    →  aspec run loop  ──► (agent executes)
+            →  aspec plan    →  session preflight  ──► (Codex/Claude executes natively)
             →  run the task pack's verification commands
             →  aspec review code  →  aspec finish
 ```
@@ -144,8 +153,13 @@ handoff/roadmap state.
 ## The operating contract: how AgentSpec guides execution
 
 AgentSpec is more than a wrapper around `before` and `after`. During a task,
-it runs a **supervised loop** — `aspec run loop` orchestrates step-by-step
-execution, and at every step it hands the agent a fresh contract:
+it supplies the governance contract while Codex Goal/workflow or Claude
+`/loop`/dynamic workflows own provider-native execution. The native agent must
+still honor the task pack, session lease, allowed paths, verification, review,
+and finish write-back.
+
+When the host cannot provide that workflow, AgentSpec exposes a portable
+**generic fallback**:
 
 1. **A runner package** (`aspec run package`) containing the next executor
    prompt, the active context pack, the iteration counter (e.g. *3 of 5*),
@@ -158,6 +172,10 @@ execution, and at every step it hands the agent a fresh contract:
    operations, credential leakage, missing tests.
 4. **AgentSpec decides** whether to continue (next runner package), halt
    (budget exhausted, policy violation), or hand off for review.
+
+`aspec run package` and `aspec run result` are the stable provider-neutral
+bridge. `aspec run loop` and `aspec run exec` remain compatible fallback
+commands; they are no longer the preferred execution path.
 
 What the agent receives in a **task context pack** is itself a contract:
 
@@ -183,7 +201,7 @@ flowchart LR
   A["Design intake<br/>(docs/source)"] --> B["Compile spec<br/>(requirements.yml)"]
   B --> C["Create task pack<br/>(bounded scope)"]
   C --> D["Plan workflow"]
-  D --> E["Supervised run loop<br/>(agent + AgentSpec)"]
+  D --> E["Provider-native execution<br/>(generic runner fallback)"]
   E --> F["Verify<br/>(tests + checks)"]
   F --> G["Review<br/>(evidence recorded)"]
   G --> H["Finish<br/>(ledger + handoff + roadmap)"]
@@ -197,7 +215,7 @@ The next session reads `agent/handoff.yml` and `agent/runs/` and continues
 from the right step.
 
 For the full **control-plane and execution architecture** — adapter → CLI →
-source/spec → planning → supervised run → governance — see
+source/spec → planning → governed execution → governance — see
 [docs/GETTING_STARTED.md#how-the-pieces-fit](docs/GETTING_STARTED.md#how-the-pieces-fit).
 
 ---
@@ -216,7 +234,7 @@ handoff), `docs/` (source, spec, traceability, ADRs, DCRs, ROADMAP), and
 ## Core concepts
 
 The key terms — source snapshot, requirement, DCR, task context pack,
-workflow, runner package, supervised run, handoff, review evidence — are
+workflow, execution strategy, runner fallback, handoff, review evidence — are
 defined in the glossary at
 [docs/GETTING_STARTED.md#mental-model](docs/GETTING_STARTED.md#mental-model).
 
@@ -245,10 +263,10 @@ DCRs and external imports before promoting them to accepted source.
 
 - **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** — full human guide:
   exact CLI sequences, control-plane and execution architecture, importing
-  changing sources, supervised run workflows, recovery commands.
+  changing sources, provider-native workflows, fallback runners, recovery commands.
 - **[docs/release/README.md](docs/release/README.md)** — public completion,
   verification, review evidence, private-state cleanup, and release checks.
-- **[agentspec/](agentspec/)** — CLI source: `run.py` (supervised loop),
+- **[agentspec/](agentspec/)** — CLI source: `run.py` (generic fallback loop),
   `runner.py` (runner packages), `policy.py` (path + iteration gates),
   `task.py` (context pack rendering), `lifecycle.py` (10 native stages).
 - **[agentspec-codex-plugin/](agentspec-codex-plugin/)** — Codex adapter.

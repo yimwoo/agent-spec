@@ -135,6 +135,11 @@ class PostArtifactGuidanceTests(unittest.TestCase):
             self.assertEqual(guidance["state"], "task_created_session_needed")
             self.assertEqual(guidance["next_actions"][0]["id"], "claim_session")
             self.assertIn("aspec session start --task T-001", guidance["next_actions"][0]["commands"][0])
+            self.assertEqual(guidance["artifact"]["execution_strategy"]["selected"]["mode"], "provider_native")
+            self.assertEqual(
+                guidance["artifact"]["execution_strategy"]["fallback"]["mode"],
+                "agentspec_generic_fallback",
+            )
             self.assertFalse(guidance["agent_display"]["show_terminal_commands"])
 
 

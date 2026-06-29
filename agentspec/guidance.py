@@ -228,11 +228,14 @@ def _design_guidance(root: Path, path: Path, rel_path: str) -> dict[str, Any]:
 
 
 def _task_context_pack_guidance(root: Path, path: Path, rel_path: str) -> dict[str, Any]:
+    from .lifecycle import build_execution_strategy
+
     record = _task_context_pack_record(root, rel_path) or _fallback_task_record(path, rel_path)
     task_id = str(record.get("id") or path.stem.split("-", 2)[0])
     title = str(record.get("title") or path.stem)
     workflow_plan = workflow_lifecycle_for_context_pack(root, rel_path)
     workflow_present = bool(workflow_plan.get("present"))
+    execution_strategy = build_execution_strategy(root)
 
     artifact = {
         "kind": "task_context_pack",
@@ -243,7 +246,9 @@ def _task_context_pack_guidance(root: Path, path: Path, rel_path: str) -> dict[s
         "type": record.get("type"),
         "workflow": record.get("workflow"),
         "workflow_plan": workflow_plan,
+        "execution_strategy": execution_strategy,
     }
+    next_actions: list[dict[str, Any]]
 
     if not workflow_present:
         state = "task_created_workflow_needed"
@@ -287,10 +292,18 @@ def _task_context_pack_guidance(root: Path, path: Path, rel_path: str) -> dict[s
             next_actions = [
                 {
                     "id": "start_execution",
-                    "label": "Start execution",
-                    "description": "Run the task through the planned workflow under the active session lease.",
-                    "prompt": f"Start execution for {task_id} under its workflow and active session lease.",
-                    "commands": [f"aspec run loop {rel_path}"],
+                    "label": "Continue provider-native execution",
+                    "description": (
+                        "Use the active host workflow inside the task and session boundary; "
+                        "fall back to AgentSpec runner packages only if needed."
+                    ),
+                    "prompt": (
+                        f"Continue {task_id} in the provider-native host workflow. Do not bypass its "
+                        "allowed paths, verification, review, or finish write-back."
+                    ),
+                    "commands": ["aspec run package --runner generic --json"],
+                    "execution_strategy": execution_strategy.get("selected"),
+                    "fallback_execution": execution_strategy.get("fallback"),
                 }
             ]
 

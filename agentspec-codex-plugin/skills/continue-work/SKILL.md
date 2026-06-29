@@ -19,13 +19,28 @@ aspec status --json
 aspec task next
 ```
 
-2. If a task is ready, start or resume the AgentSpec loop:
+2. If a task is ready, plan it and claim the governed session boundary:
 
 ```bash
 aspec plan <T-id>
 aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
-aspec run loop
 ```
+
+Prefer provider-native execution after preflight: use Codex Goal mode or the
+active Codex workflow to execute and iterate on the task directly. Keep the
+task pack, allowed paths, verification, review, and finish write-back as the
+AgentSpec boundary. Do not bypass those gates because Codex owns the execution
+loop.
+
+If provider-native execution is unavailable, use the generic fallback:
+
+```bash
+aspec run package --runner generic --json
+aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
+```
+
+`aspec run loop` and `aspec run exec` remain compatibility paths during the
+transition, not the preferred Codex workflow.
 
 For implementation work, the expected order is task pack -> workflow -> branch/worktree/session -> execution -> verification -> review -> finish.
 Claim or verify an active owner/patcher session lease before implementation execution.

@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
@@ -630,10 +631,123 @@ Originating DCR: `DCR-0001`
 
             status = build_project_status(root)
 
-            self.assertEqual(status["tasks"]["total"], 0)
+            self.assertEqual(status["tasks"]["total"], 1)
+            self.assertEqual(status["tasks"]["by_status"], {"complete": 1})
             self.assertEqual(status["requirements"]["uncovered_accepted_examples"], [])
             self.assertEqual(status["dcrs"]["covered_by_task"], 1)
             self.assertEqual(status["dcrs"]["ready_for_tasking"], 0)
+
+    def test_status_counts_public_completion_without_private_ledger(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Ready."},
+            )
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-201", "status": "accepted", "priority": "P1"}],
+            )
+            context_pack = root / "agent" / "context-packs" / "T-001-complete.md"
+            context_pack.write_text(
+                """# T-001: Complete
+
+Type: `implementation`
+
+## Requirements
+
+- `R-201` Requirement
+""",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["git", "add", "-f", "agent/context-packs/T-001-complete.md"],
+                cwd=root,
+                check=True,
+            )
+            write_data(
+                root / "docs" / "release" / "evidence.yml",
+                {
+                    "schema": "agentspec.release_evidence.v0",
+                    "updated_at": "2026-06-29T00:00:00Z",
+                    "tasks": {
+                        "agent/context-packs/T-001-complete.md": {
+                            "task_id": "T-001",
+                            "context_pack": "agent/context-packs/T-001-complete.md",
+                            "status": "complete",
+                            "run_id": "complete-t001",
+                            "requirements": ["R-201"],
+                            "verification": {"status": "passed"},
+                            "code_review": {"id": "REVIEW-0001", "verdict": "ready"},
+                            "updated_at": "2026-06-29T00:00:00Z",
+                        }
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["tasks"]["total"], 1)
+            self.assertEqual(status["tasks"]["by_status"], {"complete": 1})
+            self.assertEqual(status["tasks"]["ready"], [])
+            self.assertIsNone(status["tasks"]["next"])
+            self.assertEqual(status["requirements"]["uncovered_accepted_examples"], [])
+
+    def test_status_prefers_tracked_private_completion_over_older_public_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "agent").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation", "summary": "Ready."},
+            )
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            context_pack = "agent/context-packs/T-001-complete.md"
+            write_data(
+                root / "agent" / "task-ledger.yml",
+                {
+                    "schema": "agentspec.task_ledger.v0",
+                    "tasks": {
+                        context_pack: {
+                            "status": "complete",
+                            "run_id": "private-run",
+                            "verification": {"status": "passed"},
+                            "updated_at": "2026-06-30T00:00:00Z",
+                        }
+                    },
+                },
+            )
+            subprocess.run(["git", "add", "agent/task-ledger.yml"], cwd=root, check=True)
+            write_data(
+                root / "docs" / "release" / "evidence.yml",
+                {
+                    "schema": "agentspec.release_evidence.v0",
+                    "updated_at": "2026-06-29T00:00:00Z",
+                    "tasks": {
+                        context_pack: {
+                            "task_id": "T-001",
+                            "context_pack": context_pack,
+                            "status": "complete",
+                            "run_id": "public-run",
+                            "verification": {"status": "failed"},
+                            "updated_at": "2026-06-29T00:00:00Z",
+                        }
+                    },
+                },
+            )
+
+            status = build_project_status(root)
+
+            self.assertEqual(status["tasks"]["completed"][0]["run_id"], "private-run")
+            self.assertEqual(status["tasks"]["completed"][0]["verification"]["status"], "passed")
 
     def test_status_normalizes_context_pack_originating_dcr_headers(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -1038,11 +1152,40 @@ branch: codex/t-003-ready
 
             summary = status["lifecycle_summary"]
             self.assertEqual(summary["current_stage"], "task_ready")
+            self.assertEqual(status["execution"]["selected"]["mode"], "provider_native")
+            self.assertEqual(summary["execution"]["selected"]["provider"], "current-host")
+            self.assertEqual(
+                summary["recommended_next_action"]["label"],
+                "Continue in the provider-native host workflow.",
+            )
             self.assertEqual(summary["current_artifact"]["session_preflight"]["status"], "satisfied")
             self.assertEqual(
                 summary["current_artifact"]["session_preflight"]["active_session"]["session_id"],
                 "S-status-preflight",
             )
+
+    def test_status_reports_unavailable_host_capability_and_generic_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_ready_task_only(root)
+
+            with mock.patch.dict(
+                "os.environ",
+                {
+                    "AGENTSPEC_EXECUTION_PROVIDER": "claude",
+                    "AGENTSPEC_CLAUDE_NATIVE_EXECUTION": "0",
+                },
+                clear=False,
+            ):
+                status = build_project_status(root)
+
+            execution = status["execution"]
+            self.assertEqual(execution["selected"]["mode"], "agentspec_generic_fallback")
+            self.assertEqual(
+                execution["unavailable_capabilities"][0]["id"],
+                "claude_loop_or_dynamic_workflow",
+            )
+            self.assertIn("aspec run package", execution["fallback"]["commands"])
 
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:

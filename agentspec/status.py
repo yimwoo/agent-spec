@@ -10,16 +10,18 @@ from typing import Any
 
 from .config import load_project_config, merged_runtime_config
 from .dcr import list_dcrs
+from .evidence import load_task_evidence, task_evidence_sources
 from .errors import ERROR_SCHEMA
 from .handoff import load_project_handoff
 from .io import load_data
+from .lifecycle import build_execution_strategy
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
-from .paths import is_untracked_git_ignored, path_matches_pattern, untracked_git_ignored_paths
+from .paths import path_matches_pattern, untracked_git_ignored_paths
 from .run import RESEARCH_ALLOWED_PATHS, RESEARCH_CONTEXT_PACK_SENTINEL
 from .session import build_session_preflight, build_session_status
-from .task import list_task_context_packs, load_task_ledger, next_task_context_pack
+from .task import list_task_context_packs, next_task_context_pack
 from .workflow import build_workflow_contract_status, workflow_lifecycle_for_context_pack, workflow_warning_lines
 from .writeback import build_lifecycle_projection, lifecycle_warning_lines
 
@@ -68,12 +70,14 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     sessions = build_session_status(root)
     workflows = build_workflow_contract_status(root)
     agent_profiles = _agent_profile_status(root)
+    execution = build_execution_strategy(root)
 
     active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
     recent_runs = sorted(runs, key=lambda run: str(run.get("updated_at", "")), reverse=True)[:recent_limit]
-    completed_ledger_tasks = list(_completed_task_by_ledger(root).values())
-    coverage_tasks = [*tasks, *completed_ledger_tasks]
+    completed_evidence_tasks = list(_completed_task_by_evidence(root).values())
+    projected_tasks = _merge_status_task_records(tasks, completed_evidence_tasks)
+    coverage_tasks = projected_tasks
     covered_requirement_ids = _task_requirement_ids(root, coverage_tasks)
     requirement_dcr_ids = _requirement_originating_dcr_ids(requirements)
     covered_dcr_ids = _task_originating_dcr_ids(root, coverage_tasks, requirement_dcr_ids)
@@ -99,10 +103,11 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "ready_for_tasking_items": dcr_tasking["ready_for_tasking_items"],
     }
     task_counts = {
-        "total": len(tasks),
-        "by_status": _counts(record.get("status") for record in tasks),
-        "by_type": _counts(record.get("type") for record in tasks),
-        "ready": [record for record in tasks if record.get("status") == "ready"],
+        "total": len(projected_tasks),
+        "by_status": _counts(record.get("status") for record in projected_tasks),
+        "by_type": _counts(record.get("type") for record in projected_tasks),
+        "ready": [record for record in projected_tasks if record.get("status") == "ready"],
+        "completed": [record for record in projected_tasks if record.get("status") == "complete"],
         "next": next_task,
     }
     run_counts = {
@@ -153,6 +158,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "runs": run_counts,
         "sessions": sessions,
         "agent_profiles": agent_profiles,
+        "execution": execution,
         "workflows": workflows,
         "lifecycle": lifecycle,
     }
@@ -172,6 +178,9 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
     workflows = _dict_or_empty(status.get("workflows"))
     lifecycle = _dict_or_empty(status.get("lifecycle"))
     outcomes = _dict_or_empty(status.get("outcomes"))
+    execution = _dict_or_empty(status.get("execution"))
+    selected_execution = _dict_or_empty(execution.get("selected"))
+    fallback_execution = _dict_or_empty(execution.get("fallback"))
     next_task = tasks.get("next") if isinstance(tasks.get("next"), dict) else None
     attention_runs = _list_or_empty(runs.get("attention"))
     active_runs = _list_or_empty(runs.get("active"))
@@ -252,7 +261,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                 ),
                 "human_decision_required": False,
                 "reason": str(session_preflight.get("message") or "Implementation execution should have an active session lease."),
-                "commands": [command, f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
+                "commands": [command, "aspec status --json"],
                 "options": [
                     {
                         "label": "Claim an implementation session",
@@ -260,9 +269,14 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                         "commands": [command],
                     },
                     {
-                        "label": "Run after the session is active",
+                        "label": "Continue in the host workflow",
                         "when": "After the branch/worktree lease exists and matches the task.",
-                        "commands": [f"aspec run loop {path}" if path else "aspec task next"],
+                        "commands": [],
+                    },
+                    {
+                        "label": "Use the portable fallback",
+                        "when": "Only when provider-native execution is unavailable.",
+                        "commands": ["aspec run package --runner generic --json"],
                     },
                 ],
             }
@@ -279,12 +293,23 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                 }
             ]
         else:
-            action = {
-                "label": "Start the next ready task.",
-                "human_decision_required": False,
-                "reason": "A ready task context pack defines the scope, allowed paths, and verification expectations.",
-                "commands": [f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
-            }
+            if selected_execution.get("mode") == "provider_native":
+                action = {
+                    "label": "Continue in the provider-native host workflow.",
+                    "human_decision_required": False,
+                    "reason": (
+                        "The task pack and session lease define the AgentSpec boundary; the current host "
+                        "can execute and iterate natively inside that boundary."
+                    ),
+                    "commands": ["aspec status --json"],
+                }
+            else:
+                action = {
+                    "label": "Start the AgentSpec generic fallback.",
+                    "human_decision_required": False,
+                    "reason": "Provider-native execution is unavailable; use the portable package/result contract.",
+                    "commands": ["aspec run package --runner generic --json", "aspec status --json"],
+                }
     elif lifecycle.get("readiness") in {"blocked", "needs_attention"}:
         stage = "lifecycle_attention"
         findings = _lifecycle_findings(lifecycle)
@@ -324,6 +349,13 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             outcomes=outcomes,
         )
 
+    action["execution_strategy"] = (
+        fallback_execution
+        if stage in {"active_run", "attention_run"}
+        else selected_execution
+    )
+    action["fallback_execution"] = fallback_execution
+
     return {
         "schema": LIFECYCLE_SUMMARY_SCHEMA,
         "main_point": main_point,
@@ -336,6 +368,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             "score": outcomes.get("score"),
             "summary": outcomes.get("summary"),
         },
+        "execution": execution,
         "recommended_next_action": _with_agent_display(action),
         "blocked_by": blocked_by,
         "terms": _lifecycle_terms(),
@@ -488,7 +521,7 @@ def _classify_active_runs(
     active: list[dict[str, Any]] = []
     stale_active: list[dict[str, Any]] = []
     completed_by_pack = _completed_task_by_context_pack(tasks)
-    completed_by_pack.update(_completed_task_by_ledger(root))
+    completed_by_pack.update(_completed_task_by_evidence(root))
 
     for run in runs:
         if run.get("status") not in ACTIVE_RUN_STATUSES:
@@ -512,7 +545,7 @@ def _classify_attention_runs(
     attention: list[dict[str, Any]] = []
     stale_attention: list[dict[str, Any]] = []
     completed_by_pack = _completed_task_by_context_pack(tasks)
-    completed_by_pack.update(_completed_task_by_ledger(root))
+    completed_by_pack.update(_completed_task_by_evidence(root))
     completed_scopes = _completed_task_allowed_scopes(root, tasks)
 
     for run in runs:
@@ -540,17 +573,8 @@ def _completed_task_by_context_pack(tasks: list[dict[str, Any]]) -> dict[str, di
     return completed
 
 
-def _completed_task_by_ledger(root: Path) -> dict[str, dict[str, Any]]:
-    if is_untracked_git_ignored(root, root / "agent" / "task-ledger.yml"):
-        return {}
-    try:
-        ledger = load_task_ledger(root)
-    except ValueError:
-        return {}
-    tasks = ledger.get("tasks", {})
-    if not isinstance(tasks, dict):
-        return {}
-
+def _completed_task_by_evidence(root: Path) -> dict[str, dict[str, Any]]:
+    tasks = load_task_evidence(root)
     completed: dict[str, dict[str, Any]] = {}
     for context_pack, entry in tasks.items():
         if not isinstance(context_pack, str) or not isinstance(entry, dict):
@@ -558,15 +582,46 @@ def _completed_task_by_ledger(root: Path) -> dict[str, dict[str, Any]]:
         if entry.get("status") != "complete":
             continue
         completed[context_pack] = {
-            "id": _task_id_from_context_pack(context_pack),
+            "id": entry.get("task_id") or _task_id_from_context_pack(context_pack),
             "path": context_pack,
             "status": "complete",
-            "status_source": "ledger",
-            "status_reason": f"Task ledger marks {context_pack} complete.",
+            "status_source": "evidence",
+            "status_reason": f"Task evidence marks {context_pack} complete.",
             "run_id": entry.get("run_id"),
             "updated_at": entry.get("updated_at", ""),
+            "requirements": [
+                {"id": requirement_id}
+                for requirement_id in entry.get("requirements", [])
+                if isinstance(requirement_id, str)
+            ],
+            "verification": _dict_or_empty(entry.get("verification")),
+            "code_review": _dict_or_empty(entry.get("code_review")),
+            "evidence_sources": task_evidence_sources(entry),
         }
     return completed
+
+
+def _merge_status_task_records(
+    context_pack_tasks: list[dict[str, Any]],
+    completed_evidence_tasks: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    by_path = {
+        str(task.get("path")): dict(task)
+        for task in context_pack_tasks
+        if isinstance(task.get("path"), str)
+    }
+    for task in completed_evidence_tasks:
+        path = task.get("path")
+        if not isinstance(path, str):
+            continue
+        by_path[path] = {**by_path.get(path, {}), **task}
+    return sorted(by_path.values(), key=lambda task: int(task.get("sort_key") or _task_sort_key(task)))
+
+
+def _task_sort_key(task: dict[str, Any]) -> int:
+    task_id = str(task.get("id") or "")
+    match = re.fullmatch(r"T-(\d+)", task_id)
+    return int(match.group(1)) if match else 0
 
 
 def _task_id_from_context_pack(context_pack: str) -> str | None:
