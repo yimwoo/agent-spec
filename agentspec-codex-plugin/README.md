@@ -1,18 +1,28 @@
 # AgentSpec For Codex
 
-This plugin gives Codex the `aspec:*` skills for initializing and continuing
-AgentSpec-governed repositories. The plugin is a thin adapter: Codex follows
-the packaged skills, but the `aspec` CLI remains the source of truth.
+This plugin gives Codex the `aspec:*` skills for initializing, designing,
+planning, continuing, finishing, and auditing outcomes in AgentSpec-governed
+repositories. The plugin is a thin adapter: Codex follows the packaged skills,
+but the `aspec` CLI remains the source of truth.
 
-Install or load this directory as the plugin package. It contains only the
-Codex plugin manifest, this README, public `skills/`, and non-public
-controller/worker/reviewer guidance; it does not include the AgentSpec engine
-repository's private `agent/`, `reports/`, `.codex/`, `.claude/`,
-`.agentspec/`, or generated design/traceability docs.
+Install or load this directory as the plugin package. It contains the Codex
+plugin manifest, this README, public `skills/`, non-public
+controller/worker/reviewer guidance, `hooks/hooks.json`, and the packaged skill
+manifest. It does not include the AgentSpec engine repository's private
+`agent/`, `reports/`, `.codex/`, `.claude/`, `.agentspec/`, or generated
+design/traceability docs.
 
 ## Install First
 
-From the repository root:
+Install the matching stable CLI first:
+
+```bash
+python3 -m pip install \
+  "git+https://github.com/yimwoo/agent-spec.git@v0.1.42"
+aspec --help
+```
+
+Then register the release-pinned Codex plugin marketplace:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
@@ -28,19 +38,16 @@ codex
 
 In the CLI plugin browser, choose the local marketplace, open `aspec`, and
 select `Install plugin` or toggle it on. In the Codex app, restart Codex, open
-**Plugins > Local Plugins**, and install `aspec`.
-
-Then make sure the AgentSpec CLI is available:
-
-```bash
-python3 -m pip install "git+https://github.com/yimwoo/agent-spec.git"
-```
+**Plugins > Local Plugins**, and install `aspec`. Start a new thread after
+installing so Codex loads the current plugin bundle.
 
 For local development, load this plugin directory directly from your checkout
-and keep an editable CLI install active:
+and keep an editable CLI install active. Development installs intentionally
+follow the checkout instead of the stable version pin:
 
 ```bash
 pip install -e .
+bash install.sh --local
 ```
 
 ## Try This In Codex
@@ -75,6 +82,14 @@ the impact, and prepare the next task pack. Ask before promoting accepted
 source.
 ```
 
+To audit whether completed work is ready for users or production:
+
+```text
+Use aspec:outcome-audit to inspect the configured product outcomes, required
+gates, observation freshness, policy verdicts, blockers, and repair actions.
+Do not treat task completion or a model self-report as outcome evidence.
+```
+
 Codex should report requirement IDs, task pack path, allowed paths,
 verification result, review ID, branch/worktree disposition, and
 handoff/roadmap status.
@@ -104,17 +119,31 @@ your-project/
 |-- .codex/agents/
 |-- .claude/agents/
 |-- .claude/skills/
-|-- agent/context-packs/
-|-- agent/roles/
-|-- agent/runs/
-|-- agent/workflows/
-|-- docs/source/
-|-- docs/traceability/
-`-- reports/
+|-- agent/
+|   |-- context-packs/
+|   |-- roles/
+|   |-- runs/
+|   |-- sessions/
+|   |-- workflows/
+|   |-- outcomes.yml
+|   `-- maturity.yml
+|-- docs/
+|   |-- source/
+|   |-- spec/
+|   |-- traceability/
+|   |-- discovery/
+|   |-- adr/
+|   `-- change-requests/
+`-- reports/{drift,doctor,traceability,eval,quality,dogfood}/
 ```
 
-Task ledgers, handoff records, review evidence, and `docs/ROADMAP.md` appear
-as AgentSpec plans, runs, reviews, and finishes work.
+Task ledgers, handoff records, review evidence under `agent/reviews/`, and
+`docs/ROADMAP.md` appear as AgentSpec plans, runs, reviews, and finishes work.
+Later lifecycle activity also creates evidence under `agent/hook-evidence/`,
+`agent/outcome-evidence/`, `agent/evals/`, and `reports/eval/`. Raw runtime
+state may be ignored according to the target repository's policy; durable
+contract and evidence artifacts should be committed when that policy requires
+them.
 
 ## Initialize a repository
 
@@ -223,10 +252,19 @@ public entrypoints or by the AgentSpec CLI fallback commands listed in
 The plugin bundles `hooks/hooks.json` for pre-tool policy and scope checks,
 stop verification, and finish-evidence capture. Each handler delegates to
 `python3 -m agentspec.cli hook evaluate`; no policy logic is duplicated in the
-plugin. Use Codex `/hooks` to review and trust the hook definitions. An
-AgentSpec allow decision never auto-approves the tool call, so Codex sandbox,
-permissions, rules, and managed policy remain authoritative. Evidence is
-written to `agent/hook-evidence/events.jsonl`.
+plugin.
+
+Plugin-bundled hooks require a Codex runtime that supports lifecycle hooks from
+enabled plugins. After installing or upgrading, start a new thread or restart
+Codex, then use `/hooks` to confirm the AgentSpec hook source is loaded and to
+review and trust its exact definitions. If the runtime does not expose the
+bundled hooks, the AgentSpec skills and CLI still work, but pre-tool and Stop
+enforcement are not active until the runtime is upgraded or equivalent hooks
+are configured explicitly.
+
+An AgentSpec allow decision never auto-approves the tool call, so Codex
+sandbox, permissions, rules, and managed policy remain authoritative. Evidence
+is written to `agent/hook-evidence/events.jsonl`.
 
 ## Boundaries
 
