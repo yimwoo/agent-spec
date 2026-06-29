@@ -1,3 +1,5 @@
+"""Read-only project metrics derived from AgentSpec lifecycle artifacts."""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -39,6 +41,8 @@ def build_project_metrics(root: Path) -> dict[str, Any]:
 
 
 def format_project_metrics(metrics: dict[str, Any]) -> str:
+    """Format project metrics for terminal output."""
+
     readiness = metrics.get("readiness", {})
     requirements = metrics.get("requirements", {})
     dcrs = metrics.get("dcrs", {})

@@ -1,3 +1,5 @@
+"""Repository diagnostics for AgentSpec configuration and invariants."""
+
 from __future__ import annotations
 
 from pathlib import Path

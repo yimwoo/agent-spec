@@ -1,3 +1,5 @@
+"""Structured diagnostic logging configuration for AgentSpec commands."""
+
 from __future__ import annotations
 
 import json
@@ -17,6 +19,8 @@ _DISABLED_LEVEL = logging.CRITICAL + 1
 
 
 def get_logger() -> logging.Logger:
+    """Return the shared AgentSpec diagnostic logger."""
+
     return logging.getLogger(LOGGER_NAME)
 
 

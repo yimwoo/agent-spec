@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from .io import load_data, write_data, write_text
+from .io import write_text
 from .paths import is_untracked_git_ignored, slugify
 
 
@@ -41,6 +41,12 @@ class DCRSchemaError(ValueError):
 
 
 def parse_dcr(path: Path) -> dict[str, Any]:
+    """Parse and validate canonical metadata from one DCR document.
+
+    Raises:
+        DCRSchemaError: If required DCR structure or metadata is invalid.
+    """
+
     text = Path(path).read_text(encoding="utf-8")
     dcr_id = _extract_id(text, path)
     fields = _parse_metadata_table(text)
@@ -149,6 +155,8 @@ def _extract_classification(value: str) -> str:
 
 
 def next_dcr_id(root: Path) -> str:
+    """Return the next available zero-padded DCR identifier."""
+
     directory = Path(root) / "docs" / "change-requests"
     if not directory.is_dir():
         return "DCR-0001"
@@ -169,6 +177,8 @@ def create_dcr_stub(
     submitted_by: str = "user",
     decided_by: str = "user",
 ) -> Path:
+    """Create a classified DCR stub and return its repository path."""
+
     if classification not in ALLOWED_CLASSIFICATIONS:
         raise DCRSchemaError(
             f"Unknown classification {classification!r}. Allowed: {sorted(ALLOWED_CLASSIFICATIONS)}."
@@ -216,6 +226,8 @@ def create_dcr_stub(
 
 
 def set_classification(root: Path, dcr_id: str, new_classification: str) -> Path:
+    """Validate and update the classification row of an existing DCR."""
+
     if new_classification not in ALLOWED_CLASSIFICATIONS:
         raise DCRSchemaError(
             f"Unknown classification {new_classification!r}. Allowed: {sorted(ALLOWED_CLASSIFICATIONS)}."
@@ -275,6 +287,8 @@ def accept_dcr(root: Path, dcr_id: str) -> dict[str, Any]:
 
 
 def list_dcrs(root: Path, *, include_untracked_gitignored: bool = True) -> list[dict[str, Any]]:
+    """List valid DCR records, optionally excluding ignored private files."""
+
     directory = Path(root) / "docs" / "change-requests"
     if not directory.is_dir():
         return []

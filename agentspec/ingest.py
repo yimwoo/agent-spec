@@ -1,6 +1,9 @@
+"""Ingest Markdown or text sources into canonical AgentSpec snapshots."""
+
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, TypedDict
 
 from .init import init_project
 from .io import copy_text_file, load_data, read_text, sha256_text, utc_now_iso, write_data
@@ -8,7 +11,30 @@ from .markdown import document_title, sectionize_markdown
 from .paths import slugify
 
 
-def ingest_source(root: Path, source_path: Path, classification: str = "internal", storage_mode: str = "committed") -> dict[str, object]:
+class IngestResult(TypedDict):
+    """Source and section records produced by one ingest operation."""
+
+    source: dict[str, Any]
+    sections: list[dict[str, Any]]
+
+
+def ingest_source(root: Path, source_path: Path, classification: str = "internal", storage_mode: str = "committed") -> IngestResult:
+    """Ingest a source document and persist its source and section records.
+
+    Args:
+        root: AgentSpec project root.
+        source_path: Markdown or text document to ingest.
+        classification: Source sensitivity classification.
+        storage_mode: Policy-controlled source storage mode.
+
+    Returns:
+        The persisted source record and generated section records.
+
+    Raises:
+        FileNotFoundError: If the source document does not exist.
+        ValueError: If the source file type is unsupported.
+    """
+
     init_project(root)
     source_path = source_path.resolve()
     if not source_path.exists():

@@ -1,3 +1,5 @@
+"""Command-line parser and dispatcher for AgentSpec lifecycle operations."""
+
 from __future__ import annotations
 
 import argparse
@@ -99,6 +101,8 @@ def _default_prog() -> str:
 
 
 def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
+    """Build the complete AgentSpec command-line argument parser."""
+
     parser = argparse.ArgumentParser(
         prog=prog or _default_prog(),
         description="Compile design sources into agent-ready repository artifacts.",
@@ -511,6 +515,8 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None, prog: str | None = None) -> int:
+    """Parse arguments, dispatch one command, and return its process status."""
+
     parser = build_parser(prog=prog)
     args = parser.parse_args(argv)
     configure_diagnostics(os.environ)
@@ -530,15 +536,18 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "ingest":
-            result = ingest_source(root, Path(args.path), classification=args.classification, storage_mode=args.storage_mode)
-            print(f"Ingested {result['source']['uri']} as {result['source']['id']} with {len(result['sections'])} sections.")
+            ingest_result = ingest_source(root, Path(args.path), classification=args.classification, storage_mode=args.storage_mode)
+            print(
+                f"Ingested {ingest_result['source']['uri']} as {ingest_result['source']['id']} "
+                f"with {len(ingest_result['sections'])} sections."
+            )
             return 0
 
         if args.command == "intake":
             if args.intake_command == "import":
                 if not args.as_candidate:
                     raise ValueError("intake import requires --as-candidate.")
-                result = import_candidate(
+                import_result = import_candidate(
                     root,
                     Path(args.path),
                     kind=args.kind,
@@ -547,40 +556,40 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     storage_mode=args.storage_mode,
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(import_result, indent=2))
                 else:
-                    print(f"Imported {result['source_key']} as candidate {result['snapshot_id']}.")
+                    print(f"Imported {import_result['source_key']} as candidate {import_result['snapshot_id']}.")
                 return 0
             if args.intake_command == "diff":
-                result = diff_candidate(root, args.snapshot_id, baseline=args.baseline)
+                diff_result = diff_candidate(root, args.snapshot_id, baseline=args.baseline)
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(diff_result, indent=2))
                 else:
-                    print(format_diff_report(result))
+                    print(format_diff_report(diff_result))
                 return 0
             if args.intake_command == "promote":
-                result = promote_candidate(
+                promotion_result = promote_candidate(
                     root,
                     args.snapshot_id,
                     decision=args.decision,
                     run_compile=args.compile,
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(promotion_result, indent=2))
                 else:
                     print(
-                        f"Promoted {result['snapshot_id']} as accepted source "
-                        f"{result['accepted_source']['id']}."
+                        f"Promoted {promotion_result['snapshot_id']} as accepted source "
+                        f"{promotion_result['accepted_source']['id']}."
                     )
-                    if not result["compile"]["ran"]:
-                        print(f"Next: {result['compile']['command']}")
+                    if not promotion_result["compile"]["ran"]:
+                        print(f"Next: {promotion_result['compile']['command']}")
                 return 0
             parser.print_help()
             return 0
 
         if args.command == "source":
             if args.source_command == "add":
-                result = add_source_record(
+                source_add_result = add_source_record(
                     root,
                     source_key=args.source_key,
                     remote_uri=args.remote_uri,
@@ -590,47 +599,47 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     poll_cadence=args.poll_cadence,
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(source_add_result, indent=2))
                 else:
                     print(
-                        f"{result['action'].title()} source "
-                        f"{result['record']['source_key']} -> {result['record']['remote_uri']}."
+                        f"{source_add_result['action'].title()} source "
+                        f"{source_add_result['record']['source_key']} -> {source_add_result['record']['remote_uri']}."
                     )
                 return 0
             if args.source_command == "list":
-                result = list_source_records(root)
+                source_list_result = list_source_records(root)
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(source_list_result, indent=2))
                 else:
-                    print(format_source_list(result))
+                    print(format_source_list(source_list_result))
                 return 0
             if args.source_command == "check":
                 if args.all_sources and args.source_key:
                     raise ValueError("source check accepts either <source-key> or --all, not both.")
                 if not args.all_sources and not args.source_key:
                     raise ValueError("source check requires <source-key> or --all.")
-                result = check_registered_sources(
+                source_check_result = check_registered_sources(
                     root,
                     source_key=args.source_key,
                     all_sources=args.all_sources,
                     as_candidate=args.as_candidate,
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(source_check_result, indent=2))
                 else:
-                    print(format_source_check(result))
-                return source_check_exit_code(result)
+                    print(format_source_check(source_check_result))
+                return source_check_exit_code(source_check_result)
             parser.print_help()
             return 0
 
         if args.command == "compile":
-            result = compile_project(root)
+            compile_result = compile_project(root)
             print(
                 "Compiled "
-                f"{len(result['spec_shards'])} spec shards, "
-                f"{len(result['requirements'])} requirements, "
-                f"{len(result['open_questions'])} open questions. "
-                f"Readiness: {result['readiness']['score']}/100."
+                f"{len(compile_result['spec_shards'])} spec shards, "
+                f"{len(compile_result['requirements'])} requirements, "
+                f"{len(compile_result['open_questions'])} open questions. "
+                f"Readiness: {compile_result['readiness']['score']}/100."
             )
             return 0
 
@@ -687,12 +696,12 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
 
         if args.command == "roadmap":
             if args.check:
-                result = check_roadmap(root)
+                roadmap_result = check_roadmap(root)
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(roadmap_result, indent=2))
                 else:
-                    print(result["summary"])
-                return 0 if result["current"] else 1
+                    print(roadmap_result["summary"])
+                return 0 if roadmap_result["current"] else 1
             path = update_roadmap(root)
             if args.json:
                 print(json.dumps({"path": str(path.relative_to(root))}, indent=2))
@@ -704,23 +713,24 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             selectors = [value for value in [args.selector, args.from_task] if value]
             if args.current:
                 current = next_task_context_pack(root)
-                if current is None:
+                current_path = current.get("path") if isinstance(current, dict) else None
+                if not current_path:
                     raise ValueError("No ready task context pack found.")
-                selectors.append(str(current["path"]))
+                selectors.append(str(current_path))
             if len(selectors) != 1:
                 raise ValueError("Select exactly one task with <task>, --from-task, or --current.")
-            result = create_or_link_native_workflow(root, selectors[0])
+            plan_result = create_or_link_native_workflow(root, selectors[0])
             if args.json:
-                print(json.dumps(result, indent=2))
+                print(json.dumps(plan_result, indent=2))
             else:
-                action = "Created" if result.get("created") else "Linked"
-                print(f"{action} workflow: {result['workflow_path']}")
-                print(f"Task pack: {result['task_pack']}")
-                print(f"Next: {result['next_command']}")
+                action = "Created" if plan_result.get("created") else "Linked"
+                print(f"{action} workflow: {plan_result['workflow_path']}")
+                print(f"Task pack: {plan_result['task_pack']}")
+                print(f"Next: {plan_result['next_command']}")
             return 0
 
         if args.command == "finish":
-            result = finish_task(
+            finish_result = finish_task(
                 root,
                 args.selector,
                 current=args.current,
@@ -731,24 +741,24 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 review_id=args.review_id,
             )
             if args.json:
-                print(json.dumps(result, indent=2))
+                print(json.dumps(finish_result, indent=2))
             else:
-                _print_finish_result(result)
-            if result.get("dry_run") and result.get("enforcement") == "strict" and not result.get("finishable"):
+                _print_finish_result(finish_result)
+            if finish_result.get("dry_run") and finish_result.get("enforcement") == "strict" and not finish_result.get("finishable"):
                 return 1
             return 0
 
         if args.command == "migrate":
             if args.migrate_command == "legacy-execution":
-                result = migrate_legacy_execution(
+                migration_result = migrate_legacy_execution(
                     root,
                     from_path=args.from_path,
                     write=args.write,
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(migration_result, indent=2))
                 else:
-                    print(format_legacy_execution_migration(result))
+                    print(format_legacy_execution_migration(migration_result))
                 return 0
             parser.print_help()
             return 0
@@ -934,25 +944,31 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             if args.json:
                 print(json.dumps(records, indent=2))
             else:
-                for record in records:
-                    print(f"{record['id']}\t{record['status']}\t{record['type']}\t{record['path']}\t{record['title']}")
+                for task_record in records:
+                    print(
+                        f"{task_record['id']}\t{task_record['status']}\t{task_record['type']}\t"
+                        f"{task_record['path']}\t{task_record['title']}"
+                    )
             return 0
 
         if args.command == "task" and args.task_command == "next":
-            record = next_task_context_pack(root, task_type=args.type, order=args.order)
-            if record is None:
+            next_record = next_task_context_pack(root, task_type=args.type, order=args.order)
+            if next_record is None:
                 warnings = workflow_warning_lines(build_workflow_contract_status(root))
                 status_payload = build_project_status(root, recent_limit=0)
                 summary = status_payload.get("lifecycle_summary") if isinstance(status_payload, dict) else {}
                 summary = summary if isinstance(summary, dict) else {}
                 summary = _task_next_no_ready_summary(summary, args.type)
-                action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
-                commands = action.get("commands") if isinstance(action.get("commands"), list) else []
-                options = action.get("options") if isinstance(action.get("options"), list) else []
+                raw_next_action = summary.get("recommended_next_action")
+                next_action_payload: dict[str, Any] = raw_next_action if isinstance(raw_next_action, dict) else {}
+                raw_commands = next_action_payload.get("commands")
+                commands: list[Any] = raw_commands if isinstance(raw_commands, list) else []
+                raw_options = next_action_payload.get("options")
+                options: list[Any] = raw_options if isinstance(raw_options, list) else []
                 agent_next_action = (
-                    action.get("agent_display")
-                    if isinstance(action.get("agent_display"), dict)
-                    else agent_display_for_next_action(action)
+                    next_action_payload.get("agent_display")
+                    if isinstance(next_action_payload.get("agent_display"), dict)
+                    else agent_display_for_next_action(next_action_payload)
                 )
                 if args.json:
                     print(
@@ -975,16 +991,16 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                         print(f"Warning: {warning}")
                 return 1
             if args.json:
-                payload = dict(record)
+                payload = dict(next_record)
                 payload["session_preflight"] = build_session_preflight(
                     root,
-                    context_pack=str(record.get("path") or ""),
-                    task_id=str(record.get("id") or ""),
-                    task_type=str(record.get("type") or "implementation"),
+                    context_pack=str(next_record.get("path") or ""),
+                    task_id=str(next_record.get("id") or ""),
+                    task_type=str(next_record.get("type") or "implementation"),
                 )
                 print(json.dumps(payload, indent=2))
             else:
-                print(f"{record['path']}")
+                print(str(next_record.get("path")))
             return 0
 
         if args.command == "task" and args.task_command == "complete":
@@ -1048,7 +1064,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 )
                 return 0
             if args.run_command == "resume":
-                result = resume_run(
+                resume_result = resume_run(
                     root,
                     args.run_id,
                     executor_output=args.executor_output,
@@ -1059,14 +1075,14 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     observe_touched_paths=not args.explicit_touched_paths,
                     run_dir=_run_dir_from_args(args),
                 )
-                review = result["review"]
+                review = resume_result["review"]
                 print(f"{args.run_id}: {review['decision']} ({review['confidence']}) - {review['reason']}")
                 message = review.get("message_to_executor")
                 if message:
                     print(message)
                 return 0
             if args.run_command == "loop":
-                result = loop_run(
+                loop_result = loop_run(
                     root,
                     Path(args.context_pack) if args.context_pack else None,
                     run_id=args.run_id,
@@ -1081,23 +1097,23 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(loop_result, indent=2))
                     return 0
 
-                state = result["state"]
-                selected = result.get("selected_task")
+                state = loop_result["state"]
+                selected = loop_result.get("selected_task")
                 if selected:
                     print(f"Selected {selected['path']}.")
-                action = "Started" if result.get("started") else "Using"
+                action = "Started" if loop_result.get("started") else "Using"
                 print(f"{action} run {state['run_id']} for {state['context_pack']}.")
-                target_writes = result.get("target_write_requirements")
+                target_writes = loop_result.get("target_write_requirements")
                 if target_writes:
                     print(
                         "Research findings may still require target writes: "
                         + ", ".join(target_writes)
                     )
 
-                review = result.get("review")
+                review = loop_result.get("review")
                 if review:
                     print(f"{state['run_id']}: {review['decision']} ({review['confidence']}) - {review['reason']}")
                     message = review.get("message_to_executor")
@@ -1105,10 +1121,10 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                         print(message)
                 else:
                     print(f"Status: {state['status']}.")
-                _print_session_preflight_summary(result.get("session_preflight"))
+                _print_session_preflight_summary(loop_result.get("session_preflight"))
                 return 0
             if args.run_command == "step":
-                result = step_run(
+                step_result = step_run(
                     root,
                     Path(args.context_pack) if args.context_pack else None,
                     run_id=args.run_id,
@@ -1122,11 +1138,11 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(step_result, indent=2))
                     return 0
-                print(f"{result['run_id']}: {result['next_action']} ({result['state']['status']})")
-                if result.get("prompt"):
-                    print(result["prompt"])
+                print(f"{step_result['run_id']}: {step_result['next_action']} ({step_result['state']['status']})")
+                if step_result.get("prompt"):
+                    print(step_result["prompt"])
                 return 0
             if args.run_command == "package":
                 package = package_run(
@@ -1191,7 +1207,7 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(f"{demo['run_id']}: {demo['final_next_action']} runner={demo['runner']}")
                 return 0
             if args.run_command == "exec":
-                result = execute_runner(
+                exec_result = execute_runner(
                     root,
                     Path(args.context_pack) if args.context_pack else None,
                     runner=args.runner,
@@ -1207,9 +1223,9 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                     run_dir=_run_dir_from_args(args),
                 )
                 if args.json:
-                    print(json.dumps(result, indent=2))
+                    print(json.dumps(exec_result, indent=2))
                     return 0
-                print(f"{result['run_id']}: {result['final_next_action']} runner={result['runner']}")
+                print(f"{exec_result['run_id']}: {exec_result['final_next_action']} runner={exec_result['runner']}")
                 return 0
             if args.run_command == "inspect":
                 info = inspect_run(root, args.run_id, run_dir=_run_dir_from_args(args))
@@ -1347,7 +1363,7 @@ def _is_retryable(exc: BaseException) -> bool:
 
 def _build_error_envelope(exc: BaseException, prog: str, args: argparse.Namespace) -> dict[str, Any]:
     structured = _structured_error_for_exception(exc, args)
-    envelope = {
+    envelope: dict[str, Any] = {
         "schema": CLI_ERROR_SCHEMA,
         "error": {
             "type": getattr(structured, "type_name", None) or type(structured).__name__,
@@ -1494,9 +1510,12 @@ def _print_session_preflight_summary(preflight: Any) -> None:
 
 
 def _print_no_ready_task(summary: dict[str, Any], warnings: list[str]) -> None:
-    action = summary.get("recommended_next_action") if isinstance(summary.get("recommended_next_action"), dict) else {}
-    commands = action.get("commands") if isinstance(action.get("commands"), list) else []
-    options = action.get("options") if isinstance(action.get("options"), list) else []
+    raw_action = summary.get("recommended_next_action")
+    action: dict[str, Any] = raw_action if isinstance(raw_action, dict) else {}
+    raw_commands = action.get("commands")
+    commands: list[Any] = raw_commands if isinstance(raw_commands, list) else []
+    raw_options = action.get("options")
+    options: list[Any] = raw_options if isinstance(raw_options, list) else []
     reason = action.get("reason") or summary.get("main_point") or "No ready task context pack found."
     print("No ready task context pack found.")
     print(f"Why: {reason}")
@@ -1514,7 +1533,8 @@ def _print_no_ready_task(summary: dict[str, Any], warnings: list[str]) -> None:
             when = option.get("when")
             if when:
                 print(f"   Use when: {when}")
-            option_commands = option.get("commands") if isinstance(option.get("commands"), list) else []
+            raw_option_commands = option.get("commands")
+            option_commands: list[Any] = raw_option_commands if isinstance(raw_option_commands, list) else []
             for command in option_commands:
                 print(f"   - {command}")
     if warnings:
@@ -1525,7 +1545,8 @@ def _task_next_no_ready_summary(summary: dict[str, Any], task_type: str | None) 
     if not task_type:
         return summary
     main_point = f"No {task_type} task context pack is ready."
-    blocked_by = summary.get("blocked_by") if isinstance(summary.get("blocked_by"), list) else []
+    raw_blocked_by = summary.get("blocked_by")
+    blocked_by: list[Any] = raw_blocked_by if isinstance(raw_blocked_by, list) else []
     updated = dict(summary)
     action = {
         "label": f"Create or select a ready {task_type} task context pack.",
@@ -1595,8 +1616,10 @@ def _dispatch_next_action(root: Path) -> int:
             print(f"Status: {state['status']}.")
         return 0
 
-    summary = status_payload.get("lifecycle_summary") if isinstance(status_payload.get("lifecycle_summary"), dict) else {}
-    workflows = status_payload.get("workflows") if isinstance(status_payload.get("workflows"), dict) else {}
+    raw_summary = status_payload.get("lifecycle_summary")
+    summary: dict[str, Any] = raw_summary if isinstance(raw_summary, dict) else {}
+    raw_workflows = status_payload.get("workflows")
+    workflows: dict[str, Any] = raw_workflows if isinstance(raw_workflows, dict) else {}
     _print_no_ready_task(summary, workflow_warning_lines(workflows))
     return 1
 

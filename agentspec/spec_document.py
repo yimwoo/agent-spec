@@ -1,3 +1,5 @@
+"""Canonical source-document schema validation and structured issue reporting."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -50,11 +52,15 @@ _OPTIONAL_LIST_FIELDS = ("requirements", "api_contracts", "open_questions")
 
 @dataclass(frozen=True)
 class ValidationIssue:
+    """One path-specific source-document validation failure."""
+
     path: str
     code: str
     message: str
 
     def to_dict(self) -> dict[str, str]:
+        """Serialize the validation issue for a structured report."""
+
         return {
             "path": self.path,
             "code": self.code,
@@ -63,11 +69,15 @@ class ValidationIssue:
 
 
 class SpecDocumentValidationError(ValueError):
+    """Raised with all validation issues for an invalid source document."""
+
     def __init__(self, issues: list[ValidationIssue]):
         self.issues = issues
         super().__init__("; ".join(issue.message for issue in issues))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize all validation issues into the stable report schema."""
+
         return _report(self.issues)
 
 
@@ -354,4 +364,3 @@ def _issues_from_report(report: Mapping[str, Any]) -> list[ValidationIssue]:
         for error in report.get("errors", [])
         if isinstance(error, Mapping)
     ]
-

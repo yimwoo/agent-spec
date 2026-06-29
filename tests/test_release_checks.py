@@ -13,7 +13,7 @@ class ReleaseChecksTests(unittest.TestCase):
     def test_version_metadata_is_synchronized(self) -> None:
         version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
-        self.assertEqual(version, "0.1.39")
+        self.assertEqual(version, "0.1.40")
         self.assertEqual(agentspec.__version__, version)
         for path in [
             ROOT / "agentspec-codex-plugin" / ".codex-plugin" / "plugin.json",
@@ -52,6 +52,11 @@ class ReleaseChecksTests(unittest.TestCase):
         self.assertIn("agentspec-codex-plugin", workflow)
         self.assertIn("agentspec-claude-plugin", workflow)
         self.assertIn("plugin.json", workflow)
+
+    def test_default_mypy_scope_covers_the_package(self) -> None:
+        config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+        self.assertEqual(config["tool"]["mypy"]["files"], ["agentspec"])
 
 
 if __name__ == "__main__":

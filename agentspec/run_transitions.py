@@ -7,7 +7,7 @@ I/O so these rules stay easy to read and test in isolation.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Literal, Protocol, TypedDict
 
 
@@ -48,14 +48,12 @@ class RunTransitionEvent(TypedDict, total=False):
     reason: str
 
 
-class ReviewWithPolicyFlags(Protocol):
-    """Minimal review object contract used by transition helpers.
+class ReviewWithPolicyFlags(Protocol):  # pylint: disable=too-few-public-methods
+    """Minimal review object contract used by transition helpers."""
 
-    Attributes:
-        policy_flags: Structured policy flags emitted with a review verdict.
-    """
-
-    policy_flags: Sequence[str]
+    @property
+    def policy_flags(self) -> Sequence[str]:
+        """Return structured policy flags emitted with the review verdict."""
 
 
 def status_for_decision(decision: str) -> RunStatus:
@@ -68,12 +66,13 @@ def status_for_decision(decision: str) -> RunStatus:
         The run status written to `state.yml`. Unknown decisions conservatively
         map to `paused` so execution does not advance silently.
     """
-    return {
+    statuses: dict[str, RunStatus] = {
         "auto_continue": "running",
         "pause_for_human": "paused",
         "halt": "halted",
         "complete": "complete",
-    }.get(decision, "paused")
+    }
+    return statuses.get(decision, "paused")
 
 
 def next_action_for_status(status: str) -> NextRunAction:
@@ -86,19 +85,20 @@ def next_action_for_status(status: str) -> NextRunAction:
         The next controller action. Unknown statuses default to `await_human`
         because the safe fallback is to stop and ask for review.
     """
-    return {
+    actions: dict[str, NextRunAction] = {
         "started": "continue_executor",
         "running": "continue_executor",
         "paused": "await_human",
         "complete": "complete",
         "halted": "stop",
         "aborted": "stop",
-    }.get(status, "await_human")
+    }
+    return actions.get(status, "await_human")
 
 
 def halted_run_accepts_corrected_evidence(
-    state: RunTransitionState,
-    events: Sequence[RunTransitionEvent],
+    state: Mapping[str, object],
+    events: Sequence[Mapping[str, object]],
 ) -> bool:
     """Return whether a halted autonomous/research run can be reopened.
 
@@ -128,7 +128,7 @@ def halted_run_accepts_corrected_evidence(
     return isinstance(state.get("infrastructure_blocker"), dict)
 
 
-def is_quality_review_halt_event(event: RunTransitionEvent) -> bool:
+def is_quality_review_halt_event(event: Mapping[str, object]) -> bool:
     """Return whether an autonomous pause-to-DCR event came from quality review.
 
     Args:

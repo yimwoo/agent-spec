@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import utc_now_iso
-from .paths import is_untracked_git_ignored, slugify, truncate_on_word_boundary, untracked_git_ignored_paths
+from .paths import slugify, truncate_on_word_boundary, untracked_git_ignored_paths
 
 
 WORKFLOW_CONTRACT_SCHEMA = "agentspec.workflow_contract.v0"

@@ -1,3 +1,5 @@
+"""Structured AgentSpec domain errors for CLI and runner boundaries."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -37,9 +39,13 @@ class AgentSpecError(Exception):
 
     @property
     def effective_retryable(self) -> bool:
+        """Return the instance-level retryability decision."""
+
         return self._retryable
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the error into the stable public error envelope."""
+
         payload: dict[str, Any] = {
             "schema": ERROR_SCHEMA,
             "code": self.code,
@@ -58,31 +64,43 @@ class AgentSpecError(Exception):
 
 
 class AgentSpecValidationError(AgentSpecError):
+    """Raised when caller input or lifecycle state fails validation."""
+
     code = "ASPEC_VALIDATION"
     layer = "control_plane"
 
 
 class RunStateNotFoundError(AgentSpecError):
+    """Raised when a requested supervised-run state cannot be found."""
+
     code = "ASPEC_STATE_NOT_FOUND"
     layer = "control_plane"
 
 
 class AgentSpecIOPermissionError(AgentSpecError):
+    """Raised when AgentSpec cannot read or write a required path."""
+
     code = "ASPEC_IO_PERMISSION"
     layer = "control_plane"
 
 
 class RunnerResultInvalidError(AgentSpecValidationError):
+    """Raised when an external runner result violates its contract."""
+
     code = "ASPEC_RUNNER_RESULT_INVALID"
     layer = "execution"
 
 
 class RunnerTimeoutError(AgentSpecError):
+    """Raised for retryable external runner timeouts."""
+
     code = "ASPEC_RUNNER_TIMEOUT"
     layer = "execution"
     retryable = True
 
 
 class RunnerStartFailedError(AgentSpecError):
+    """Raised when an external runner process cannot be started."""
+
     code = "ASPEC_RUNNER_START_FAILED"
     layer = "execution"

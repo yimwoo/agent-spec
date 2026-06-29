@@ -1,3 +1,5 @@
+"""Source connector contracts and the local Confluence fixture adapter."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +10,8 @@ import json
 
 @dataclass(frozen=True)
 class FetchedSource:
+    """Normalized source content returned by a connector provider."""
+
     body: str
     remote_uri: str
     remote_version: str | None = None
@@ -17,6 +21,8 @@ class FetchedSource:
 
 
 class ConnectorFetchError(ValueError):
+    """Raised when a source connector cannot retrieve or parse a source."""
+
     def __init__(self, connector: str, uri: str, message: str):
         self.connector = connector
         self.uri = uri
@@ -24,6 +30,8 @@ class ConnectorFetchError(ValueError):
         super().__init__(f"{connector} connector failed for {uri}: {message}")
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize connector failure context for command output."""
+
         return {
             "connector": self.connector,
             "uri": self.uri,
@@ -32,6 +40,12 @@ class ConnectorFetchError(ValueError):
 
 
 def fetch_source(kind: str, uri: str) -> FetchedSource:
+    """Fetch a source through the registered connector for its kind.
+
+    Raises:
+        ConnectorFetchError: If no provider exists or retrieval fails.
+    """
+
     if kind == "confluence":
         return _fetch_confluence_fixture(uri)
     raise ConnectorFetchError(kind, uri, "No connector provider is registered.")

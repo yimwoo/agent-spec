@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentspec"
-version = "0.1.39"
+version = "0.1.40"
 description = "Design-to-agent workspace compiler and control plane for code agents."
 readme = "README.md"
 license = "MIT"
@@ -22,22 +22,7 @@ exclude = ["tests*"]
 
 [tool.mypy]
 python_version = "3.11"
-files = [
-    "agentspec/config.py",
-    "agentspec/evidence.py",
-    "agentspec/guidance.py",
-    "agentspec/maturity.py",
-    "agentspec/review.py",
-    "agentspec/roadmap.py",
-    "agentspec/run.py",
-    "agentspec/runner.py",
-    "agentspec/session.py",
-    "agentspec/source_registry.py",
-    "agentspec/status.py",
-    "agentspec/task.py",
-    "agentspec/workflow.py",
-    "agentspec/writeback.py",
-]
+files = ["agentspec"]
 follow_imports = "skip"
 show_error_codes = true
 warn_unused_ignores = true

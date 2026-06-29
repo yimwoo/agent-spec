@@ -1,3 +1,5 @@
+"""Read and write durable project handoff summaries."""
+
 from __future__ import annotations
 
 import re
@@ -13,6 +15,8 @@ HANDOFF_PATH = Path("agent/handoff.yml")
 
 
 def load_project_handoff(root: Path) -> dict[str, Any] | None:
+    """Load a tracked project handoff, excluding ignored private state."""
+
     if is_untracked_git_ignored(root, root / HANDOFF_PATH):
         return None
     data = load_data(root / HANDOFF_PATH)
@@ -29,6 +33,8 @@ def write_project_handoff(
     completed_state: dict[str, Any],
     project_status: dict[str, Any],
 ) -> dict[str, Any]:
+    """Build and persist project handoff state after task completion."""
+
     payload = build_project_handoff(root, completed_state=completed_state, project_status=project_status)
     write_data(root / HANDOFF_PATH, payload)
     return payload
@@ -41,6 +47,8 @@ def refresh_project_handoff(
     updated_at: str | None = None,
     only_if_run_id: str | None = None,
 ) -> dict[str, Any] | None:
+    """Refresh status-derived handoff fields while preserving durable metadata."""
+
     payload = load_data(root / HANDOFF_PATH)
     if not isinstance(payload, dict):
         return None
@@ -53,13 +61,16 @@ def refresh_project_handoff(
     refreshed["root"] = refreshed.get("root") or "."
     refreshed["current_state"] = _current_state(project_status)
     refreshed["next_action"] = _next_action(project_status)
+    raw_commands = refreshed.get("commands")
+    commands: dict[str, Any] = raw_commands if isinstance(raw_commands, dict) else {}
     refreshed["commands"] = {
         "status": "aspec status --json",
         "next_action": "aspec continue",
         "task_next": "aspec task next",
-        **(refreshed.get("commands") if isinstance(refreshed.get("commands"), dict) else {}),
+        **commands,
     }
-    artifacts = refreshed.get("artifacts") if isinstance(refreshed.get("artifacts"), dict) else {}
+    raw_artifacts = refreshed.get("artifacts")
+    artifacts: dict[str, Any] = raw_artifacts if isinstance(raw_artifacts, dict) else {}
     refreshed["artifacts"] = {
         "task_ledger": "agent/task-ledger.yml",
         "handoff": str(HANDOFF_PATH),
@@ -75,8 +86,10 @@ def build_project_handoff(
     completed_state: dict[str, Any],
     project_status: dict[str, Any],
 ) -> dict[str, Any]:
+    """Build the durable handoff payload for a completed task."""
+
     updated_at = str(completed_state.get("updated_at") or "")
-    payload = {
+    payload: dict[str, Any] = {
         "schema": HANDOFF_SCHEMA,
         "updated_at": updated_at,
         "root": ".",
@@ -187,7 +200,8 @@ def _task_id(context_pack: str) -> str | None:
 
 
 def _next_action_references_run(payload: dict[str, Any], run_id: str) -> bool:
-    action = payload.get("next_action") if isinstance(payload.get("next_action"), dict) else {}
+    raw_action = payload.get("next_action")
+    action: dict[str, Any] = raw_action if isinstance(raw_action, dict) else {}
     if action.get("run_id") == run_id:
         return True
     command = action.get("command")

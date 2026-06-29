@@ -1,3 +1,5 @@
+"""Markdown heading parsing and stable source-section generation."""
+
 from __future__ import annotations
 
 import re
@@ -12,12 +14,16 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 
 @dataclass(frozen=True)
 class Heading:
+    """One parsed Markdown heading with source position metadata."""
+
     level: int
     title: str
     line: int
 
 
 def document_title(markdown: str, fallback: str) -> str:
+    """Return the first Markdown heading or a caller-provided fallback."""
+
     for line in markdown.splitlines():
         match = HEADING_RE.match(line)
         if match:
@@ -26,6 +32,8 @@ def document_title(markdown: str, fallback: str) -> str:
 
 
 def sectionize_markdown(markdown: str, source_id: str) -> list[dict[str, Any]]:
+    """Split Markdown into stable hierarchical AgentSpec section records."""
+
     lines = markdown.splitlines()
     headings = _find_headings(lines)
     if not headings:

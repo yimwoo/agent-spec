@@ -1,3 +1,5 @@
+"""Import, compare, promote, and format candidate source snapshots."""
+
 from __future__ import annotations
 
 import json
@@ -302,6 +304,8 @@ def promote_candidate(
 
 
 def format_diff_report(diff: dict[str, Any]) -> str:
+    """Format a candidate-versus-baseline diff for terminal output."""
+
     baseline = diff.get("baseline", {})
     lines = [
         f"Candidate {diff['snapshot_id']} vs accepted {baseline.get('source_id') or '-'}",

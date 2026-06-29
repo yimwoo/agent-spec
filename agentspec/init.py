@@ -1,3 +1,5 @@
+"""Initialize the AgentSpec artifact layout and default project configuration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,6 +18,12 @@ def init_project(
     maturity: str = DEFAULT_MATURITY_LEVEL,
     maturity_enforcement: str = DEFAULT_MATURITY_ENFORCEMENT,
 ) -> list[Path]:
+    """Create missing AgentSpec directories and default project artifacts.
+
+    Existing files are preserved. The returned paths identify artifacts
+    created by this invocation.
+    """
+
     ensure_dirs(root)
     written: list[Path] = []
 
