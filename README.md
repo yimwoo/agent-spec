@@ -57,7 +57,7 @@ what is in scope, what counts as verified, how many iterations remain* —
 Stable release (recommended):
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.41"
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.42"
 ```
 
 Latest from main (dev):
@@ -83,11 +83,11 @@ turns natural-language requests into `aspec` invocations.
 <summary><b>Codex</b></summary>
 
 ```bash
-# Stable installer. The script defaults to the release-pinned plugin v0.1.41.
+# Stable installer. The script defaults to the release-pinned plugin v0.1.42.
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
-The installer defaults to the release-pinned plugin `v0.1.41`, verifies it
+The installer defaults to the release-pinned plugin `v0.1.42`, verifies it
 against an installed AgentSpec CLI, and stops with repair guidance if the
 versions differ. To test the development plugin intentionally, pass
 `--ref main`; use `--allow-version-mismatch` only for explicit compatibility
