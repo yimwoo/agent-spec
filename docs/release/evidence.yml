@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:59:58Z",
+  "updated_at": "2026-06-29T22:19:06Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -369,6 +369,40 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0138.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-180-prepare-and-publish-v0-1-42-release.md": {
+      "task_id": "T-180",
+      "context_pack": "agent/context-packs/T-180-prepare-and-publish-v0-1-42-release.md",
+      "status": "complete",
+      "run_id": "complete-t-180-prepare-and-publish-v0-1-42-release-20260629221906085364",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T22:19:06Z",
+      "requirements": [
+        "R-218",
+        "R-219",
+        "R-220"
+      ],
+      "completion_reason": "Prepared and verified AgentSpec v0.1.42 for R-218, R-219, and R-220, including synchronized release metadata, distribution artifacts, and installed-wheel live smoke evidence.",
+      "code_review": {
+        "id": "REVIEW-0141",
+        "verdict": "ready",
+        "summary": "v0.1.42 metadata is synchronized across the package, Codex and Claude plugins, stable installer, README, and release contract. The reconciled main history preserves T-176 through T-179 evidence. Verification includes 27 focused tests, 594 full tests, package-wide mypy, pylint 10.00/10, compileall, installer syntax, build/Twine checks, and an isolated-wheel live smoke covering init/status, fail-closed hooks, typed outcome verification, and controlled eval reporting.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0141.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0141",
+          "verdict": "ready",
+          "summary": "v0.1.42 metadata is synchronized across the package, Codex and Claude plugins, stable installer, README, and release contract. The reconciled main history preserves T-176 through T-179 evidence. Verification includes 27 focused tests, 594 full tests, package-wide mypy, pylint 10.00/10, compileall, installer syntax, build/Twine checks, and an isolated-wheel live smoke covering init/status, fail-closed hooks, typed outcome verification, and controlled eval reporting.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0141.yml"
         }
       ]
     }
