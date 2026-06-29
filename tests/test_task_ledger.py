@@ -184,6 +184,7 @@ def _write_pack(path: Path, task_id: str, title: str) -> None:
         f"""# {task_id}: {title}
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Requirements
 

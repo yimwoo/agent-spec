@@ -119,7 +119,7 @@ class RunnerPackageTests(unittest.TestCase):
             package = package_run(root, run_id="pkg-001", runner="codex")
 
             self.assertEqual(package["runner"], "codex")
-            self.assertEqual(package["execution"]["argv"], ["codex"])
+            self.assertEqual(package["execution"]["argv"], ["codex", "exec", "--json", "-"])
             self.assertTrue(package["should_execute"])
 
     def test_completed_step_returns_no_execution_stdin(self) -> None:
@@ -517,8 +517,34 @@ class RunnerPackageTests(unittest.TestCase):
             package = json.loads(output.getvalue())
             self.assertEqual(package["schema"], "agentspec.runner_package.v0")
             self.assertEqual(package["runner"], "claude")
-            self.assertEqual(package["execution"]["argv"], ["claude"])
+            self.assertEqual(package["execution"]["argv"], ["claude", "-p", "--output-format", "stream-json", "--verbose"])
             self.assertTrue(package["should_execute"])
+
+    def test_submit_runner_result_requires_session_preflight_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root, host_worktree=False)
+            package_run(root, run_id="pkg-preflight-result", runner="generic")
+            state_path = root / "agent" / "runs" / "pkg-preflight-result" / "state.yml"
+            before = load_data(state_path)
+
+            with self.assertRaisesRegex(ValueError, "session preflight"):
+                submit_runner_result(
+                    root,
+                    "pkg-preflight-result",
+                    {
+                        "schema": RUNNER_RESULT_SCHEMA,
+                        "executor_output": "Done. Acceptance criteria are met.",
+                        "touched_paths": ["agentspec/runner.py"],
+                        "test_status": "passed",
+                    },
+                    runner="generic",
+                )
+
+            self.assertEqual(load_data(state_path), before)
+            ledger_path = root / "agent" / "task-ledger.yml"
+            ledger = load_data(ledger_path) if ledger_path.exists() else {}
+            self.assertNotIn("agent/context-packs/T-022-runner-result-ingestion.md", ledger.get("tasks", {}))
 
     def test_cli_result_json_outputs_next_runner_package(self) -> None:
         with tempfile.TemporaryDirectory() as td:

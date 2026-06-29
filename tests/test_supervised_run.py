@@ -13,6 +13,7 @@ from agentspec.run import abort_run, inspect_run, resume_run, start_run
 PACK = """# T-008: DCR Accept Cascade Fix
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Goal
 
@@ -29,6 +30,7 @@ Fix DCR acceptance behavior.
 OTHER_PACK = """# T-011: Other Task
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Allowed Paths
 

@@ -20,7 +20,7 @@ def _seed_workspace(root: Path) -> Path:
     (root / "agentspec").mkdir(exist_ok=True)
     (root / "agentspec" / "fixture_target.py").write_text("", encoding="utf-8")
     pack.write_text(
-        "# T-997: Fixture\n\nType: `implementation`\n\n"
+        "# T-997: Fixture\n\nType: `implementation`\nHost Worktree Execution: `explicit`\n\n"
         "## Allowed Paths\n\n- `agentspec/fixture_target.py`\n",
         encoding="utf-8",
     )

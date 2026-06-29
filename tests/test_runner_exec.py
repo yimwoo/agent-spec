@@ -6,10 +6,11 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
-from agentspec.runner import RUNNER_EXEC_SCHEMA, RUNNER_RESULT_SCHEMA, execute_runner
+from agentspec.runner import RUNNER_EXEC_SCHEMA, RUNNER_OUTPUT_INLINE_LIMIT, RUNNER_RESULT_SCHEMA, execute_runner
 
 
 class RunnerExecTests(unittest.TestCase):
@@ -137,6 +138,38 @@ class RunnerExecTests(unittest.TestCase):
             self.assertTrue(finished["error"]["retryable"])
             self.assertEqual(finished["error"]["operation"], "run.exec")
 
+    def test_execute_runner_records_heartbeat_events_during_long_run(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+
+            with mock.patch("agentspec.runner.RUNNER_HEARTBEAT_INTERVAL_SECONDS", 0.01):
+                execute_runner(
+                    root,
+                    run_id="exec-heartbeat",
+                    runner="generic",
+                    command=[
+                        sys.executable,
+                        "-c",
+                        "import time; time.sleep(0.05); print('Done. Acceptance criteria are met.')",
+                    ],
+                    timeout_seconds=1,
+                    test_status="passed",
+                )
+
+            heartbeats = [
+                event
+                for event in _events(root, "exec-heartbeat")
+                if event["kind"] == "runner_invocation_heartbeat"
+            ]
+            self.assertGreaterEqual(len(heartbeats), 1)
+            self.assertEqual(heartbeats[0]["runner"], "generic")
+            self.assertGreater(heartbeats[0]["elapsed_seconds"], 0)
+            self.assertEqual(
+                heartbeats[0]["recovery_command"],
+                "aspec run package --runner generic --run-id exec-heartbeat --json",
+            )
+
     def test_execute_runner_records_start_failure_event(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -178,6 +211,34 @@ class RunnerExecTests(unittest.TestCase):
             payload = json.dumps(result)
             self.assertNotIn(secret, payload)
             self.assertIn("[REDACTED_CREDENTIAL]", payload)
+
+    def test_execute_runner_externalizes_large_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            script = (
+                "print('Done. Acceptance criteria are met.')\n"
+                f"print('x' * {RUNNER_OUTPUT_INLINE_LIMIT + 256})\n"
+            )
+
+            result = execute_runner(
+                root,
+                run_id="exec-large-output",
+                runner="generic",
+                command=[sys.executable, "-c", script],
+                test_status="passed",
+            )
+
+            execution = result["transcript"][1]["execution"]
+            self.assertIn("output_artifacts", execution)
+            stdout_artifact = execution["output_artifacts"]["stdout"]
+            self.assertTrue(stdout_artifact["path"].endswith("runner-stdout.txt"))
+            artifact_path = root / stdout_artifact["path"]
+            self.assertTrue(artifact_path.exists())
+            full_stdout = artifact_path.read_text(encoding="utf-8")
+            self.assertGreater(len(full_stdout), RUNNER_OUTPUT_INLINE_LIMIT)
+            self.assertLess(len(execution["stdout"]), len(full_stdout))
+            self.assertIn("full redacted output written", execution["stdout"])
 
     def test_execute_runner_does_not_invoke_command_when_session_preflight_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as td:

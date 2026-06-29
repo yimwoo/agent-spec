@@ -100,6 +100,26 @@ Host Worktree Execution: `explicit`
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed(root)
+            with redirect_stdout(io.StringIO()):
+                main(
+                    [
+                        "--root",
+                        str(root),
+                        "session",
+                        "start",
+                        "--task",
+                        "T-019",
+                        "--owner",
+                        "codex",
+                        "--branch",
+                        "feature/prompt-preflight",
+                        "--worktree",
+                        str(root),
+                        "--session-id",
+                        "S-prompt-resume",
+                        "--json",
+                    ]
+                )
             start_run(root, Path("agent/context-packs/T-019-test.md"), run_id="run-001")
             resume_run(
                 root,
@@ -140,6 +160,26 @@ Host Worktree Execution: `explicit`
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             _seed(root)
+            with redirect_stdout(io.StringIO()):
+                main(
+                    [
+                        "--root",
+                        str(root),
+                        "session",
+                        "start",
+                        "--task",
+                        "T-019",
+                        "--owner",
+                        "codex",
+                        "--branch",
+                        "feature/prompt-terminal",
+                        "--worktree",
+                        str(root),
+                        "--session-id",
+                        "S-prompt-terminal",
+                        "--json",
+                    ]
+                )
             start_run(root, Path("agent/context-packs/T-019-test.md"), run_id="run-001")
             resume_run(
                 root,

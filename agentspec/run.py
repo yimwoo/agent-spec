@@ -266,6 +266,13 @@ def resume_run(
         events = _load_events(root, run_id, run_dir=run_dir)
         if not _halted_run_accepts_corrected_evidence(state, events):
             raise ValueError(f"Run {run_id} is already {state.get('status')}.")
+    session_preflight = _session_preflight_for_state(root, state)
+    state["session_preflight"] = session_preflight
+    if session_preflight.get("status") in {"blocked", "missing"}:
+        raise ValueError(
+            f"Run {run_id} cannot resume because implementation session preflight "
+            f"is {session_preflight.get('status')}: {session_preflight.get('message')}"
+        )
     _ensure_run_state_writable(root, run_dir)
 
     touched_paths = touched_paths or []

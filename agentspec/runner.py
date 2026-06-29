@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import os
 import subprocess
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .errors import (
     RunnerResultInvalidError,
@@ -32,6 +33,8 @@ RUNNER_EXEC_SCHEMA = "agentspec.runner_exec.v0"
 ALLOWED_RUNNERS = {"generic", "codex", "claude"}
 ALLOWED_TEST_STATUSES = {"not_run", "passed", "failed"}
 ALLOWED_REVIEWER_MODES = {"deterministic", "model", "auto"}
+RUNNER_HEARTBEAT_INTERVAL_SECONDS = 30.0
+RUNNER_OUTPUT_INLINE_LIMIT = 4000
 ALLOWED_EVIDENCE_ARTIFACT_KINDS = {
     "console_log",
     "dom_snapshot",
@@ -320,11 +323,26 @@ def execute_runner(
             },
             run_dir=run_dir,
         )
+
+        def heartbeat(elapsed_seconds: float) -> None:
+            append_run_event(
+                root,
+                actual_run_id,
+                {
+                    "kind": "runner_invocation_heartbeat",
+                    "runner": runner,
+                    "elapsed_seconds": round(elapsed_seconds, 3),
+                    "recovery_command": _runner_package_recovery_command(actual_run_id, runner),
+                },
+                run_dir=run_dir,
+            )
+
         execution = _run_package_subprocess(
             root,
             initial_package,
             command=command,
             timeout_seconds=timeout_seconds,
+            heartbeat_callback=heartbeat,
         )
         append_run_event(
             root,
@@ -732,9 +750,9 @@ def _run_dir_arg(root: Path, run_dir: Path | None) -> str | None:
 
 def _runner_argv(runner: str) -> list[str]:
     if runner == "codex":
-        return ["codex"]
+        return ["codex", "exec", "--json", "-"]
     if runner == "claude":
-        return ["claude"]
+        return ["claude", "-p", "--output-format", "stream-json", "--verbose"]
     return []
 
 
@@ -766,6 +784,7 @@ def _run_package_subprocess(
     *,
     command: list[str] | None,
     timeout_seconds: float | None,
+    heartbeat_callback: Callable[[float], None] | None = None,
 ) -> dict[str, Any]:
     argv = command if command is not None else list(package.get("execution", {}).get("argv") or [])
     if not argv:
@@ -779,32 +798,32 @@ def _run_package_subprocess(
         env.update({str(key): str(value) for key, value in package_env.items()})
 
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             argv,
             cwd=root,
-            input=stdin if isinstance(stdin, str) else None,
+            stdin=subprocess.PIPE if isinstance(stdin, str) else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            capture_output=True,
             env=env,
-            timeout=timeout_seconds,
-            check=False,
+        )
+        stdout, stderr, timed_out = _communicate_with_heartbeats(
+            process,
+            stdin=stdin if isinstance(stdin, str) else None,
+            timeout_seconds=timeout_seconds,
+            heartbeat_callback=heartbeat_callback,
         )
         result = {
             "argv": argv,
-            "returncode": completed.returncode,
-            "stdout": completed.stdout,
-            "stderr": completed.stderr,
-            "timed_out": False,
-            "error": None,
-        }
-    except subprocess.TimeoutExpired as exc:
-        result = {
-            "argv": argv,
-            "returncode": None,
-            "stdout": exc.stdout if isinstance(exc.stdout, str) else "",
-            "stderr": exc.stderr if isinstance(exc.stderr, str) else "",
-            "timed_out": True,
-            "error": f"Runner command timed out after {timeout_seconds} seconds.",
+            "returncode": process.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "timed_out": timed_out,
+            "error": (
+                f"Runner command timed out after {timeout_seconds} seconds."
+                if timed_out
+                else None
+            ),
         }
     except OSError as exc:
         result = {
@@ -816,8 +835,106 @@ def _run_package_subprocess(
             "error": f"Runner command failed to start: {exc}",
         }
 
+    _externalize_large_output(root, package, result)
     result["touched_paths"] = _git_changed_paths(root)
     return result
+
+
+def _communicate_with_heartbeats(
+    process: subprocess.Popen[str],
+    *,
+    stdin: str | None,
+    timeout_seconds: float | None,
+    heartbeat_callback: Callable[[float], None] | None,
+) -> tuple[str, str, bool]:
+    started = time.monotonic()
+    deadline = started + timeout_seconds if timeout_seconds is not None else None
+    heartbeat_at = (
+        started + RUNNER_HEARTBEAT_INTERVAL_SECONDS
+        if heartbeat_callback is not None and RUNNER_HEARTBEAT_INTERVAL_SECONDS > 0
+        else None
+    )
+    pending_stdin = stdin
+
+    while True:
+        now = time.monotonic()
+        if deadline is not None and now >= deadline:
+            stdout, stderr = _kill_and_collect(process)
+            return stdout, stderr, True
+
+        wait_until = deadline
+        if heartbeat_at is not None:
+            wait_until = heartbeat_at if wait_until is None else min(wait_until, heartbeat_at)
+        timeout = None if wait_until is None else max(wait_until - now, 0.001)
+
+        try:
+            stdout, stderr = process.communicate(input=pending_stdin, timeout=timeout)
+            return stdout or "", stderr or "", False
+        except subprocess.TimeoutExpired:
+            pending_stdin = None
+            now = time.monotonic()
+            if deadline is not None and now >= deadline:
+                stdout, stderr = _kill_and_collect(process)
+                return stdout, stderr, True
+            if heartbeat_at is not None and heartbeat_callback is not None and now >= heartbeat_at:
+                heartbeat_callback(now - started)
+                heartbeat_at = now + RUNNER_HEARTBEAT_INTERVAL_SECONDS
+
+
+def _kill_and_collect(process: subprocess.Popen[str]) -> tuple[str, str]:
+    process.kill()
+    stdout, stderr = process.communicate()
+    return stdout or "", stderr or ""
+
+
+def _externalize_large_output(
+    root: Path,
+    package: dict[str, Any],
+    result: dict[str, Any],
+) -> None:
+    artifacts: dict[str, dict[str, Any]] = {}
+    for key, filename in (("stdout", "runner-stdout.txt"), ("stderr", "runner-stderr.txt")):
+        value = result.get(key)
+        if not isinstance(value, str) or len(value) <= RUNNER_OUTPUT_INLINE_LIMIT:
+            continue
+        redacted_value = redact_sensitive_text(value)
+        artifact_path = _runner_output_artifact_path(root, package, filename)
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_text(redacted_value, encoding="utf-8")
+        display_path = _display_artifact_path(root, artifact_path)
+        result[key] = (
+            f"{redacted_value[:RUNNER_OUTPUT_INLINE_LIMIT]}\n"
+            f"... [truncated; full redacted output written to {display_path}]"
+        )
+        artifacts[key] = {
+            "path": display_path,
+            "bytes": len(redacted_value.encode("utf-8")),
+            "truncated": True,
+        }
+    if artifacts:
+        result["output_artifacts"] = artifacts
+
+
+def _runner_output_artifact_path(root: Path, package: dict[str, Any], filename: str) -> Path:
+    run_id = str(package.get("run_id") or package.get("step", {}).get("run_id") or "")
+    state = package.get("step", {}).get("state") if isinstance(package.get("step"), dict) else None
+    run_root = None
+    if isinstance(state, dict):
+        raw_run_root = state.get("run_state_dir")
+        if isinstance(raw_run_root, str) and raw_run_root.strip():
+            run_root = Path(raw_run_root)
+    if run_root is None:
+        run_root = root / "agent" / "runs"
+    if not run_root.is_absolute():
+        run_root = root / run_root
+    return run_root / run_id / "artifacts" / filename
+
+
+def _display_artifact_path(root: Path, path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(root.resolve()))
+    except ValueError:
+        return str(path.resolve())
 
 
 def _executor_output_from_subprocess(execution: dict[str, Any]) -> str:

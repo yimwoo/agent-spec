@@ -21,6 +21,7 @@ from agentspec.run import resume_run, start_run
 PACK = """# T-018: Model Reviewer
 
 Type: `implementation`
+Host Worktree Execution: `explicit`
 
 ## Allowed Paths
 
