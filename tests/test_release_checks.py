@@ -13,7 +13,7 @@ class ReleaseChecksTests(unittest.TestCase):
     def test_version_metadata_is_synchronized(self) -> None:
         version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
-        self.assertEqual(version, "0.1.40")
+        self.assertEqual(version, "0.1.41")
         self.assertEqual(agentspec.__version__, version)
         for path in [
             ROOT / "agentspec-codex-plugin" / ".codex-plugin" / "plugin.json",

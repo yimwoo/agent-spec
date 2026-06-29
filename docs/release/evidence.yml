@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:23:09Z",
+  "updated_at": "2026-06-29T21:33:09Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -241,6 +241,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0137.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-179-prepare-v0-1-41-release-metadata.md": {
+      "task_id": "T-179",
+      "context_pack": "agent/context-packs/T-179-prepare-v0-1-41-release-metadata.md",
+      "status": "complete",
+      "run_id": "complete-t-179-prepare-v0-1-41-release-metadata-20260629213309691943",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:33:09Z",
+      "requirements": [
+        "R-217"
+      ],
+      "completion_reason": "Prepared v0.1.41 release metadata for R-216 lifecycle evidence compatibility and R-217 provider-native execution strategy; synchronized package and plugin versions and passed all release gates.",
+      "code_review": {
+        "id": "REVIEW-0138",
+        "verdict": "ready",
+        "summary": "No blocking findings after synchronized 0.1.41 package, plugin, README, installer, and test metadata; 4 focused tests; 570-test full suite; package-wide mypy; pylint 10.00/10; compileall; release build; Twine validation; installer syntax; and diff checks.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0138.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0138",
+          "verdict": "ready",
+          "summary": "No blocking findings after synchronized 0.1.41 package, plugin, README, installer, and test metadata; 4 focused tests; 570-test full suite; package-wide mypy; pylint 10.00/10; compileall; release build; Twine validation; installer syntax; and diff checks.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0138.yml"
         }
       ]
     }

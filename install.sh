@@ -9,7 +9,7 @@ set -euo pipefail
 #   bash install.sh --local            # use this checkout as the plugin source
 
 REPO_URL="https://github.com/yimwoo/agent-spec"
-DEFAULT_SOURCE_REF="v0.1.40"
+DEFAULT_SOURCE_REF="v0.1.41"
 SOURCE_REF="${AGENTSPEC_REF:-${DEFAULT_SOURCE_REF}}"
 SOURCE_DIR="$HOME/.codex/plugins/agentspec-source"
 PLUGIN_SUBDIR="agentspec-codex-plugin"
