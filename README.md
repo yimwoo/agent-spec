@@ -56,7 +56,7 @@ what is in scope, what counts as verified, how many iterations remain* —
 Stable release (recommended):
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.37"
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.38"
 ```
 
 Latest from main (dev):
@@ -87,7 +87,7 @@ curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh |
 ```
 
 > Release-pinned plugin installation is planned; today the installer tracks
-> `main`. Pin the CLI separately with `@v0.1.37` (see step 1).
+> `main`. Pin the CLI separately with `@v0.1.38` (see step 1).
 
 Then enable the plugin:
 
