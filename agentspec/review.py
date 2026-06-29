@@ -985,7 +985,12 @@ def record_code_review(
         "range": range_ref,
         "created_at": utc_now_iso(),
     }
-    return _write_review_artifact(root, directory="reviews", prefix="REVIEW", record=record)
+    persisted = _write_review_artifact(root, directory="reviews", prefix="REVIEW", record=record)
+
+    from .evidence import write_public_release_review
+
+    write_public_release_review(root, persisted)
+    return persisted
 
 
 def load_code_review(root: Path, review_id: str) -> dict[str, Any]:

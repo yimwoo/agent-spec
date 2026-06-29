@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -98,6 +99,33 @@ class TaskCompletionTests(unittest.TestCase):
             handoff = load_data(root / "agent" / "handoff.yml")
             self.assertEqual(handoff["last_completed_task"]["code_review"]["id"], "REVIEW-0001")
             self.assertEqual(handoff["artifacts"]["last_code_review"], "agent/reviews/REVIEW-0001.yml")
+
+    def test_complete_mirrors_public_release_evidence_when_agent_state_is_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            subprocess.run(["git", "init"], cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            _write_review(root, "REVIEW-0001", "agent/context-packs/T-013-task.md", "ready")
+
+            complete_context_pack_run(
+                root,
+                "T-013",
+                run_id="complete-t013",
+                reason="Verified for release.",
+                test_status="passed",
+                review_id="REVIEW-0001",
+            )
+
+            evidence = load_data(root / "docs" / "release" / "evidence.yml")
+            self.assertEqual(evidence["schema"], "agentspec.release_evidence.v0")
+            entry = evidence["tasks"]["agent/context-packs/T-013-task.md"]
+            self.assertEqual(entry["task_id"], "T-013")
+            self.assertEqual(entry["run_id"], "complete-t013")
+            self.assertEqual(entry["verification"]["status"], "passed")
+            self.assertEqual(entry["code_review"]["id"], "REVIEW-0001")
+            self.assertEqual(entry["code_review"]["verdict"], "ready")
+            self.assertEqual([review["id"] for review in entry["reviews"]], ["REVIEW-0001"])
 
     def test_cli_task_complete_links_code_review(self) -> None:
         with tempfile.TemporaryDirectory() as td:

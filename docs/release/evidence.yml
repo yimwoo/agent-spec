@@ -1,0 +1,111 @@
+{
+  "schema": "agentspec.release_evidence.v0",
+  "updated_at": "2026-06-29T19:12:09Z",
+  "tasks": {
+    "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
+      "task_id": "T-169",
+      "context_pack": "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md",
+      "status": "complete",
+      "run_id": "complete-t-169-harden-release-evidence-and-maintainability-checks-20260629052515794702",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T05:25:15Z",
+      "completion_reason": "Marked complete by user.",
+      "code_review": {
+        "id": "REVIEW-0130",
+        "verdict": "ready",
+        "summary": "All prior blockers resolved: public evidence validates schema and current verdicts, later reviews preserve history, touched mypy and pylint gates pass, workflow state is repaired, and 0.1.39 release metadata is synchronized.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "created_at": "2026-06-29T18:53:30Z",
+        "path": "agent/reviews/REVIEW-0130.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0128",
+          "verdict": "ready",
+          "reviewer": "codex",
+          "path": "agent/reviews/REVIEW-0128.yml"
+        },
+        {
+          "id": "REVIEW-0129",
+          "verdict": "not-ready",
+          "summary": "Blocking review findings: public maturity gates trust malformed release evidence; the touched writeback module fails mypy and is outside configured scope; the completed workflow remains planned without verification commands; 0.1.39 metadata is not bumped.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "created_at": "2026-06-29T18:31:01Z",
+          "path": "agent/reviews/REVIEW-0129.yml"
+        },
+        {
+          "id": "REVIEW-0130",
+          "verdict": "ready",
+          "summary": "All prior blockers resolved: public evidence validates schema and current verdicts, later reviews preserve history, touched mypy and pylint gates pass, workflow state is repaired, and 0.1.39 release metadata is synchronized.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "created_at": "2026-06-29T18:53:30Z",
+          "path": "agent/reviews/REVIEW-0130.yml"
+        }
+      ],
+      "review_updated_at": "2026-06-29T18:53:30Z"
+    },
+    "agent/context-packs/T-170-fix-release-evidence-and-0-1-39-review-blockers.md": {
+      "task_id": "T-170",
+      "context_pack": "agent/context-packs/T-170-fix-release-evidence-and-0-1-39-review-blockers.md",
+      "status": "complete",
+      "run_id": "complete-t-170-fix-release-evidence-and-0-1-39-review-blockers-20260629185340975520",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T18:53:40Z",
+      "completion_reason": "Finished by user.",
+      "code_review": {
+        "id": "REVIEW-0131",
+        "verdict": "ready",
+        "summary": "No blocking findings after evidence trust-boundary regressions, review-history projection, private-state cleanup coverage, configured mypy and pylint, 560-test full suites, workflow parsing, package build, twine validation, and clean-wheel smoke tests.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0131.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0131",
+          "verdict": "ready",
+          "summary": "No blocking findings after evidence trust-boundary regressions, review-history projection, private-state cleanup coverage, configured mypy and pylint, 560-test full suites, workflow parsing, package build, twine validation, and clean-wheel smoke tests.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0131.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-172-prefer-newer-public-review-evidence-in-roadmap.md": {
+      "task_id": "T-172",
+      "context_pack": "agent/context-packs/T-172-prefer-newer-public-review-evidence-in-roadmap.md",
+      "status": "complete",
+      "run_id": "complete-t-172-prefer-newer-public-review-evidence-in-roadmap-20260629191209085408",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T19:12:09Z",
+      "completion_reason": "Finished by user.",
+      "code_review": {
+        "id": "REVIEW-0132",
+        "verdict": "ready",
+        "summary": "No blocking findings after public/private review precedence regressions, roadmap regeneration, 562-test full suite, configured mypy, pylint, compileall, and diff checks.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0132.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0132",
+          "verdict": "ready",
+          "summary": "No blocking findings after public/private review precedence regressions, roadmap regeneration, 562-test full suite, configured mypy, pylint, compileall, and diff checks.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0132.yml"
+        }
+      ]
+    }
+  }
+}
