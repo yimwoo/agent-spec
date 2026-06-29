@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:10:20Z",
+  "updated_at": "2026-06-29T21:23:09Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -209,6 +209,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0136.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-175-prefer-provider-native-execution-with-generic-fallback.md": {
+      "task_id": "T-175",
+      "context_pack": "agent/context-packs/T-175-prefer-provider-native-execution-with-generic-fallback.md",
+      "status": "complete",
+      "run_id": "complete-t-175-prefer-provider-native-execution-with-generic-fallback-20260629212309331541",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:23:09Z",
+      "requirements": [
+        "R-217"
+      ],
+      "completion_reason": "Completed R-217 provider-native execution strategy with portable AgentSpec fallback compatibility.",
+      "code_review": {
+        "id": "REVIEW-0137",
+        "verdict": "ready",
+        "summary": "No blocking findings after native-first strategy projection, Codex and Claude adapter guidance, generic fallback compatibility checks, 111 focused tests, 571-test full suite, package-wide mypy, pylint 10.00/10, compileall, and diff checks.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0137.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0137",
+          "verdict": "ready",
+          "summary": "No blocking findings after native-first strategy projection, Codex and Claude adapter guidance, generic fallback compatibility checks, 111 focused tests, 571-test full suite, package-wide mypy, pylint 10.00/10, compileall, and diff checks.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0137.yml"
         }
       ]
     }

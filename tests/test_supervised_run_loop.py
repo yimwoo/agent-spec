@@ -22,6 +22,8 @@ class SupervisedRunLoopTests(unittest.TestCase):
             result = loop_run(root, run_id="loop-001")
 
             self.assertTrue(result["started"])
+            self.assertEqual(result["execution_strategy"]["mode"], "agentspec_generic_fallback")
+            self.assertFalse(result["execution_strategy"]["preferred"])
             self.assertEqual(result["selected_task"]["id"], "T-008")
             self.assertEqual(result["state"]["run_id"], "loop-001")
             self.assertEqual(result["state"]["status"], "started")

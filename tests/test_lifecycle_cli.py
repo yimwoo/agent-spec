@@ -6,7 +6,12 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import main
-from agentspec.lifecycle import LIFECYCLE_CONTRACT_SCHEMA, build_lifecycle_contract, format_lifecycle_contract
+from agentspec.lifecycle import (
+    LIFECYCLE_CONTRACT_SCHEMA,
+    build_execution_strategy,
+    build_lifecycle_contract,
+    format_lifecycle_contract,
+)
 
 
 class LifecycleCliTests(unittest.TestCase):
@@ -47,6 +52,13 @@ class LifecycleCliTests(unittest.TestCase):
                 "agentspec.post_artifact_guidance.v0",
             )
             self.assertFalse(contract["post_artifact_guidance"]["agent_display"]["show_terminal_commands"])
+            execution = contract["execution"]
+            self.assertEqual(execution["selected"]["mode"], "provider_native")
+            self.assertEqual(execution["selected"]["provider"], "current-host")
+            self.assertEqual(execution["selected"]["availability"], "unverified")
+            self.assertEqual(execution["fallback"]["mode"], "agentspec_generic_fallback")
+            self.assertIn("aspec run package", execution["fallback"]["commands"])
+            self.assertIn("aspec run result", execution["fallback"]["commands"])
 
             inspiration = " ".join(source["value"] for source in contract["source_inspirations"])
             self.assertIn("idea refinement", inspiration)
@@ -72,6 +84,30 @@ class LifecycleCliTests(unittest.TestCase):
             self.assertEqual(by_id["delegate"]["native_commands"], [])
             self.assertIn("delegate-work", by_id["delegate"]["skill_names"])
             self.assertIn("aspec finish", by_id["branch_finish"]["native_commands"])
+            self.assertEqual(by_id["execute"]["preferred_execution"], "provider_native")
+            self.assertEqual(by_id["execute"]["fallback_execution"], "agentspec_generic_fallback")
+
+    def test_execution_strategy_reports_provider_capability_and_fallback(self) -> None:
+        codex = build_execution_strategy(
+            Path("/tmp/agentspec-lifecycle-test"),
+            provider="codex",
+            capabilities={"codex_goal_or_workflow": True},
+        )
+        self.assertEqual(codex["selected"]["provider"], "codex")
+        self.assertEqual(codex["selected"]["mechanism"], "goal_or_workflow")
+        self.assertEqual(codex["unavailable_capabilities"], [])
+
+        unavailable = build_execution_strategy(
+            Path("/tmp/agentspec-lifecycle-test"),
+            provider="claude",
+            capabilities={"claude_loop_or_dynamic_workflow": False},
+        )
+        self.assertEqual(unavailable["selected"]["mode"], "agentspec_generic_fallback")
+        self.assertEqual(
+            unavailable["unavailable_capabilities"][0]["id"],
+            "claude_loop_or_dynamic_workflow",
+        )
+        self.assertIn("aspec run loop", unavailable["fallback"]["compatibility_commands"])
 
     def test_lifecycle_cli_human_output(self) -> None:
         with tempfile.TemporaryDirectory() as td:

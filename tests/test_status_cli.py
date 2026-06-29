@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from agentspec.cli import main
 from agentspec.io import load_data, write_data
@@ -1151,11 +1152,40 @@ branch: codex/t-003-ready
 
             summary = status["lifecycle_summary"]
             self.assertEqual(summary["current_stage"], "task_ready")
+            self.assertEqual(status["execution"]["selected"]["mode"], "provider_native")
+            self.assertEqual(summary["execution"]["selected"]["provider"], "current-host")
+            self.assertEqual(
+                summary["recommended_next_action"]["label"],
+                "Continue in the provider-native host workflow.",
+            )
             self.assertEqual(summary["current_artifact"]["session_preflight"]["status"], "satisfied")
             self.assertEqual(
                 summary["current_artifact"]["session_preflight"]["active_session"]["session_id"],
                 "S-status-preflight",
             )
+
+    def test_status_reports_unavailable_host_capability_and_generic_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed_ready_task_only(root)
+
+            with mock.patch.dict(
+                "os.environ",
+                {
+                    "AGENTSPEC_EXECUTION_PROVIDER": "claude",
+                    "AGENTSPEC_CLAUDE_NATIVE_EXECUTION": "0",
+                },
+                clear=False,
+            ):
+                status = build_project_status(root)
+
+            execution = status["execution"]
+            self.assertEqual(execution["selected"]["mode"], "agentspec_generic_fallback")
+            self.assertEqual(
+                execution["unavailable_capabilities"][0]["id"],
+                "claude_loop_or_dynamic_workflow",
+            )
+            self.assertIn("aspec run package", execution["fallback"]["commands"])
 
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:

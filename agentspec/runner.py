@@ -682,6 +682,13 @@ def build_runner_package(step: dict[str, Any], *, runner: str = "generic", run_d
     package: dict[str, Any] = {
         "schema": RUNNER_PACKAGE_SCHEMA,
         "runner": runner,
+        "execution_strategy": {
+            "mode": "provider_neutral_bridge",
+            "fallback": True,
+            "runner": runner,
+            "stable_contract": ["aspec run package", "aspec run result"],
+            "compatibility_contract": ["aspec run loop", "aspec run exec"],
+        },
         "run_id": run_id,
         "next_action": step.get("next_action"),
         "should_execute": should_execute,

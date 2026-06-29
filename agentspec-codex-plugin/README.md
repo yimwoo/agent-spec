@@ -176,8 +176,15 @@ aspec status
 aspec task next
 aspec plan <T-id>
 aspec session start --task <T-id> --owner <owner> --branch <branch> --worktree <path>
-aspec run loop
+aspec run package --runner generic --json
+aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
 ```
+
+After session preflight, provider-native execution is preferred: use Codex
+Goal mode or the active Codex workflow to complete the scoped task. The
+package/result pair is the generic fallback; `aspec run loop` and `aspec run
+exec` remain compatibility paths. Do not bypass allowed paths, verification,
+review, or finish write-back in either mode.
 
 For candidate external-source updates:
 

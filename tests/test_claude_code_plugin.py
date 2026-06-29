@@ -265,6 +265,37 @@ class ClaudeCodePluginTests(unittest.TestCase):
                     self.assertIn(text, normalized)
                 self.assertNotIn("--disposition merged", normalized)
 
+    def test_plugin_guidance_prefers_provider_native_execution(self) -> None:
+        codex = REPO_ROOT / "agentspec-codex-plugin"
+        claude = REPO_ROOT / "agentspec-claude-plugin"
+        codex_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in [
+                codex / "skills" / "continue-work" / "SKILL.md",
+                codex / "controller" / "skills" / "execute-workflow" / "SKILL.md",
+                codex / "README.md",
+            ]
+        )
+        claude_text = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in [
+                claude / "skills" / "continue-work" / "SKILL.md",
+                claude / "controller" / "skills" / "execute-workflow" / "SKILL.md",
+                claude / "README.md",
+            ]
+        )
+
+        codex_normalized = " ".join(codex_text.split())
+        claude_normalized = " ".join(claude_text.split())
+        self.assertIn("Codex Goal mode or the active Codex workflow", codex_normalized)
+        self.assertIn("Claude `/loop` or a dynamic Claude workflow", claude_normalized)
+        for text in (codex_normalized, claude_normalized):
+            self.assertIn("provider-native execution", text)
+            self.assertIn("generic fallback", text)
+            self.assertIn("aspec run package", text)
+            self.assertIn("aspec run result", text)
+            self.assertIn("Do not bypass", text)
+
     def test_emitted_agent_guidance_requires_session_gate_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

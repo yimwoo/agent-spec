@@ -14,6 +14,7 @@ from .evidence import load_task_evidence, task_evidence_sources
 from .errors import ERROR_SCHEMA
 from .handoff import load_project_handoff
 from .io import load_data
+from .lifecycle import build_execution_strategy
 from .maturity import build_maturity_status
 from .model_review import build_agent_profile_diagnostics
 from .outcome import build_outcome_status
@@ -69,6 +70,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
     sessions = build_session_status(root)
     workflows = build_workflow_contract_status(root)
     agent_profiles = _agent_profile_status(root)
+    execution = build_execution_strategy(root)
 
     active_runs, stale_active_runs = _classify_active_runs(root, runs, tasks)
     attention_runs, stale_attention_runs = _classify_attention_runs(root, runs, tasks)
@@ -156,6 +158,7 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "runs": run_counts,
         "sessions": sessions,
         "agent_profiles": agent_profiles,
+        "execution": execution,
         "workflows": workflows,
         "lifecycle": lifecycle,
     }
@@ -175,6 +178,9 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
     workflows = _dict_or_empty(status.get("workflows"))
     lifecycle = _dict_or_empty(status.get("lifecycle"))
     outcomes = _dict_or_empty(status.get("outcomes"))
+    execution = _dict_or_empty(status.get("execution"))
+    selected_execution = _dict_or_empty(execution.get("selected"))
+    fallback_execution = _dict_or_empty(execution.get("fallback"))
     next_task = tasks.get("next") if isinstance(tasks.get("next"), dict) else None
     attention_runs = _list_or_empty(runs.get("attention"))
     active_runs = _list_or_empty(runs.get("active"))
@@ -255,7 +261,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                 ),
                 "human_decision_required": False,
                 "reason": str(session_preflight.get("message") or "Implementation execution should have an active session lease."),
-                "commands": [command, f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
+                "commands": [command, "aspec status --json"],
                 "options": [
                     {
                         "label": "Claim an implementation session",
@@ -263,9 +269,14 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                         "commands": [command],
                     },
                     {
-                        "label": "Run after the session is active",
+                        "label": "Continue in the host workflow",
                         "when": "After the branch/worktree lease exists and matches the task.",
-                        "commands": [f"aspec run loop {path}" if path else "aspec task next"],
+                        "commands": [],
+                    },
+                    {
+                        "label": "Use the portable fallback",
+                        "when": "Only when provider-native execution is unavailable.",
+                        "commands": ["aspec run package --runner generic --json"],
                     },
                 ],
             }
@@ -282,12 +293,23 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                 }
             ]
         else:
-            action = {
-                "label": "Start the next ready task.",
-                "human_decision_required": False,
-                "reason": "A ready task context pack defines the scope, allowed paths, and verification expectations.",
-                "commands": [f"aspec run loop {path}" if path else "aspec task next", "aspec status --json"],
-            }
+            if selected_execution.get("mode") == "provider_native":
+                action = {
+                    "label": "Continue in the provider-native host workflow.",
+                    "human_decision_required": False,
+                    "reason": (
+                        "The task pack and session lease define the AgentSpec boundary; the current host "
+                        "can execute and iterate natively inside that boundary."
+                    ),
+                    "commands": ["aspec status --json"],
+                }
+            else:
+                action = {
+                    "label": "Start the AgentSpec generic fallback.",
+                    "human_decision_required": False,
+                    "reason": "Provider-native execution is unavailable; use the portable package/result contract.",
+                    "commands": ["aspec run package --runner generic --json", "aspec status --json"],
+                }
     elif lifecycle.get("readiness") in {"blocked", "needs_attention"}:
         stage = "lifecycle_attention"
         findings = _lifecycle_findings(lifecycle)
@@ -327,6 +349,13 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             outcomes=outcomes,
         )
 
+    action["execution_strategy"] = (
+        fallback_execution
+        if stage in {"active_run", "attention_run"}
+        else selected_execution
+    )
+    action["fallback_execution"] = fallback_execution
+
     return {
         "schema": LIFECYCLE_SUMMARY_SCHEMA,
         "main_point": main_point,
@@ -339,6 +368,7 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
             "score": outcomes.get("score"),
             "summary": outcomes.get("summary"),
         },
+        "execution": execution,
         "recommended_next_action": _with_agent_display(action),
         "blocked_by": blocked_by,
         "terms": _lifecycle_terms(),

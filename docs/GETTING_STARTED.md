@@ -92,6 +92,13 @@ The important boundary is that the code agent is the executor. AgentSpec is the
 stateful control plane that tells the agent what is in scope, records what
 happened, and keeps the next human or agent from depending on chat history.
 
+After task, workflow, and session preflight, prefer provider-native execution:
+Codex Goal mode or the active Codex workflow, and Claude `/loop` or a dynamic
+Claude workflow. AgentSpec still owns scope, evidence, review, and finish.
+When the host-native capability is unavailable, use `aspec run package` plus
+`aspec run result` as the generic fallback. `aspec run loop` and `aspec run
+exec` remain compatibility paths.
+
 ## Prompt-First Operating Model
 
 AgentSpec is designed so humans can prompt a code agent instead of manually
@@ -135,12 +142,15 @@ sequenceDiagram
   C->>R: Link a workflow or execution plan
   P->>C: aspec session start
   C->>R: Record branch/worktree/session lease
-  P->>C: aspec run package or run loop
-  C-->>A: Return scoped prompt, allowed paths, and verification expectations
-  A->>R: Edit code and run tests inside the declared scope
-  A->>P: Report output, touched paths, tests, and evidence
-  P->>C: aspec run result
-  C->>R: Record events and apply policy/reviewer verdict
+  alt Provider-native workflow available
+    A->>R: Execute and iterate inside the declared scope
+  else Generic fallback required
+    P->>C: aspec run package
+    C-->>A: Return scoped prompt and result contract
+    A->>P: Report output, touched paths, tests, and evidence
+    P->>C: aspec run result
+    C->>R: Record events and apply policy/reviewer verdict
+  end
   alt Ready to finish
     P->>C: aspec review code and aspec finish
     C->>R: Update reviews, task ledger, handoff, and roadmap
@@ -351,21 +361,20 @@ Create a native workflow for the task:
 aspec --root "$TARGET" plan --current
 ```
 
-Start or continue execution:
+After session preflight, continue in the provider-native host workflow. For
+Codex, use Goal mode or the active workflow; for Claude, use `/loop` or a
+dynamic workflow. Do not bypass the task pack or lifecycle gates.
+
+Use the generic fallback only when the native host capability is unavailable:
 
 ```bash
-aspec --root "$TARGET" run loop
-aspec --root "$TARGET" run prompt <run-id>
-```
-
-For runner integrations:
-
-```bash
-aspec --root "$TARGET" run package --runner codex --json
+aspec --root "$TARGET" run package --runner generic --json
 aspec --root "$TARGET" run result <run-id> \
   --result-json '{"executor_output":"Done. Tests passed.","test_status":"passed"}' \
   --json
 ```
+
+`aspec run loop` and `aspec run exec` remain supported for compatibility.
 
 The controller owns durable state. Plugin skills and external agents are thin
 adapters that read the task pack, do the bounded work, and report results back
@@ -499,7 +508,7 @@ obvious without reading chat history:
 | Compile requirements | Source sections produce specs, `R-###` requirements, assumptions, questions, and readiness. | `aspec compile` |
 | Create task pack | A requirement becomes a bounded `T-###` context pack with allowed paths and tests. | `aspec task create --requirement R-### --type implementation --title "<title>"` |
 | Plan workflow | The task pack is linked to a native execution plan. | `aspec plan T-###` |
-| Run scoped work | The code agent works only inside the task pack scope. | `aspec run loop agent/context-packs/T-###-name.md` |
+| Run scoped work | The code agent uses its provider-native workflow inside the task/session boundary. | Codex Goal/workflow or Claude `/loop`; `aspec run package` is the fallback |
 | Verify and review | Tests pass and review evidence is recorded. | `aspec review code --task T-### --verdict ready --summary "<summary>"` |
 | Finish write-back | Ledger, handoff, and roadmap make the next session recoverable. | `aspec finish T-### --test-status passed --review REVIEW-####` |
 

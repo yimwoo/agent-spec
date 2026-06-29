@@ -20,21 +20,27 @@ aspec status --json
 aspec run prompt <run-id>
 ```
 
-2. Use the native run loop or runner package flow:
+2. Prefer provider-native execution. Use Claude `/loop` or a dynamic Claude
+   workflow to keep iterating until the workflow's verification and completion
+   criteria are satisfied. Do not bypass AgentSpec task scope, session
+   preflight, allowed paths, review, or finish write-back.
+
+3. If the host-native capability is unavailable, use the provider-neutral
+   generic fallback contract:
 
 ```bash
-aspec run loop
-aspec run step --json
 aspec run package --runner generic --json
 aspec run result <run-id> --result-json '{"executor_output":"..."}' --json
-aspec run exec --runner codex --json
 ```
+
+`aspec run loop` and `aspec run exec --runner claude` remain compatibility
+paths. They are not the preferred Claude execution strategy.
 
 Claim or verify an active owner/patcher session lease before implementation execution.
 Do not start `aspec run loop`, `aspec run package`, or `aspec run exec` until session preflight is satisfied.
 Explicit host-worktree execution is an auditable escape hatch when the workflow or context pack declares it intentionally.
 
-3. Keep edits inside the task context pack allowed paths and report touched
+4. Keep edits inside the task context pack allowed paths and report touched
    paths in the executor result.
 
 Boundary: this skill does not create a separate execution state machine.
