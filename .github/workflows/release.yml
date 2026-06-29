@@ -8,6 +8,7 @@ on:
       - "agentspec-codex-plugin/**"
       - "agentspec-claude-plugin/**"
       - "docs/release/**"
+      - "install.sh"
       - "tests/**"
       - "README.md"
       - "pyproject.toml"
@@ -80,10 +81,10 @@ jobs:
 
           from agentspec.evidence import (
               PASSING_PUBLIC_REVIEW_VERDICTS,
-              load_public_release_tasks,
+              load_task_evidence,
           )
 
-          tasks = load_public_release_tasks(Path("."))
+          tasks = load_task_evidence(Path("."))
           assert tasks, "docs/release/evidence.yml has no valid task evidence"
           for context_pack, entry in tasks.items():
               verification = entry["verification"]
@@ -99,12 +100,7 @@ jobs:
           python -m pytest -q
           python -m compileall -q agentspec tests
           python -m mypy
-          python -m pylint \
-            agentspec/evidence.py \
-            agentspec/maturity.py \
-            agentspec/review.py \
-            agentspec/roadmap.py \
-            agentspec/writeback.py
+          python -m pylint agentspec
 
       - name: Check tag points at checkout
         if: env.RELEASE_TAG != ''

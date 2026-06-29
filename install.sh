@@ -3,11 +3,14 @@ set -euo pipefail
 
 # AgentSpec Codex plugin installer
 # Usage:
-#   bash install.sh                    # clone to ~/.codex/plugins/agentspec-source + register
+#   bash install.sh                    # install the release-pinned plugin + register
+#   bash install.sh --ref main         # install the development plugin from main
 #   bash install.sh --codex-plugin     # same as above
 #   bash install.sh --local            # use this checkout as the plugin source
 
 REPO_URL="https://github.com/yimwoo/agent-spec"
+DEFAULT_SOURCE_REF="v0.1.40"
+SOURCE_REF="${AGENTSPEC_REF:-${DEFAULT_SOURCE_REF}}"
 SOURCE_DIR="$HOME/.codex/plugins/agentspec-source"
 PLUGIN_SUBDIR="agentspec-codex-plugin"
 MARKETPLACE_FILE="$HOME/.agents/plugins/marketplace.json"
@@ -31,20 +34,57 @@ ensure_clean_checkout() {
   fi
 }
 
-fast_forward_source_checkout() {
+checkout_source_ref() {
   local source_dir="$1"
-  local current_branch
+  local source_ref="$2"
 
   ensure_clean_checkout "${source_dir}"
-  current_branch="$(git -C "${source_dir}" branch --show-current)"
-  if [ "${current_branch}" != "main" ]; then
-    echo "Error: expected ${source_dir} to be on branch main, found ${current_branch}." >&2
-    echo "Switch that checkout back to main, or use --local from your working tree." >&2
-    exit 1
+  git -C "${source_dir}" fetch --tags origin
+  if [ "${source_ref}" = "main" ]; then
+    git -C "${source_dir}" checkout main
+    git -C "${source_dir}" pull --ff-only origin main
+    return 0
   fi
 
-  git -C "${source_dir}" fetch origin
-  git -C "${source_dir}" pull --ff-only origin main
+  if ! git -C "${source_dir}" rev-parse --verify "${source_ref}^{commit}" >/dev/null 2>&1; then
+    echo "Error: AgentSpec source ref not found: ${source_ref}" >&2
+    echo "Use a release tag such as ${DEFAULT_SOURCE_REF}, or pass --ref main for development." >&2
+    exit 1
+  fi
+  git -C "${source_dir}" checkout --detach "${source_ref}"
+}
+
+verify_cli_plugin_compatibility() {
+  local manifest_path="$1"
+  local plugin_version
+  local cli_version
+
+  plugin_version="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["version"])' "${manifest_path}")"
+  cli_version="$(python3 -c '
+import importlib.metadata
+
+try:
+    print(importlib.metadata.version("agentspec"))
+except importlib.metadata.PackageNotFoundError:
+    print("")
+')"
+
+  if [ -z "${cli_version}" ]; then
+    echo "AgentSpec CLI is not installed yet; install v${plugin_version} before governed execution."
+    return 0
+  fi
+  if [ "${cli_version}" = "${plugin_version}" ]; then
+    echo "AgentSpec CLI/plugin compatibility verified: ${plugin_version}."
+    return 0
+  fi
+  if [ "${ALLOW_VERSION_MISMATCH}" = true ]; then
+    echo "Warning: AgentSpec CLI ${cli_version} does not match plugin ${plugin_version}." >&2
+    return 0
+  fi
+
+  echo "Error: AgentSpec CLI ${cli_version} does not match plugin ${plugin_version}." >&2
+  echo "Install the matching CLI or rerun with --allow-version-mismatch for intentional development testing." >&2
+  exit 1
 }
 
 refresh_codex_plugin_cache() {
@@ -170,21 +210,42 @@ print(action + " AgentSpec plugin entry (version " + entry["version"] + ")")
 }
 
 LOCAL_MODE=false
-for arg in "$@"; do
-  case "$arg" in
-    --local) LOCAL_MODE=true ;;
-    --codex-plugin) ;;
+ALLOW_VERSION_MISMATCH=false
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --local)
+      LOCAL_MODE=true
+      shift
+      ;;
+    --codex-plugin)
+      shift
+      ;;
+    --ref)
+      if [ "$#" -lt 2 ]; then
+        echo "Error: --ref requires a release tag or main." >&2
+        exit 1
+      fi
+      SOURCE_REF="$2"
+      shift 2
+      ;;
+    --allow-version-mismatch)
+      ALLOW_VERSION_MISMATCH=true
+      shift
+      ;;
     --help|-h)
       echo "AgentSpec Codex Plugin Installer"
       echo ""
       echo "Usage:"
-      echo "  bash install.sh                  Install as Codex plugin"
+      echo "  bash install.sh                  Install ${DEFAULT_SOURCE_REF} (stable default)"
+      echo "  bash install.sh --ref main       Install the development plugin from main"
       echo "  bash install.sh --local          Use current checkout as plugin source"
+      echo "  bash install.sh --allow-version-mismatch"
+      echo "                                   Permit intentional CLI/plugin skew"
       echo ""
       exit 0
       ;;
     *)
-      echo "Unknown argument: ${arg}" >&2
+      echo "Unknown argument: $1" >&2
       exit 1
       ;;
   esac
@@ -194,6 +255,7 @@ ensure_command git
 ensure_command python3
 
 if [ "${LOCAL_MODE}" = true ]; then
+  SOURCE_REF="local"
   REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PLUGIN_PATH="${REPO_ROOT}/${PLUGIN_SUBDIR}"
   MARKETPLACE_FILE="${REPO_ROOT}/.agents/plugins/marketplace.json"
@@ -201,11 +263,12 @@ if [ "${LOCAL_MODE}" = true ]; then
 else
   if [ -d "${SOURCE_DIR}/.git" ]; then
     echo "Updating existing source checkout at ${SOURCE_DIR}..."
-    fast_forward_source_checkout "${SOURCE_DIR}"
+    checkout_source_ref "${SOURCE_DIR}" "${SOURCE_REF}"
   else
     echo "Cloning AgentSpec to ${SOURCE_DIR}..."
     mkdir -p "$(dirname "${SOURCE_DIR}")"
     git clone "${REPO_URL}" "${SOURCE_DIR}"
+    checkout_source_ref "${SOURCE_DIR}" "${SOURCE_REF}"
   fi
   PLUGIN_PATH="${SOURCE_DIR}/${PLUGIN_SUBDIR}"
 fi
@@ -215,6 +278,8 @@ if [ ! -f "${PLUGIN_MANIFEST}" ]; then
   echo "Error: ${PLUGIN_MANIFEST} not found." >&2
   exit 1
 fi
+
+verify_cli_plugin_compatibility "${PLUGIN_MANIFEST}"
 
 MARKETPLACE_DIR="$(dirname "${MARKETPLACE_FILE}")"
 mkdir -p "${MARKETPLACE_DIR}"
@@ -228,7 +293,8 @@ echo ""
 echo "Next steps:"
 echo "  1. Install the AgentSpec CLI if needed:"
 echo ""
-echo "     python3 -m pip install \"git+https://github.com/yimwoo/agent-spec.git\""
+PLUGIN_VERSION="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["version"])' "${PLUGIN_MANIFEST}")"
+echo "     python3 -m pip install \"git+https://github.com/yimwoo/agent-spec.git@v${PLUGIN_VERSION}\""
 echo ""
 echo "  2. Codex CLI: run 'codex', then '/plugins', choose the local marketplace,"
 echo "     open aspec, and select Install plugin or toggle it on."
@@ -245,4 +311,5 @@ echo ""
 echo "     Use aspec:init-project to initialize this repository from docs/source/design.md."
 echo ""
 echo "Plugin source: ${PLUGIN_PATH}"
+echo "Source ref:    ${SOURCE_REF}"
 echo "Marketplace:   ${MARKETPLACE_FILE}"

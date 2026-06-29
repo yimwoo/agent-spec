@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_project_config, merged_runtime_config
-from .evidence import load_public_release_tasks, public_release_evidence_path
+from .evidence import load_public_release_tasks, load_task_evidence, public_release_evidence_path
 from .io import load_data, write_text
 
 
@@ -25,12 +25,9 @@ def build_roadmap(root: Path) -> str:
 
     root = root.resolve()
     handoff = _dict_or_empty(load_data(root / "agent" / "handoff.yml", {}))
-    ledger = _dict_or_empty(load_data(root / "agent" / "task-ledger.yml", {}))
     public_tasks = load_public_release_tasks(root)
     requirements = _list_or_empty(load_data(root / "docs" / "traceability" / "requirements.yml", []))
-    tasks = ledger.get("tasks") if isinstance(ledger.get("tasks"), dict) else {}
-    private_tasks: dict[str, Any] = tasks if isinstance(tasks, dict) else {}
-    merged_tasks = _merge_task_evidence(public_tasks, private_tasks)
+    merged_tasks = load_task_evidence(root)
     task_items = sorted(merged_tasks.items())
     generated_from = [
         "`agent/handoff.yml`",
@@ -209,39 +206,6 @@ def _task_row(context_pack: str, entry: dict[str, Any]) -> str:
         f"{review.get('id', '-') if review else '-'} | "
         f"{entry.get('updated_at', '-')} |"
     )
-
-
-def _merge_task_evidence(
-    public_tasks: dict[str, dict[str, Any]],
-    private_tasks: dict[str, Any],
-) -> dict[str, dict[str, Any]]:
-    merged = {context_pack: dict(entry) for context_pack, entry in public_tasks.items()}
-    for context_pack, private_entry in private_tasks.items():
-        if not isinstance(context_pack, str) or not isinstance(private_entry, dict):
-            continue
-        public_entry = public_tasks.get(context_pack)
-        if public_entry is None:
-            merged[context_pack] = private_entry
-            continue
-        combined = {**public_entry, **private_entry}
-        if _public_review_is_newer(public_entry, private_entry):
-            for key in ("code_review", "reviews", "review_updated_at"):
-                if key in public_entry:
-                    combined[key] = public_entry[key]
-        merged[context_pack] = combined
-    return merged
-
-
-def _public_review_is_newer(
-    public_entry: dict[str, Any],
-    private_entry: dict[str, Any],
-) -> bool:
-    public_review = public_entry.get("code_review")
-    if not isinstance(public_review, dict):
-        return False
-    public_updated = str(public_entry.get("review_updated_at") or public_entry.get("updated_at") or "")
-    private_updated = str(private_entry.get("review_updated_at") or private_entry.get("updated_at") or "")
-    return bool(public_updated) and public_updated > private_updated
 
 
 def _count_text(counts: Counter[str]) -> str:

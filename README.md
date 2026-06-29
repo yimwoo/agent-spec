@@ -82,12 +82,20 @@ turns natural-language requests into `aspec` invocations.
 <summary><b>Codex</b></summary>
 
 ```bash
-# Current installer. Clones/updates the Codex plugin source from main.
+# Stable installer. The script defaults to the release-pinned plugin v0.1.40.
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
-> Release-pinned plugin installation is planned; today the installer tracks
-> `main`. Pin the CLI separately with `@v0.1.40` (see step 1).
+The installer defaults to the release-pinned plugin `v0.1.40`, verifies it
+against an installed AgentSpec CLI, and stops with repair guidance if the
+versions differ. To test the development plugin intentionally, pass
+`--ref main`; use `--allow-version-mismatch` only for explicit compatibility
+testing.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh \
+  | bash -s -- --ref main
+```
 
 Then enable the plugin:
 

@@ -1,12 +1,15 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T20:05:05Z",
+  "updated_at": "2026-06-29T21:10:20Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
       "context_pack": "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md",
       "status": "complete",
       "run_id": "complete-t-169-harden-release-evidence-and-maintainability-checks-20260629052515794702",
+      "requirements": [
+        "R-215"
+      ],
       "verification": {
         "status": "passed"
       },
@@ -54,6 +57,9 @@
       "context_pack": "agent/context-packs/T-170-fix-release-evidence-and-0-1-39-review-blockers.md",
       "status": "complete",
       "run_id": "complete-t-170-fix-release-evidence-and-0-1-39-review-blockers-20260629185340975520",
+      "requirements": [
+        "R-215"
+      ],
       "verification": {
         "status": "passed"
       },
@@ -83,6 +89,9 @@
       "context_pack": "agent/context-packs/T-171-complete-package-wide-mypy-and-pylint-baseline.md",
       "status": "complete",
       "run_id": "complete-t-171-complete-package-wide-mypy-and-pylint-baseline-20260629195230503791",
+      "requirements": [
+        "R-215"
+      ],
       "verification": {
         "status": "passed"
       },
@@ -112,6 +121,9 @@
       "context_pack": "agent/context-packs/T-172-prefer-newer-public-review-evidence-in-roadmap.md",
       "status": "complete",
       "run_id": "complete-t-172-prefer-newer-public-review-evidence-in-roadmap-20260629191209085408",
+      "requirements": [
+        "R-215"
+      ],
       "verification": {
         "status": "passed"
       },
@@ -141,6 +153,9 @@
       "context_pack": "agent/context-packs/T-173-prepare-v0-1-40-release-metadata.md",
       "status": "complete",
       "run_id": "complete-t-173-prepare-v0-1-40-release-metadata-20260629200505580626",
+      "requirements": [
+        "R-215"
+      ],
       "verification": {
         "status": "passed"
       },
@@ -162,6 +177,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0135.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-174-align-lifecycle-state-evidence-and-release-compatibility.md": {
+      "task_id": "T-174",
+      "context_pack": "agent/context-packs/T-174-align-lifecycle-state-evidence-and-release-compatibility.md",
+      "status": "complete",
+      "run_id": "complete-t-174-align-lifecycle-state-evidence-and-release-compatibility-20260629211020779046",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:10:20Z",
+      "requirements": [
+        "R-216"
+      ],
+      "completion_reason": "Completed R-216 lifecycle state, evidence projection, stable installer compatibility, and release CI hardening.",
+      "code_review": {
+        "id": "REVIEW-0136",
+        "verdict": "ready",
+        "summary": "No blocking findings after task-state and public-evidence regressions, stable plugin/CLI pinning, 101 focused tests, 568-test full suite, package-wide mypy and pylint, compileall, installer syntax, release build, Twine validation, and diff checks.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0136.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0136",
+          "verdict": "ready",
+          "summary": "No blocking findings after task-state and public-evidence regressions, stable plugin/CLI pinning, 101 focused tests, 568-test full suite, package-wide mypy and pylint, compileall, installer syntax, release build, Twine validation, and diff checks.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0136.yml"
         }
       ]
     }
