@@ -1,0 +1,43 @@
+{
+  "description": "AgentSpec policy, scope, stop-verification, and finish-evidence adapters for Claude Code.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider claude --event pre-execution --native",
+            "timeout": 30,
+            "statusMessage": "Checking AgentSpec task scope"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider claude --event finish-evidence --native",
+            "timeout": 30,
+            "statusMessage": "Recording AgentSpec finish evidence"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider claude --event stop-verification --native",
+            "timeout": 30,
+            "statusMessage": "Checking AgentSpec completion evidence"
+          }
+        ]
+      }
+    ]
+  }
+}

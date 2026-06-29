@@ -11,6 +11,7 @@ from pathlib import Path
 
 from agentspec.cli import CLI_ERROR_SCHEMA, main
 from agentspec.io import load_data, write_data
+from agentspec.outcome import build_outcome_status, record_outcome_observation
 
 
 CONFLUENCE_BODY = """# Payments Design
@@ -22,6 +23,55 @@ The Confluence page describes payment capture behavior.
 
 
 class EnterpriseConnectorTests(unittest.TestCase):
+    def test_external_outcome_adapter_contributes_facts_without_policy_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_data(
+                root / "agent" / "outcomes.yml",
+                {
+                    "schema": "agentspec.outcomes.v0",
+                    "outcomes": [
+                        {
+                            "id": "O-service",
+                            "title": "Service is operational",
+                            "gates": [
+                                {
+                                    "id": "G-slo",
+                                    "title": "SLO holds",
+                                    "checks": [
+                                        {"id": "C-slo", "kind": "slo", "max_age_seconds": 3600}
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            )
+
+            recorded = record_outcome_observation(
+                root,
+                {
+                    "outcome_id": "O-service",
+                    "gate_id": "G-slo",
+                    "check_id": "C-slo",
+                    "kind": "slo",
+                    "observed_at": "2026-06-29T20:00:00Z",
+                    "source": {
+                        "type": "observability",
+                        "adapter": "metrics-connector",
+                        "query_id": "availability-30d",
+                    },
+                    "facts": {"compliant": True},
+                },
+            )
+
+            self.assertNotIn("status", recorded)
+            status = build_outcome_status(root, evaluated_at="2026-06-29T20:30:00Z")
+            verdict = status["outcomes"][0]["gates"][0]["verdicts"][0]
+            self.assertEqual(verdict["status"], "passed")
+            self.assertEqual(verdict["policy_authority"], "agentspec.outcome")
+            self.assertEqual(verdict["observation"]["source"]["adapter"], "metrics-connector")
+
     def test_confluence_fixture_import_writes_candidate_snapshot_only(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -376,6 +376,37 @@ aspec --root "$TARGET" run result <run-id> \
 
 `aspec run loop` and `aspec run exec` remain supported for compatibility.
 
+## Native Lifecycle Hooks
+
+The Codex and Claude plugins bundle thin native hooks that call one shared
+AgentSpec policy surface:
+
+```bash
+python3 -m agentspec.cli hook evaluate \
+  --provider codex \
+  --event pre-execution \
+  --native
+```
+
+Native hook JSON is read from stdin. The provider-neutral request, decision,
+and evidence schemas cover:
+
+- pre-execution session and policy checks;
+- scope-expansion decisions for paths outside the active task pack;
+- stop verification against task, test, review, and finish evidence; and
+- post-tool finish evidence with provider and native-session provenance.
+
+Every evaluation is appended to `agent/hook-evidence/events.jsonl`. Malformed
+blocking input fails closed. An AgentSpec `allow` result intentionally omits
+native auto-approval, so Codex/Claude sandbox, permission, hook trust, and
+managed policy remain authoritative. Review and trust installed hooks using
+the host's native hook controls before relying on them.
+
+Stop verification is advisory unless the native payload declares
+`completion_requested: true`. For automation that treats every Stop as a
+completion attempt, set `AGENTSPEC_HOOK_ENFORCE_STOP=1`; the recursion guard
+still allows a second Stop event to prevent an endless hook loop.
+
 The controller owns durable state. Plugin skills and external agents are thin
 adapters that read the task pack, do the bounded work, and report results back
 to AgentSpec.
@@ -484,6 +515,115 @@ AgentSpec state is private dogfood context and is intentionally ignored:
 and `docs/adr/`. Public installs and plugin packages should contain only the
 CLI, tests, human-facing docs, and plugin package directories.
 
+## Outcome Verification
+
+Task completion says that scoped implementation work finished. It does not, by
+itself, prove that a user journey works or that production is healthy. Define
+those proofs as typed checks in `agent/outcomes.yml`:
+
+```json
+{
+  "id": "G-checkout-ready",
+  "title": "Checkout is production ready",
+  "required": true,
+  "checks": [
+    {
+      "id": "C-checkout-browser",
+      "kind": "browser_ui",
+      "max_age_seconds": 3600,
+      "repair": "Run the production checkout journey again."
+    },
+    {
+      "id": "C-checkout-slo",
+      "kind": "slo",
+      "max_age_seconds": 86400,
+      "repair": "Refresh the checkout SLO window."
+    }
+  ]
+}
+```
+
+Supported kinds are `command`, `browser_ui`, `slo`, `api_compatibility`,
+`deployment`, and `release`. External browser, CI, observability, deployment,
+and release adapters submit timestamped facts with source provenance:
+
+```bash
+aspec outcome observe --input-json '{
+  "outcome_id":"O-checkout",
+  "gate_id":"G-checkout-ready",
+  "check_id":"C-checkout-browser",
+  "kind":"browser_ui",
+  "observed_at":"2026-06-29T20:00:00Z",
+  "source":{"type":"browser","adapter":"playwright","run_id":"pw-42"},
+  "facts":{"journeys_total":3,"journeys_passed":3}
+}' --json
+
+aspec outcome verify --json
+aspec outcome --json
+```
+
+Definitions, observations, and verdicts remain separate:
+
+- definitions: `agent/outcomes.yml`;
+- adapter observations: `agent/outcome-evidence/observations/`;
+- AgentSpec policy verdicts: `agent/outcome-evidence/verdicts/latest.yml`.
+
+Adapters cannot submit `status`, `passed`, or `verdict` fields. AgentSpec owns
+the policy decision, reports missing, stale, malformed, failed, untrusted, and
+passing evidence with repair guidance, and never accepts task completion or a
+model self-report as production-readiness proof.
+
+## Controlled Agent Evaluations
+
+Use a versioned experiment manifest to test the same fixed corpus under an
+AgentSpec condition and a control condition. A manifest pins task revisions,
+success-oracle revisions, Codex and Claude models, environment, limits, and
+replicate count:
+
+```json
+{
+  "schema": "agentspec.evaluation_manifest.v0",
+  "id": "EXP-lifecycle-001",
+  "tasks": [{
+    "id": "TASK-fix-001",
+    "source": "corpus/fix-001.md",
+    "revision": "sha256:...",
+    "oracle": {"id": "tests", "type": "command", "revision": "oracle-v1"}
+  }],
+  "conditions": [
+    {"id": "with-agentspec", "agentspec": true},
+    {"id": "control", "agentspec": false}
+  ],
+  "providers": [
+    {"id": "codex", "model": "<pinned-codex-model>"},
+    {"id": "claude", "model": "<pinned-claude-model>"}
+  ],
+  "environment": {"id": "ubuntu", "revision": "image-sha"},
+  "limits": {"max_duration_seconds": 1800, "max_tokens": 100000, "max_retries": 3},
+  "replicates": 3
+}
+```
+
+The evaluation surface deliberately does not execute Codex or Claude. Run each
+cell through the provider's normal task workflow and existing repository,
+session, credential, sandbox, and external-service controls. Then record the
+immutable evidence and build the comparison:
+
+```bash
+aspec eval validate agent/evals/EXP-lifecycle-001/manifest.yml --json
+aspec eval record agent/evals/EXP-lifecycle-001/manifest.yml \
+  --input-file ./run-evidence.json --json
+aspec eval report agent/evals/EXP-lifecycle-001/manifest.yml --json
+```
+
+Run evidence can record completion, regressions, retries, human interventions,
+input/output/cached/total tokens, cost, duration, review findings, escaped
+defects, and raw provider provenance. Reports compare only pairs with compatible
+task, provider, model, environment, limits, oracle, and replicate metadata.
+Missing or partial evidence is labeled `limited`; metadata drift and duplicate
+cells are `invalid`. Machine-readable and Markdown reports are written under
+`reports/eval/<experiment-id>/` and state limitations before conclusions.
+
 ## Daily Commands
 
 ```bash
@@ -492,7 +632,9 @@ aspec lifecycle              # native lifecycle map
 aspec task next              # next ready task pack
 aspec next-action            # recovery or continuation command
 aspec maturity status        # governance profile checks
-aspec outcome                # product outcome gates
+aspec outcome                # live product outcome evidence and gates
+aspec outcome verify         # persist the current policy-verdict projection
+aspec eval report <manifest> # controlled AgentSpec-versus-control evidence
 aspec roadmap --check --json # roadmap freshness
 ```
 

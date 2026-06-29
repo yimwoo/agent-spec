@@ -296,6 +296,25 @@ class ClaudeCodePluginTests(unittest.TestCase):
             self.assertIn("aspec run result", text)
             self.assertIn("Do not bypass", text)
 
+    def test_plugins_bundle_native_lifecycle_hook_adapters(self) -> None:
+        for provider, plugin_name in (
+            ("codex", "agentspec-codex-plugin"),
+            ("claude", "agentspec-claude-plugin"),
+        ):
+            with self.subTest(provider=provider):
+                hook_path = REPO_ROOT / plugin_name / "hooks" / "hooks.json"
+                payload = json.loads(hook_path.read_text(encoding="utf-8"))
+                hooks = payload["hooks"]
+                self.assertIn("PreToolUse", hooks)
+                self.assertIn("PostToolUse", hooks)
+                self.assertIn("Stop", hooks)
+                commands = json.dumps(payload)
+                self.assertIn(f"--provider {provider}", commands)
+                self.assertIn("--event pre-execution", commands)
+                self.assertIn("--event stop-verification", commands)
+                self.assertIn("--event finish-evidence", commands)
+                self.assertIn("--native", commands)
+
     def test_emitted_agent_guidance_requires_session_gate_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

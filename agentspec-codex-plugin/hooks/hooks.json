@@ -1,0 +1,43 @@
+{
+  "description": "AgentSpec policy, scope, stop-verification, and finish-evidence adapters for Codex.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider codex --event pre-execution --native",
+            "timeout": 30,
+            "statusMessage": "Checking AgentSpec task scope"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider codex --event finish-evidence --native",
+            "timeout": 30,
+            "statusMessage": "Recording AgentSpec finish evidence"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m agentspec.cli hook evaluate --provider codex --event stop-verification --native",
+            "timeout": 30,
+            "statusMessage": "Checking AgentSpec completion evidence"
+          }
+        ]
+      }
+    ]
+  }
+}

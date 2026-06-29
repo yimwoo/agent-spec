@@ -22,6 +22,12 @@ from .diagnostics import configure_diagnostics, get_logger
 from .doctor import run_doctor
 from .drift import run_drift
 from .emit import emit_targets
+from .eval import (
+    format_evaluation_report,
+    load_evaluation_manifest,
+    record_evaluation_run,
+    write_evaluation_report,
+)
 from .errors import (
     AgentSpecError,
     AgentSpecIOPermissionError,
@@ -35,6 +41,7 @@ from .guidance import (
     format_artifact_preservation_guidance,
     format_post_artifact_guidance,
 )
+from .hooks import ALLOWED_HOOK_EVENTS, ALLOWED_HOOK_PROVIDERS, evaluate_native_hook
 from .ingest import ingest_source
 from .intake import diff_candidate, format_diff_report, import_candidate, promote_candidate
 from .lifecycle import build_lifecycle_contract, format_lifecycle_contract
@@ -49,7 +56,12 @@ from .maturity import (
     format_maturity_status,
     set_maturity_config,
 )
-from .outcome import build_outcome_status, format_outcome_status
+from .outcome import (
+    build_outcome_status,
+    format_outcome_status,
+    record_outcome_observation,
+    write_outcome_verdicts,
+)
 from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import (
@@ -179,6 +191,22 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     guidance.add_argument("artifact", help="Artifact path to inspect.")
     guidance.add_argument("--json", action="store_true")
 
+    hook = subparsers.add_parser("hook", help="Provider-native lifecycle hook adapters.")
+    hook_subparsers = hook.add_subparsers(dest="hook_command")
+    hook_evaluate = hook_subparsers.add_parser(
+        "evaluate",
+        help="Evaluate a native hook payload through AgentSpec policy.",
+    )
+    hook_evaluate.add_argument("--provider", required=True, choices=sorted(ALLOWED_HOOK_PROVIDERS))
+    hook_evaluate.add_argument("--event", required=True, choices=sorted(ALLOWED_HOOK_EVENTS))
+    hook_evaluate.add_argument("--input-json", help="Native hook JSON. Defaults to stdin.")
+    hook_evaluate.add_argument(
+        "--native",
+        action="store_true",
+        help="Emit only the provider-native hook response.",
+    )
+    hook_evaluate.add_argument("--json", action="store_true")
+
     quality = subparsers.add_parser("quality", help="Run recurring quality garbage-collection diagnostics.")
     quality.add_argument("--json", action="store_true")
     quality.add_argument("--report-dir", help="Write reports under <path>/quality/ instead of <root>/reports/quality/.")
@@ -186,6 +214,30 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     metrics = subparsers.add_parser("metrics", help="Print read-only project feedback-loop metrics.")
     metrics.add_argument("--json", action="store_true")
+
+    evaluation = subparsers.add_parser("eval", help="Controlled Codex/Claude lifecycle evaluations.")
+    evaluation_subparsers = evaluation.add_subparsers(dest="eval_command")
+    evaluation_validate = evaluation_subparsers.add_parser(
+        "validate",
+        help="Validate a versioned controlled-experiment manifest.",
+    )
+    evaluation_validate.add_argument("manifest")
+    evaluation_validate.add_argument("--json", action="store_true")
+    evaluation_record = evaluation_subparsers.add_parser(
+        "record",
+        help="Record immutable evidence for an externally executed experiment cell.",
+    )
+    evaluation_record.add_argument("manifest")
+    evaluation_record_input = evaluation_record.add_mutually_exclusive_group()
+    evaluation_record_input.add_argument("--input-json", help="Run evidence JSON. Defaults to stdin.")
+    evaluation_record_input.add_argument("--input-file", help="Read run evidence JSON from a file.")
+    evaluation_record.add_argument("--json", action="store_true")
+    evaluation_report = evaluation_subparsers.add_parser(
+        "report",
+        help="Write deterministic comparative machine and Markdown reports.",
+    )
+    evaluation_report.add_argument("manifest")
+    evaluation_report.add_argument("--json", action="store_true")
 
     roadmap = subparsers.add_parser("roadmap", help="Generate or check docs/ROADMAP.md.")
     roadmap.add_argument("--check", action="store_true", help="Fail if docs/ROADMAP.md is missing or stale.")
@@ -226,8 +278,28 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     migrate_legacy.add_argument("--write", action="store_true", help="Create missing AgentSpec task context packs. Defaults to dry-run.")
     migrate_legacy.add_argument("--json", action="store_true")
 
-    outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
+    outcome = subparsers.add_parser("outcome", help="Verify product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
+    outcome_subparsers = outcome.add_subparsers(dest="outcome_command")
+    outcome_observe = outcome_subparsers.add_parser(
+        "observe",
+        help="Record facts from an external outcome-evidence adapter.",
+    )
+    outcome_observation_input = outcome_observe.add_mutually_exclusive_group()
+    outcome_observation_input.add_argument(
+        "--input-json",
+        help="Observation JSON. Defaults to stdin.",
+    )
+    outcome_observation_input.add_argument(
+        "--input-file",
+        help="Read observation JSON from a file.",
+    )
+    outcome_observe.add_argument("--json", action="store_true")
+    outcome_verify = outcome_subparsers.add_parser(
+        "verify",
+        help="Evaluate observations and persist AgentSpec policy verdicts.",
+    )
+    outcome_verify.add_argument("--json", action="store_true")
 
     maturity = subparsers.add_parser("maturity", help="Print or update progressive maturity profile status.")
     maturity_subparsers = maturity.add_subparsers(dest="maturity_command")
@@ -685,6 +757,30 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(format_post_artifact_guidance(guidance_payload))
             return 0
 
+        if args.command == "hook":
+            if args.hook_command == "evaluate":
+                raw_input = args.input_json if args.input_json is not None else sys.stdin.read()
+                try:
+                    native_input: Any = json.loads(raw_input)
+                except (json.JSONDecodeError, TypeError):
+                    native_input = raw_input
+                hook_result = evaluate_native_hook(
+                    root,
+                    provider=args.provider,
+                    event=args.event,
+                    native_input=native_input,
+                )
+                if args.native:
+                    print(json.dumps(hook_result["native_output"]))
+                elif args.json:
+                    print(json.dumps(hook_result, indent=2))
+                else:
+                    decision = hook_result["decision"]
+                    print(f"{decision['outcome']}: {decision['reason']}")
+                return 0
+            parser.print_help()
+            return 0
+
         if args.command == "quality":
             report_dir = Path(args.report_dir) if args.report_dir else None
             report = run_quality_gc(root, report_dir=report_dir, task_interval=args.task_interval)
@@ -702,6 +798,47 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(metrics_payload, indent=2))
             else:
                 print(format_project_metrics(metrics_payload))
+            return 0
+
+        if args.command == "eval":
+            if args.eval_command is None:
+                parser.print_help()
+                return 0
+            manifest_path = Path(args.manifest)
+            if not manifest_path.is_absolute():
+                manifest_path = root / manifest_path
+            if args.eval_command == "validate":
+                manifest = load_evaluation_manifest(manifest_path)
+                if args.json:
+                    print(json.dumps(manifest, indent=2))
+                else:
+                    print(
+                        f"Evaluation manifest {manifest['id']} is valid: "
+                        f"{len(manifest['tasks'])} task(s), "
+                        f"{len(manifest['providers'])} provider(s), "
+                        f"{manifest['replicates']} replicate(s)."
+                    )
+                return 0
+            if args.eval_command == "record":
+                if args.input_file:
+                    raw_run = Path(args.input_file).read_text(encoding="utf-8")
+                else:
+                    raw_run = args.input_json if args.input_json is not None else sys.stdin.read()
+                run = record_evaluation_run(root, manifest_path, json.loads(raw_run))
+                if args.json:
+                    print(json.dumps(run, indent=2))
+                else:
+                    print(f"Recorded evaluation run {run['id']} at {run['path']}.")
+                return 0
+            if args.eval_command == "report":
+                report = write_evaluation_report(root, manifest_path)
+                if args.json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print(format_evaluation_report(report))
+                    print(f"\nReports: {report['report_paths']['machine']}, {report['report_paths']['markdown']}")
+                return 0
+            parser.print_help()
             return 0
 
         if args.command == "roadmap":
@@ -774,6 +911,32 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "outcome":
+            if args.outcome_command == "observe":
+                if args.input_file:
+                    raw_observation = Path(args.input_file).read_text(encoding="utf-8")
+                else:
+                    raw_observation = args.input_json if args.input_json is not None else sys.stdin.read()
+                observation = json.loads(raw_observation)
+                recorded = record_outcome_observation(root, observation)
+                if args.json:
+                    print(json.dumps(recorded, indent=2))
+                else:
+                    print(
+                        f"Recorded {recorded['kind']} observation {recorded['id']} "
+                        f"at {recorded['path']}."
+                    )
+                return 0
+            if args.outcome_command == "verify":
+                verdict_payload = write_outcome_verdicts(root)
+                if args.json:
+                    print(json.dumps(verdict_payload, indent=2))
+                else:
+                    print(
+                        f"Outcome readiness: {verdict_payload['readiness']}; "
+                        f"wrote {len(verdict_payload['verdicts'])} verdict(s) "
+                        f"to {verdict_payload['path']}."
+                    )
+                return 0
             outcome_payload = build_outcome_status(root)
             if args.json:
                 print(json.dumps(outcome_payload, indent=2))

@@ -218,6 +218,16 @@ roadmap, and handoff recovery live under `controller/` and are invoked by the
 public entrypoints or by the AgentSpec CLI fallback commands listed in
 `manifests/skill-manifest.json`.
 
+## Lifecycle hooks
+
+The plugin bundles `hooks/hooks.json` for pre-tool policy and scope checks,
+stop verification, and finish-evidence capture. Each handler delegates to
+`python3 -m agentspec.cli hook evaluate`; no policy logic is duplicated in the
+plugin. Use Codex `/hooks` to review and trust the hook definitions. An
+AgentSpec allow decision never auto-approves the tool call, so Codex sandbox,
+permissions, rules, and managed policy remain authoritative. Evidence is
+written to `agent/hook-evidence/events.jsonl`.
+
 ## Boundaries
 
 The plugin is a thin adapter. It does not fetch Confluence or Jira directly,
