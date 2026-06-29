@@ -13,6 +13,7 @@ from .status import build_project_status, load_run_records
 
 
 METRICS_SCHEMA = "agentspec.metrics.v0"
+EVALUATION_METRICS_SCHEMA = "agentspec.evaluation_metrics.v0"
 _MODEL_REVIEW_FALLBACK_FLAG = "model_review_unavailable"
 
 
@@ -37,6 +38,39 @@ def build_project_metrics(root: Path) -> dict[str, Any]:
         "policy_flags": _policy_flag_metrics(runs),
         "cycle_time": _cycle_time_metrics(runs),
         "quality_gc": quality,
+    }
+
+
+def aggregate_evaluation_metrics(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate controlled-evaluation run evidence with explicit denominators.
+
+    Missing measurements remain missing rather than becoming zero, so partial
+    experiments cannot accidentally improve a condition's apparent result.
+    """
+
+    completed_values = [
+        value
+        for run in runs
+        for value in [_evaluation_metric(run, "completed")]
+        if isinstance(value, bool)
+    ]
+    completed_count = sum(1 for value in completed_values if value)
+    return {
+        "schema": EVALUATION_METRICS_SCHEMA,
+        "run_count": len(runs),
+        "completion": {
+            "known": len(completed_values),
+            "completed": completed_count,
+            "rate": _rate(completed_count, len(completed_values)),
+        },
+        "regressions": _numeric_summary(runs, "regressions"),
+        "retries": _numeric_summary(runs, "retries"),
+        "human_interventions": _numeric_summary(runs, "human_interventions"),
+        "tokens": _numeric_summary(runs, "tokens.total"),
+        "cost_usd": _numeric_summary(runs, "cost_usd"),
+        "duration_seconds": _numeric_summary(runs, "duration_seconds"),
+        "review_findings": _numeric_summary(runs, "review_findings"),
+        "escaped_defects": _numeric_summary(runs, "escaped_defects"),
     }
 
 
@@ -231,6 +265,32 @@ def _run_duration_seconds(run: dict[str, Any]) -> float | None:
         return None
     duration = (updated - created).total_seconds()
     return duration if duration >= 0 else None
+
+
+def _numeric_summary(runs: list[dict[str, Any]], field: str) -> dict[str, Any]:
+    values = [
+        float(value)
+        for run in runs
+        for value in [_evaluation_metric(run, field)]
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0
+    ]
+    if not values:
+        return {"known": 0, "total": None, "average": None, "median": None}
+    return {
+        "known": len(values),
+        "total": round(sum(values), 6),
+        "average": round(mean(values), 6),
+        "median": round(median(values), 6),
+    }
+
+
+def _evaluation_metric(run: dict[str, Any], field: str) -> Any:
+    value: Any = run.get("metrics")
+    for part in field.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
 
 
 def _parse_datetime(value: Any) -> datetime | None:

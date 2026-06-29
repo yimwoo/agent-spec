@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:47:25Z",
+  "updated_at": "2026-06-29T21:59:58Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -305,6 +305,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0139.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-178-add-controlled-cross-agent-lifecycle-evaluations.md": {
+      "task_id": "T-178",
+      "context_pack": "agent/context-packs/T-178-add-controlled-cross-agent-lifecycle-evaluations.md",
+      "status": "complete",
+      "run_id": "complete-t-178-add-controlled-cross-agent-lifecycle-evaluations-20260629215958648363",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:59:58Z",
+      "requirements": [
+        "R-220"
+      ],
+      "completion_reason": "Completed R-220 with controlled Codex/Claude AgentSpec-versus-control manifests, immutable run evidence, comparability gates, metrics, and deterministic reports.",
+      "code_review": {
+        "id": "REVIEW-0140",
+        "verdict": "ready",
+        "summary": "Controlled Codex/Claude A/B manifests pin task revisions, conditions, provider models, environments, limits, replicates, and success oracles. Immutable run evidence captures completion, regressions, retries, intervention, token/cost/duration, review, escaped-defect, and raw provenance metrics; deterministic reports exclude incompatible cells and label partial evidence. Verified by 594 tests, mypy, compileall, and pylint 10.00/10.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0140.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0140",
+          "verdict": "ready",
+          "summary": "Controlled Codex/Claude A/B manifests pin task revisions, conditions, provider models, environments, limits, replicates, and success oracles. Immutable run evidence captures completion, regressions, retries, intervention, token/cost/duration, review, escaped-defect, and raw provenance metrics; deterministic reports exclude incompatible cells and label partial evidence. Verified by 594 tests, mypy, compileall, and pylint 10.00/10.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0140.yml"
         }
       ]
     }

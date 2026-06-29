@@ -7,7 +7,13 @@ from pathlib import Path
 
 from agentspec.cli import main
 from agentspec.io import write_data
-from agentspec.metrics import METRICS_SCHEMA, build_project_metrics, format_project_metrics
+from agentspec.metrics import (
+    EVALUATION_METRICS_SCHEMA,
+    METRICS_SCHEMA,
+    aggregate_evaluation_metrics,
+    build_project_metrics,
+    format_project_metrics,
+)
 
 
 @contextlib.contextmanager
@@ -23,6 +29,47 @@ def pushd(path: Path):
 
 
 class MetricsCLITests(unittest.TestCase):
+    def test_evaluation_metrics_preserve_partial_evidence_denominators(self) -> None:
+        metrics = aggregate_evaluation_metrics(
+            [
+                {
+                    "metrics": {
+                        "completed": True,
+                        "regressions": 0,
+                        "retries": 1,
+                        "human_interventions": 0,
+                        "tokens": {"total": 1000},
+                        "cost_usd": 1.25,
+                        "duration_seconds": 120,
+                        "review_findings": 0,
+                    }
+                },
+                {
+                    "metrics": {
+                        "completed": False,
+                        "regressions": 2,
+                        "retries": 3,
+                        "human_interventions": 1,
+                        "tokens": {"total": 1600},
+                        "cost_usd": 2.75,
+                        "duration_seconds": 240,
+                        "review_findings": 2,
+                        "escaped_defects": 1,
+                    }
+                },
+                {"metrics": {}},
+            ]
+        )
+
+        self.assertEqual(metrics["schema"], EVALUATION_METRICS_SCHEMA)
+        self.assertEqual(metrics["run_count"], 3)
+        self.assertEqual(metrics["completion"], {"known": 2, "completed": 1, "rate": 0.5})
+        self.assertEqual(metrics["regressions"]["known"], 2)
+        self.assertEqual(metrics["regressions"]["average"], 1.0)
+        self.assertEqual(metrics["tokens"]["total"], 2600.0)
+        self.assertEqual(metrics["cost_usd"]["average"], 2.0)
+        self.assertEqual(metrics["escaped_defects"]["known"], 1)
+
     def test_build_project_metrics_derives_feedback_loop_rates(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

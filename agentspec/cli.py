@@ -22,6 +22,12 @@ from .diagnostics import configure_diagnostics, get_logger
 from .doctor import run_doctor
 from .drift import run_drift
 from .emit import emit_targets
+from .eval import (
+    format_evaluation_report,
+    load_evaluation_manifest,
+    record_evaluation_run,
+    write_evaluation_report,
+)
 from .errors import (
     AgentSpecError,
     AgentSpecIOPermissionError,
@@ -208,6 +214,30 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
 
     metrics = subparsers.add_parser("metrics", help="Print read-only project feedback-loop metrics.")
     metrics.add_argument("--json", action="store_true")
+
+    evaluation = subparsers.add_parser("eval", help="Controlled Codex/Claude lifecycle evaluations.")
+    evaluation_subparsers = evaluation.add_subparsers(dest="eval_command")
+    evaluation_validate = evaluation_subparsers.add_parser(
+        "validate",
+        help="Validate a versioned controlled-experiment manifest.",
+    )
+    evaluation_validate.add_argument("manifest")
+    evaluation_validate.add_argument("--json", action="store_true")
+    evaluation_record = evaluation_subparsers.add_parser(
+        "record",
+        help="Record immutable evidence for an externally executed experiment cell.",
+    )
+    evaluation_record.add_argument("manifest")
+    evaluation_record_input = evaluation_record.add_mutually_exclusive_group()
+    evaluation_record_input.add_argument("--input-json", help="Run evidence JSON. Defaults to stdin.")
+    evaluation_record_input.add_argument("--input-file", help="Read run evidence JSON from a file.")
+    evaluation_record.add_argument("--json", action="store_true")
+    evaluation_report = evaluation_subparsers.add_parser(
+        "report",
+        help="Write deterministic comparative machine and Markdown reports.",
+    )
+    evaluation_report.add_argument("manifest")
+    evaluation_report.add_argument("--json", action="store_true")
 
     roadmap = subparsers.add_parser("roadmap", help="Generate or check docs/ROADMAP.md.")
     roadmap.add_argument("--check", action="store_true", help="Fail if docs/ROADMAP.md is missing or stale.")
@@ -768,6 +798,47 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(metrics_payload, indent=2))
             else:
                 print(format_project_metrics(metrics_payload))
+            return 0
+
+        if args.command == "eval":
+            if args.eval_command is None:
+                parser.print_help()
+                return 0
+            manifest_path = Path(args.manifest)
+            if not manifest_path.is_absolute():
+                manifest_path = root / manifest_path
+            if args.eval_command == "validate":
+                manifest = load_evaluation_manifest(manifest_path)
+                if args.json:
+                    print(json.dumps(manifest, indent=2))
+                else:
+                    print(
+                        f"Evaluation manifest {manifest['id']} is valid: "
+                        f"{len(manifest['tasks'])} task(s), "
+                        f"{len(manifest['providers'])} provider(s), "
+                        f"{manifest['replicates']} replicate(s)."
+                    )
+                return 0
+            if args.eval_command == "record":
+                if args.input_file:
+                    raw_run = Path(args.input_file).read_text(encoding="utf-8")
+                else:
+                    raw_run = args.input_json if args.input_json is not None else sys.stdin.read()
+                run = record_evaluation_run(root, manifest_path, json.loads(raw_run))
+                if args.json:
+                    print(json.dumps(run, indent=2))
+                else:
+                    print(f"Recorded evaluation run {run['id']} at {run['path']}.")
+                return 0
+            if args.eval_command == "report":
+                report = write_evaluation_report(root, manifest_path)
+                if args.json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print(format_evaluation_report(report))
+                    print(f"\nReports: {report['report_paths']['machine']}, {report['report_paths']['markdown']}")
+                return 0
+            parser.print_help()
             return 0
 
         if args.command == "roadmap":

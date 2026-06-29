@@ -573,6 +573,57 @@ the policy decision, reports missing, stale, malformed, failed, untrusted, and
 passing evidence with repair guidance, and never accepts task completion or a
 model self-report as production-readiness proof.
 
+## Controlled Agent Evaluations
+
+Use a versioned experiment manifest to test the same fixed corpus under an
+AgentSpec condition and a control condition. A manifest pins task revisions,
+success-oracle revisions, Codex and Claude models, environment, limits, and
+replicate count:
+
+```json
+{
+  "schema": "agentspec.evaluation_manifest.v0",
+  "id": "EXP-lifecycle-001",
+  "tasks": [{
+    "id": "TASK-fix-001",
+    "source": "corpus/fix-001.md",
+    "revision": "sha256:...",
+    "oracle": {"id": "tests", "type": "command", "revision": "oracle-v1"}
+  }],
+  "conditions": [
+    {"id": "with-agentspec", "agentspec": true},
+    {"id": "control", "agentspec": false}
+  ],
+  "providers": [
+    {"id": "codex", "model": "<pinned-codex-model>"},
+    {"id": "claude", "model": "<pinned-claude-model>"}
+  ],
+  "environment": {"id": "ubuntu", "revision": "image-sha"},
+  "limits": {"max_duration_seconds": 1800, "max_tokens": 100000, "max_retries": 3},
+  "replicates": 3
+}
+```
+
+The evaluation surface deliberately does not execute Codex or Claude. Run each
+cell through the provider's normal task workflow and existing repository,
+session, credential, sandbox, and external-service controls. Then record the
+immutable evidence and build the comparison:
+
+```bash
+aspec eval validate agent/evals/EXP-lifecycle-001/manifest.yml --json
+aspec eval record agent/evals/EXP-lifecycle-001/manifest.yml \
+  --input-file ./run-evidence.json --json
+aspec eval report agent/evals/EXP-lifecycle-001/manifest.yml --json
+```
+
+Run evidence can record completion, regressions, retries, human interventions,
+input/output/cached/total tokens, cost, duration, review findings, escaped
+defects, and raw provider provenance. Reports compare only pairs with compatible
+task, provider, model, environment, limits, oracle, and replicate metadata.
+Missing or partial evidence is labeled `limited`; metadata drift and duplicate
+cells are `invalid`. Machine-readable and Markdown reports are written under
+`reports/eval/<experiment-id>/` and state limitations before conclusions.
+
 ## Daily Commands
 
 ```bash
@@ -583,6 +634,7 @@ aspec next-action            # recovery or continuation command
 aspec maturity status        # governance profile checks
 aspec outcome                # live product outcome evidence and gates
 aspec outcome verify         # persist the current policy-verdict projection
+aspec eval report <manifest> # controlled AgentSpec-versus-control evidence
 aspec roadmap --check --json # roadmap freshness
 ```
 
