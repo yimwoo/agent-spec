@@ -1,3 +1,5 @@
+"""Project-wide quality governance checks and report projections."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -165,7 +167,8 @@ def _findings(status: dict[str, Any], doctor: dict[str, Any]) -> list[dict[str, 
 
     outcomes = status.get("outcomes")
     if isinstance(outcomes, dict) and outcomes.get("readiness") != "ready":
-        blockers = outcomes.get("blockers") if isinstance(outcomes.get("blockers"), list) else []
+        raw_blockers = outcomes.get("blockers")
+        blockers: list[Any] = raw_blockers if isinstance(raw_blockers, list) else []
         findings.append(
             {
                 "id": "QG-OUTCOMES-001",
@@ -221,8 +224,10 @@ def _project_status_summary(status: dict[str, Any]) -> dict[str, Any]:
 
 
 def _doctor_summary(doctor: dict[str, Any]) -> dict[str, Any]:
-    agent_context = doctor.get("agent_context", {}) if isinstance(doctor.get("agent_context"), dict) else {}
-    invariants = doctor.get("project_invariants", {}) if isinstance(doctor.get("project_invariants"), dict) else {}
+    raw_agent_context = doctor.get("agent_context")
+    agent_context: dict[str, Any] = raw_agent_context if isinstance(raw_agent_context, dict) else {}
+    raw_invariants = doctor.get("project_invariants")
+    invariants: dict[str, Any] = raw_invariants if isinstance(raw_invariants, dict) else {}
     return {
         "agent_context_status": agent_context.get("status"),
         "agent_context_warning_count": len(agent_context.get("warnings", [])),
@@ -246,8 +251,10 @@ def _outcome_summary(outcomes: Any) -> dict[str, Any]:
 def _handoff_summary(handoff: Any) -> dict[str, Any]:
     if not isinstance(handoff, dict):
         return {"present": False, "path": "agent/handoff.yml"}
-    last_task = handoff.get("last_completed_task") if isinstance(handoff.get("last_completed_task"), dict) else {}
-    next_action = handoff.get("next_action") if isinstance(handoff.get("next_action"), dict) else {}
+    raw_last_task = handoff.get("last_completed_task")
+    last_task: dict[str, Any] = raw_last_task if isinstance(raw_last_task, dict) else {}
+    raw_next_action = handoff.get("next_action")
+    next_action: dict[str, Any] = raw_next_action if isinstance(raw_next_action, dict) else {}
     return {
         "present": True,
         "path": handoff.get("path", "agent/handoff.yml"),

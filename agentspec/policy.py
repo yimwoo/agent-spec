@@ -1,3 +1,5 @@
+"""Execution-scope, content-safety, and source-emission policy checks."""
+
 from __future__ import annotations
 
 import re
@@ -11,6 +13,8 @@ from .paths import path_matches_pattern
 
 @dataclass(frozen=True)
 class PolicyVerdict:
+    """Deterministic execution policy decision and supporting flags."""
+
     decision: str
     reason: str
     flags: list[str]
@@ -61,6 +65,8 @@ def evaluate_policy(
     executor_output: str = "",
     mode: str = "supervised",
 ) -> PolicyVerdict:
+    """Evaluate path, iteration, and autonomous-content policy gates."""
+
     if iteration > max_iterations:
         return PolicyVerdict(
             decision="halt",
@@ -125,10 +131,14 @@ def _evaluate_autonomous_content(executor_output: str) -> PolicyVerdict | None:
 
 
 def has_credential_pattern(text: str) -> bool:
+    """Return whether text contains a supported credential-shaped pattern."""
+
     return any(pattern.search(text) for pattern in _CREDENTIAL_PATTERNS)
 
 
 def redact_sensitive_text(text: str) -> str:
+    """Replace supported credential-shaped patterns with a stable marker."""
+
     redacted = text
     for pattern in _CREDENTIAL_PATTERNS:
         redacted = pattern.sub(_CREDENTIAL_REDACTION, redacted)

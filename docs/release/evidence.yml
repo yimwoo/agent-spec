@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T19:12:09Z",
+  "updated_at": "2026-06-29T19:52:30Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -75,6 +75,35 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0131.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-171-complete-package-wide-mypy-and-pylint-baseline.md": {
+      "task_id": "T-171",
+      "context_pack": "agent/context-packs/T-171-complete-package-wide-mypy-and-pylint-baseline.md",
+      "status": "complete",
+      "run_id": "complete-t-171-complete-package-wide-mypy-and-pylint-baseline-20260629195230503791",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T19:52:30Z",
+      "completion_reason": "Finished by user.",
+      "code_review": {
+        "id": "REVIEW-0134",
+        "verdict": "ready",
+        "summary": "No blocking findings after package-wide typed-boundary cleanup, public API compatibility review, 95 focused tests, 563-test full suite, configured package-wide mypy, pylint 10.00/10, compileall, and diff checks. Supersedes REVIEW-0133 reviewer attribution only.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0134.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0134",
+          "verdict": "ready",
+          "summary": "No blocking findings after package-wide typed-boundary cleanup, public API compatibility review, 95 focused tests, 563-test full suite, configured package-wide mypy, pylint 10.00/10, compileall, and diff checks. Supersedes REVIEW-0133 reviewer attribution only.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0134.yml"
         }
       ]
     },

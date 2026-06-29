@@ -1,3 +1,5 @@
+"""AgentSpec lifecycle operating-contract projections and formatting."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,6 +12,8 @@ LIFECYCLE_CONTRACT_SCHEMA = "agentspec.lifecycle_contract.v0"
 
 
 def build_lifecycle_contract(root: Path) -> dict[str, Any]:
+    """Build the native lifecycle stages and adapter ownership contract."""
+
     root = root.resolve()
     stages = _lifecycle_stages()
     counts = {
@@ -59,7 +63,11 @@ def build_lifecycle_contract(root: Path) -> dict[str, Any]:
             },
             {
                 "name": "addyosmani/agent-skills",
-                "value": "Mapped as process inspiration for idea refinement, specification, planning, implementation, review, quality, git workflow, CI/CD, documentation, security, performance, browser testing, migration, and launch practices.",
+                "value": (
+                    "Mapped as process inspiration for idea refinement, specification, planning, "
+                    "implementation, review, quality, git workflow, CI/CD, documentation, security, "
+                    "performance, browser testing, migration, and launch practices."
+                ),
             },
         ],
         "counts": counts,
@@ -68,6 +76,8 @@ def build_lifecycle_contract(root: Path) -> dict[str, Any]:
 
 
 def format_lifecycle_contract(contract: dict[str, Any]) -> str:
+    """Format a lifecycle operating contract for terminal output."""
+
     lines = [
         "AgentSpec Lifecycle Operating Contract",
         str(contract.get("summary") or ""),

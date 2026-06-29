@@ -1,3 +1,5 @@
+"""Deterministic text, structured-data, hashing, and write-safety helpers."""
+
 from __future__ import annotations
 
 import hashlib
@@ -8,18 +10,26 @@ from typing import Any
 
 
 def utc_now_iso() -> str:
+    """Return the current UTC time as a second-precision ISO 8601 string."""
+
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def sha256_text(text: str) -> str:
+    """Return a prefixed SHA-256 digest for UTF-8 text."""
+
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def read_text(path: Path) -> str:
+    """Read a UTF-8 text file."""
+
     return path.read_text(encoding="utf-8")
 
 
 def write_text(path: Path, text: str) -> None:
+    """Write UTF-8 text, creating parent directories as needed."""
+
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
 
@@ -37,6 +47,8 @@ def write_data(path: Path, data: Any) -> None:
 
 
 def load_data(path: Path, default: Any | None = None) -> Any:
+    """Load YAML-compatible JSON, returning a default for missing/empty files."""
+
     if not path.exists():
         return default
     text = path.read_text(encoding="utf-8").strip()
@@ -46,11 +58,15 @@ def load_data(path: Path, default: Any | None = None) -> Any:
 
 
 def copy_text_file(source: Path, destination: Path) -> None:
+    """Copy UTF-8 text while creating the destination parent directory."""
+
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def lines_between(path: Path, start_line: int, end_line: int) -> str:
+    """Return an inclusive one-based line range from a UTF-8 text file."""
+
     lines = path.read_text(encoding="utf-8").splitlines()
     return "\n".join(lines[start_line - 1 : end_line])
 

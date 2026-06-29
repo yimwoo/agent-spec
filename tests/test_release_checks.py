@@ -53,6 +53,11 @@ class ReleaseChecksTests(unittest.TestCase):
         self.assertIn("agentspec-claude-plugin", workflow)
         self.assertIn("plugin.json", workflow)
 
+    def test_default_mypy_scope_covers_the_package(self) -> None:
+        config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+        self.assertEqual(config["tool"]["mypy"]["files"], ["agentspec"])
+
 
 if __name__ == "__main__":
     unittest.main()

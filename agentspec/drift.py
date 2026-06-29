@@ -1,3 +1,5 @@
+"""Semantic drift analysis between code changes and AgentSpec artifacts."""
+
 from __future__ import annotations
 
 import re
@@ -73,6 +75,8 @@ STOPWORDS = {
 
 @dataclass
 class FileChange:
+    """Normalized changed-file content used by semantic drift checks."""
+
     path: str
     old_path: str | None = None
     added_lines: list[str] = field(default_factory=list)
@@ -81,19 +85,27 @@ class FileChange:
 
     @property
     def added_count(self) -> int:
+        """Return the number of added diff lines."""
+
         return len(self.added_lines)
 
     @property
     def removed_count(self) -> int:
+        """Return the number of removed diff lines."""
+
         return len(self.removed_lines)
 
     @property
     def tokens(self) -> set[str]:
+        """Return normalized semantic tokens from the path and changed lines."""
+
         return _tokens(" ".join([self.path, *self.added_lines, *self.removed_lines]))
 
 
 @dataclass
 class ContextPack:
+    """Task context relevant to drift impact analysis."""
+
     id: str
     path: str
     requirements: set[str]
@@ -103,6 +115,8 @@ class ContextPack:
 
 @dataclass
 class FileAssessment:
+    """Drift verdict and traceability evidence for one changed file."""
+
     file: FileChange
     verdict: str
     requirement_ids: list[str]
@@ -351,12 +365,12 @@ def _report(
         out.append("| None | review | - | - | - | No git diff was available or no files changed. |")
 
     out.extend(["", "## Workflow Coverage", "", "| Artifact | Kind | Status | Referenced By | Backfill |", "|---|---|---|---|---|"])
-    artifacts = workflows.get("artifacts") if isinstance(workflows.get("artifacts"), list) else []
+    raw_artifacts = workflows.get("artifacts")
+    artifacts = [artifact for artifact in raw_artifacts if isinstance(artifact, dict)] if isinstance(raw_artifacts, list) else []
     if artifacts:
         for artifact in artifacts:
-            if not isinstance(artifact, dict):
-                continue
-            refs = artifact.get("referenced_by") if isinstance(artifact.get("referenced_by"), list) else []
+            raw_refs = artifact.get("referenced_by")
+            refs: list[Any] = raw_refs if isinstance(raw_refs, list) else []
             out.append(
                 "| "
                 f"`{artifact.get('path')}` | "

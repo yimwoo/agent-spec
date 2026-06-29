@@ -1,3 +1,5 @@
+"""Plan and apply migration of legacy execution artifacts into task packs."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,6 +18,8 @@ def migrate_legacy_execution(
     from_path: str | Path | None = None,
     write: bool = False,
 ) -> dict[str, Any]:
+    """Build or apply a migration plan for legacy execution artifacts."""
+
     root = root.resolve()
     selected = _selected_legacy_artifacts(root, from_path)
     artifacts: list[dict[str, Any]] = []
@@ -45,9 +49,13 @@ def migrate_legacy_execution(
 
 
 def format_legacy_execution_migration(result: dict[str, Any]) -> str:
+    """Format a legacy execution migration result for terminal output."""
+
     mode = str(result.get("mode") or "dry-run")
-    summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
-    artifacts = result.get("artifacts") if isinstance(result.get("artifacts"), list) else []
+    raw_summary = result.get("summary")
+    summary: dict[str, Any] = raw_summary if isinstance(raw_summary, dict) else {}
+    raw_artifacts = result.get("artifacts")
+    artifacts = [artifact for artifact in raw_artifacts if isinstance(artifact, dict)] if isinstance(raw_artifacts, list) else []
     lines = [
         f"Legacy execution migration plan ({mode})",
         (

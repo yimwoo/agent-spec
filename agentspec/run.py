@@ -864,7 +864,7 @@ def step_run(
         run_dir=run_dir,
     )
     state = loop["state"]
-    next_action = _next_action_for_status(str(state.get("status")))
+    next_action: str = _next_action_for_status(str(state.get("status")))
     session_preflight = _session_preflight_for_state(root, state)
     state["session_preflight"] = session_preflight
     if isinstance(loop.get("run_id"), str):

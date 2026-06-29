@@ -1,3 +1,5 @@
+"""Product-outcome readiness projections and human-readable formatting."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -74,6 +76,8 @@ def build_outcome_status(root: Path) -> dict[str, Any]:
 
 
 def format_outcome_status(status: dict[str, Any]) -> str:
+    """Format a product-outcome status payload for terminal output."""
+
     lines = [
         "AgentSpec Product Outcomes",
         f"Path: {status.get('path', 'agent/outcomes.yml')}",
@@ -84,7 +88,7 @@ def format_outcome_status(status: dict[str, Any]) -> str:
         "Required gates are evidence checks that must be ready before claiming outcome readiness.",
     ]
 
-    outcomes = status.get("outcomes") if isinstance(status.get("outcomes"), list) else []
+    outcomes = _list_or_empty(status.get("outcomes"))
     if outcomes:
         lines.extend(["", "Outcomes:"])
         for outcome in outcomes:

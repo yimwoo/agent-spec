@@ -798,7 +798,7 @@ def _run_package_subprocess(
         env.update({str(key): str(value) for key, value in package_env.items()})
 
     try:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             argv,
             cwd=root,
             stdin=subprocess.PIPE if isinstance(stdin, str) else None,
@@ -806,25 +806,25 @@ def _run_package_subprocess(
             stderr=subprocess.PIPE,
             text=True,
             env=env,
-        )
-        stdout, stderr, timed_out = _communicate_with_heartbeats(
-            process,
-            stdin=stdin if isinstance(stdin, str) else None,
-            timeout_seconds=timeout_seconds,
-            heartbeat_callback=heartbeat_callback,
-        )
-        result = {
-            "argv": argv,
-            "returncode": process.returncode,
-            "stdout": stdout,
-            "stderr": stderr,
-            "timed_out": timed_out,
-            "error": (
-                f"Runner command timed out after {timeout_seconds} seconds."
-                if timed_out
-                else None
-            ),
-        }
+        ) as process:
+            stdout, stderr, timed_out = _communicate_with_heartbeats(
+                process,
+                stdin=stdin if isinstance(stdin, str) else None,
+                timeout_seconds=timeout_seconds,
+                heartbeat_callback=heartbeat_callback,
+            )
+            result = {
+                "argv": argv,
+                "returncode": process.returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "timed_out": timed_out,
+                "error": (
+                    f"Runner command timed out after {timeout_seconds} seconds."
+                    if timed_out
+                    else None
+                ),
+            }
     except OSError as exc:
         result = {
             "argv": argv,

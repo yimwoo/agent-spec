@@ -1,3 +1,5 @@
+"""Model-backed continuation and quality review prompts and response parsing."""
+
 from __future__ import annotations
 
 import json
@@ -76,6 +78,8 @@ def request_model_review(
     deterministic_reason: str,
     test_status: str,
 ) -> dict[str, Any] | None:
+    """Request and parse a continuation review, or return None if unavailable."""
+
     prompt = build_model_review_prompt(
         executor_output=executor_output,
         active_context_pack=active_context_pack,
@@ -96,6 +100,8 @@ def request_quality_review(
     deterministic_reason: str,
     acceptance_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
+    """Request and parse a quality review, or return None if unavailable."""
+
     prompt = build_quality_review_prompt(
         executor_output=executor_output,
         test_status=test_status,
@@ -115,6 +121,8 @@ def build_model_review_prompt(
     deterministic_reason: str,
     test_status: str,
 ) -> str:
+    """Build the bounded JSON-only continuation reviewer prompt."""
+
     return "\n".join(
         [
             "You are an AgentSpec continuation reviewer.",
@@ -150,6 +158,8 @@ def build_quality_review_prompt(
     deterministic_reason: str,
     acceptance_evidence: dict[str, Any] | None = None,
 ) -> str:
+    """Build the bounded JSON-only quality reviewer prompt."""
+
     evidence_note = (
         json.dumps(acceptance_evidence, sort_keys=True)[:2000]
         if acceptance_evidence is not None
@@ -181,6 +191,12 @@ def build_quality_review_prompt(
 
 
 def parse_model_review_response(raw: str) -> dict[str, Any]:
+    """Validate and normalize a continuation reviewer JSON response.
+
+    Raises:
+        ValueError: If the response is not valid reviewer JSON.
+    """
+
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -214,6 +230,12 @@ def parse_model_review_response(raw: str) -> dict[str, Any]:
 
 
 def parse_quality_review_response(raw: str) -> dict[str, Any]:
+    """Validate and normalize a quality reviewer JSON response.
+
+    Raises:
+        ValueError: If the response is not valid quality-review JSON.
+    """
+
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError as exc:

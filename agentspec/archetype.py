@@ -160,7 +160,7 @@ def _dominant_language(files: list[str], languages: list[str]) -> str:
             if path.endswith(suffix) and language in counts:
                 counts[language] += 1
                 break
-    return max(counts, key=counts.get) if counts else languages[0]
+    return max(counts, key=lambda language: counts[language]) if counts else languages[0]
 
 
 def _python_self_host_targets(text: str) -> list[str]:

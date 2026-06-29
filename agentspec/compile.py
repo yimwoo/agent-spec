@@ -1,3 +1,5 @@
+"""Compile accepted source snapshots into specification and planning artifacts."""
+
 from __future__ import annotations
 
 import re
@@ -6,7 +8,6 @@ from typing import Any
 
 from .archetype import detect_archetype, infer_code_targets, infer_test_targets
 from .io import lines_between, load_data, sha256_text, write_data, write_text
-from .paths import slugify
 from .policy import can_emit_source_body, source_body_redaction
 
 
@@ -30,6 +31,12 @@ REQUIREMENT_WORD_RE = re.compile(
 
 
 def compile_project(root: Path) -> dict[str, Any]:
+    """Compile canonical source sections into AgentSpec project artifacts.
+
+    Raises:
+        ValueError: If no canonical source sections have been ingested.
+    """
+
     sections = _accepted_sections(load_data(root / "docs" / "source" / "sections.yml", []))
     sources = load_data(root / "docs" / "source" / "sources.yml", [])
     if not sections:
@@ -133,7 +140,7 @@ def _section_text(root: Path, section: dict[str, Any], source_by_id: dict[str, d
 
 
 def _write_spec_shards(root: Path, sections: list[dict[str, Any]], section_texts: dict[str, str]) -> list[dict[str, Any]]:
-    shard_records = []
+    shard_records: list[dict[str, Any]] = []
     for slug, title, keywords in SPEC_SHARDS:
         matched = [section for section in sections if _matches_keywords(section, keywords)]
         if not matched:
@@ -389,11 +396,11 @@ def _score_readiness(sections: list[dict[str, Any]]) -> dict[str, Any]:
         "test_strategy": ["test", "evaluation", "quality", "golden fixtures", "success criteria"],
         "rollout_plan": ["rollout", "phase"],
     }
-    dimensions = {
+    dimensions: dict[str, dict[str, Any]] = {
         name: {"score": 10 if any(keyword in headings for keyword in keywords) else 0, "signals": [keyword for keyword in keywords if keyword in headings]}
         for name, keywords in checks.items()
     }
-    score = round(sum(value["score"] for value in dimensions.values()) / (len(dimensions) * 10) * 100)
+    score = round(sum(int(value["score"]) for value in dimensions.values()) / (len(dimensions) * 10) * 100)
     if score < 30:
         mode = "discovery"
     elif score < 60:

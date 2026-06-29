@@ -22,6 +22,13 @@ from .io import load_data, write_data
 
 
 def accept_requirement(root: Path, requirement_id: str) -> dict[str, Any]:
+    """Accept one eligible requirement and persist the updated registry.
+
+    Raises:
+        ValueError: If the requirement is missing, ineligible, or already
+            accepted.
+    """
+
     reqs_path = Path(root) / "docs" / "traceability" / "requirements.yml"
     requirements = load_data(reqs_path, []) or []
 

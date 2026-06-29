@@ -1,3 +1,5 @@
+"""Filesystem, identifier, and allowed-path helpers for AgentSpec."""
+
 from __future__ import annotations
 
 import re
@@ -49,15 +51,21 @@ _GIT_CHECK_IGNORE_TIMEOUT_SECONDS = 2.0
 
 
 def project_root(path: str | Path = ".") -> Path:
+    """Resolve a filesystem path to an absolute project root."""
+
     return Path(path).resolve()
 
 
 def slugify(value: str, fallback: str = "item") -> str:
+    """Convert text to a lowercase URL-safe slug, using a fallback if empty."""
+
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return slug or fallback
 
 
 def ensure_dirs(root: Path) -> None:
+    """Create the standard AgentSpec artifact directories below a root."""
+
     for directory in ARTIFACT_DIRS:
         (root / directory).mkdir(parents=True, exist_ok=True)
 
@@ -106,13 +114,15 @@ def untracked_git_ignored_paths(root: Path, paths: list[Path]) -> set[Path]:
     ignored: set[Path] = set()
     for line in result.stdout.splitlines():
         rel_path = line.strip()
-        resolved = resolved_by_rel_path.get(rel_path)
-        if resolved is not None:
-            ignored.add(resolved)
+        ignored_path = resolved_by_rel_path.get(rel_path)
+        if ignored_path is not None:
+            ignored.add(ignored_path)
     return ignored
 
 
 def next_numbered_id(prefix: str, existing_ids: list[str]) -> str:
+    """Return the next zero-padded identifier for a prefix."""
+
     highest = 0
     pattern = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
     for existing_id in existing_ids:
