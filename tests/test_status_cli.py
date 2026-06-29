@@ -1187,6 +1187,55 @@ branch: codex/t-003-ready
             )
             self.assertIn("aspec run package", execution["fallback"]["commands"])
 
+    def test_project_status_projects_typed_outcome_evidence_and_repair(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            (root / "docs" / "discovery").mkdir(parents=True)
+            write_data(root / "docs" / "traceability" / "requirements.yml", [])
+            write_data(
+                root / "docs" / "discovery" / "readiness.yml",
+                {"score": 100, "mode": "normal-implementation"},
+            )
+            write_data(
+                root / "agent" / "outcomes.yml",
+                {
+                    "schema": "agentspec.outcomes.v0",
+                    "outcomes": [
+                        {
+                            "id": "O-production",
+                            "title": "Production is healthy",
+                            "gates": [
+                                {
+                                    "id": "G-deployment",
+                                    "title": "Deployment health",
+                                    "checks": [
+                                        {
+                                            "id": "C-health",
+                                            "kind": "deployment",
+                                            "max_age_seconds": 300,
+                                            "repair": "Query production health and record fresh facts.",
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            )
+
+            status = build_project_status(root)
+
+            outcomes = status["outcomes"]
+            self.assertEqual(outcomes["readiness"], "blocked")
+            verdict = outcomes["outcomes"][0]["gates"][0]["verdicts"][0]
+            self.assertEqual(verdict["status"], "missing")
+            self.assertEqual(
+                outcomes["next_actions"],
+                ["Query production health and record fresh facts."],
+            )
+            self.assertEqual(outcomes["evidence_contract"]["adapter_role"], "observation_only")
+
     def test_human_status_includes_active_and_recent_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

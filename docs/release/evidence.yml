@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T21:36:10Z",
+  "updated_at": "2026-06-29T21:47:25Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -273,6 +273,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0138.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-177-make-outcome-verification-the-flagship-surface.md": {
+      "task_id": "T-177",
+      "context_pack": "agent/context-packs/T-177-make-outcome-verification-the-flagship-surface.md",
+      "status": "complete",
+      "run_id": "complete-t-177-make-outcome-verification-the-flagship-surface-20260629214725737480",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-29T21:47:25Z",
+      "requirements": [
+        "R-219"
+      ],
+      "completion_reason": "Completed R-219 with typed, fresh, provenance-bearing outcome observations and AgentSpec-owned readiness verdicts.",
+      "code_review": {
+        "id": "REVIEW-0139",
+        "verdict": "ready",
+        "summary": "Typed outcome definitions now evaluate immutable external observations into separate AgentSpec-owned verdicts across command, browser/UI, SLO, API compatibility, deployment, and release checks. Freshness, malformed/failing/missing/untrusted evidence, repair guidance, provider provenance, CLI intake, persisted verdicts, project status, and legacy compatibility are covered by 586 tests, mypy, compileall, and pylint 10.00/10.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0139.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0139",
+          "verdict": "ready",
+          "summary": "Typed outcome definitions now evaluate immutable external observations into separate AgentSpec-owned verdicts across command, browser/UI, SLO, API compatibility, deployment, and release checks. Freshness, malformed/failing/missing/untrusted evidence, repair guidance, provider provenance, CLI intake, persisted verdicts, project status, and legacy compatibility are covered by 586 tests, mypy, compileall, and pylint 10.00/10.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0139.yml"
         }
       ]
     }

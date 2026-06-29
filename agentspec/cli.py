@@ -50,7 +50,12 @@ from .maturity import (
     format_maturity_status,
     set_maturity_config,
 )
-from .outcome import build_outcome_status, format_outcome_status
+from .outcome import (
+    build_outcome_status,
+    format_outcome_status,
+    record_outcome_observation,
+    write_outcome_verdicts,
+)
 from .quality import run_quality_gc
 from .requirement import accept_requirement
 from .review import (
@@ -243,8 +248,28 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     migrate_legacy.add_argument("--write", action="store_true", help="Create missing AgentSpec task context packs. Defaults to dry-run.")
     migrate_legacy.add_argument("--json", action="store_true")
 
-    outcome = subparsers.add_parser("outcome", help="Print product outcome readiness gates.")
+    outcome = subparsers.add_parser("outcome", help="Verify product outcome readiness gates.")
     outcome.add_argument("--json", action="store_true")
+    outcome_subparsers = outcome.add_subparsers(dest="outcome_command")
+    outcome_observe = outcome_subparsers.add_parser(
+        "observe",
+        help="Record facts from an external outcome-evidence adapter.",
+    )
+    outcome_observation_input = outcome_observe.add_mutually_exclusive_group()
+    outcome_observation_input.add_argument(
+        "--input-json",
+        help="Observation JSON. Defaults to stdin.",
+    )
+    outcome_observation_input.add_argument(
+        "--input-file",
+        help="Read observation JSON from a file.",
+    )
+    outcome_observe.add_argument("--json", action="store_true")
+    outcome_verify = outcome_subparsers.add_parser(
+        "verify",
+        help="Evaluate observations and persist AgentSpec policy verdicts.",
+    )
+    outcome_verify.add_argument("--json", action="store_true")
 
     maturity = subparsers.add_parser("maturity", help="Print or update progressive maturity profile status.")
     maturity_subparsers = maturity.add_subparsers(dest="maturity_command")
@@ -815,6 +840,32 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
             return 0
 
         if args.command == "outcome":
+            if args.outcome_command == "observe":
+                if args.input_file:
+                    raw_observation = Path(args.input_file).read_text(encoding="utf-8")
+                else:
+                    raw_observation = args.input_json if args.input_json is not None else sys.stdin.read()
+                observation = json.loads(raw_observation)
+                recorded = record_outcome_observation(root, observation)
+                if args.json:
+                    print(json.dumps(recorded, indent=2))
+                else:
+                    print(
+                        f"Recorded {recorded['kind']} observation {recorded['id']} "
+                        f"at {recorded['path']}."
+                    )
+                return 0
+            if args.outcome_command == "verify":
+                verdict_payload = write_outcome_verdicts(root)
+                if args.json:
+                    print(json.dumps(verdict_payload, indent=2))
+                else:
+                    print(
+                        f"Outcome readiness: {verdict_payload['readiness']}; "
+                        f"wrote {len(verdict_payload['verdicts'])} verdict(s) "
+                        f"to {verdict_payload['path']}."
+                    )
+                return 0
             outcome_payload = build_outcome_status(root)
             if args.json:
                 print(json.dumps(outcome_payload, indent=2))

@@ -515,6 +515,64 @@ AgentSpec state is private dogfood context and is intentionally ignored:
 and `docs/adr/`. Public installs and plugin packages should contain only the
 CLI, tests, human-facing docs, and plugin package directories.
 
+## Outcome Verification
+
+Task completion says that scoped implementation work finished. It does not, by
+itself, prove that a user journey works or that production is healthy. Define
+those proofs as typed checks in `agent/outcomes.yml`:
+
+```json
+{
+  "id": "G-checkout-ready",
+  "title": "Checkout is production ready",
+  "required": true,
+  "checks": [
+    {
+      "id": "C-checkout-browser",
+      "kind": "browser_ui",
+      "max_age_seconds": 3600,
+      "repair": "Run the production checkout journey again."
+    },
+    {
+      "id": "C-checkout-slo",
+      "kind": "slo",
+      "max_age_seconds": 86400,
+      "repair": "Refresh the checkout SLO window."
+    }
+  ]
+}
+```
+
+Supported kinds are `command`, `browser_ui`, `slo`, `api_compatibility`,
+`deployment`, and `release`. External browser, CI, observability, deployment,
+and release adapters submit timestamped facts with source provenance:
+
+```bash
+aspec outcome observe --input-json '{
+  "outcome_id":"O-checkout",
+  "gate_id":"G-checkout-ready",
+  "check_id":"C-checkout-browser",
+  "kind":"browser_ui",
+  "observed_at":"2026-06-29T20:00:00Z",
+  "source":{"type":"browser","adapter":"playwright","run_id":"pw-42"},
+  "facts":{"journeys_total":3,"journeys_passed":3}
+}' --json
+
+aspec outcome verify --json
+aspec outcome --json
+```
+
+Definitions, observations, and verdicts remain separate:
+
+- definitions: `agent/outcomes.yml`;
+- adapter observations: `agent/outcome-evidence/observations/`;
+- AgentSpec policy verdicts: `agent/outcome-evidence/verdicts/latest.yml`.
+
+Adapters cannot submit `status`, `passed`, or `verdict` fields. AgentSpec owns
+the policy decision, reports missing, stale, malformed, failed, untrusted, and
+passing evidence with repair guidance, and never accepts task completion or a
+model self-report as production-readiness proof.
+
 ## Daily Commands
 
 ```bash
@@ -523,7 +581,8 @@ aspec lifecycle              # native lifecycle map
 aspec task next              # next ready task pack
 aspec next-action            # recovery or continuation command
 aspec maturity status        # governance profile checks
-aspec outcome                # product outcome gates
+aspec outcome                # live product outcome evidence and gates
+aspec outcome verify         # persist the current policy-verdict projection
 aspec roadmap --check --json # roadmap freshness
 ```
 
