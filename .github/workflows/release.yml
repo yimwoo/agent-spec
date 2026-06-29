@@ -1,0 +1,149 @@
+name: Release Verification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "agentspec/**"
+      - "agentspec-codex-plugin/**"
+      - "agentspec-claude-plugin/**"
+      - "docs/release/**"
+      - "tests/**"
+      - "README.md"
+      - "pyproject.toml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to verify, for example v0.1.39.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install verification tools
+        run: |
+          python -m pip install \
+            "build>=1.2,<2" \
+            "mypy>=1.10,<2" \
+            "pylint>=3,<4" \
+            "pytest>=8,<9" \
+            "twine>=6,<7"
+
+      - name: Check version metadata
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import re
+          import tomllib
+
+          root = pathlib.Path(".")
+          version = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          init_text = (root / "agentspec" / "__init__.py").read_text(encoding="utf-8")
+          init_match = re.search(r'__version__ = "([^"]+)"', init_text)
+          assert init_match, "agentspec.__version__ is missing"
+          assert init_match.group(1) == version, "agentspec.__version__ does not match pyproject"
+
+          for path in [
+              root / "agentspec-codex-plugin" / ".codex-plugin" / "plugin.json",
+              root / "agentspec-claude-plugin" / ".claude-plugin" / "plugin.json",
+          ]:
+              plugin = json.loads(path.read_text(encoding="utf-8"))
+              assert plugin["version"] == version, f"{path} version does not match pyproject"
+
+          readme = (root / "README.md").read_text(encoding="utf-8")
+          assert f"@v{version}" in readme, "README install pin does not match pyproject"
+          PY
+
+      - name: Check public release evidence
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          from agentspec.evidence import (
+              PASSING_PUBLIC_REVIEW_VERDICTS,
+              load_public_release_tasks,
+          )
+
+          tasks = load_public_release_tasks(Path("."))
+          assert tasks, "docs/release/evidence.yml has no valid task evidence"
+          for context_pack, entry in tasks.items():
+              verification = entry["verification"]
+              review = entry.get("code_review", {})
+              assert verification.get("status") == "passed", f"{context_pack} verification has not passed"
+              assert review.get("verdict") in PASSING_PUBLIC_REVIEW_VERDICTS, (
+                  f"{context_pack} latest review is not ready"
+              )
+          PY
+
+      - name: Run Python verification
+        run: |
+          python -m pytest -q
+          python -m compileall -q agentspec tests
+          python -m mypy
+          python -m pylint \
+            agentspec/evidence.py \
+            agentspec/maturity.py \
+            agentspec/review.py \
+            agentspec/roadmap.py \
+            agentspec/writeback.py
+
+      - name: Check tag points at checkout
+        if: env.RELEASE_TAG != ''
+        run: |
+          test -n "$RELEASE_TAG"
+          VERSION="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "$RELEASE_TAG" = "v$VERSION"
+          TAG_COMMIT="$(git rev-parse "$RELEASE_TAG^{commit}")"
+          HEAD_COMMIT="$(git rev-parse HEAD)"
+          test "$TAG_COMMIT" = "$HEAD_COMMIT"
+
+      - name: Build distribution artifacts
+        run: |
+          VERSION="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          python -m build
+          test -f "dist/agentspec-${VERSION}.tar.gz"
+          test -f "dist/agentspec-${VERSION}-py3-none-any.whl"
+          python -m twine check dist/*
+
+      - name: Verify GitHub release publication
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$RELEASE_TAG" --json tagName,isDraft,isPrerelease,assets > release.json
+          python - <<'PY'
+          import json
+          import os
+
+          with open("release.json", encoding="utf-8") as handle:
+              release = json.load(handle)
+          tag = os.environ["RELEASE_TAG"]
+          assert release["tagName"] == tag
+          assert release["isDraft"] is False
+          asset_names = {asset["name"] for asset in release["assets"]}
+          version = tag.removeprefix("v")
+          expected = {
+              f"agentspec-{version}.tar.gz",
+              f"agentspec-{version}-py3-none-any.whl",
+          }
+          assert expected.issubset(asset_names), f"missing release assets: {sorted(expected - asset_names)}"
+          PY

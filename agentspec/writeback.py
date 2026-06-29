@@ -1,9 +1,12 @@
+"""Completion write-back, lifecycle readiness, and public evidence helpers."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
 from .config import merged_runtime_config
+from .evidence import write_public_release_evidence
 from .io import load_data, utc_now_iso
 from .paths import is_untracked_git_ignored, untracked_git_ignored_paths
 from .roadmap import ROADMAP_PATH, check_roadmap
@@ -39,6 +42,8 @@ class FinishBlockedError(ValueError):
         self.projection = projection
 
     def to_dict(self) -> dict[str, Any]:
+        """Return structured error context for JSON CLI responses."""
+
         return {"projection": self.projection}
 
 
@@ -64,7 +69,7 @@ def build_completion_projection(root: Path, task_selector: str | Path) -> dict[s
             }
         )
     else:
-        verification = ledger_entry.get("verification") if isinstance(ledger_entry.get("verification"), dict) else {}
+        verification = _dict(ledger_entry.get("verification"))
         if verification.get("status") != "passed":
             findings.append(
                 {
@@ -75,7 +80,7 @@ def build_completion_projection(root: Path, task_selector: str | Path) -> dict[s
                     "repair": f"aspec task complete {context_pack} --test-status passed",
                 }
             )
-        review = ledger_entry.get("code_review") if isinstance(ledger_entry.get("code_review"), dict) else {}
+        review = _dict(ledger_entry.get("code_review"))
         review_warning = _review_link_warning(root, context_pack, review)
         if review_warning is not None:
             findings.append({**review_warning, "repair": f"aspec review code --task {context_pack}"})
@@ -108,15 +113,17 @@ def build_completion_projection(root: Path, task_selector: str | Path) -> dict[s
 
 
 def update_task_ledger(root: Path, completion: dict[str, Any]) -> dict[str, Any]:
-    """Write completion status through the canonical task-ledger helper."""
+    """Write completion status and optional public release evidence."""
 
     from .task import record_task_ledger_status
 
+    root = root.resolve()
     context_pack = _required_string(completion, "context_pack")
-    verification = completion.get("verification") if isinstance(completion.get("verification"), dict) else {}
-    code_review = completion.get("code_review") if isinstance(completion.get("code_review"), dict) else None
-    return record_task_ledger_status(
-        root.resolve(),
+    verification = _dict(completion.get("verification"))
+    raw_code_review = completion.get("code_review")
+    code_review = raw_code_review if isinstance(raw_code_review, dict) else None
+    ledger_entry = record_task_ledger_status(
+        root,
         context_pack=context_pack,
         status=str(completion.get("status") or "complete"),
         run_id=_optional_string(completion.get("run_id")),
@@ -125,6 +132,19 @@ def update_task_ledger(root: Path, completion: dict[str, Any]) -> dict[str, Any]
         updated_at=_optional_string(completion.get("updated_at")) or utc_now_iso(),
         code_review=code_review,
     )
+    write_public_release_evidence(
+        root,
+        {
+            **completion,
+            "context_pack": context_pack,
+            "status": ledger_entry.get("status"),
+            "run_id": ledger_entry.get("run_id"),
+            "verification": ledger_entry.get("verification"),
+            "code_review": ledger_entry.get("code_review"),
+            "updated_at": ledger_entry.get("updated_at"),
+        },
+    )
+    return ledger_entry
 
 
 def update_handoff(
@@ -334,6 +354,8 @@ def resolve_finish_selector(
     *,
     current: bool = False,
 ) -> str:
+    """Resolve a finish command selector to a repo-relative context pack."""
+
     root = root.resolve()
     if current and task_selector is not None:
         raise ValueError("Select a finish task with either <task-selector> or --current, not both.")
@@ -388,7 +410,9 @@ def build_lifecycle_projection(
 
 
 def lifecycle_warning_lines(lifecycle: dict[str, Any]) -> list[str]:
-    warnings = lifecycle.get("warnings") if isinstance(lifecycle.get("warnings"), list) else []
+    """Format lifecycle warnings for concise human status output."""
+
+    warnings = _list(lifecycle.get("warnings"))
     lines: list[str] = []
     for warning in warnings:
         if not isinstance(warning, dict):
@@ -484,7 +508,7 @@ def _completion_warnings(root: Path) -> list[dict[str, Any]]:
             continue
         if entry.get("status") != "complete":
             continue
-        verification = entry.get("verification") if isinstance(entry.get("verification"), dict) else {}
+        verification = _dict(entry.get("verification"))
         if verification.get("status") != "passed":
             warnings.append(
                 {
@@ -495,7 +519,7 @@ def _completion_warnings(root: Path) -> list[dict[str, Any]]:
                     "repair": f"aspec finish {context_pack} --test-status passed --review REVIEW-####",
                 }
             )
-        review = entry.get("code_review") if isinstance(entry.get("code_review"), dict) else {}
+        review = _dict(entry.get("code_review"))
         if _review_link_required(entry, review_contract_started_at):
             review_warning = _review_link_warning(root, context_pack, review)
             if review_warning is not None:
@@ -539,7 +563,7 @@ def _review_link_warning(
             "message": f"Completed task links code review {review_id}, but verdict is {verdict!r}.",
             "repair": f"aspec review code --task {context_pack}",
         }
-    task = record.get("task") if isinstance(record.get("task"), dict) else {}
+    task = _dict(record.get("task"))
     if task.get("context_pack") != context_pack:
         return {
             "type": "missing_review",
@@ -896,7 +920,7 @@ def _selected_handoff_warning(
             "message": "Task is complete, but project handoff is missing.",
             "repair": "aspec task complete <task> --test-status passed",
         }
-    last = handoff.get("last_completed_task") if isinstance(handoff.get("last_completed_task"), dict) else {}
+    last = _dict(handoff.get("last_completed_task"))
     if last.get("context_pack") != context_pack:
         return {
             "type": "stale_handoff",
@@ -979,8 +1003,8 @@ def _finish_enforcement(root: Path) -> str:
     config = load_data(root / ".agentspec" / "config.yml", {}) or {}
     if not isinstance(config, dict):
         return "warn"
-    finish = config.get("finish") if isinstance(config.get("finish"), dict) else {}
-    lifecycle = config.get("lifecycle") if isinstance(config.get("lifecycle"), dict) else {}
+    finish = _dict(config.get("finish"))
+    lifecycle = _dict(config.get("lifecycle"))
     raw = finish.get("enforcement") or lifecycle.get("finish_enforcement") or lifecycle.get("enforcement") or "warn"
     enforcement = str(raw)
     if enforcement == "block":
@@ -1007,8 +1031,7 @@ def _lifecycle_config(root: Path) -> dict[str, Any]:
     config = load_data(root / ".agentspec" / "config.yml", {}) or {}
     if not isinstance(config, dict):
         config = {}
-    lifecycle = merged_runtime_config(config).get("lifecycle", {})
-    return lifecycle if isinstance(lifecycle, dict) else {}
+    return _dict(merged_runtime_config(config).get("lifecycle"))
 
 
 def _current_finish_context_pack(root: Path) -> str | None:
@@ -1022,7 +1045,7 @@ def _current_finish_context_pack(root: Path) -> str | None:
 
     next_task = next_task_context_pack(root)
     if isinstance(next_task, dict) and next_task.get("path"):
-        return str(next_task["path"])
+        return str(next_task.get("path"))
 
     handoff = load_data(root / "agent" / "handoff.yml", {}) or {}
     last = handoff.get("last_completed_task") if isinstance(handoff, dict) else {}
@@ -1052,7 +1075,7 @@ def _active_run_context_packs(root: Path) -> list[str]:
 def _handoff_summary_for_task(handoff: Any, context_pack: str) -> dict[str, Any]:
     if not isinstance(handoff, dict) or not handoff:
         return {"present": False, "matches_task": False}
-    last = handoff.get("last_completed_task") if isinstance(handoff.get("last_completed_task"), dict) else {}
+    last = _dict(handoff.get("last_completed_task"))
     return {
         "present": True,
         "matches_task": last.get("context_pack") == context_pack,

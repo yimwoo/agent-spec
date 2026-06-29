@@ -56,7 +56,7 @@ what is in scope, what counts as verified, how many iterations remain* —
 Stable release (recommended):
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.38"
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.39"
 ```
 
 Latest from main (dev):
@@ -87,7 +87,7 @@ curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh |
 ```
 
 > Release-pinned plugin installation is planned; today the installer tracks
-> `main`. Pin the CLI separately with `@v0.1.38` (see step 1).
+> `main`. Pin the CLI separately with `@v0.1.39` (see step 1).
 
 Then enable the plugin:
 
@@ -246,6 +246,8 @@ DCRs and external imports before promoting them to accepted source.
 - **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** — full human guide:
   exact CLI sequences, control-plane and execution architecture, importing
   changing sources, supervised run workflows, recovery commands.
+- **[docs/release/README.md](docs/release/README.md)** — public completion,
+  verification, review evidence, private-state cleanup, and release checks.
 - **[agentspec/](agentspec/)** — CLI source: `run.py` (supervised loop),
   `runner.py` (runner packages), `policy.py` (path + iteration gates),
   `task.py` (context pack rendering), `lifecycle.py` (10 native stages).

@@ -1,8 +1,15 @@
+"""Progressive maturity checks for AgentSpec project readiness."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
+from .evidence import (
+    PASSING_PUBLIC_REVIEW_VERDICTS,
+    load_public_release_tasks,
+    public_release_evidence_path,
+)
 from .io import load_data, write_data
 
 
@@ -63,6 +70,8 @@ def default_maturity_config(
     level: str = DEFAULT_MATURITY_LEVEL,
     enforcement: str = DEFAULT_MATURITY_ENFORCEMENT,
 ) -> dict[str, Any]:
+    """Return the default repo-local maturity configuration."""
+
     _validate_level(level)
     _validate_enforcement(enforcement)
     return {
@@ -76,6 +85,8 @@ def default_maturity_config(
 
 
 def load_maturity_config(root: Path) -> dict[str, Any]:
+    """Load and validate the repo maturity configuration."""
+
     path = _config_path(root)
     data = load_data(path, None)
     if data is None:
@@ -98,6 +109,8 @@ def load_maturity_config(root: Path) -> dict[str, Any]:
 
 
 def set_maturity_config(root: Path, *, level: str, enforcement: str) -> dict[str, Any]:
+    """Write the maturity profile and return its current status projection."""
+
     root = root.resolve()
     config = default_maturity_config(level=level, enforcement=enforcement)
     write_data(_config_path(root), config)
@@ -105,6 +118,8 @@ def set_maturity_config(root: Path, *, level: str, enforcement: str) -> dict[str
 
 
 def build_maturity_status(root: Path) -> dict[str, Any]:
+    """Build the maturity readiness projection for the configured profile."""
+
     root = root.resolve()
     config = load_maturity_config(root)
     level = str(config["level"])
@@ -140,6 +155,8 @@ def build_maturity_status(root: Path) -> dict[str, Any]:
 
 
 def format_maturity_status(status: dict[str, Any]) -> str:
+    """Format a maturity status payload for human CLI output."""
+
     lines = [
         "AgentSpec Maturity",
         f"Level: {status.get('level')}",
@@ -217,9 +234,15 @@ def _check_predicate(root: Path, check_id: str) -> tuple[bool, list[str]]:
     if check_id == "session_lease_state":
         return _all_exist(root, ["agent/sessions/active", "agent/sessions/archived"])
     if check_id == "review_evidence":
-        return _any_glob(root, "agent/reviews/REVIEW-*.yml")
+        return _any_passed(
+            _any_glob(root, "agent/reviews/REVIEW-*.yml"),
+            _public_release_tasks_have_code_review(root),
+        )
     if check_id == "test_evidence":
-        return _task_ledger_has_passed_verification(root)
+        return _any_passed(
+            _task_ledger_has_passed_verification(root),
+            _public_release_tasks_have_passed_verification(root),
+        )
     if check_id == "drift_check":
         return _any_exists(root, ["reports/drift/latest.md", "docs/drift"])
     if check_id == "outcome_gates":
@@ -253,7 +276,10 @@ def _check_predicate(root: Path, check_id: str) -> tuple[bool, list[str]]:
             _any_context_pack_has(root, "Rollback"),
         )
     if check_id == "audit_record":
-        return _exists(root, "agent/task-ledger.yml")
+        return _any_passed(
+            _exists(root, "agent/task-ledger.yml"),
+            _public_release_evidence_exists(root),
+        )
     if check_id == "ci_e2e_evidence":
         return _any_passed(
             _workflow_has_test_or_e2e_job(root),
@@ -362,6 +388,30 @@ def _task_ledger_has_passed_verification(root: Path) -> tuple[bool, list[str]]:
         if isinstance(verification, dict) and verification.get("status") == "passed":
             return True, ["agent/task-ledger.yml", str(context_pack)]
     return False, []
+
+
+def _public_release_tasks_have_passed_verification(root: Path) -> tuple[bool, list[str]]:
+    evidence_path = public_release_evidence_path()
+    for context_pack, entry in load_public_release_tasks(root).items():
+        raw_verification = entry.get("verification")
+        verification: dict[str, Any] = raw_verification if isinstance(raw_verification, dict) else {}
+        if verification.get("status") == "passed":
+            return True, [evidence_path, context_pack]
+    return False, []
+
+
+def _public_release_tasks_have_code_review(root: Path) -> tuple[bool, list[str]]:
+    evidence_path = public_release_evidence_path()
+    for context_pack, entry in load_public_release_tasks(root).items():
+        review = entry.get("code_review")
+        if isinstance(review, dict) and review.get("verdict") in PASSING_PUBLIC_REVIEW_VERDICTS:
+            return True, [evidence_path, context_pack]
+    return False, []
+
+
+def _public_release_evidence_exists(root: Path) -> tuple[bool, list[str]]:
+    exists = bool(load_public_release_tasks(root))
+    return exists, [public_release_evidence_path()] if exists else []
 
 
 def _outcomes_configured(root: Path) -> tuple[bool, list[str]]:

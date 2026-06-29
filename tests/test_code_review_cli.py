@@ -54,6 +54,58 @@ class CodeReviewCLITests(unittest.TestCase):
             artifact = load_data(root / "agent" / "reviews" / "REVIEW-0001.yml")
             self.assertEqual(artifact, payload)
 
+    def test_review_code_refreshes_completed_public_evidence_and_preserves_history(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _seed(root)
+            context_pack = "agent/context-packs/T-013-task.md"
+            previous_review = {"id": "REVIEW-0000", "verdict": "ready"}
+            write_data(
+                root / "docs" / "release" / "evidence.yml",
+                {
+                    "schema": "agentspec.release_evidence.v0",
+                    "updated_at": "2026-06-29T00:00:00Z",
+                    "tasks": {
+                        context_pack: {
+                            "task_id": "T-013",
+                            "context_pack": context_pack,
+                            "status": "complete",
+                            "run_id": "complete-t013",
+                            "verification": {"status": "passed"},
+                            "updated_at": "2026-06-29T00:00:00Z",
+                            "code_review": previous_review,
+                            "reviews": [previous_review],
+                        }
+                    },
+                },
+            )
+
+            blocked = review_module.record_code_review(
+                root,
+                task_selector="T-013",
+                verdict="not-ready",
+                summary="One blocker remains.",
+                reviewer="codex",
+            )
+            ready = review_module.record_code_review(
+                root,
+                task_selector="T-013",
+                verdict="ready",
+                summary="No blocking findings.",
+                reviewer="codex",
+            )
+
+            evidence = load_data(root / "docs" / "release" / "evidence.yml")
+            entry = evidence["tasks"][context_pack]
+            self.assertEqual(entry["code_review"]["id"], ready["id"])
+            self.assertEqual(entry["code_review"]["verdict"], "ready")
+            self.assertEqual(
+                [review["id"] for review in entry["reviews"]],
+                ["REVIEW-0000", blocked["id"], ready["id"]],
+            )
+            self.assertEqual(entry["reviews"][-2]["verdict"], "not-ready")
+            self.assertEqual(entry["review_updated_at"], ready["created_at"])
+
     def test_review_code_warns_when_review_artifact_is_gitignored(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
