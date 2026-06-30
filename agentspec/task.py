@@ -13,7 +13,13 @@ from .archetype import (
     validate_path_provenance,
 )
 from .dcr import find_dcr_by_id, is_implementation_eligible, parse_dcr
-from .evidence import PRIVATE_TASK_LEDGER_PATH, load_task_evidence, task_evidence_sources
+from .evidence import (
+    ALLOWED_PUBLIC_TASK_STATES,
+    PRIVATE_TASK_LEDGER_PATH,
+    load_task_evidence,
+    task_evidence_sources,
+    write_public_task_state,
+)
 from .io import lines_between, load_data, utc_now_iso, write_data, write_text
 from .paths import slugify, truncate_on_word_boundary, untracked_git_ignored_paths
 from .policy import can_emit_source_body, source_body_redaction
@@ -141,22 +147,40 @@ def list_task_context_packs(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
-    evidence_status_by_pack = _task_evidence_status_by_context_pack(
+    evidence_tasks = load_task_evidence(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
+    evidence_status_by_pack = _task_evidence_status_by_context_pack(evidence_tasks)
     pack_paths = sorted((root / "agent" / "context-packs").glob("T-*.md"))
     ignored_paths = set() if include_untracked_gitignored else untracked_git_ignored_paths(root, pack_paths)
     records: list[dict[str, Any]] = []
+    recorded_paths: set[str] = set()
     for path in pack_paths:
         if path.resolve() in ignored_paths:
             continue
         record = _parse_context_pack_record(root, path, requirements, run_status_by_pack, evidence_status_by_pack)
+        recorded_paths.add(str(record["path"]))
         if task_type and record.get("type") != task_type:
             continue
         if status and record.get("status") != status:
             continue
         records.append(record)
+    for context_pack, entry in sorted(evidence_tasks.items()):
+        if context_pack in recorded_paths:
+            continue
+        record = _evidence_only_task_record(
+            context_pack,
+            entry,
+            requirements,
+            evidence_status_by_pack.get(context_pack),
+        )
+        if task_type and record.get("type") != task_type:
+            continue
+        if status and record.get("status") != status:
+            continue
+        records.append(record)
+    records.sort(key=lambda record: int(record.get("sort_key") or 0))
     return records
 
 
@@ -227,6 +251,82 @@ def record_task_ledger_status(
     ledger["tasks"] = {key: tasks[key] for key in sorted(tasks)}
     write_data(_task_ledger_path(root), ledger)
     return tasks[rel]
+
+
+def record_public_task_state(
+    root: Path,
+    selector: str,
+    *,
+    status: str,
+    reason: str,
+    test_status: str = "not_run",
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    """Project a non-terminal task state into private and public evidence.
+
+    Args:
+        root: AgentSpec project root.
+        selector: Task id or context-pack path.
+        status: Non-terminal lifecycle status to record.
+        reason: Actionable explanation of the current state.
+        test_status: Current verification status.
+        run_id: Optional associated run identifier.
+
+    Returns:
+        The public task-state entry.
+
+    Raises:
+        ValueError: If the selector, status, or reason is invalid.
+    """
+
+    if status not in ALLOWED_PUBLIC_TASK_STATES:
+        allowed = ", ".join(sorted(ALLOWED_PUBLIC_TASK_STATES))
+        raise ValueError(f"task state must be one of: {allowed}.")
+    if not reason.strip():
+        raise ValueError("task state requires a non-empty reason.")
+
+    root = root.resolve()
+    path = _resolve_context_pack_selector(root, selector)
+    text = path.read_text(encoding="utf-8")
+    rel = path.relative_to(root).as_posix()
+    heading = text.splitlines()[0].strip() if text.splitlines() else f"# {path.stem}"
+    match = re.match(r"^#\s+(T-\d{3,}):?\s*(.*)$", heading)
+    task_id = match.group(1) if match else path.stem.split("-", 2)[0]
+    title = match.group(2).strip() if match and match.group(2).strip() else path.stem
+    task_type = _first_metadata_value(text, "Type") or "implementation"
+    requirement_ids = _requirement_ids(text)
+    updated_at = utc_now_iso()
+    existing = load_task_ledger(root)["tasks"].get(rel)
+    if isinstance(existing, dict) and existing.get("status") == "complete":
+        raise ValueError("Cannot publish a non-terminal state for a completed task.")
+
+    entry: dict[str, Any] = {
+        "task_id": task_id,
+        "title": title,
+        "type": task_type,
+        "context_pack": rel,
+        "status": status,
+        "reason": reason.strip(),
+        "requirements": requirement_ids,
+        "verification": {"status": test_status},
+        "updated_at": updated_at,
+    }
+    if run_id:
+        entry["run_id"] = run_id
+    public_entry = write_public_task_state(
+        root,
+        entry,
+    )
+    record_task_ledger_status(
+        root,
+        context_pack=rel,
+        status=status,
+        run_id=run_id,
+        reason=reason.strip(),
+        test_status=test_status,
+        updated_at=updated_at,
+    )
+    return public_entry
 
 
 def load_task_ledger(root: Path) -> dict[str, Any]:
@@ -351,6 +451,43 @@ def _parse_context_pack_record(
     }
 
 
+def _evidence_only_task_record(
+    context_pack: str,
+    entry: dict[str, Any],
+    requirements: dict[str, dict[str, Any]],
+    status_overlay: dict[str, Any] | None,
+) -> dict[str, Any]:
+    task_id = str(entry.get("task_id") or _task_id_from_context_pack(context_pack))
+    requirement_records = [
+        {
+            "id": requirement_id,
+            "status": requirements.get(requirement_id, {}).get("status", "unknown"),
+            "priority": requirements.get(requirement_id, {}).get("priority"),
+        }
+        for requirement_id in entry.get("requirements", [])
+        if isinstance(requirement_id, str)
+    ]
+    overlay = status_overlay or {}
+    return {
+        "id": task_id,
+        "title": entry.get("title") or task_id,
+        "type": entry.get("type"),
+        "path": context_pack,
+        "originating_dcr": entry.get("originating_dcr"),
+        "workflow": entry.get("workflow"),
+        "requirements": requirement_records,
+        "status": overlay.get("status") or entry.get("status", "unknown"),
+        "status_reason": overlay.get("reason") or entry.get("reason"),
+        "status_source": overlay.get("source") or "evidence",
+        "sort_key": int(task_id.split("-", 1)[1]) if task_id.startswith("T-") and task_id[2:].isdigit() else 0,
+        "run_id": entry.get("run_id"),
+        "updated_at": entry.get("updated_at", ""),
+        "verification": entry.get("verification", {}),
+        "code_review": entry.get("code_review", {}),
+        "evidence_sources": task_evidence_sources(entry),
+    }
+
+
 def _first_metadata_value(text: str, name: str) -> str | None:
     match = re.search(rf"^{re.escape(name)}:\s*`?([^`\n]+)`?\s*$", text, flags=re.MULTILINE)
     return match.group(1).strip() if match else None
@@ -411,27 +548,23 @@ def _run_status_by_context_pack(
 
 
 def _task_evidence_status_by_context_pack(
-    root: Path,
-    *,
-    include_untracked_gitignored: bool = True,
+    tasks: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     statuses: dict[str, dict[str, Any]] = {}
-    tasks = load_task_evidence(
-        root,
-        include_untracked_gitignored=include_untracked_gitignored,
-    )
     for context_pack, entry in tasks.items():
         status = entry.get("status", "unknown")
         run_id = entry.get("run_id")
         suffix = f" via run {run_id}" if run_id else ""
         sources = task_evidence_sources(entry)
         is_private = PRIVATE_TASK_LEDGER_PATH.as_posix() in sources
+        detail = entry.get("reason") or entry.get("completion_reason")
+        detail_suffix = f" {detail}" if isinstance(detail, str) and detail else ""
         statuses[context_pack] = {
             "status": status,
             "reason": (
-                f"Task ledger marks {context_pack} {status}{suffix}."
+                f"Task ledger marks {context_pack} {status}{suffix}.{detail_suffix}"
                 if is_private
-                else f"Task evidence marks {context_pack} {status}{suffix}."
+                else f"Task evidence marks {context_pack} {status}{suffix}.{detail_suffix}"
             ),
             "updated_at": entry.get("updated_at", ""),
             "source": "ledger" if is_private else "evidence",
@@ -462,6 +595,27 @@ def _normalize_context_pack_path(root: Path, context_pack: str) -> str:
     if path.is_absolute():
         return str(path.resolve().relative_to(root.resolve()))
     return str(path).lstrip("./")
+
+
+def _resolve_context_pack_selector(root: Path, selector: str) -> Path:
+    candidate = Path(selector)
+    if candidate.is_absolute() and candidate.is_file():
+        return candidate.resolve()
+    project_candidate = (root / candidate).resolve()
+    if project_candidate.is_file():
+        return project_candidate
+    if re.fullmatch(r"T-\d{3,}", selector):
+        matches = sorted((root / "agent" / "context-packs").glob(f"{selector}-*.md"))
+        if len(matches) == 1:
+            return matches[0].resolve()
+        if len(matches) > 1:
+            raise ValueError(f"Task selector {selector} matches multiple context packs.")
+    raise ValueError(f"Task context pack not found for selector: {selector}")
+
+
+def _task_id_from_context_pack(context_pack: str) -> str:
+    match = re.search(r"\b(T-\d{3,})\b", Path(context_pack).name)
+    return match.group(1) if match else "-"
 
 
 def _task_ledger_path(root: Path) -> Path:

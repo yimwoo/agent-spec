@@ -100,7 +100,13 @@ from .source_registry import (
 from .spec_document import ALLOWED_CLASSIFICATIONS as SOURCE_CLASSIFICATIONS
 from .spec_document import ALLOWED_KINDS, ALLOWED_STORAGE_MODES
 from .status import agent_display_for_next_action, build_project_status, format_project_status
-from .task import create_task_context_pack, create_task_context_pack_from_workflow, list_task_context_packs, next_task_context_pack
+from .task import (
+    create_task_context_pack,
+    create_task_context_pack_from_workflow,
+    list_task_context_packs,
+    next_task_context_pack,
+    record_public_task_state,
+)
 from .writeback import finish_task, update_roadmap
 from .workflow import build_workflow_contract_status, create_or_link_native_workflow, workflow_warning_lines
 
@@ -416,6 +422,20 @@ def build_parser(prog: str | None = None) -> argparse.ArgumentParser:
     task_complete.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
     task_complete.add_argument("--review", dest="review_id", help="Code review id to link before completion.")
     task_complete.add_argument("--json", action="store_true")
+    task_state = task_subparsers.add_parser(
+        "state",
+        help="Project a non-terminal task state into private and public evidence.",
+    )
+    task_state.add_argument("selector", help="Task id (e.g. T-013) or context pack path.")
+    task_state.add_argument(
+        "--status",
+        required=True,
+        choices=["blocked", "halted", "in_progress", "paused"],
+    )
+    task_state.add_argument("--reason", required=True, help="Actionable explanation of the current task state.")
+    task_state.add_argument("--run-id")
+    task_state.add_argument("--test-status", default="not_run", choices=["not_run", "passed", "failed"])
+    task_state.add_argument("--json", action="store_true")
 
     context = subparsers.add_parser("context", help="Context pack utilities.")
     context_subparsers = context.add_subparsers(dest="context_command")
@@ -1200,6 +1220,21 @@ def main(argv: list[str] | None = None, prog: str | None = None) -> int:
                 print(json.dumps(state, indent=2))
             else:
                 print(f"Marked {state['context_pack']} complete via run {state['run_id']}.")
+            return 0
+
+        if args.command == "task" and args.task_command == "state":
+            state = record_public_task_state(
+                root,
+                args.selector,
+                status=args.status,
+                reason=args.reason,
+                test_status=args.test_status,
+                run_id=args.run_id,
+            )
+            if args.json:
+                print(json.dumps(state, indent=2))
+            else:
+                print(f"Projected {state['context_pack']} as {state['status']} in public task evidence.")
             return 0
 
         if args.command == "context" and args.context_command == "build":

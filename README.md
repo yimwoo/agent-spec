@@ -151,6 +151,14 @@ The agent reports back: requirement IDs touched, task pack path, allowed paths,
 iteration count, verification commands and results, review ID, and updated
 handoff/roadmap state.
 
+When a repository keeps `agent/` runtime state private, AgentSpec mirrors both
+completed tasks and explicitly recorded non-terminal states into the tracked
+`docs/release/evidence.yml` projection. Use `aspec task state T-123 --status
+blocked --reason "..."` (or `in_progress`, `paused`, or `halted`) so status,
+task listing, and roadmap generation do not mistake blocked work for an idle
+project; completing the task replaces that state with final verification and
+review evidence.
+
 ---
 
 ## The operating contract: how AgentSpec guides execution

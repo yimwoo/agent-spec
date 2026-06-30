@@ -16,6 +16,7 @@ PRIVATE_TASK_LEDGER_PATH = Path("agent/task-ledger.yml")
 ALLOWED_PUBLIC_VERIFICATION_STATUSES = frozenset({"failed", "not_run", "passed"})
 ALLOWED_PUBLIC_REVIEW_VERDICTS = frozenset({"not-ready", "ready", "ready-with-warnings"})
 PASSING_PUBLIC_REVIEW_VERDICTS = frozenset({"ready", "ready-with-warnings"})
+ALLOWED_PUBLIC_TASK_STATES = frozenset({"blocked", "halted", "in_progress", "paused"})
 
 
 def should_write_public_release_evidence(root: Path) -> bool:
@@ -60,15 +61,19 @@ def write_public_release_evidence(root: Path, completion: dict[str, Any]) -> dic
 
     path = root / PUBLIC_RELEASE_EVIDENCE_PATH
     tasks = load_public_release_tasks(root)
+    task_states = load_public_task_states(root)
 
     entry = _completion_entry(root, context_pack, completion)
     entry = _merge_review_history(tasks.get(context_pack), entry)
     tasks[context_pack] = entry
+    task_states.pop(context_pack, None)
     payload = {
         "schema": PUBLIC_RELEASE_EVIDENCE_SCHEMA,
         "updated_at": entry["updated_at"],
         "tasks": {key: tasks[key] for key in sorted(tasks)},
     }
+    if task_states:
+        payload["task_states"] = {key: task_states[key] for key in sorted(task_states)}
     write_data(path, payload)
     return entry
 
@@ -94,6 +99,62 @@ def load_public_release_tasks(root: Path) -> dict[str, dict[str, Any]]:
     return validated
 
 
+def load_public_task_states(root: Path) -> dict[str, dict[str, Any]]:
+    """Load validated non-terminal task states from public evidence."""
+
+    data = load_data(root.resolve() / PUBLIC_RELEASE_EVIDENCE_PATH, {})
+    if not isinstance(data, dict) or data.get("schema") != PUBLIC_RELEASE_EVIDENCE_SCHEMA:
+        return {}
+    task_states = data.get("task_states")
+    if not isinstance(task_states, dict):
+        return {}
+    validated: dict[str, dict[str, Any]] = {}
+    for context_pack, entry in task_states.items():
+        if _valid_public_task_state_entry(context_pack, entry):
+            validated[context_pack] = entry
+    return validated
+
+
+def write_public_task_state(root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    """Persist one non-terminal task state in the public evidence projection.
+
+    Args:
+        root: AgentSpec project root.
+        state: Normalized task-state record containing context, status, and
+            recovery reason.
+
+    Returns:
+        The validated public task-state entry.
+
+    Raises:
+        ValueError: If the state is malformed or attempts to reopen a task with
+            public completion evidence.
+    """
+
+    root = root.resolve()
+    context_pack = state.get("context_pack")
+    if not isinstance(context_pack, str) or not context_pack:
+        raise ValueError("public task state requires context_pack.")
+    entry = dict(state)
+    if not _valid_public_task_state_entry(context_pack, entry):
+        allowed = ", ".join(sorted(ALLOWED_PUBLIC_TASK_STATES))
+        raise ValueError(f"public task state must be valid and use one of: {allowed}.")
+
+    tasks = load_public_release_tasks(root)
+    if context_pack in tasks:
+        raise ValueError("Cannot publish a non-terminal state for a completed task.")
+    task_states = load_public_task_states(root)
+    task_states[context_pack] = entry
+    payload = {
+        "schema": PUBLIC_RELEASE_EVIDENCE_SCHEMA,
+        "updated_at": entry["updated_at"],
+        "tasks": {key: tasks[key] for key in sorted(tasks)},
+        "task_states": {key: task_states[key] for key in sorted(task_states)},
+    }
+    write_data(root / PUBLIC_RELEASE_EVIDENCE_PATH, payload)
+    return entry
+
+
 def load_task_evidence(
     root: Path,
     *,
@@ -114,6 +175,13 @@ def load_task_evidence(
     """
 
     root = root.resolve()
+    public_states = {
+        context_pack: {
+            **entry,
+            "_evidence_sources": [PUBLIC_RELEASE_EVIDENCE_PATH.as_posix()],
+        }
+        for context_pack, entry in load_public_task_states(root).items()
+    }
     public_tasks = {
         context_pack: {
             **entry,
@@ -121,11 +189,12 @@ def load_task_evidence(
         }
         for context_pack, entry in load_public_release_tasks(root).items()
     }
+    public_evidence = {**public_states, **public_tasks}
     private_tasks = _load_private_task_evidence(
         root,
         include_untracked_gitignored=include_untracked_gitignored,
     )
-    return _merge_task_evidence(public_tasks, private_tasks)
+    return _merge_task_evidence(public_evidence, private_tasks)
 
 
 def task_evidence_sources(entry: dict[str, Any]) -> list[str]:
@@ -160,6 +229,7 @@ def write_public_release_review(root: Path, review: dict[str, Any]) -> dict[str,
         return None
 
     tasks = load_public_release_tasks(root)
+    task_states = load_public_task_states(root)
     existing = tasks.get(context_pack)
     if existing is None:
         return None
@@ -182,6 +252,8 @@ def write_public_release_review(root: Path, review: dict[str, Any]) -> dict[str,
         "updated_at": updated_at,
         "tasks": {key: tasks[key] for key in sorted(tasks)},
     }
+    if task_states:
+        payload["task_states"] = {key: task_states[key] for key in sorted(task_states)}
     write_data(root / PUBLIC_RELEASE_EVIDENCE_PATH, payload)
     return summary
 
@@ -293,6 +365,36 @@ def _valid_public_task_entry(context_pack: Any, entry: Any) -> bool:
             isinstance(value, str) and re.fullmatch(r"R-\d{3,}", value)
             for value in requirements
         )
+    ):
+        return False
+    return True
+
+
+def _valid_public_task_state_entry(context_pack: Any, entry: Any) -> bool:
+    if not isinstance(context_pack, str) or not isinstance(entry, dict):
+        return False
+    task_id = _task_id_from_context_pack(context_pack)
+    if task_id == "-" or entry.get("task_id") != task_id:
+        return False
+    if entry.get("context_pack") != context_pack:
+        return False
+    if entry.get("status") not in ALLOWED_PUBLIC_TASK_STATES:
+        return False
+    if not _nonempty_string(entry.get("reason")) or not _nonempty_string(entry.get("updated_at")):
+        return False
+    verification = entry.get("verification")
+    if not isinstance(verification, dict) or verification.get("status") not in ALLOWED_PUBLIC_VERIFICATION_STATUSES:
+        return False
+    title = entry.get("title")
+    if title is not None and not _nonempty_string(title):
+        return False
+    task_type = entry.get("type")
+    if task_type is not None and not _nonempty_string(task_type):
+        return False
+    requirements = entry.get("requirements")
+    if requirements is not None and (
+        not isinstance(requirements, list)
+        or not all(isinstance(value, str) and re.fullmatch(r"R-\d{3,}", value) for value in requirements)
     ):
         return False
     return True
