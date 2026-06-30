@@ -85,8 +85,13 @@ jobs:
           )
 
           tasks = load_task_evidence(Path("."))
-          assert tasks, "docs/release/evidence.yml has no valid task evidence"
-          for context_pack, entry in tasks.items():
+          completed_tasks = {
+              context_pack: entry
+              for context_pack, entry in tasks.items()
+              if entry.get("status") == "complete"
+          }
+          assert completed_tasks, "docs/release/evidence.yml has no valid completion evidence"
+          for context_pack, entry in completed_tasks.items():
               verification = entry["verification"]
               review = entry.get("code_review", {})
               assert verification.get("status") == "passed", f"{context_pack} verification has not passed"

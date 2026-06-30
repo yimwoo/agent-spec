@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-30T22:13:05Z",
+  "updated_at": "2026-06-30T23:31:17Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -536,6 +536,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0147.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-186-allow-blocked-task-projections-in-release-verification.md": {
+      "task_id": "T-186",
+      "context_pack": "agent/context-packs/T-186-allow-blocked-task-projections-in-release-verification.md",
+      "status": "complete",
+      "run_id": "complete-t-186-allow-blocked-task-projections-in-release-verification-20260630233117849524",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-30T23:31:17Z",
+      "requirements": [
+        "R-216"
+      ],
+      "completion_reason": "Corrected the release evidence gate to validate completed tasks without rejecting valid blocked or in-progress projections.",
+      "code_review": {
+        "id": "REVIEW-0148",
+        "verdict": "ready",
+        "summary": "Scope: release workflow and its contract test only, plus AgentSpec public write-back. Reviewed plan alignment, completion/non-terminal evidence boundaries, failure behavior, security, performance, and simplification. No findings. The workflow now filters the unified evidence projection to status=complete before enforcing passed verification and ready review, while preserving blocked/in-progress visibility. RED/GREEN regression confirmed; exact release predicate passed with 16 completions and one blocked task; 605 full tests, mypy, pylint 10.00/10, compileall, installer syntax, and diff checks passed. Residual risk is limited to GitHub-hosted workflow execution, which will be verified by dispatch after merge.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0148.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0148",
+          "verdict": "ready",
+          "summary": "Scope: release workflow and its contract test only, plus AgentSpec public write-back. Reviewed plan alignment, completion/non-terminal evidence boundaries, failure behavior, security, performance, and simplification. No findings. The workflow now filters the unified evidence projection to status=complete before enforcing passed verification and ready review, while preserving blocked/in-progress visibility. RED/GREEN regression confirmed; exact release predicate passed with 16 completions and one blocked task; 605 full tests, mypy, pylint 10.00/10, compileall, installer syntax, and diff checks passed. Residual risk is limited to GitHub-hosted workflow execution, which will be verified by dispatch after merge.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0148.yml"
         }
       ]
     }
