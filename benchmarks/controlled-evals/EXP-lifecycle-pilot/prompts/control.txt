@@ -1,0 +1,5 @@
+Read task.md and complete the requested change. Work autonomously, edit only
+src/identifier.py and tests/, add or update regression tests, and run
+`python -m unittest discover -s tests -v` before finishing. Do not use
+AgentSpec or change project-governance files. Do not stop until the task is
+complete or you have a concrete blocker.

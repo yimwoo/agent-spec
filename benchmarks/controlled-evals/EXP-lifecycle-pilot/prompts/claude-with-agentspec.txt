@@ -1,0 +1,5 @@
+Use /aspec:continue-work to complete the ready T-001 task in this repository.
+Work autonomously through planning, session preflight, implementation, public
+verification, code-review evidence, and AgentSpec finish write-back. Respect
+the task pack's allowed paths. Do not stop until the task is either complete or
+a concrete blocker is recorded.
