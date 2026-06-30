@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-29T23:29:09Z",
+  "updated_at": "2026-06-30T02:10:35Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -440,6 +440,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0142.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-182-align-quality-gc-with-portable-evidence-projections.md": {
+      "task_id": "T-182",
+      "context_pack": "agent/context-packs/T-182-align-quality-gc-with-portable-evidence-projections.md",
+      "status": "complete",
+      "run_id": "complete-t-182-align-quality-gc-with-portable-evidence-projections-20260630021035831400",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-30T02:10:35Z",
+      "requirements": [
+        "R-216"
+      ],
+      "completion_reason": "Aligned quality GC and doctor diagnostics with the portable public evidence projection for R-216.",
+      "code_review": {
+        "id": "REVIEW-0143",
+        "verdict": "ready",
+        "summary": "No blocking findings. Doctor freshness now excludes untracked Git-ignored source residue, quality GC recognizes public completion evidence as the portable lifecycle projection, ordinary missing-handoff behavior is preserved, and regression tests cover both paths.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0143.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0143",
+          "verdict": "ready",
+          "summary": "No blocking findings. Doctor freshness now excludes untracked Git-ignored source residue, quality GC recognizes public completion evidence as the portable lifecycle projection, ordinary missing-handoff behavior is preserved, and regression tests cover both paths.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0143.yml"
         }
       ]
     }

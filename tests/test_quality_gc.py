@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -41,6 +42,10 @@ class QualityGCTests(unittest.TestCase):
             )
             self.assertTrue(
                 any(finding["id"] == "QG-OUTCOMES-001" for finding in report["findings"]),
+                report["findings"],
+            )
+            self.assertTrue(
+                any(finding["id"] == "QG-HANDOFF-001" for finding in report["findings"]),
                 report["findings"],
             )
             self.assertEqual(report["doctor"]["agent_context_status"], "warning")
@@ -92,6 +97,48 @@ class QualityGCTests(unittest.TestCase):
             self.assertEqual(cadence["completed_tasks_since_last_quality"], 1)
             self.assertEqual(cadence["was_due"], False)
             self.assertFalse((root / "reports" / "quality" / "latest.md").exists())
+
+    def test_quality_gc_uses_public_completion_when_private_state_is_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            _seed_agent_context(root)
+            _write_agent_context_outputs(root)
+            _set_mtime(root / "docs" / "traceability" / "requirements.yml", 1_700_000_000_000_000_000)
+            _set_mtime(root / "docs" / "discovery" / "readiness.yml", 1_700_000_000_000_000_000)
+            for path in [
+                root / "AGENTS.md",
+                root / "CLAUDE.md",
+                root / ".codex" / "agents" / "spec-reviewer.toml",
+            ]:
+                _set_mtime(path, 1_700_000_001_000_000_000)
+            _set_mtime(root / "agent" / "task-ledger.yml", 1_700_000_002_000_000_000)
+            write_data(
+                root / "docs" / "release" / "evidence.yml",
+                {
+                    "schema": "agentspec.release_evidence.v0",
+                    "updated_at": "2026-06-30T00:00:00Z",
+                    "tasks": {
+                        "agent/context-packs/T-001-task.md": {
+                            "task_id": "T-001",
+                            "context_pack": "agent/context-packs/T-001-task.md",
+                            "status": "complete",
+                            "run_id": "run-public-001",
+                            "verification": {"status": "passed"},
+                            "updated_at": "2026-06-30T00:00:00Z",
+                        }
+                    },
+                },
+            )
+
+            report = run_quality_gc(root)
+
+            categories = {finding["category"] for finding in report["findings"]}
+            self.assertNotIn("agent_context_freshness", categories)
+            self.assertNotIn("handoff", categories)
+            self.assertEqual(report["doctor"]["agent_context_status"], "fresh")
+            self.assertEqual(report["cadence"]["completed_tasks"], 1)
 
 
 def _seed_agent_context(root: Path) -> None:

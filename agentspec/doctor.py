@@ -8,6 +8,7 @@ from typing import Any
 from .config import load_project_config, merged_runtime_config
 from .io import ensure_writable_dir, write_data, write_text
 from .model_review import build_agent_profile_diagnostics
+from .paths import untracked_git_ignored_paths
 from .policy import evaluate_project_invariants
 
 
@@ -216,7 +217,11 @@ def _agent_context_freshness(root: Path) -> dict[str, Any]:
 
 
 def _existing_paths(root: Path, relative_paths: list[str]) -> list[str]:
-    return [rel for rel in relative_paths if (root / rel).is_file()]
+    """Return existing portable inputs, excluding ignored private residue."""
+
+    existing = [rel for rel in relative_paths if (root / rel).is_file()]
+    ignored = untracked_git_ignored_paths(root, [root / rel for rel in existing])
+    return [rel for rel in existing if (root / rel).resolve() not in ignored]
 
 
 def _agent_profile_diagnostics(root: Path) -> dict[str, Any]:

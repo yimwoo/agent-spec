@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .doctor import AGENT_CONTEXT_RECOVERY_COMMAND, run_doctor
+from .evidence import PUBLIC_RELEASE_EVIDENCE_PATH
 from .io import ensure_writable_dir, load_data, utc_now_iso, write_data, write_text
 from .status import build_project_status
 
@@ -153,7 +154,7 @@ def _findings(status: dict[str, Any], doctor: dict[str, Any]) -> list[dict[str, 
             }
         )
 
-    if status.get("handoff") is None:
+    if status.get("handoff") is None and not _has_public_completion_evidence(status):
         findings.append(
             {
                 "id": "QG-HANDOFF-001",
@@ -184,6 +185,25 @@ def _findings(status: dict[str, Any], doctor: dict[str, Any]) -> list[dict[str, 
         )
 
     return findings
+
+
+def _has_public_completion_evidence(status: dict[str, Any]) -> bool:
+    """Return whether status includes a portable public task completion."""
+
+    tasks = status.get("tasks")
+    if not isinstance(tasks, dict):
+        return False
+    completed = tasks.get("completed")
+    if not isinstance(completed, list):
+        return False
+    public_path = PUBLIC_RELEASE_EVIDENCE_PATH.as_posix()
+    for task in completed:
+        if not isinstance(task, dict):
+            continue
+        sources = task.get("evidence_sources")
+        if isinstance(sources, list) and public_path in sources:
+            return True
+    return False
 
 
 def _open_question_count(status: dict[str, Any]) -> int:
