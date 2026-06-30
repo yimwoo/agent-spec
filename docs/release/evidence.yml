@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-30T21:58:03Z",
+  "updated_at": "2026-06-30T22:13:05Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -504,6 +504,38 @@
           "reviewer": "codex",
           "range": "worktree",
           "path": "agent/reviews/REVIEW-0146.yml"
+        }
+      ]
+    },
+    "agent/context-packs/T-185-prepare-v0-1-43-release-candidate-and-installed-plugin-live-test.md": {
+      "task_id": "T-185",
+      "context_pack": "agent/context-packs/T-185-prepare-v0-1-43-release-candidate-and-installed-plugin-live-test.md",
+      "status": "complete",
+      "run_id": "complete-t-185-prepare-v0-1-43-release-candidate-and-installed-plugin-live-test-20260630221305141208",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-06-30T22:13:05Z",
+      "requirements": [
+        "R-216"
+      ],
+      "completion_reason": "Prepared and verified the v0.1.43 release candidate with synchronized package/plugin metadata, distribution checks, Claude manifest validation, and isolated installed-wheel/Codex-plugin live evidence.",
+      "code_review": {
+        "id": "REVIEW-0147",
+        "verdict": "ready",
+        "summary": "v0.1.43 metadata is synchronized across package, Codex and Claude plugins, READMEs, installer, and release contract. Verification passed: 605 full tests, 93 focused lifecycle/release/plugin tests, package-wide mypy, pylint 10.00/10, compileall, installer syntax, diff checks, build and Twine validation, Claude plugin validation, and an isolated installed-wheel/Codex-plugin live smoke that preserved blocked-task status from public evidence after private AgentSpec state was removed.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0147.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0147",
+          "verdict": "ready",
+          "summary": "v0.1.43 metadata is synchronized across package, Codex and Claude plugins, READMEs, installer, and release contract. Verification passed: 605 full tests, 93 focused lifecycle/release/plugin tests, package-wide mypy, pylint 10.00/10, compileall, installer syntax, diff checks, build and Twine validation, Claude plugin validation, and an isolated installed-wheel/Codex-plugin live smoke that preserved blocked-task status from public evidence after private AgentSpec state was removed.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0147.yml"
         }
       ]
     }

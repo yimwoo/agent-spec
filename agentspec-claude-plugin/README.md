@@ -17,7 +17,7 @@ Install the matching stable CLI:
 
 ```bash
 python3 -m pip install \
-  "git+https://github.com/yimwoo/agent-spec.git@v0.1.42"
+  "git+https://github.com/yimwoo/agent-spec.git@v0.1.43"
 aspec --help
 ```
 
