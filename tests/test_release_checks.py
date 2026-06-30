@@ -53,6 +53,8 @@ class ReleaseChecksTests(unittest.TestCase):
         self.assertIn("agentspec-claude-plugin", workflow)
         self.assertIn("plugin.json", workflow)
         self.assertIn("load_task_evidence", workflow)
+        self.assertIn('if entry.get("status") == "complete"', workflow)
+        self.assertIn("for context_pack, entry in completed_tasks.items():", workflow)
         self.assertIn('- "install.sh"', workflow)
 
     def test_default_mypy_scope_covers_the_package(self) -> None:
