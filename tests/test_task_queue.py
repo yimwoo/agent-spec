@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from agentspec.cli import build_parser, main
-from agentspec.io import write_data
+from agentspec.io import load_data, write_data
 from agentspec.task import create_task_context_pack, list_task_context_packs, next_task_context_pack
 
 
@@ -218,6 +218,101 @@ class TaskQueueTests(unittest.TestCase):
                 code = main(["--root", str(root), "task", "next", "--json"])
             self.assertEqual(code, 1)
             self.assertIsNone(json.loads(output.getvalue())["task"])
+
+    def test_cli_task_state_projects_blocked_ignored_task_without_making_it_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text("/agent/\n", encoding="utf-8")
+            (root / "agent" / "context-packs").mkdir(parents=True)
+            (root / "docs" / "traceability").mkdir(parents=True)
+            write_data(
+                root / "docs" / "traceability" / "requirements.yml",
+                [{"id": "R-001", "status": "accepted", "priority": "P0"}],
+            )
+            _write_pack(
+                root / "agent" / "context-packs" / "T-001-blocked.md",
+                "T-001",
+                "Blocked provider evaluation",
+                "implementation",
+                "R-001",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "state",
+                        "T-001",
+                        "--status",
+                        "blocked",
+                        "--reason",
+                        "Provider transport unavailable.",
+                        "--json",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            projected = json.loads(output.getvalue())
+            self.assertEqual(projected["status"], "blocked")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "list", "--json"])
+            self.assertEqual(code, 0)
+            records = json.loads(output.getvalue())
+            self.assertEqual(len(records), 1)
+            self.assertEqual(records[0]["id"], "T-001")
+            self.assertEqual(records[0]["status"], "blocked")
+            self.assertEqual(records[0]["status_source"], "evidence")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(["--root", str(root), "task", "next", "--json"])
+            self.assertEqual(code, 1)
+            self.assertIsNone(json.loads(output.getvalue())["task"])
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "complete",
+                        "T-001",
+                        "--test-status",
+                        "passed",
+                        "--json",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            evidence = load_data(root / "docs" / "release" / "evidence.yml")
+            self.assertNotIn("task_states", evidence)
+            self.assertEqual(evidence["tasks"]["agent/context-packs/T-001-blocked.md"]["status"], "complete")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--root",
+                        str(root),
+                        "task",
+                        "state",
+                        "T-001",
+                        "--status",
+                        "blocked",
+                        "--reason",
+                        "Stale retry.",
+                        "--json",
+                    ]
+                )
+            self.assertEqual(code, 1)
+            evidence = load_data(root / "docs" / "release" / "evidence.yml")
+            self.assertNotIn("task_states", evidence)
+            self.assertEqual(evidence["tasks"]["agent/context-packs/T-001-blocked.md"]["status"], "complete")
 
     def test_cli_task_next_json_includes_session_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as td:

@@ -60,7 +60,7 @@ what is in scope, what counts as verified, how many iterations remain* —
 Stable release (recommended):
 
 ```bash
-pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.42"
+pip install "git+https://github.com/yimwoo/agent-spec.git@v0.1.43"
 ```
 
 Latest from main (dev):
@@ -86,11 +86,11 @@ turns natural-language requests into `aspec` invocations.
 <summary><b>Codex</b></summary>
 
 ```bash
-# Stable installer. The script defaults to the release-pinned plugin v0.1.42.
+# Stable installer. The script defaults to the release-pinned plugin v0.1.43.
 curl -fsSL https://raw.githubusercontent.com/yimwoo/agent-spec/main/install.sh | bash
 ```
 
-The installer defaults to the release-pinned plugin `v0.1.42`, verifies it
+The installer defaults to the release-pinned plugin `v0.1.43`, verifies it
 against an installed AgentSpec CLI, and stops with repair guidance if the
 versions differ. To test the development plugin intentionally, pass
 `--ref main`; use `--allow-version-mismatch` only for explicit compatibility
@@ -150,6 +150,14 @@ aspec init  →  aspec ingest  →  aspec compile  →  aspec task create
 The agent reports back: requirement IDs touched, task pack path, allowed paths,
 iteration count, verification commands and results, review ID, and updated
 handoff/roadmap state.
+
+When a repository keeps `agent/` runtime state private, AgentSpec mirrors both
+completed tasks and explicitly recorded non-terminal states into the tracked
+`docs/release/evidence.yml` projection. Use `aspec task state T-123 --status
+blocked --reason "..."` (or `in_progress`, `paused`, or `halted`) so status,
+task listing, and roadmap generation do not mistake blocked work for an idle
+project; completing the task replaces that state with final verification and
+review evidence.
 
 ---
 

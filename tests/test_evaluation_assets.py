@@ -90,13 +90,36 @@ class EvaluationAssetTests(unittest.TestCase):
                 100,
             )
 
-    def test_public_pilot_report_does_not_claim_results_without_cells(self) -> None:
+    def test_public_pilot_report_is_limitation_forward_for_partial_execution(self) -> None:
         report = (ROOT / "docs" / "evaluations" / "EXP-lifecycle-pilot.md").read_text(encoding="utf-8")
 
-        self.assertIn("execution blocked; no provider cells recorded", report)
+        self.assertIn("partial execution; Codex pair recorded, Claude transport blocked", report)
         self.assertIn("Expected cells: 4", report)
-        self.assertIn("Recorded cells: 0", report)
-        self.assertIn("no AgentSpec-versus-control conclusion", report)
+        self.assertIn("Recorded cells: 2", report)
+        self.assertIn("not a causal or general AgentSpec performance claim", report)
+        self.assertIn("enforce a token stop", report)
+        self.assertIn("Actual cost reported | unavailable", report)
+
+    def test_recorded_codex_pair_preserves_protocol_deviations(self) -> None:
+        run_dir = PILOT / "evidence" / "runs"
+        runs = [
+            load_data(run_dir / "EVALRUN-codex-control-r1.yml"),
+            load_data(run_dir / "EVALRUN-codex-with-agentspec-r1.yml"),
+        ]
+
+        self.assertEqual({run["condition_id"] for run in runs}, {"control", "with-agentspec"})
+        for run in runs:
+            self.assertTrue(run["metrics"]["completed"])
+            self.assertEqual(run["metrics"]["regressions"], 0)
+            self.assertEqual(run["metrics"]["escaped_defects"], 0)
+            self.assertGreater(run["metrics"]["tokens"]["total"], run["limits"]["max_tokens"])
+            self.assertIn("did not enforce a token stop", run["provenance"]["protocol_deviations"][0])
+            self.assertFalse(run["provenance"]["raw_transcript_committed"])
+
+        generated = load_data(PILOT / "evidence" / "comparison.yml")
+        self.assertEqual(generated["expected_run_count"], 4)
+        self.assertEqual(generated["recorded_run_count"], 2)
+        self.assertEqual(generated["classifications"], {"valid": 0, "limited": 2, "invalid": 0})
 
 
 def _sha256(path: Path) -> str:

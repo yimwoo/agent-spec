@@ -108,6 +108,12 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
         "by_type": _counts(record.get("type") for record in projected_tasks),
         "ready": [record for record in projected_tasks if record.get("status") == "ready"],
         "completed": [record for record in projected_tasks if record.get("status") == "complete"],
+        "blocked": [
+            record
+            for record in projected_tasks
+            if record.get("status") in {"blocked", "halted", "paused"}
+        ],
+        "in_progress": [record for record in projected_tasks if record.get("status") == "in_progress"],
         "next": next_task,
     }
     run_counts = {
@@ -140,12 +146,14 @@ def build_project_status(root: Path, *, recent_limit: int = 5) -> dict[str, Any]
             next_task=next_task,
             active_runs=active_runs,
             attention_runs=attention_runs,
+            tasks=projected_tasks,
             lifecycle=lifecycle,
         ),
         "recommendation": _recommendation(
             next_task=next_task,
             active_runs=active_runs,
             attention_runs=attention_runs,
+            tasks=projected_tasks,
             workflows=workflows,
             lifecycle=lifecycle,
         ),
@@ -184,6 +192,8 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
     next_task = tasks.get("next") if isinstance(tasks.get("next"), dict) else None
     attention_runs = _list_or_empty(runs.get("attention"))
     active_runs = _list_or_empty(runs.get("active"))
+    blocked_tasks = _list_or_empty(tasks.get("blocked"))
+    in_progress_tasks = _list_or_empty(tasks.get("in_progress"))
     workflow_warnings = workflow_warning_lines(workflows)
 
     stage = "idle_no_ready_task"
@@ -310,6 +320,52 @@ def build_lifecycle_summary(status: dict[str, Any]) -> dict[str, Any]:
                     "reason": "Provider-native execution is unavailable; use the portable package/result contract.",
                     "commands": ["aspec run package --runner generic --json", "aspec status --json"],
                 }
+    elif blocked_tasks:
+        task = blocked_tasks[0]
+        task_id = str(task.get("id") or "unknown")
+        reason = str(task.get("status_reason") or "A recorded blocker must be resolved before completion.")
+        stage = "task_blocked"
+        main_point = f"Task {task_id} is blocked: {reason}"
+        artifact = {
+            "type": "task",
+            "id": task_id,
+            "title": task.get("title"),
+            "path": task.get("path"),
+            "status": task.get("status"),
+        }
+        blocked_by = [
+            {
+                "kind": "blocked_task",
+                "message": reason,
+                "context_pack": task.get("path"),
+                "task_id": task_id,
+            }
+        ]
+        action = {
+            "label": f"Resolve the blocker for task {task_id}.",
+            "human_decision_required": True,
+            "reason": reason,
+            "commands": ["aspec status --json"],
+        }
+    elif in_progress_tasks:
+        task = in_progress_tasks[0]
+        task_id = str(task.get("id") or "unknown")
+        reason = str(task.get("status_reason") or "The task has public in-progress evidence.")
+        stage = "task_in_progress"
+        main_point = f"Task {task_id} is in progress: {reason}"
+        artifact = {
+            "type": "task",
+            "id": task_id,
+            "title": task.get("title"),
+            "path": task.get("path"),
+            "status": task.get("status"),
+        }
+        action = {
+            "label": f"Resume task {task_id} from its governed checkout.",
+            "human_decision_required": True,
+            "reason": reason,
+            "commands": ["aspec status --json"],
+        }
     elif lifecycle.get("readiness") in {"blocked", "needs_attention"}:
         stage = "lifecycle_attention"
         findings = _lifecycle_findings(lifecycle)
@@ -921,6 +977,7 @@ def _overall_status(
     next_task: dict[str, Any] | None,
     active_runs: list[dict[str, Any]],
     attention_runs: list[dict[str, Any]],
+    tasks: list[dict[str, Any]],
     lifecycle: dict[str, Any] | None = None,
 ) -> str:
     if attention_runs:
@@ -929,6 +986,10 @@ def _overall_status(
         return "running"
     if next_task:
         return "ready"
+    if any(task.get("status") in {"blocked", "halted", "paused"} for task in tasks):
+        return "attention_needed"
+    if any(task.get("status") == "in_progress" for task in tasks):
+        return "running"
     if isinstance(lifecycle, dict) and lifecycle.get("readiness") == "needs_attention":
         return "attention_needed"
     return "idle"
@@ -939,6 +1000,7 @@ def _recommendation(
     next_task: dict[str, Any] | None,
     active_runs: list[dict[str, Any]],
     attention_runs: list[dict[str, Any]],
+    tasks: list[dict[str, Any]],
     workflows: dict[str, Any] | None = None,
     lifecycle: dict[str, Any] | None = None,
 ) -> str:
@@ -950,6 +1012,15 @@ def _recommendation(
         return f"Continue active run with `aspec run prompt {run_id}` or `aspec run loop --run-id {run_id}`."
     if next_task:
         return f"Start next ready task with `aspec run loop {next_task.get('path')}`."
+    blocked = next(
+        (task for task in tasks if task.get("status") in {"blocked", "halted", "paused"}),
+        None,
+    )
+    if blocked:
+        return f"Resolve the recorded blocker for task {blocked.get('id')}."
+    in_progress = next((task for task in tasks if task.get("status") == "in_progress"), None)
+    if in_progress:
+        return f"Resume task {in_progress.get('id')} from its governed checkout."
     lifecycle_recommendation = _lifecycle_recommendation(lifecycle)
     if lifecycle_recommendation:
         return lifecycle_recommendation
