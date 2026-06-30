@@ -1,0 +1,39 @@
+{
+  "schema": "agentspec.evaluation_public_comparison.v0",
+  "experiment_id": "EXP-lifecycle-pilot",
+  "generated_at": "2026-06-30T21:35:26Z",
+  "expected_run_count": 4,
+  "recorded_run_count": 2,
+  "classifications": {
+    "valid": 0,
+    "limited": 2,
+    "invalid": 0
+  },
+  "codex_pair": {
+    "classification": "limited",
+    "completed": {
+      "control": true,
+      "with_agentspec": true,
+      "delta": 0
+    },
+    "regressions_delta": 0,
+    "retries_delta": 0,
+    "human_interventions_delta": 0,
+    "tokens_total_delta": 770023,
+    "tokens_uncached_input_plus_output_delta": 71911,
+    "duration_seconds_delta": 152.423,
+    "review_findings_delta": 0,
+    "escaped_defects_delta": 0,
+    "cost_usd_delta": null,
+    "limitations": [
+      "Actual provider cost was not reported.",
+      "The declared 50000-token cap was not enforced and both runs exceeded it."
+    ]
+  },
+  "claude_pair": {
+    "classification": "limited",
+    "comparable": false,
+    "reason": "Both condition runs are missing because api.anthropic.com:443 was unreachable from the authenticated host."
+  },
+  "conclusion": "The single Codex pair had equal task completion and defect outcomes; AgentSpec added lifecycle evidence, 770023 reported total tokens, and 152.423 seconds. No causal or general performance claim is supported."
+}

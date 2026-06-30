@@ -1,10 +1,10 @@
 # EXP-lifecycle-pilot
 
-Status: **execution blocked; no provider cells recorded**
+Status: **partial execution; Codex pair recorded, Claude transport blocked**
 
-This document is a pre-execution record for the first controlled Codex and
-Claude lifecycle pilot. It is not an AgentSpec performance result and supports
-no AgentSpec-versus-control conclusion.
+This document reports the first observed cells from the controlled Codex and
+Claude lifecycle pilot. It is descriptive evidence from one task and one
+replicate, not a causal or general AgentSpec performance claim.
 
 ## Pinned protocol
 
@@ -16,34 +16,60 @@ no AgentSpec-versus-control conclusion.
 - Conditions: AgentSpec lifecycle treatment and direct-prompt control
 - Replicates: one per provider/condition pair
 - Expected cells: 4
-- Recorded cells: 0
+- Recorded cells: 2
 
 The fixture's public tests pass before execution and its hidden Unicode oracle
 fails, confirming that the task begins unresolved. Workspace preparation is
 deterministic and keeps the hidden oracle outside each provider workspace.
 
-## Execution boundary
+## Observed Codex result
 
-The attempted launch was denied by tenant policy before any cell produced raw
-output. The Claude treatment would send repository-derived task, fixture,
-AgentSpec plugin, and workspace contents to an external service. That transfer
-requires separate explicit user approval after disclosure of the risk. No
-workaround was attempted, and the other cells were not treated as completed.
+Both Codex `gpt-5.5` cells completed the requested implementation. All three
+public tests and all three hidden-oracle tests passed in each workspace, with
+zero regressions, retries, human interventions, review findings, or escaped
+defects.
 
-Raw transcripts, when explicitly authorized, remain under an isolated
-temporary directory and are not committed. AgentSpec receives only scored run
-evidence and provenance after provider execution.
+| Metric | Control | With AgentSpec | AgentSpec - control |
+|---|---:|---:|---:|
+| Completed | yes | yes | no change |
+| Total tokens reported | 236,271 | 1,006,294 | +770,023 |
+| Cached input tokens | 207,104 | 905,216 | +698,112 |
+| Uncached input + output | 29,167 | 101,078 | +71,911 |
+| Duration | 89.648 s | 242.071 s | +152.423 s |
+| Actual cost reported | unavailable | unavailable | unavailable |
 
-## Current evaluator result
+The AgentSpec cell additionally produced a workflow, claimed and closed a
+session lease, recorded ready code-review evidence, completed task write-back,
+and reached an idle status with no active session. The control cell produced
+the correct source and regression-test changes without lifecycle evidence.
 
-The deterministic evaluator reports two limited provider pairs, zero valid
-pairs, and zero invalid pairs because both conditions are missing for Codex and
-Claude. It correctly concludes that no comparative claim is supported.
+This single pair shows governance overhead but no observed correctness benefit
+on this small task. It cannot establish how either condition performs on larger
+or failure-prone work.
+
+## Protocol deviations and blocked cells
+
+- The manifest declared a 50,000-token limit, but the provider runner did not
+  enforce a token stop. Both Codex cells exceeded the declared total-token
+  limit. Their immutable records preserve the observed metrics, but this report
+  does not treat the pair as protocol-valid even though its metadata matches.
+- Codex CLI did not report actual monetary cost. API list-price estimates are
+  not substituted for the user's subscription cost.
+- Claude Code authentication was valid, but credential-free connectivity to
+  `api.anthropic.com:443` failed and minimal `claude-opus-4-8` probes returned
+  no output. Neither Claude evaluation workspace was launched or scored.
+- The generated evaluator therefore reports zero valid pairs, two limited
+  pairs, and zero invalid pairs: Codex is limited by missing cost data, and
+  Claude is limited by missing condition runs.
+- Raw transcripts remain in an isolated temporary directory and are not
+  committed. Only scored evidence, digests, and non-sensitive blocker facts
+  are versioned.
 
 ## Required next action
 
-Obtain explicit approval to transmit the pinned task, fixture, AgentSpec
-treatment artifacts, and provider prompts to Codex and Claude. Then execute the
-four isolated cells, score public tests plus the hidden oracle, record immutable
-run evidence, regenerate the comparison, and replace this pre-execution record
-with observed results and limitations.
+Restore policy-approved connectivity from Claude Code to
+`api.anthropic.com:443`, then run both Claude conditions from fresh isolated
+workspaces. Before a follow-up Codex run, publish a new manifest revision with
+an enforceable token-budget rule; do not rewrite these immutable observations.
+Complete T-183 only after all four cells have comparable evidence and a ready
+review verdict.

@@ -1,0 +1,25 @@
+{
+  "schema": "agentspec.evaluation_blocker.v0",
+  "experiment_id": "EXP-lifecycle-pilot",
+  "provider": "claude",
+  "model": "claude-opus-4-8",
+  "conditions_affected": [
+    "control",
+    "with-agentspec"
+  ],
+  "observed_at": "2026-06-30T21:20:00Z",
+  "status": "blocked",
+  "facts": {
+    "claude_code_version": "2.1.157",
+    "authenticated": true,
+    "api_provider": "firstParty",
+    "credential_free_endpoint_probe": "connection_failed",
+    "endpoint": "api.anthropic.com:443",
+    "curl_exit_code": 7,
+    "evaluation_cells_started": 0,
+    "evaluation_cells_recorded": 0
+  },
+  "impact": "No Claude condition can be scored or compared from this host.",
+  "repair": "Restore policy-approved connectivity to api.anthropic.com:443, verify a minimal claude-opus-4-8 response, and run both conditions from fresh isolated workspaces.",
+  "sensitive_data_included": false
+}

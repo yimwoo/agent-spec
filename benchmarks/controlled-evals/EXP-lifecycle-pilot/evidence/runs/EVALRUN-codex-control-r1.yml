@@ -1,0 +1,56 @@
+{
+  "schema": "agentspec.evaluation_public_run.v0",
+  "id": "EVALRUN-codex-control-r1",
+  "experiment_id": "EXP-lifecycle-pilot",
+  "task_id": "TASK-unicode-slugify",
+  "condition_id": "control",
+  "provider": "codex",
+  "model": "gpt-5.5",
+  "replicate": 1,
+  "task_revision": "sha256:7a3638b7b72e861d4fc74ee6920076610c1b46c4f3ebcdcf31780bf7325ee98b",
+  "environment": {
+    "id": "local-darwin-arm64",
+    "revision": "macos-26.5.1-arm64-python-3.11.13-codex-0.137.0-claude-2.1.157"
+  },
+  "limits": {
+    "max_duration_seconds": 600,
+    "max_tokens": 50000,
+    "max_retries": 2
+  },
+  "oracle_revision": "sha256:42a4742c7b9e4eb61863934908790b6d6594db0389748126c8bfa96d3315bfef",
+  "started_at": "2026-06-30T21:21:40.336483Z",
+  "completed_at": "2026-06-30T21:23:09.984836Z",
+  "metrics": {
+    "completed": true,
+    "public_tests_passed": 3,
+    "public_tests_total": 3,
+    "hidden_oracle_passed": 3,
+    "hidden_oracle_total": 3,
+    "regressions": 0,
+    "retries": 0,
+    "human_interventions": 0,
+    "tokens": {
+      "input": 232795,
+      "cached": 207104,
+      "output": 3476,
+      "total": 236271,
+      "uncached_input_plus_output": 29167
+    },
+    "cost_usd": null,
+    "cost_status": "provider_not_reported",
+    "duration_seconds": 89.648,
+    "review_findings": 0,
+    "escaped_defects": 0
+  },
+  "provenance": {
+    "provider_stdout_sha256": "735690f89b6f4480145e8cd615dc4d1bc5ced3e42f80b08cf87c52731c08ad1b",
+    "provider_stderr_sha256": "45b9b49ff82cf93f1f507520da0506225ff59917e1aab3b3a9897c02b9525f09",
+    "execution_sha256": "9a214abbd9d2f140dc32461eef80e59cc542043fcc652a6e90410ffbe23e7b8a",
+    "solution_diff_sha256": "7cd91dffe47e1940ef6961f413ab2952b82d2234f0aecfc0efd6f14e92686c7e",
+    "approval_rejections": 1,
+    "protocol_deviations": [
+      "The provider reported 236271 total tokens, above manifest limits.max_tokens=50000; the runner did not enforce a token stop."
+    ],
+    "raw_transcript_committed": false
+  }
+}

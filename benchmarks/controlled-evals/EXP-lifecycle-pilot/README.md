@@ -43,3 +43,15 @@ log; unavailable cost fields remain explicit rather than estimated.
 The public result is summarized in
 `docs/evaluations/EXP-lifecycle-pilot.md`. Raw provider transcripts and
 temporary workspaces remain outside the repository.
+
+## Current execution status
+
+The first Codex control and AgentSpec cells were recorded on 2026-06-30. Both
+passed the public suite and hidden oracle, while the AgentSpec condition also
+completed lifecycle review and write-back. The observations are limited: the
+CLI did not report actual cost, and the runner did not enforce the manifest's
+nominal token cap.
+
+The Claude pair remains unexecuted because this host could authenticate Claude
+Code but could not connect to `api.anthropic.com:443`. See the public report and
+the non-sensitive blocker record under `agent/evals/EXP-lifecycle-pilot/`.

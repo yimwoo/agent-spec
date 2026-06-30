@@ -1,0 +1,63 @@
+{
+  "schema": "agentspec.evaluation_public_run.v0",
+  "id": "EVALRUN-codex-with-agentspec-r1",
+  "experiment_id": "EXP-lifecycle-pilot",
+  "task_id": "TASK-unicode-slugify",
+  "condition_id": "with-agentspec",
+  "provider": "codex",
+  "model": "gpt-5.5",
+  "replicate": 1,
+  "task_revision": "sha256:7a3638b7b72e861d4fc74ee6920076610c1b46c4f3ebcdcf31780bf7325ee98b",
+  "environment": {
+    "id": "local-darwin-arm64",
+    "revision": "macos-26.5.1-arm64-python-3.11.13-codex-0.137.0-claude-2.1.157"
+  },
+  "limits": {
+    "max_duration_seconds": 600,
+    "max_tokens": 50000,
+    "max_retries": 2
+  },
+  "oracle_revision": "sha256:42a4742c7b9e4eb61863934908790b6d6594db0389748126c8bfa96d3315bfef",
+  "started_at": "2026-06-30T21:24:15.369746Z",
+  "completed_at": "2026-06-30T21:28:17.442581Z",
+  "metrics": {
+    "completed": true,
+    "public_tests_passed": 3,
+    "public_tests_total": 3,
+    "hidden_oracle_passed": 3,
+    "hidden_oracle_total": 3,
+    "regressions": 0,
+    "retries": 0,
+    "human_interventions": 0,
+    "tokens": {
+      "input": 997435,
+      "cached": 905216,
+      "output": 8859,
+      "total": 1006294,
+      "uncached_input_plus_output": 101078
+    },
+    "cost_usd": null,
+    "cost_status": "provider_not_reported",
+    "duration_seconds": 242.071,
+    "review_findings": 0,
+    "escaped_defects": 0
+  },
+  "lifecycle_evidence": {
+    "task_status": "complete",
+    "finish_run_id": "complete-t-001-normalize-identifiers-20260630212706984779",
+    "review_id": "REVIEW-0001",
+    "review_verdict": "ready",
+    "active_sessions_after_finish": 0
+  },
+  "provenance": {
+    "provider_stdout_sha256": "13ffa788c4b6e23f82db8a5f3367a9b4cbda280671e4eaa567fb8255e6b753ad",
+    "provider_stderr_sha256": "3c7c8713096c9662fa92aee39670c47e319b7321207a8a51333cb63b1caf2641",
+    "execution_sha256": "36e5602aa3d091ae1591ec2ae694661d3ccca3ff187daca8c3e29008f41545ca",
+    "solution_diff_sha256": "2dac7e405e575d3ecccef321d0e097820c963bef47945863c1f47175fd5e536d",
+    "approval_rejections": 1,
+    "protocol_deviations": [
+      "The provider reported 1006294 total tokens, above manifest limits.max_tokens=50000; the runner did not enforce a token stop."
+    ],
+    "raw_transcript_committed": false
+  }
+}
