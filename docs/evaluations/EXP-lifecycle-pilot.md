@@ -67,9 +67,18 @@ or failure-prone work.
 
 ## Required next action
 
-Restore policy-approved connectivity from Claude Code to
-`api.anthropic.com:443`, then run both Claude conditions from fresh isolated
-workspaces. Before a follow-up Codex run, publish a new manifest revision with
-an enforceable token-budget rule; do not rewrite these immutable observations.
-Complete T-183 only after all four cells have comparable evidence and a ready
-review verdict.
+Refresh Claude Code authentication, then run both Claude conditions from fresh
+isolated workspaces. As of 2026-07-01 `api.anthropic.com:443` is reachable, but
+the active Claude Code login returns HTTP 401 for a minimal pinned-model request.
+The follow-up protocol is now published as
+`benchmarks/controlled-evals/EXP-lifecycle-pilot/manifest-v2.yml` with SHA-256
+`b22aa291b8543f90ca5fbd6050de5e5c663840d507342f6dce271abcd1e79e7d`.
+It distinguishes runner-enforced duration/retry limits, Claude's provider
+budget, post-run token validity checks, and unavailable Codex monetary cost.
+The Codex pin remains `gpt-5.5`: a `gpt-5.6-sol` availability probe was rejected
+because that model requires a newer Codex app or CLI than the v2 environment.
+
+Run all four v2 cells from fresh workspaces so each provider pair shares the
+same task, model, environment, limits, and oracle. Do not rewrite these v1
+observations. Complete T-183 only after all four v2 cells have comparable
+evidence and a ready review verdict.
