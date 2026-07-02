@@ -52,6 +52,42 @@ completed lifecycle review and write-back. The observations are limited: the
 CLI did not report actual cost, and the runner did not enforce the manifest's
 nominal token cap.
 
-The Claude pair remains unexecuted because this host could authenticate Claude
-Code but could not connect to `api.anthropic.com:443`. See the public report and
-the non-sensitive blocker record under `agent/evals/EXP-lifecycle-pilot/`.
+The Claude pair remains unexecuted. The original 2026-06-30 blocker was network
+connectivity. On 2026-07-01 the endpoint became reachable, but two minimal
+`claude-opus-4-8` probes returned HTTP 401 even though local auth status reported
+a logged-in subscription. See the non-sensitive blocker records under
+`evidence/blockers/`.
+
+## Capability-aware protocol revision
+
+`manifest-v2.yml` is the immutable rerun protocol prepared after the first
+pilot exposed an unenforced token declaration. Its SHA-256 is
+`b22aa291b8543f90ca5fbd6050de5e5c663840d507342f6dce271abcd1e79e7d`.
+
+The v2 runner derives models and limits from that manifest. It terminates the
+provider process group at the duration deadline, bounds runner retries at zero,
+passes Claude's USD ceiling through its native budget flag, and checks token
+usage after completion. Codex currently reports usage in its final JSONL event,
+so its token threshold is a validity gate rather than a mid-turn spend stop.
+Any exceeded or required-but-unobserved threshold makes the runner exit
+non-zero and prevents the cell from contributing to valid comparisons.
+
+Run a fresh cell only after provider connectivity succeeds:
+
+```bash
+python benchmarks/controlled-evals/EXP-lifecycle-pilot/run_provider.py \
+  --manifest benchmarks/controlled-evals/EXP-lifecycle-pilot/manifest-v2.yml \
+  --provider codex \
+  --condition control \
+  --workspace /absolute/path/to/fresh-workspace \
+  --output-dir /absolute/path/to/new-raw-evidence
+```
+
+The original manifest and run records remain unchanged; v2 observations must
+use new workspaces, output directories, experiment IDs, and evidence IDs.
+
+The v2 model pins remain Codex `gpt-5.5` and Claude `claude-opus-4-8`. A
+2026-07-01 `gpt-5.6-sol` probe reached the provider but was rejected because it
+requires a newer Codex app or CLI than the pinned `0.137.0` environment. The
+protocol therefore keeps the last successfully verified Codex model rather
+than recording an unexecutable pin.

@@ -1,6 +1,6 @@
 {
   "schema": "agentspec.release_evidence.v0",
-  "updated_at": "2026-06-30T23:31:17Z",
+  "updated_at": "2026-07-01T17:05:58Z",
   "tasks": {
     "agent/context-packs/T-169-harden-release-evidence-and-maintainability-checks.md": {
       "task_id": "T-169",
@@ -570,6 +570,38 @@
           "path": "agent/reviews/REVIEW-0148.yml"
         }
       ]
+    },
+    "agent/context-packs/T-187-enforce-controlled-evaluation-budgets-and-prepare-a-valid-four-cell-rerun.md": {
+      "task_id": "T-187",
+      "context_pack": "agent/context-packs/T-187-enforce-controlled-evaluation-budgets-and-prepare-a-valid-four-cell-rerun.md",
+      "status": "complete",
+      "run_id": "complete-t-187-enforce-controlled-evaluation-budgets-and-prepare-a-valid-four-cell-rerun-20260701170558780225",
+      "verification": {
+        "status": "passed"
+      },
+      "updated_at": "2026-07-01T17:05:58Z",
+      "requirements": [
+        "R-220"
+      ],
+      "completion_reason": "Implemented capability-aware evaluation limits and immutable protocol v2 while preserving original evidence; real four-cell execution remains blocked only by stale Claude credentials.",
+      "code_review": {
+        "id": "REVIEW-0149",
+        "verdict": "ready",
+        "summary": "Scope: R-220 manifest policies, provider-specific budgets, process-group watchdog, usage/cost extraction, semantic provider failures, protocol validity classification, immutable v2 assets, docs, and lifecycle blocker projection. Reviewed dimensions: design/plan alignment, evidence integrity, process safety, provider permissions, boundary conditions, simplification, and secret hygiene. Findings: none. Not covered: real four-cell execution because minimal Claude Opus 4.8 probes return HTTP 401. Residual risk: future provider CLI output-shape changes fail closed through missing required observations or semantic failure detection. Verification: 30 focused tests and 617 full tests passed; mypy clean across 45 files; pylint 10.00/10; compileall, diff checks, and HOTL document lint passed; original manifest and v1 run digests remain unchanged. Verdict: ready.",
+        "reviewer": "codex",
+        "range": "worktree",
+        "path": "agent/reviews/REVIEW-0149.yml"
+      },
+      "reviews": [
+        {
+          "id": "REVIEW-0149",
+          "verdict": "ready",
+          "summary": "Scope: R-220 manifest policies, provider-specific budgets, process-group watchdog, usage/cost extraction, semantic provider failures, protocol validity classification, immutable v2 assets, docs, and lifecycle blocker projection. Reviewed dimensions: design/plan alignment, evidence integrity, process safety, provider permissions, boundary conditions, simplification, and secret hygiene. Findings: none. Not covered: real four-cell execution because minimal Claude Opus 4.8 probes return HTTP 401. Residual risk: future provider CLI output-shape changes fail closed through missing required observations or semantic failure detection. Verification: 30 focused tests and 617 full tests passed; mypy clean across 45 files; pylint 10.00/10; compileall, diff checks, and HOTL document lint passed; original manifest and v1 run digests remain unchanged. Verdict: ready.",
+          "reviewer": "codex",
+          "range": "worktree",
+          "path": "agent/reviews/REVIEW-0149.yml"
+        }
+      ]
     }
   },
   "task_states": {
@@ -579,14 +611,14 @@
       "type": "implementation",
       "context_pack": "agent/context-packs/T-183-run-first-controlled-codex-and-claude-lifecycle-evaluation-pilot.md",
       "status": "blocked",
-      "reason": "Codex pair recorded with protocol limitations; Claude control and AgentSpec cells are blocked because api.anthropic.com:443 is unreachable from this authenticated host.",
+      "reason": "The v2 runner and protocol are ready; api.anthropic.com is reachable, but the active Claude Code login returns HTTP 401 for minimal claude-opus-4-8 probes and must be refreshed before four fresh cells can run.",
       "requirements": [
         "R-220"
       ],
       "verification": {
         "status": "not_run"
       },
-      "updated_at": "2026-06-30T21:50:18Z"
+      "updated_at": "2026-07-01T16:55:48Z"
     }
   }
 }

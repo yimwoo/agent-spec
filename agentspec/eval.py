@@ -31,6 +31,15 @@ CORE_METRICS = (
     "duration_seconds",
 )
 OPTIONAL_METRICS = ("review_findings", "escaped_defects")
+LIMIT_POLICY_FIELDS = {
+    "max_duration_seconds": "seconds",
+    "max_tokens": "tokens",
+    "max_retries": "attempts",
+}
+LIMIT_ENFORCEMENT_MODES = frozenset({"runner", "provider", "post_run", "unavailable"})
+LIMIT_OUTCOME_STATUSES = frozenset(
+    {"passed", "exceeded", "unavailable", "unobserved_required", "unsupported"}
+)
 
 
 def load_evaluation_manifest(path: Path) -> dict[str, Any]:
@@ -79,6 +88,20 @@ def validate_evaluation_manifest(payload: Any) -> dict[str, Any]:
             "underlying_task_authority_required": True,
         },
     }
+
+
+def effective_evaluation_limits(
+    manifest: dict[str, Any],
+    provider_id: str,
+) -> dict[str, Any]:
+    """Return cross-provider limits plus any provider-specific budget contract."""
+
+    provider = _find_by_id(manifest["providers"], provider_id, "provider")
+    limits = dict(manifest["limits"])
+    budget = provider.get("budget")
+    if isinstance(budget, dict):
+        limits["provider_budget"] = budget
+    return limits
 
 
 def record_evaluation_run(
@@ -308,12 +331,13 @@ def _validate_providers(value: Any) -> list[dict[str, Any]]:
     for raw in value:
         if not isinstance(raw, dict):
             raise ValueError("Each provider definition must be an object.")
-        providers.append(
-            {
-                "id": _required_identifier(raw, "id", "Evaluation provider"),
-                "model": _required_text(raw, "model", "Evaluation provider"),
-            }
-        )
+        provider: dict[str, Any] = {
+            "id": _required_identifier(raw, "id", "Evaluation provider"),
+            "model": _required_text(raw, "model", "Evaluation provider"),
+        }
+        if "budget" in raw:
+            provider["budget"] = _validate_provider_budget(raw.get("budget"))
+        providers.append(provider)
     _require_unique_ids(providers, "provider")
     provider_ids = {provider["id"] for provider in providers}
     if not REQUIRED_PROVIDERS.issubset(provider_ids):
@@ -342,7 +366,84 @@ def _validate_limits(value: Any) -> dict[str, Any]:
     retries = value.get("max_retries")
     if not _non_negative_int(retries):
         raise ValueError("Evaluation limits.max_retries must be a non-negative integer.")
-    return dict(value)
+    normalized = dict(value)
+    policies = value.get("policies")
+    if policies is None:
+        return normalized
+    if not isinstance(policies, dict):
+        raise ValueError("Evaluation limits.policies must be an object.")
+    missing = sorted(set(LIMIT_POLICY_FIELDS) - set(policies))
+    if missing:
+        raise ValueError(f"Evaluation limits.policies is missing: {', '.join(missing)}.")
+    unsupported = sorted(set(policies) - set(LIMIT_POLICY_FIELDS))
+    if unsupported:
+        raise ValueError(f"Evaluation limits.policies has unsupported fields: {', '.join(unsupported)}.")
+    normalized["policies"] = {
+        field: _validate_limit_policy(field, policies[field])
+        for field in LIMIT_POLICY_FIELDS
+    }
+    return normalized
+
+
+def _validate_limit_policy(field: str, value: Any) -> dict[str, Any]:
+    """Validate how one cross-provider limit is enforced and observed."""
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Evaluation limits.policies.{field} must be an object.")
+    expected_unit = LIMIT_POLICY_FIELDS[field]
+    if value.get("unit") != expected_unit:
+        raise ValueError(f"Evaluation limits.policies.{field}.unit must be {expected_unit}.")
+    enforcement = value.get("enforcement")
+    if enforcement not in LIMIT_ENFORCEMENT_MODES:
+        allowed = ", ".join(sorted(LIMIT_ENFORCEMENT_MODES))
+        raise ValueError(
+            f"Evaluation limits.policies.{field}.enforcement must be one of: {allowed}."
+        )
+    observation_required = value.get("observation_required")
+    if not isinstance(observation_required, bool):
+        raise ValueError(
+            f"Evaluation limits.policies.{field}.observation_required must be boolean."
+        )
+    if enforcement == "unavailable" and observation_required:
+        raise ValueError(
+            f"Evaluation limits.policies.{field} cannot require observation when unavailable."
+        )
+    return {
+        "unit": expected_unit,
+        "enforcement": enforcement,
+        "observation_required": observation_required,
+    }
+
+
+def _validate_provider_budget(value: Any) -> dict[str, Any]:
+    """Validate a provider-specific monetary budget capability."""
+
+    if not isinstance(value, dict):
+        raise ValueError("Evaluation provider budget must be an object.")
+    if value.get("unit") != "usd":
+        raise ValueError("Evaluation provider budget unit must be usd.")
+    enforcement = value.get("enforcement")
+    if enforcement not in {"provider", "post_run", "unavailable"}:
+        raise ValueError(
+            "Evaluation provider budget enforcement must be provider, post_run, or unavailable."
+        )
+    observation_required = value.get("observation_required")
+    if not isinstance(observation_required, bool):
+        raise ValueError("Evaluation provider budget observation_required must be boolean.")
+    maximum = value.get("max_cost_usd")
+    if enforcement == "unavailable":
+        if maximum is not None or observation_required:
+            raise ValueError(
+                "Unavailable evaluation provider budgets require null max_cost_usd and optional observation."
+            )
+    elif not _positive_number(maximum):
+        raise ValueError("Evaluation provider budget max_cost_usd must be positive.")
+    return {
+        "max_cost_usd": maximum,
+        "unit": "usd",
+        "enforcement": enforcement,
+        "observation_required": observation_required,
+    }
 
 
 def _validate_run_metrics(value: Any) -> dict[str, Any]:
@@ -385,7 +486,36 @@ def _validate_provenance(value: Any) -> dict[str, Any]:
         isinstance(evidence, list) and any(isinstance(item, str) and item for item in evidence)
     ):
         raise ValueError("Evaluation provenance requires native_run_id or evidence references.")
-    return dict(value)
+    normalized = dict(value)
+    if "limit_outcomes" in value:
+        normalized["limit_outcomes"] = _validate_limit_outcomes(value.get("limit_outcomes"))
+    return normalized
+
+
+def _validate_limit_outcomes(value: Any) -> dict[str, dict[str, Any]]:
+    """Validate deterministic enforcement outcomes captured by a provider runner."""
+
+    if not isinstance(value, dict) or not value:
+        raise ValueError("Evaluation provenance limit_outcomes must be a non-empty object.")
+    normalized: dict[str, dict[str, Any]] = {}
+    for limit_id, raw in value.items():
+        if not isinstance(limit_id, str) or not limit_id or not isinstance(raw, dict):
+            raise ValueError("Evaluation provenance limit outcomes must contain named objects.")
+        status = raw.get("status")
+        if status not in LIMIT_OUTCOME_STATUSES:
+            allowed = ", ".join(sorted(LIMIT_OUTCOME_STATUSES))
+            raise ValueError(f"Evaluation limit outcome status must be one of: {allowed}.")
+        observed = raw.get("observed")
+        if status in {"passed", "exceeded"} and not _non_negative_number(observed):
+            raise ValueError(
+                f"Evaluation limit outcome {limit_id} with status {status} requires observed."
+            )
+        if status == "unobserved_required" and observed is not None:
+            raise ValueError(
+                f"Evaluation limit outcome {limit_id} cannot be unobserved with observed data."
+            )
+        normalized[limit_id] = dict(raw)
+    return normalized
 
 
 def _load_evaluation_runs(root: Path, experiment_id: str) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
@@ -448,7 +578,7 @@ def _build_pairs(manifest: dict[str, Any], runs: list[dict[str, Any]]) -> list[d
                     "task_revision": task["revision"],
                     "model": provider["model"],
                     "environment": manifest["environment"],
-                    "limits": manifest["limits"],
+                    "limits": effective_evaluation_limits(manifest, str(provider["id"])),
                     "oracle": task["oracle"],
                 }
                 cells = {
@@ -508,12 +638,21 @@ def _classify_pair(
                 elif _canonical(actual) != _canonical(expected[field]):
                     invalid = True
                     reasons.append(f"{name} run {field} does not match the manifest.")
-            missing_metrics = [field for field in CORE_METRICS if _metric_value(run, field) is None]
+            missing_metrics = [
+                field
+                for field in CORE_METRICS
+                if _metric_value(run, field) is None
+                and _core_metric_required(field, expected["limits"])
+            ]
             if missing_metrics:
                 reasons.append(f"{name} run is missing core metrics: {', '.join(missing_metrics)}.")
             optional_missing = [field for field in OPTIONAL_METRICS if _metric_value(run, field) is None]
             if optional_missing:
                 reasons.append(f"{name} run has unavailable optional metrics: {', '.join(optional_missing)}.")
+            protocol_failures = _protocol_limit_failures(run, expected["limits"])
+            if protocol_failures:
+                invalid = True
+                reasons.extend(f"{name} run {failure}." for failure in protocol_failures)
     both_present = all(isinstance(run, dict) for run in selected.values())
     metadata_complete = both_present and not any(
         isinstance(run, dict) and any(run.get(field) is None for field in COMPARABILITY_FIELDS)
@@ -628,6 +767,65 @@ def _pair_runs(pair: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def _protocol_limit_failures(run: dict[str, Any], limits: Any) -> list[str]:
+    """Return validity-blocking limit outcomes from one run record."""
+
+    provenance = run.get("provenance")
+    outcomes = provenance.get("limit_outcomes") if isinstance(provenance, dict) else None
+    failures: list[str] = []
+    required_outcomes = _declared_limit_outcomes(limits)
+    if required_outcomes and not isinstance(outcomes, dict):
+        return [f"is missing required limit outcome {limit_id}" for limit_id in required_outcomes]
+    if not isinstance(outcomes, dict):
+        return failures
+    failures.extend(
+        f"is missing required limit outcome {limit_id}"
+        for limit_id in required_outcomes
+        if limit_id not in outcomes
+    )
+    for limit_id, outcome in outcomes.items():
+        if not isinstance(outcome, dict):
+            continue
+        status = outcome.get("status")
+        if status == "exceeded":
+            failures.append(f"exceeded required limit {limit_id}")
+        elif status == "unobserved_required":
+            failures.append(f"could not observe required limit {limit_id}")
+        elif status == "unsupported":
+            failures.append(f"used unsupported enforcement for required limit {limit_id}")
+    return failures
+
+
+def _declared_limit_outcomes(limits: Any) -> list[str]:
+    if not isinstance(limits, dict) or not isinstance(limits.get("policies"), dict):
+        return []
+    required = list(limits["policies"])
+    if isinstance(limits.get("provider_budget"), dict):
+        required.append("max_cost_usd")
+    return required
+
+
+def _core_metric_required(metric: str, limits: Any) -> bool:
+    """Return whether a missing metric limits conclusions under declared policy."""
+
+    if not isinstance(limits, dict):
+        return True
+    if metric == "cost_usd":
+        budget = limits.get("provider_budget")
+        if isinstance(budget, dict):
+            return bool(budget.get("observation_required", True))
+    policy_name = {
+        "duration_seconds": "max_duration_seconds",
+        "tokens.total": "max_tokens",
+        "retries": "max_retries",
+    }.get(metric)
+    policies = limits.get("policies")
+    policy = policies.get(policy_name) if isinstance(policies, dict) and policy_name else None
+    if isinstance(policy, dict):
+        return bool(policy.get("observation_required", True))
+    return True
+
+
 def _find_by_id(records: list[dict[str, Any]], identifier: str, label: str) -> dict[str, Any]:
     for record in records:
         if record.get("id") == identifier:
@@ -704,6 +902,10 @@ def _non_negative_int(value: Any) -> bool:
 
 def _non_negative_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0
+
+
+def _positive_number(value: Any) -> bool:
+    return _non_negative_number(value) and value > 0
 
 
 def _safe_identifier(value: str) -> bool:

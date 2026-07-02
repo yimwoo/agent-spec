@@ -50,6 +50,170 @@ class EvaluationCliTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "revision"):
             validate_evaluation_manifest(payload)
 
+    def test_manifest_validates_capability_aware_limit_policies(self) -> None:
+        payload = _manifest_payload()
+        payload["limits"]["policies"] = _limit_policies()
+        payload["providers"][0]["budget"] = {
+            "max_cost_usd": None,
+            "unit": "usd",
+            "enforcement": "unavailable",
+            "observation_required": False,
+        }
+        payload["providers"][1]["budget"] = {
+            "max_cost_usd": 2.0,
+            "unit": "usd",
+            "enforcement": "provider",
+            "observation_required": True,
+        }
+
+        manifest = validate_evaluation_manifest(payload)
+
+        self.assertEqual(manifest["limits"]["policies"]["max_tokens"]["enforcement"], "post_run")
+        codex = next(item for item in manifest["providers"] if item["id"] == "codex")
+        claude = next(item for item in manifest["providers"] if item["id"] == "claude")
+        self.assertEqual(codex["budget"]["enforcement"], "unavailable")
+        self.assertEqual(claude["budget"]["max_cost_usd"], 2.0)
+
+        invalid = _manifest_payload()
+        invalid["limits"]["policies"] = _limit_policies()
+        invalid["limits"]["policies"]["max_tokens"]["enforcement"] = "prompt_only"
+        with self.assertRaisesRegex(ValueError, "enforcement"):
+            validate_evaluation_manifest(invalid)
+
+    def test_exceeded_required_budget_outcome_invalidates_a_pair(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            payload = _manifest_payload()
+            payload["limits"]["policies"] = _limit_policies()
+            manifest_path = root / "agent" / "evals" / "EXP-agent-lifecycle" / "manifest.yml"
+            write_data(manifest_path, payload)
+            limits = load_evaluation_manifest(manifest_path)["limits"]
+            for condition in ("with-agentspec", "control"):
+                run = _run_payload(
+                    run_id=f"codex-{condition}",
+                    provider="codex",
+                    condition=condition,
+                )
+                run["limits"] = limits
+                run["provenance"]["limit_outcomes"] = {
+                    "max_duration_seconds": {"status": "passed", "observed": 90},
+                    "max_tokens": {
+                        "status": "exceeded" if condition == "with-agentspec" else "passed",
+                        "observed": 100001 if condition == "with-agentspec" else 1000,
+                    },
+                    "max_retries": {"status": "passed", "observed": 0},
+                }
+                record_evaluation_run(root, manifest_path, run)
+
+            report = build_evaluation_report(root, manifest_path)
+
+            pair = next(item for item in report["pairs"] if item["provider"] == "codex")
+            self.assertEqual(pair["classification"], "invalid")
+            self.assertFalse(pair["comparable"])
+            self.assertIn("exceeded required limit max_tokens", "\n".join(pair["reasons"]))
+
+    def test_provider_budget_is_part_of_pair_comparability(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            payload = _manifest_payload()
+            payload["limits"]["policies"] = _limit_policies()
+            payload["providers"][1]["budget"] = {
+                "max_cost_usd": 2.0,
+                "unit": "usd",
+                "enforcement": "provider",
+                "observation_required": True,
+            }
+            manifest_path = root / "agent" / "evals" / "EXP-agent-lifecycle" / "manifest.yml"
+            write_data(manifest_path, payload)
+            manifest = load_evaluation_manifest(manifest_path)
+            claude = next(item for item in manifest["providers"] if item["id"] == "claude")
+            effective_limits = {**manifest["limits"], "provider_budget": claude["budget"]}
+            for condition in ("with-agentspec", "control"):
+                run = _run_payload(
+                    run_id=f"claude-{condition}",
+                    provider="claude",
+                    condition=condition,
+                )
+                run["limits"] = effective_limits
+                run["provenance"]["limit_outcomes"] = {
+                    "max_duration_seconds": {"status": "passed", "observed": 90},
+                    "max_tokens": {"status": "passed", "observed": 1000},
+                    "max_retries": {"status": "passed", "observed": 0},
+                    "max_cost_usd": {"status": "passed", "observed": 1.0},
+                }
+                record_evaluation_run(root, manifest_path, run)
+
+            report = build_evaluation_report(root, manifest_path)
+
+            pair = next(item for item in report["pairs"] if item["provider"] == "claude")
+            self.assertEqual(pair["classification"], "valid")
+            self.assertTrue(pair["comparable"])
+            self.assertEqual(pair["expected"]["limits"]["provider_budget"]["max_cost_usd"], 2.0)
+
+    def test_declared_unavailable_cost_does_not_limit_a_codex_pair(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            payload = _manifest_payload()
+            payload["limits"]["policies"] = _limit_policies()
+            payload["providers"][0]["budget"] = {
+                "max_cost_usd": None,
+                "unit": "usd",
+                "enforcement": "unavailable",
+                "observation_required": False,
+            }
+            manifest_path = root / "agent" / "evals" / "EXP-agent-lifecycle" / "manifest.yml"
+            write_data(manifest_path, payload)
+            manifest = load_evaluation_manifest(manifest_path)
+            codex = next(item for item in manifest["providers"] if item["id"] == "codex")
+            effective_limits = {**manifest["limits"], "provider_budget": codex["budget"]}
+            for condition in ("with-agentspec", "control"):
+                run = _run_payload(
+                    run_id=f"codex-{condition}",
+                    provider="codex",
+                    condition=condition,
+                )
+                run["limits"] = effective_limits
+                run["metrics"].pop("cost_usd")
+                run["provenance"]["limit_outcomes"] = {
+                    "max_duration_seconds": {"status": "passed", "observed": 90},
+                    "max_tokens": {"status": "passed", "observed": 1000},
+                    "max_retries": {"status": "passed", "observed": 0},
+                    "max_cost_usd": {"status": "unavailable", "observed": None},
+                }
+                record_evaluation_run(root, manifest_path, run)
+
+            report = build_evaluation_report(root, manifest_path)
+
+            pair = next(item for item in report["pairs"] if item["provider"] == "codex")
+            self.assertEqual(pair["classification"], "valid")
+            self.assertTrue(pair["comparable"])
+            self.assertIsNone(report["deltas"]["cost_usd_average"])
+
+    def test_missing_declared_limit_outcome_invalidates_a_v2_pair(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            payload = _manifest_payload()
+            payload["limits"]["policies"] = _limit_policies()
+            manifest_path = root / "agent" / "evals" / "EXP-agent-lifecycle" / "manifest.yml"
+            write_data(manifest_path, payload)
+            limits = load_evaluation_manifest(manifest_path)["limits"]
+            for condition in ("with-agentspec", "control"):
+                run = _run_payload(
+                    run_id=f"codex-{condition}",
+                    provider="codex",
+                    condition=condition,
+                )
+                run["limits"] = limits
+                record_evaluation_run(root, manifest_path, run)
+
+            report = build_evaluation_report(root, manifest_path)
+
+            pair = next(item for item in report["pairs"] if item["provider"] == "codex")
+            self.assertEqual(pair["classification"], "invalid")
+            self.assertFalse(pair["comparable"])
+            reasons = "\n".join(pair["reasons"])
+            self.assertIn("missing required limit outcome max_tokens", reasons)
+
     def test_paired_report_aggregates_requested_metrics_and_raw_provenance(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -214,6 +378,22 @@ class EvaluationCliTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "immutable"):
                 record_evaluation_run(root, manifest_path, payload)
 
+    def test_limit_outcome_cannot_pass_without_an_observed_value(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest_path = _write_manifest(root)
+            payload = _run_payload(
+                run_id="codex-with",
+                provider="codex",
+                condition="with-agentspec",
+            )
+            payload["provenance"]["limit_outcomes"] = {
+                "max_tokens": {"status": "passed", "observed": None}
+            }
+
+            with self.assertRaisesRegex(ValueError, "observed"):
+                record_evaluation_run(root, manifest_path, payload)
+
 
 def _manifest_payload() -> dict[str, object]:
     return {
@@ -239,6 +419,26 @@ def _manifest_payload() -> dict[str, object]:
         "environment": {"id": "ubuntu", "revision": "image-sha-123"},
         "limits": {"max_duration_seconds": 1800, "max_tokens": 100000, "max_retries": 3},
         "replicates": 1,
+    }
+
+
+def _limit_policies() -> dict[str, dict[str, object]]:
+    return {
+        "max_duration_seconds": {
+            "unit": "seconds",
+            "enforcement": "runner",
+            "observation_required": True,
+        },
+        "max_tokens": {
+            "unit": "tokens",
+            "enforcement": "post_run",
+            "observation_required": True,
+        },
+        "max_retries": {
+            "unit": "attempts",
+            "enforcement": "runner",
+            "observation_required": True,
+        },
     }
 
 

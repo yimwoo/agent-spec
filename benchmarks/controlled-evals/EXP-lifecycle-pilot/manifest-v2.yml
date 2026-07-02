@@ -1,0 +1,79 @@
+{
+  "schema": "agentspec.evaluation_manifest.v0",
+  "id": "EXP-lifecycle-pilot-v2",
+  "title": "Controlled Codex and Claude lifecycle pilot with capability-aware limits",
+  "description": "One-task procedural pilot comparing AgentSpec lifecycle guidance with a direct-prompt control under explicit provider-capability-aware limits.",
+  "tasks": [
+    {
+      "id": "TASK-unicode-slugify",
+      "source": "benchmarks/controlled-evals/EXP-lifecycle-pilot/task.md",
+      "revision": "sha256:7a3638b7b72e861d4fc74ee6920076610c1b46c4f3ebcdcf31780bf7325ee98b",
+      "oracle": {
+        "id": "oracle-unicode-slugify",
+        "type": "command",
+        "revision": "sha256:42a4742c7b9e4eb61863934908790b6d6594db0389748126c8bfa96d3315bfef"
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "id": "with-agentspec",
+      "agentspec": true,
+      "description": "Ready AgentSpec task pack, workflow, repository guidance, and provider plugin skill."
+    },
+    {
+      "id": "control",
+      "agentspec": false,
+      "description": "Same task and fixture without AgentSpec artifacts or plugin guidance."
+    }
+  ],
+  "providers": [
+    {
+      "id": "codex",
+      "model": "gpt-5.5",
+      "budget": {
+        "max_cost_usd": null,
+        "unit": "usd",
+        "enforcement": "unavailable",
+        "observation_required": false
+      }
+    },
+    {
+      "id": "claude",
+      "model": "claude-opus-4-8",
+      "budget": {
+        "max_cost_usd": 2.0,
+        "unit": "usd",
+        "enforcement": "provider",
+        "observation_required": true
+      }
+    }
+  ],
+  "environment": {
+    "id": "local-darwin-arm64-v2",
+    "revision": "macos-26.5.1-arm64-python-3.11.13-codex-0.137.0-claude-2.1.157-budget-runner-v2"
+  },
+  "limits": {
+    "max_duration_seconds": 600,
+    "max_tokens": 1250000,
+    "max_retries": 0,
+    "policies": {
+      "max_duration_seconds": {
+        "unit": "seconds",
+        "enforcement": "runner",
+        "observation_required": true
+      },
+      "max_tokens": {
+        "unit": "tokens",
+        "enforcement": "post_run",
+        "observation_required": true
+      },
+      "max_retries": {
+        "unit": "attempts",
+        "enforcement": "runner",
+        "observation_required": true
+      }
+    }
+  },
+  "replicates": 1
+}

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
+import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from agentspec.eval import load_evaluation_manifest
 from agentspec.io import load_data
@@ -16,6 +19,19 @@ from agentspec.io import load_data
 
 ROOT = Path(__file__).resolve().parents[1]
 PILOT = ROOT / "benchmarks" / "controlled-evals" / "EXP-lifecycle-pilot"
+
+
+def _load_runner_module():
+    spec = importlib.util.spec_from_file_location("agentspec_pilot_runner", PILOT / "run_provider.py")
+    if spec is None or spec.loader is None:
+        raise AssertionError("Could not load controlled-evaluation runner.")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+RUNNER = _load_runner_module()
 
 
 class EvaluationAssetTests(unittest.TestCase):
@@ -28,6 +44,35 @@ class EvaluationAssetTests(unittest.TestCase):
         self.assertEqual({condition["agentspec"] for condition in manifest["conditions"]}, {True, False})
         self.assertEqual(task["revision"], _sha256(ROOT / task["source"]))
         self.assertEqual(task["oracle"]["revision"], _sha256(PILOT / "oracle" / "identifier_oracle.py"))
+
+    def test_budget_runner_v2_is_new_and_preserves_original_evidence(self) -> None:
+        original = PILOT / "manifest.yml"
+        revised = PILOT / "manifest-v2.yml"
+        manifest = load_evaluation_manifest(revised)
+
+        self.assertEqual(
+            _sha256(original),
+            "sha256:54d0c5517ca0553f68a2641f58a77a6877025714ddae0f3956182e5df8deeb83",
+        )
+        self.assertEqual(
+            _sha256(PILOT / "evidence" / "runs" / "EVALRUN-codex-control-r1.yml"),
+            "sha256:bde739778b832b4d7621e78087a4a434b99646f3d71d0efa42432ecb7fd4e45f",
+        )
+        self.assertEqual(
+            _sha256(PILOT / "evidence" / "runs" / "EVALRUN-codex-with-agentspec-r1.yml"),
+            "sha256:8743736898bf6945f73d97b0e4f505d2403b011390460a5e6574e0fd3dcaa939",
+        )
+        self.assertEqual(manifest["id"], "EXP-lifecycle-pilot-v2")
+        self.assertEqual(
+            manifest["limits"]["policies"]["max_tokens"]["enforcement"],
+            "post_run",
+        )
+        self.assertEqual(
+            next(item for item in manifest["providers"] if item["id"] == "claude")["budget"][
+                "enforcement"
+            ],
+            "provider",
+        )
 
     def test_fixture_starts_with_passing_public_tests_and_failing_hidden_oracle(self) -> None:
         fixture = PILOT / "fixture"
@@ -121,9 +166,182 @@ class EvaluationAssetTests(unittest.TestCase):
         self.assertEqual(generated["recorded_run_count"], 2)
         self.assertEqual(generated["classifications"], {"valid": 0, "limited": 2, "invalid": 0})
 
+    def test_runner_derives_models_and_provider_budget_from_manifest(self) -> None:
+        manifest = _runner_manifest()
+        workspace = Path("/tmp/eval-workspace")
+        output_dir = Path("/tmp/eval-output")
+
+        codex = RUNNER._provider_command("codex", "control", workspace, output_dir, manifest)
+        claude = RUNNER._provider_command("claude", "control", workspace, output_dir, manifest)
+
+        self.assertEqual(codex[codex.index("--model") + 1], "codex-test-model")
+        self.assertEqual(claude[claude.index("--model") + 1], "claude-test-model")
+        self.assertEqual(claude[claude.index("--max-budget-usd") + 1], "2.5")
+
+    def test_runner_watchdog_terminates_a_duration_overrun(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            result = RUNNER._run_process(
+                [sys.executable, "-c", "import time; time.sleep(5)"],
+                cwd=Path(td),
+                prompt="",
+                timeout_seconds=0.05,
+                termination_grace_seconds=0.05,
+            )
+
+        self.assertTrue(result.timed_out)
+        self.assertNotEqual(result.return_code, 0)
+        self.assertIn(result.termination_signal, {"SIGTERM", "SIGKILL", "terminate"})
+
+    def test_runner_extracts_codex_usage_and_rejects_token_overrun(self) -> None:
+        stdout = "\n".join(
+            [
+                json.dumps({"type": "turn.started"}),
+                json.dumps(
+                    {
+                        "type": "turn.completed",
+                        "usage": {
+                            "input_tokens": 100,
+                            "cached_input_tokens": 80,
+                            "output_tokens": 10,
+                        },
+                    }
+                ),
+            ]
+        )
+
+        usage = RUNNER._extract_usage("codex", stdout)
+        outcomes = RUNNER._evaluate_limit_outcomes(
+            _runner_manifest(),
+            provider="codex",
+            usage=usage,
+            cost_usd=None,
+            duration_seconds=1.0,
+            retries=0,
+            timed_out=False,
+        )
+
+        self.assertEqual(usage, {"input": 100, "cached": 80, "output": 10, "total": 110})
+        self.assertEqual(outcomes["max_tokens"]["status"], "exceeded")
+        self.assertEqual(outcomes["max_cost_usd"]["status"], "unavailable")
+
+    def test_runner_writes_separate_provider_and_protocol_outcomes(self) -> None:
+        event = json.dumps(
+            {
+                "type": "turn.completed",
+                "usage": {
+                    "input_tokens": 100,
+                    "cached_input_tokens": 80,
+                    "output_tokens": 10,
+                },
+            }
+        )
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            output_dir = root / "raw"
+            with mock.patch.object(
+                RUNNER,
+                "_provider_command",
+                return_value=[sys.executable, "-c", f"print({event!r})"],
+            ):
+                code = RUNNER.run_cell(
+                    "codex",
+                    "control",
+                    root,
+                    output_dir,
+                    PILOT / "manifest-v2.yml",
+                )
+            execution = load_data(output_dir / "execution.json")
+
+        self.assertEqual(code, 0)
+        self.assertEqual(execution["schema"], "agentspec.provider_execution.v1")
+        self.assertEqual(execution["provider_return_code"], 0)
+        self.assertEqual(execution["runner_return_code"], 0)
+        self.assertEqual(execution["stop_reason"], "completed")
+        self.assertEqual(execution["usage"]["total"], 110)
+        self.assertEqual(execution["limit_outcomes"]["max_tokens"]["status"], "passed")
+        self.assertEqual(
+            execution["effective_limits"]["provider_budget"]["enforcement"],
+            "unavailable",
+        )
+
+    def test_runner_detects_semantic_provider_failures_with_zero_exit_code(self) -> None:
+        claude = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": True,
+                "api_error_status": 401,
+                "result": "Failed to authenticate.",
+            }
+        )
+        codex = "\n".join(
+            [
+                json.dumps({"type": "turn.started"}),
+                json.dumps({"type": "turn.failed", "error": {"message": "model unavailable"}}),
+            ]
+        )
+
+        self.assertEqual(
+            RUNNER._provider_failure("claude", claude),
+            "Claude result reported is_error=true (api_error_status=401).",
+        )
+        self.assertEqual(
+            RUNNER._provider_failure("codex", codex),
+            "Codex emitted turn.failed: model unavailable",
+        )
+
 
 def _sha256(path: Path) -> str:
     return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
+
+
+def _runner_manifest() -> dict[str, object]:
+    return {
+        "providers": [
+            {
+                "id": "codex",
+                "model": "codex-test-model",
+                "budget": {
+                    "max_cost_usd": None,
+                    "unit": "usd",
+                    "enforcement": "unavailable",
+                    "observation_required": False,
+                },
+            },
+            {
+                "id": "claude",
+                "model": "claude-test-model",
+                "budget": {
+                    "max_cost_usd": 2.5,
+                    "unit": "usd",
+                    "enforcement": "provider",
+                    "observation_required": True,
+                },
+            },
+        ],
+        "limits": {
+            "max_duration_seconds": 60,
+            "max_tokens": 100,
+            "max_retries": 0,
+            "policies": {
+                "max_duration_seconds": {
+                    "unit": "seconds",
+                    "enforcement": "runner",
+                    "observation_required": True,
+                },
+                "max_tokens": {
+                    "unit": "tokens",
+                    "enforcement": "post_run",
+                    "observation_required": True,
+                },
+                "max_retries": {
+                    "unit": "attempts",
+                    "enforcement": "runner",
+                    "observation_required": True,
+                },
+            },
+        },
+    }
 
 
 if __name__ == "__main__":

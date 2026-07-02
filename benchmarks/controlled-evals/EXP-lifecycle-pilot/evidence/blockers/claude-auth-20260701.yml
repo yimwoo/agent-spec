@@ -1,0 +1,26 @@
+{
+  "schema": "agentspec.evaluation_blocker.v0",
+  "experiment_id": "EXP-lifecycle-pilot-v2",
+  "provider": "claude",
+  "model": "claude-opus-4-8",
+  "conditions_affected": [
+    "control",
+    "with-agentspec"
+  ],
+  "observed_at": "2026-07-01T16:55:04Z",
+  "status": "blocked",
+  "facts": {
+    "claude_code_version": "2.1.157",
+    "auth_status_reports_logged_in": true,
+    "api_provider": "firstParty",
+    "credential_free_endpoint_probe": "reachable_http_404",
+    "endpoint": "api.anthropic.com:443",
+    "minimal_model_probe": "http_401_invalid_authentication_credentials",
+    "probe_cost_usd": 0,
+    "evaluation_cells_started": 0,
+    "evaluation_cells_recorded": 0
+  },
+  "impact": "No Claude v2 condition can start until Claude Code credentials are refreshed and a minimal pinned-model probe succeeds.",
+  "repair": "Refresh the existing Claude Code login, verify a minimal claude-opus-4-8 response, and run all four v2 conditions from fresh isolated workspaces.",
+  "sensitive_data_included": false
+}
