@@ -331,6 +331,12 @@ def finish_task(
 
     update_handoff(root, state, build_project_status(root))
     roadmap_path = update_roadmap(root)
+
+    # Completion writes handoff before roadmap. Refresh both projections until
+    # status can see the post-roadmap handoff rather than the stale preflight one.
+    for _ in range(2):
+        update_handoff(root, state, build_project_status(root))
+        roadmap_path = update_roadmap(root)
     verification = verify_writeback(root, state)
     return {
         "schema": FINISH_RESULT_SCHEMA,
