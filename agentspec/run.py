@@ -1255,41 +1255,6 @@ def _reviewer_profile_for_decision(state: dict[str, Any], decision: str) -> dict
     return profiles.get("continuation_reviewer")
 
 
-def _status_for_decision(decision: str) -> str:
-    return {
-        "auto_continue": "running",
-        "pause_for_human": "paused",
-        "halt": "halted",
-        "complete": "complete",
-    }.get(decision, "paused")
-
-
-def _next_action_for_status(status: str) -> str:
-    return {
-        "started": "continue_executor",
-        "running": "continue_executor",
-        "paused": "await_human",
-        "complete": "complete",
-        "halted": "stop",
-        "aborted": "stop",
-    }.get(status, "await_human")
-
-def _halted_run_accepts_corrected_evidence(state: dict[str, Any], events: list[dict[str, Any]]) -> bool:
-    if state.get("mode") not in {"autonomous", "research"}:
-        return False
-
-    for event in reversed(events):
-        kind = event.get("kind")
-        if kind in {"autonomous_pause_to_dcr", "autonomous_infrastructure_block"}:
-            return True
-        if kind == "reviewer_verdict" and event.get("decision") == "halt":
-            return False
-    return isinstance(state.get("infrastructure_blocker"), dict)
-
-
-def _is_model_review_unavailable_pause(review: Any) -> bool:
-    flags = getattr(review, "policy_flags", [])
-    return _MODEL_REVIEW_UNAVAILABLE_FLAG in flags
 def _resolve_context_pack(root: Path, context_pack: Path) -> Path:
     path = context_pack if context_pack.is_absolute() else root / context_pack
     if not path.exists():
